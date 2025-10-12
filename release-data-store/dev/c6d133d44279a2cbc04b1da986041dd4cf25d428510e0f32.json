@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "releaseId": "c6d133d44279a2cbc04b1da986041dd4cf25d428510e0f32",
+  "version": "c6d133d4",
+  "networkName": "dev",
+  "releaseDate": "2025-10-12T16:45:20.903275427Z",
+  "status": "active",
+  "source": {
+    "litOs": {
+      "branch": "main",
+      "commit": "8af61b116489fa8216fcbccad73ee7c6e3730aa5"
+    },
+    "litAssets": {
+      "branch": "develop",
+      "commit": "ab10cd6a29e02d164aadf22e1463b14a92b972dc"
+    }
+  },
+  "artifacts": {
+    "manifestCid": "QmT6nJTbuf7ThjWRiPh4h3qkWRFWxKfsyFKM4b3WgNaRKM",
+    "dockerImage": "No docker image for this release"
+  },
+  "verification": {
+    "signedGitTag": "release-c6d133d44279a2cbc04b1da986041dd4cf25d428510e0f32",
+    "gpgKeyFingerprint": "68E00C6FFF28AFF0"
+  }
+}
