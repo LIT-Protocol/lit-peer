@@ -1,9 +1,9 @@
 {
   "schemaVersion": "1.0.0",
   "releaseId": "c6d133d44279a2cbc04b1da986041dd4cf25d428510e0f32",
-  "version": "c6d133d4",
+  "version": "2.0.2",
   "networkName": "dev",
-  "releaseDate": "2025-10-12T16:45:20.903275427Z",
+  "releaseDate": "2025-10-13T02:28:38.313225682Z",
   "status": "active",
   "source": {
     "litOs": {
@@ -11,12 +11,12 @@
       "commit": "8af61b116489fa8216fcbccad73ee7c6e3730aa5"
     },
     "litAssets": {
-      "branch": "develop",
-      "commit": "ab10cd6a29e02d164aadf22e1463b14a92b972dc"
+      "branch": "inf-682-node-version-store",
+      "commit": "48b15f8701a515d1a2d173f3148579460525814b"
     }
   },
   "artifacts": {
-    "manifestCid": "QmT6nJTbuf7ThjWRiPh4h3qkWRFWxKfsyFKM4b3WgNaRKM",
+    "manifestCid": "QmW9GSWmQ5i2BBNzTZ7869n4LxBRgL1n3mMou7xK3N7suZ",
     "dockerImage": "No docker image for this release"
   },
   "verification": {
