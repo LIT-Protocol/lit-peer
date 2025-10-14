@@ -3,7 +3,7 @@
   "releaseId": "c6d133d44279a2cbc04b1da986041dd4cf25d428510e0f32",
   "version": "2.0.2",
   "environment": "dev",
-  "releaseDate": "2025-10-14T00:48:25.009542831Z",
+  "releaseDate": "2025-10-14T01:22:58.178446738Z",
   "status": "active",
   "source": {
     "litOs": {
@@ -16,7 +16,7 @@
     }
   },
   "artifacts": {
-    "manifestCid": "QmQZyzDmY2xBjvDKWYR1T3tVUqsoc9LzzbfzkLVHVnv32W",
+    "manifestCid": "QmYFAssAtcKJiT2S6woNoVRdxnfWcV7NqgK7MF2Bvm15Wx",
     "dockerImage": "No docker image for this release"
   },
   "verification": {
