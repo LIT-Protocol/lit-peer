@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "releaseId": "c6d133d44279a2cbc04b1da986041dd4cf25d428510e0f32",
+  "version": "2.0.2",
+  "networkName": "internal-dev-5",
+  "releaseDate": "2025-10-18T16:01:45.708057354Z",
+  "status": "active",
+  "source": {
+    "litOs": {
+      "branch": "main",
+      "commit": "8af61b116489fa8216fcbccad73ee7c6e3730aa5"
+    },
+    "litAssets": {
+      "branch": "inf-682-node-version-store",
+      "commit": "7703f8a6d96c152ec8f43ee9831de4485720ef0e"
+    }
+  },
+  "artifacts": {
+    "manifestCid": "Qmc8d8MxsmoXtizHbAn54TFZ46vUTdCUhMsWBkCqVsLaoZ",
+    "dockerImage": "No docker image for this release"
+  },
+  "verification": {
+    "signedGitTag": "v2.0.2-internal-dev-5",
+    "gpgKeyFingerprint": "68E00C6FFF28AFF0"
+  }
+}
