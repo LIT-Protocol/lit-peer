@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+
+# IDEs
+*.iml
+.idea
+*.gz
+*.core
+
+# Rust tags created by rusty-tags
+**/rusty-tags.vi
+**/rusty-tags.emacs
+
+# Backup and writebackup files
+**/*.un~
+**/*.swp
+
+# DATIL_BACKUP: Remove this once old Datil backup is obsolete.
+rust/lit-node/lit-node/tests/test_data/datil_recovery_into_naga/backups/extracted/

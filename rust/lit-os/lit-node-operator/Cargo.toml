@@ -1,0 +1,42 @@
+[package]
+name = "lit-node-operator"
+authors = ["Adam Reif <adam@litprotocol.com>"]
+version = "0.1.0"
+edition.workspace = true
+
+[[bin]]
+name = "lit-node-operator"
+path = "src/main.rs"
+
+[features]
+default = []
+# Enable on-chain upgrade handling when set; disabled by default
+upgrade = []
+
+[dependencies]
+anyhow = "1.0"
+derive_more = "0.99.17"
+ethers = { version = "2.0.8", features = ["abigen", "legacy"] }
+lit-blockchain = { path = "../../lit-core/lit-blockchain" }
+lit-cli-os = { path = "../lit-cli-os" }
+lit-core = { path = "../../lit-core/lit-core" }
+lit-core-derive = { path = "../../lit-core/lit-core-derive" }
+lit-node-testnet = { path = "../../lit-node/lit-node-testnet" }
+nix = { version = "0.26.2", features = ["user"] }
+regex = "1.11.1"
+serde_yaml = "0.9.33"
+tokio = { version = "1.36", features = ["full"] }
+tracing = "0.1"
+tracing-journald = "0.3.0"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+async-trait = "0.1"
+chrono = { version = "0.4", features = ["serde"] }
+serde_json = "1.0"
+
+[dev-dependencies]
+lit-api-core = { path = "../../lit-core/lit-api-core" }
+lit_node = { path = "../../lit-node/lit-node" }
+lit-os-core = { path = "../lit-os-core" }
+tokio = { version = "1.36", features = ["macros", "rt-multi-thread", "time", "test-util"] }
+tracing-appender = "0.2"
+tracing-subscriber = { version = "0.3", features = ["fmt"] }

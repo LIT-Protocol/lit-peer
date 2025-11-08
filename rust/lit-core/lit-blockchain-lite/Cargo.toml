@@ -1,0 +1,15 @@
+[package]
+name = "lit-blockchain-lite"
+description = "Lit Blockchain Lite"
+authors = ["Brendon Paul <brendon.paul@litprotocol.com>"]
+version = "0.1.0"
+edition.workspace = true
+
+[profile.dev]
+opt-level = "s"
+incremental = true
+
+[dependencies]
+ethers.workspace = true
+serde.workspace = true
+

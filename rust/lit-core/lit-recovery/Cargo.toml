@@ -1,0 +1,67 @@
+[package]
+name = "lit-recovery"
+version = "0.2.0"
+edition.workspace = true
+
+[dependencies]
+arc-swap = "1.7"
+argon2 = "0.5"
+blsful = "3.0.0"
+ciborium = { version = "0.2.0"  }
+clap = { version = "4", features = ["derive"] }
+colored = "3"
+cryptex = { version = "1.8.2", features = ["file"] }
+decaf377.workspace = true
+dirs = "6"
+elliptic-curve.workspace = true
+ethers.workspace = true
+glob = "0.3.1"
+hex.workspace = true
+ed448-goldilocks-plus.workspace = true
+jubjub.workspace = true
+k256.workspace = true
+lit-node-core = { path = "../../lit-node/lit-node-core" }
+lit-blockchain = { path = "../lit-blockchain", default-features = false }
+lit-core = { path = "../lit-core", default-features = false }
+path-clean = "1"
+p256.workspace = true
+p384.workspace = true
+rand.workspace = true
+reqwest = { version = "0.11", features = ["json", "blocking"] }
+rusqlite = { version = "0.32", features = ["bundled-sqlcipher-vendored-openssl"] }
+rustyline = { version= "15", features = ["derive"] }
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml = "0.9"
+sha2.workspace = true
+sha3.workspace = true
+soteria-rs = { version = "0.3.1", features = ["signing"] }
+thiserror.workspace = true
+tiny-bip39 = { version = "2.0", default-features = false }
+tokio.workspace = true
+verifiable-share-encryption = { version = "0.3.0", git = "https://github.com/LIT-Protocol/verifiable-share-encryption", rev = "7eddfbe736369db596d0f302c72f1d76b0fd332d" }
+vsss-rs = { workspace = true, features = ["curve25519"] }
+
+generic-array.workspace = true
+
+[dependencies.bulletproofs]
+version = "4.0.0"
+features = [
+    "std",
+    "ristretto25519",
+    "ed25519",
+    "k256",
+    "p256",
+    "p384",
+    "bls12_381",
+    "bls12_381_std",
+    "ed448",
+    "jubjub",
+    "decaf377",
+]
+git = "https://github.com/LIT-Protocol/bulletproofs"
+rev = "ddf11c2f593e71f24c9a3d64c56f62d82f2b5099"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+winapi = { version = "0.3", features = ["dpapi", "errhandlingapi", "wincred", "winerror"] }
+byteorder = "1.4"

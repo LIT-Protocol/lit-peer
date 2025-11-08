@@ -1,0 +1,4 @@
+[build]
+target-dir = "target"         # path of where to place all generated artifacts
+# while this appears to the default, we're setting it in this sub project to avoid rebuilding the parent project 
+# or this project when the parent project is rebuilt.

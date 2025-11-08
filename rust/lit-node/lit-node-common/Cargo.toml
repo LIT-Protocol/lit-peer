@@ -1,0 +1,65 @@
+[package]
+name = "lit-node-common"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+aes-gcm = "0.10"
+async-std.workspace = true
+chrono = "0.4"
+derive_more.workspace = true
+ethers = { version = "2.0.8", features = [ "abigen", "legacy" ]}
+hex = { workspace = true, features = ["serde"] }
+hkdf = "0.12"
+k256 = { version = "0.13", features = ["arithmetic", "ecdsa", "ecdsa-core"] }
+lit-sdk = { path = "../lit-sdk" }
+rand.workspace = true
+rand_core.workspace = true
+rand_chacha.workspace = true
+postcard = { version = "1.0", features = ["use-std"] }
+reqwest.workspace = true
+sdd.workspace = true
+serde.workspace = true
+serdect = "0.3.0"
+serde_json.workspace = true
+sha2.workspace = true
+sha3.workspace = true
+sodalite = "0.4"
+soteria-rs.workspace = true
+url.workspace = true
+x25519-dalek = { version = "2.0", features = ["static_secrets"] }
+zeroize.workspace = true
+
+[dependencies.lit-core]
+path = "../../lit-core/lit-core"
+features = ["ipfs", "chrono", "unix"]
+
+
+[dependencies.lit-core-derive]
+path = "../../lit-core/lit-core-derive"
+
+[dependencies.lit-logging]
+path = "../../lit-core/lit-logging"
+features = ["service"]
+
+[dependencies.lit-observability]
+path = "../../lit-core/lit-observability"
+
+[dependencies.lit-api-core]
+path = "../../lit-core/lit-api-core"
+features = ["rocket-helper", "client-reqwest", "server"]
+
+[dependencies.lit-blockchain]
+path = "../../lit-core/lit-blockchain"
+
+[dependencies.lit-attestation]
+path = "../../lit-core/lit-attestation"
+features = ["generate-via-service", "kdf"]
+
+[dependencies.lit-actions-grpc]
+path = "../../lit-actions/grpc"
+optional = true
+
+[dependencies.lit-actions-server]
+path = "../../lit-actions/server"
+optional = true

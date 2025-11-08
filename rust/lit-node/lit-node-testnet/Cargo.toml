@@ -1,0 +1,66 @@
+[package]
+name = "lit-node-testnet"
+version = "0.1.0"
+edition.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+# this needs to happen at runtime, so is just a place holder for now.
+sign_test = ["lit-actions"] #enables unsafe endpoint allowing a test to use a PK directly .
+lit-actions = []
+proxy-chatter = []
+proxy_chatter = []
+lit-actions-server = ["lit-actions"] # start internal lit_actions server for testing
+testing = [] # enables testing features
+
+
+
+[build-dependencies]
+# Deno v1.37.2
+tonic-build = "0.12.3"
+
+[dependencies]
+# everything is based off of lit-node
+
+anyhow = "1.0.41"
+async-trait.workspace = true
+bs58 = "0.5.0"
+command-group = "1.0.8"
+chrono = "0.4.24"
+ethers = { version = "2.0.8", features = [ "abigen", "legacy" ]}
+fs_extra = "1.3.0"
+futures = "0.3.17"
+hex.workspace = true
+hex-literal = "0.4.1"
+
+k256 = { version = "0.13.0", features = ["sha256", "ecdsa", "serde", "ecdsa-core", "expose-field", "hash2curve", "schnorr"], optional = false }
+once_cell = { version = "1" }
+rand = { workspace = true, features = ["std_rng"]}
+rand_core.workspace = true
+rand_chacha.workspace = true
+regex = "1.7.1"
+# reqwest = { version = "0.11.14", default-features = false, features = ["json", "rustls-tls"] }
+# used to verify JWTs.  must match the version in the crate overrides at the bottom of this file
+sodalite = "0.4"
+serde.workspace = true
+serde_json.workspace = true
+tokio = { version = "1.23.0", features = ["rt-multi-thread"] }
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3" }
+url = { version = "2", features = ["serde"] }
+#ECDSA
+lit-core = { path = "../../lit-core/lit-core", features = ["ipfs", "chrono"] }
+lit-logging = { path = "../../lit-core/lit-logging", features = ["service"] }
+lit-blockchain = { path = "../../lit-core/lit-blockchain" }
+lit-attestation = { path = "../../lit-core/lit-attestation", features = ["generate-via-service", "kdf"] }
+lit-node-common ={ path = "../lit-node-common" }
+lit-node-core = { path = "../lit-node-core" }
+lit-sdk = { path = "../lit-sdk" }
+toml_edit = "0.22"
+toxiproxy_rust = "*"
+uuid = { version = "1.4", features = ["v4"] }
+reqwest = { version = "0.11.14", default-features = false, features = ["json", "rustls-tls"] }
+
+[dependencies.lit-observability]
+path = "../../lit-core/lit-observability"
+

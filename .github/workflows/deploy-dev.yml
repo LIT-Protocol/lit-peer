@@ -1,0 +1,91 @@
+---
+name: Deploy to Development (naga/datil)
+on:
+  # Manually trigger the workflow with specific inputs
+  workflow_dispatch:
+    inputs:
+      release_branch:
+        description: 'Release Branch to Deploy'
+        required: true
+        type: string
+      target_environment:
+        description: 'Target Environment'
+        required: true
+        type: choice
+        options:
+          - naga-dev
+          - datil-dev
+        default: 'naga-dev'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy Release Branch to ${{ inputs.target_environment }}
+    steps:
+      - name: Validate Release Branch Input
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          if [ -z "${{ inputs.release_branch }}" ]; then
+            echo "Error: Release Branch name must be provided!"
+            exit 1
+          fi
+
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.release_branch || github.ref }}
+          fetch-depth: 0
+
+      - name: Set Environment Variables
+        id: set-env
+        run: |
+          if [[ "${{ inputs.target_environment }}" == "naga-dev" ]]; then
+            echo "server_host=naga-dev.litgateway.com" >> "$GITHUB_OUTPUT"
+            echo "ssh_user=debian" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ inputs.target_environment }}" == "datil-dev" ]]; then
+            echo "server_host=datil-dev.litgateway.com" >> "$GITHUB_OUTPUT"
+            echo "ssh_user=ubuntu" >> "$GITHUB_OUTPUT"
+          else
+            echo "Error: Unsupported environment!"
+            exit 1
+          fi
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.1
+        with:
+          ssh-private-key: ${{ secrets.DEV_SSH_KEY }}
+
+      - name: Add Server to Known Hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan "${{ steps.set-env.outputs.server_host }}" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Deploy to Target Server
+        env:
+          SERVER_HOST: ${{ steps.set-env.outputs.server_host }}
+          SSH_USER: ${{ steps.set-env.outputs.ssh_user }}
+        run: |
+          ssh "${SSH_USER}@${SERVER_HOST}" /bin/bash << 'EOF'
+            set -e
+            DEPLOY_BRANCH="${{ inputs.release_branch || github.ref_name }}"
+            echo "Starting deployment of branch: '${DEPLOY_BRANCH}' to ${{ inputs.target_environment }}"
+            # source profile and pull changes
+            source .profile
+            cd lit-assets/rust/lit-node/lit-node
+            git fetch origin
+            git checkout "${DEPLOY_BRANCH}"
+            git pull origin "${DEPLOY_BRANCH}"
+            # Build and restart the server
+            ./scripts/build_and_restart_no_sgx.sh
+          EOF
+
+      - name: Notify Deployment Status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "Successfully deployed branch ${{ inputs.release_branch || github.ref_name }} to ${{ inputs.target_environment }}."
+          else
+            echo "Error: Deployment of branch ${{ inputs.release_branch || github.ref_name }} to ${{ inputs.target_environment }} failed."
+            exit 1
+          fi

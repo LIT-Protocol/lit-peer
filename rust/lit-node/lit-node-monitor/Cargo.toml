@@ -1,0 +1,55 @@
+[package]
+name = "lit-node-monitor"
+version = "0.1.0"
+edition = "2024"
+# edition.workspace = true
+# resolver = "2"
+
+[features]
+naga-dev = []
+naga-test = []
+naga-staging = []
+naga-prod = []
+naga-all = []
+internalDev = []
+
+[dependencies]
+chrono = "0.4.36"
+codee = "0.3.0"
+lit-blockchain-lite = { path = "../../lit-core/lit-blockchain-lite" }
+ethers = { version = "2" }
+# ethers-contract = "2"
+# ethers-web = { version = "0.2", features = [ "leptos" ] }
+ethers-web = { version = "0.2.0",  git = "https://github.com/GTC6244/ethers-web",  features = [ "leptos" ] , rev="08e249e"}
+# ethers-web = { path = "../../../../ethers-web", features = [ "leptos" ] }
+ethers-providers = { version="2.0.0", default-features = false }
+# hex.workspace = true
+hex = "0.4.3"
+icondata = "0.5.0"  
+leptos = { version = "0.7.7", features = ["csr"] } 
+leptos_meta = { version = "0.7.7" }
+leptos_router = { version = "0.7.7" }
+leptos-use = "0.15.7"
+# leptos-struct-table = "0.13.1"
+# using the branch for leptos 0.7 until it gets merged into the regular repo
+# leptos-struct-table = { git = "https://github.com/kstep/leptos-struct-table/", rev = "0b32067" }
+leptos-struct-table = { version = "0.14.0-beta.2" }
+thaw = { version = "0.4", features = ["csr"] }
+reqwest = { version = "0.11.6", features = ["json"] }
+# serde.workspace = true
+# serde_json.workspace = true
+serde = "1.0"
+serde_json = "1.0"
+console_log = "1.0.0"
+log = "=0.4.22"
+console_error_panic_hook = "0.1.7"
+uuid = "1.11.0"
+tokio = { version = "1.40.0", default-features = false, features = ["macros"] }
+serde_bytes_base64 = "0.1.1"
+yaml-rust2 = "0.10.3"
+
+
+[package.metadata.leptos] 
+assets-dir = "public" 
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]

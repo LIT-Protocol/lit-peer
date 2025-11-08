@@ -1,0 +1,61 @@
+.cargo
+.DS_Store
+
+/target*
+lit_node
+\#*\#
+*~
+**/node_modules/
+*.env
+
+# stateful information used by the nodes
+node_keys/
+node_state/
+recovery_state/
+node_*.db
+node_*.db-*
+actions_*.db
+actions_*.db-*
+
+# Active configuration yaml for the node
+rpc-config.yaml
+# used to extend the base rpc config in `dev` networks
+rpc-config.overlay.yaml
+
+# local developer's scoped logging configuration
+log_levels.toml
+
+common/target/*
+
+# various configuration files used in setup
+config/lit_config*.toml
+config/lit_config*.env
+oauth/google_keys.json
+oauth/apple_keys.json
+stytch/*
+config/secrets*
+config/*.toml
+config/*.env
+config_restore_override.toml
+config_admin_override.toml
+config/test/anvil/*
+config/test/hardhat/*
+config/test/deploy-config.json
+config/test/proxy_mappings.json
+config/test/custom_node_runtime_config.toml
+
+# output from tests
+tests/sdk/package.json
+tests/sdk/yarn.lock
+tests/test_logs
+tests/chain_state_cache
+# tests/test_state_cache
+test_logs/
+fault_tests.log
+out.log
+peers.txt
+
+/tmp
+archive.zip
+
+src/git_info.rs

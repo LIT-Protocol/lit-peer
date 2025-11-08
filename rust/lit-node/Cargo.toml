@@ -1,0 +1,87 @@
+[workspace]
+resolver = "2"
+# things to be compiled into a node release
+default-members = [
+    "lit-node", 
+    "utils",
+    "lit-node-core",
+    "lit-node-common",
+    "lit-sdk"
+]
+# all the things in this workspace (including dev and test stuff)
+members = [
+    "lit-node", 
+    "utils", 
+    "lit-node-common",
+    "lit-node-core",
+    "lit-node-testnet", 
+    "shiva", 
+    
+    "lit-sdk"
+]
+exclude = ["lit-node-monitor"]
+
+[workspace.package]
+edition = "2024"
+
+[workspace.dependencies]
+async-std = "1.13"
+async-trait = "0.1"
+blsful = "3.0.0-pre8"
+bulletproofs = { git = "https://github.com/LIT-Protocol/bulletproofs", rev = "ddf11c2f593e71f24c9a3d64c56f62d82f2b5099" }
+curve25519-dalek = { package = "curve25519-dalek-ml", version="4.3.0", features = ["group", "serde", "rand_core"] }
+data-encoding = "2.8"
+decaf377 = { git = "https://github.com/LIT-Protocol/decaf377", rev = "1c5755b2b90e1969d47ce89cf2d35078984a0ee5", features = ["serde"]  }
+derive_more = { version = "2" , features = ["display"] }
+ed25519-dalek = { version = "2.2", features = ["rand_core"] }
+ed448-goldilocks = { version = "0.16", package = "ed448-goldilocks-plus", features = ["serde"] }
+elliptic-curve = { version = "0.13", features = ["arithmetic", "serde"] }
+ethabi = "16.0.0"
+ethers = { version = "2.0.8", features = [
+    "abigen",
+    "legacy"
+]}
+generic-array = "=1.1.1"
+hex = "0.4"
+jubjub = { package = "jubjub-plus", version = "0.10", features = ["serde"] }
+reqwest = { version = "0.11.14", default-features = false, features = ["json", "rustls-tls", "stream"] }
+rand = "0.8"
+rand_core = "0.6"
+rand_chacha = "0.3.1"
+sdd = "3"
+sha2 = "0.10.9"
+sha3 = "0.10.8"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+soteria-rs = { version = "0.3.1", features = ["serde", "elements"] }
+url = { version = "2", features = ["serde"] }
+vsss-rs = { version = "5.1", features = ["curve25519"] }
+zeroize = { version = "1.8", features = ["derive"] }
+
+[patch.crates-io]
+# needed to force deno_crypto to use v0.7.0-pre and not v0.7.0-rc.0 which for some reason is missing a bunch of stuff from the -pre version
+rsa = { git = "https://github.com/RustCrypto/RSA", tag = "v0.7.0-pre" }
+# Prevent panic "Custom error class must have a builder registered: Uncaught null" that
+# happens when lit-node disconnects (e.g. op_sign_ecdsa: receiving on a closed channel)
+# Upstream PR: https://github.com/denoland/deno_core/pull/730
+deno_core = { git = "https://github.com/Lit-Protocol/deno_core", branch = "fix/deno-222-op-panic" }
+# Fix libffi build on macOS Sequoia (required by Deno)
+# Upstream issue: https://github.com/tov/libffi-rs/issues/109
+libffi-sys = { git = "https://github.com/integer32llc/libffi-rs", rev = "8df0df577317bdca2c2b5e9ae263ba0e98fa9076" }
+
+# Please keep all profiles in sync with lit-actions
+[profile.release]
+codegen-units = 1
+incremental = true
+lto = true
+opt-level = 3
+
+[profile.develop]
+inherits = "dev"
+opt-level = 1
+debug = 1
+incremental = false
+
+# rusty-v8 needs at least -O1 to not miscompile
+[profile.dev.package.v8]
+opt-level = 1

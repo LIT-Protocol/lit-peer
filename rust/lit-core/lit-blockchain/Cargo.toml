@@ -1,0 +1,39 @@
+[package]
+name = "lit-blockchain"
+description = "Lit Blockchain"
+authors = ["David Radunz <david.radunz@litprotocol.com>"]
+version = "0.1.0"
+edition.workspace = true
+
+[features]
+default = []
+env-override = []
+
+[dependencies]
+alloy.workspace = true
+arc-swap.workspace = true
+async-trait.workspace = true
+const-str = { version = "0.6" }
+ethers.workspace = true
+futures.workspace = true
+im = "15.1.0"
+moka = { version = "0.12.10", features = ["sync"] }
+once_cell.workspace = true
+reqwest.workspace = true
+scc = "2.4"
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml = { version = "0.9.14" }
+thiserror.workspace = true
+tracing.workspace = true
+url = { version = "2.5" }
+
+[dev-dependencies]
+anyhow = "1.0"
+maplit = "1.0"
+pretty_assertions = "1.4"
+toml = "0.8"
+tokio.workspace = true
+
+[dependencies.lit-core]
+path = "../lit-core"

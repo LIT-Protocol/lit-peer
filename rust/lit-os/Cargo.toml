@@ -1,0 +1,38 @@
+[workspace]
+members = [
+    "lit-os-core",
+    "lit-os-guest-initrd",
+    "lit-os-metrics",
+    "lit-cli",
+    "lit-cli-os",
+    "lit-os-prov-core",
+    "lit-os-prov-api",
+    "lit-os-prov-api-client",
+    "lit-attestation-service",
+    "lit-logging-service",
+    "lit-node-operator"
+]
+default-members = [
+    "lit-os-core",
+    "lit-os-guest-initrd",
+    "lit-os-metrics",
+    "lit-cli",
+    "lit-cli-os",
+    "lit-os-prov-core",
+    "lit-os-prov-api",
+    "lit-os-prov-api-client",
+    "lit-logging-service"
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2024"
+
+[workspace.dependencies]
+config = "0.15"
+
+[profile.develop]
+inherits = "dev"
+opt-level = 1
+debug = 1
+incremental = false
