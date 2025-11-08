@@ -1,0 +1,54 @@
+# Build only if needed.  This workflow checks if the artifact exists and if it does not, it will build the artifact.  If the artifact exists, it will not build the artifact.  This is necessary to allow the individual test workflows to be run independently of the master-trigger workflow.
+name: rust/lit-node-build-if-needed
+on:
+  workflow_dispatch: {}
+  workflow_call:
+    inputs:
+      build_features:
+        type: string
+        required: true
+        description: 'The features to pass to the cargo build command'
+
+env:
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+
+defaults:
+  run:
+    shell: bash
+    working-directory: rust/lit-node
+
+jobs:
+  # Does the artifact exist?
+  check-if-needed:
+    runs-on: warp-ubuntu-latest-x64-8x # change to LargeRunner to run on github.  Change to self-hosted to run on our own runner.  Change to buildjet-8vcpu-ubuntu-2204 to run on buildjet with 8 cpus
+    outputs:
+      artifact_exists: ${{ steps.artifact_exists.outputs.cache-hit }}
+    steps:
+      - name: Checkout lit-assets
+        uses: actions/checkout@v5
+      - uses: de-vri-es/setup-git-credentials@v2
+        with:
+          credentials: https://glitch003:${{secrets.READ_ONLY_PAT}}@github.com/
+      - name: Create cache key
+        env:
+          CACHEKEY: 'nextest-archive-${{ github.sha }}-${{ inputs.build_features }}'
+        run: |
+          CACHEKEY="${{ env.CACHEKEY }}"
+          CACHEKEY="${CACHEKEY//,/|}" # replace all commas with pipes
+          echo "CACHEKEY=${CACHEKEY}" >> "$GITHUB_ENV" # update GitHub ENV vars
+      - name: Check if the artifact exists
+        id: artifact_exists
+        uses: WarpBuilds/cache@v1
+        with:
+          lookup-only: true
+          path: rust/lit-node/lit-node/nextest-archive.tar.zst
+          key: ${{ env.CACHEKEY }}
+
+  # If it does not exist, build the artifact
+  build:
+    needs: check-if-needed
+    if: ${{ needs.check-if-needed.outputs.artifact_exists != 'true' }}
+    uses: ./.github/workflows/rust-lit-node-build.yml
+    with:
+      build_features: ${{ inputs.build_features }}
+    secrets: inherit

@@ -1,0 +1,87 @@
+# Simple workflow for deploying static content to GitHub Pages
+name: Deploy Lit Monitor
+
+on:
+  # Runs on pushes targeting the default branch
+  #push:
+  #  branches: ["develop"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      TARGET_LIT_NETWORK:
+        type: choice
+        description: 'Please choose a network to deploy. This network will affect the URL - ie, choosing "naga-test" will deploy to lit-protocol.github.io/monitor/naga-test/".  '
+        options: 
+        - naga-dev
+        - naga-test
+        - naga-staging
+        - naga-prod
+        - internalDev
+        required: true
+        default: 'naga-test'
+        
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+# because this app is in a subfolder of the lit-assets project....
+defaults:
+  run:
+    working-directory: ./rust/lit-node/lit-node-monitor
+
+jobs:
+  # Single deploy job since we're just copying files to a new repo.
+  deploy-to-monitor-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5      
+
+      # Install Rust Nightly Toolchain, with Clippy & Rustfmt
+      - name: Install nightly Rust
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: clippy, rustfmt
+
+      - name: Add WASM target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: lint
+        run: cargo clippy & cargo fmt
+
+      # If using tailwind...
+      # - name: Download and install tailwindcss binary
+      #   run: npm install -D tailwindcss && npx tailwindcss -i <INPUT/PATH.css> -o <OUTPUT/PATH.css>  # run tailwind
+
+      - name: Download and install Trunk binary
+        run: wget -qO- https://github.com/trunk-rs/trunk/releases/download/v0.18.4/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
+
+      - name: Build with Trunk
+        # "${GITHUB_REPOSITORY#*/}" evaluates into the name of the repository
+        # using --public-url something will allow trunk to modify all the href paths like from favicon.ico to repo_name/favicon.ico .
+        # this is necessary for github pages where the site is deployed to username.github.io/repo_name and all files must be requested
+        # relatively as favicon.ico. if we skip public-url option, the href paths will instead request username.github.io/favicon.ico which
+        # will obviously return error 404 not found.
+        run: ./trunk build --release --public-url "https://lit-protocol.github.io/monitor/${{ inputs.TARGET_LIT_NETWORK }}/" --dist="${{ inputs.TARGET_LIT_NETWORK }}" --features="${{ inputs.TARGET_LIT_NETWORK }}"
+
+      - name: Pushes test file
+        uses: dmnemec/copy_file_to_another_repo_action@main
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.BRENDONS_GH_PAT }}
+        with:
+          source_file: './rust/lit-node/lit-node-monitor/${{ inputs.TARGET_LIT_NETWORK }}'
+          destination_repo: 'lit-protocol/monitor'
+          destination_folder: '/'
+          user_email: 'brendon@litprotocol.com'
+          user_name: 'GTC6244'
+          commit_message: 'Updating '

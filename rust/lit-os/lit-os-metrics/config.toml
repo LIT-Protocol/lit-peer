@@ -1,0 +1,6 @@
+# This file is just for local development only.
+
+logging_jaeger = "true"
+
+[lit]
+env = "dev"

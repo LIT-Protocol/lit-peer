@@ -1,0 +1,49 @@
+name: rust/lit-node-monitor
+on:
+  workflow_dispatch: {}
+  workflow_call:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_LOG_STYLE: always
+  RUST_LOG: debug
+  RUST_BACKTRACE: full
+  CARGO_INCREMENTAL: 0
+
+defaults:
+  run:
+    shell: bash
+    working-directory: rust/lit-node/lit-node-monitor
+
+jobs:
+  build:
+    runs-on: warp-ubuntu-latest-x64-8x # change to LargeRunner to run on github.  Change to self-hosted to run on our own runner.  Change to buildjet-8vcpu-ubuntu-2204 to run on buildjet with 8 cpus
+    timeout-minutes: 15
+
+    steps:
+      - name: Clean workspace
+        working-directory: ${{ github.workspace }}
+        run: |
+          rm -rf ../../lit-assets
+          mkdir -p ${{ github.workspace }}
+      - name: Checkout lit-assets
+        uses: actions/checkout@v5
+      - name: Install deps
+        working-directory: ${{ github.workspace }}
+        run: sudo apt-get update && sudo apt-get install -y libudev-dev libsqlite3-dev cmake protobuf-compiler
+      - name: Rust Cache
+        uses: WarpBuilds/rust-cache@v2
+        with:
+          cache-all-crates: 'false'
+          workspaces: |
+            rust/lit-node/lit-node-monitor
+          key: 'cachebuster1234'
+      - name: Install rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: '1.83' # keep in sync with rust/lit-node/lit-node-monitor/rust-toolchain.toml
+          components: rustfmt clippy rust-src
+      - name: Cargo fmt check
+        run: cargo fmt -- --check
+      - name: Build
+        run: cargo build --release

@@ -1,0 +1,33 @@
+#!/usr/bin/expect
+
+set prompt {.*\$.* }
+
+set host_ip [lindex $argv 0]
+set subnet_id [lindex $argv 1]
+set wallet_key [lindex $argv 2]
+set admin_key [lindex $argv 3]
+set guest_ip [lindex $argv 4]
+set guest_gw [lindex $argv 5]
+
+spawn ssh -o StrictHostKeyChecking=no $host_ip
+
+expect -re $prompt
+
+# disable timeout so we can wait for the commands to finish
+set timeout -1
+
+# create the instance
+send "sudo lit os guest instance create prov \
+  --net4-ip $guest_ip --net4-gw $guest_gw \
+  --api-domain $subnet_id.getlit.sh -f --subnet-id $subnet_id --bootstrap --vcpus 4 --mem 4g\n"
+
+expect "Enter private key to node wallet:"
+send "$wallet_key\n"
+
+expect "Enter admin key:"
+send "$admin_key\n"
+
+expect -re {Debian GNU\/Linux 12 prov}
+
+send "exit\n"
+expect eof

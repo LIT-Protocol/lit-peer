@@ -1,0 +1,43 @@
+name: blockchain/contracts-abi
+
+on:
+  # Enable manual triggers
+  workflow_dispatch: {}
+  # Run on pull requests that affect blockchain contract files
+  pull_request:
+    paths:
+      - 'blockchain/contracts/**'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check-contract-abis:
+    name: Check Blockchain Contract ABI staleness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Install rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: '1.86' # keep in sync with rust/lit-node/rust-toolchain.toml
+          components: rustfmt
+
+      - name: Run Contract Updates
+        working-directory: rust/lit-core/lit-blockchain
+        run: |
+          make update
+
+      - name: Check for changes
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "❌ Stale checked-in contract ABIs detected, run cd rust/lit-core/lit-blockchain && make update to update them"
+            git status
+            git diff
+            exit 1
+          else
+            echo "✅ No stale checked-in contract ABIs detected"
+          fi

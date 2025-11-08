@@ -1,0 +1,23 @@
+[package]
+name = "shiva"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+# Do we need any of the node directly?  It will be included with lit-node-testnet.
+lit-node-testnet = {path = "../lit-node-testnet" }
+ts-rs = "8.1"
+anyhow = "1.0.41"
+chrono = "0.4.23"
+hex = { version = "0.4.3" }
+ethers = { version = "2.0.8", features = ["abigen", "legacy" ]}
+flume = "0.11"
+json = "0.12.4"
+rand = { version = "~0.8.5", features = ["std_rng"]}
+rocket = { version = "0.5.1", features = ["json"] }
+serde = { version = "1.0.126", features = ["derive"] }
+serde_json = "1.0.64"
+tokio = { version = "1.23.0", features = ["rt-multi-thread"] }
+tracing = "0.1.40"
+signal-hook = {version = "0.3.17", features = ["extended-siginfo"] }
+

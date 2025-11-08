@@ -1,0 +1,26 @@
+name: Lint Workflow Files
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  lint_workflow_files:
+    # Run the following bash script to download actionlint: https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash
+    # Then, run actionlint on all the workflow files.
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout lit-assets
+        uses: actions/checkout@v5
+      - name: Download actionlint
+        run: |
+          curl -sfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash | bash -s -- latest ${{ github.workspace }}
+      - name: Run actionlint
+        run: ${{ github.workspace }}/actionlint -ignore 'label ".+" is unknown'
+        env:
+          # Part of what actionlint does under the hood is to use the Shellcheck tool to lint against where we use the run field to specify shell commands to run.
+          # Silence the following shellcheck errors since they are not too applicable.
+          # SC2158: https://www.shellcheck.net/wiki/SC2158
+          # SC2129: https://www.shellcheck.net/wiki/SC2129
+          # SC2043: https://www.shellcheck.net/wiki/SC2043
+          # SC2002: https://www.shellcheck.net/wiki/SC2002
+          SHELLCHECK_OPTS: --exclude=2158,2129,2043,2002

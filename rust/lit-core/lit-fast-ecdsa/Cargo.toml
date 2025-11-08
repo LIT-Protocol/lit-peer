@@ -1,0 +1,43 @@
+[package]
+edition.workspace = true
+license-file = "./LICENSE"
+name = "lit-fast-ecdsa"
+readme = "README.md"
+version = "0.2.0"
+
+[features]
+default = ["presign"]
+presign = ["vsss-rs/std", "lit-poly"]
+
+[dependencies]
+digest = "0.10"
+ecdsa = { version = "0.16", features = ["arithmetic", "digest", "hazmat"] }
+elliptic-curve.workspace = true
+elliptic-curve-tools.workspace = true
+hex.workspace = true
+lit-poly = { git = "https://github.com/LIT-Protocol/lit-poly.git", optional = true }
+hd-keys-curves-wasm = { git = "https://github.com/LIT-Protocol/hd-keys-curves-wasm.git", rev = "5e0dcc1a6d8d08f2328d4716dca806db87f93748", default-features = false, features = ["k256", "p256", "p384"] }
+rand.workspace = true
+serde.workspace = true
+sha2.workspace = true
+subtle = "2.6"
+thiserror.workspace = true
+vsss-rs.workspace = true
+zeroize.workspace = true
+
+[dev-dependencies]
+criterion = "0.5"
+k256.workspace = true
+p256.workspace = true
+p384.workspace = true
+rand_chacha.workspace = true
+rstest = "0.24"
+serde_json.workspace = true
+
+[[bench]]
+name = "k256"
+harness = false
+
+[[bench]]
+name = "p256"
+harness = false

@@ -1,0 +1,40 @@
+dataDir: /etc/zerossl # Data directory for containing the status and temporary files
+logFile: /etc/zerossl/log.txt # Log file
+cleanUnfinished: true # Clean zerossl certificates that are not finished issuing.
+certConfigs:
+  # Use confId to identify the certificate configuration
+  - commonName: <IP Address here>
+    # mandatory
+    confId: xx1
+    # your zerossl api key
+    apiKey: <ZeroSSL API Key here>
+    ######## CSR INFO ########
+    country: US
+    province: CA
+    city: San Francisco
+    locality: San Francisco
+    organization: Earth
+    organizationUnit: Development
+    ######## CSR INFO ########
+    # certificate validity in days
+    days: 90
+    # key type, ecdsa or rsa
+    keyType: ecdsa
+    # rsa key bits
+    keyBits: 2048
+    # ecdsa curve, P-256 or P-384
+    keyCurve: P-256
+    # signature algorithm, ECDSA-SHA256 or SHA256-RSA or ECDSA-SHA384 or SHA384-RSA
+    sigAlg: ECDSA-SHA256
+    # fixed
+    strictDomains: 1
+    # fixed
+    verifyMethod: HTTP_CSR_HASH
+    # verify hook executable, will be called before verifying domains
+    verifyHook: /etc/zerossl/verify-hook.sh
+    # post hook executable, will be called after certificates arrival
+    postHook: /etc/zerossl/post-hook.sh
+    # certificate store path
+    certFile: /etc/zerossl/certificate.crt
+    # key store path
+    keyFile: /etc/zerossl/private.key

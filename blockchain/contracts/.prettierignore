@@ -1,0 +1,8 @@
+artifacts
+cache
+wallets
+.prettierrc*
+*.json
+*.yaml
+typechain-types
+lib

@@ -1,0 +1,73 @@
+syntax = "proto3";
+package chatter;
+
+message NodeRecord {
+  NodeRecordHeader header = 1;
+  repeated NodeRecordMessage messages = 2;
+  repeated NodeRecordFooter footer = 3;
+}
+
+message NodeRecordHeader {
+  string sender_id = 1;
+  repeated NodeHeaderMetaData metadata = 2;
+}
+
+message NodeHeaderMetaData {
+  oneof inner {
+    ContextSpan context_span = 1;
+  }
+}
+
+message ContextSpan {
+  string version = 1;
+  string span = 2;
+  string data = 3;
+}
+
+message NodeRecordMessage {
+  string version = 1;
+  bytes message  = 2;
+}
+
+message NodeRecordFooter {
+  string version = 1;
+  string name = 2;
+  oneof auth {
+    NodeFooterMac mac = 3;
+    NodeFooterSignature signature = 4;
+  }
+}
+
+message NodeFooterMac {
+  uint32 mac_key_id = 1;
+  bytes mac = 2;
+}
+
+message NodeFooterSignature {
+  bytes public_key_id = 1;
+  bytes signature = 2;
+}
+
+message NodeShareRequestProto {
+  string sender_id = 1;
+  bytes encrypted_entry = 2;
+}
+
+message NodeRecordResponse {
+  bool ok = 1;
+  string error = 2;
+}
+
+message ConnectRequest {
+  string noonce = 1;
+}
+
+message ConnectResponse {
+  string peer_item = 1;
+  string error = 2;
+}
+
+service ChatterService {
+  rpc ExchangeRecord (NodeRecord) returns (NodeRecordResponse);
+  rpc PeerConnect(ConnectRequest) returns (ConnectResponse);
+}

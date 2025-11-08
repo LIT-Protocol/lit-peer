@@ -1,0 +1,80 @@
+name: rust/cargo-fetch
+
+on:
+  # Enable manual triggers
+  workflow_dispatch: {}
+  # Run on pull requests that affect Rust code
+  pull_request:
+    paths:
+      - 'rust/**/Cargo.toml'
+      - 'rust/**/Cargo.lock'
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
+
+jobs:
+  cargo-fetch:
+    name: Verify Cargo Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: '1.86' # keep in sync with rust/lit-node/rust-toolchain.toml
+
+      - name: Cargo Fetch Check
+        working-directory: .
+        run: |
+          #!/bin/bash
+
+          # Script to run cargo fetch on all Rust projects
+          echo "Running cargo fetch on all Rust projects..."
+
+          # Check if rust directory exists
+          if [ ! -d "rust" ]; then
+            echo "No Rust projects found (rust directory doesn't exist)"
+            exit 0
+          fi
+
+          # Navigate to the rust directory
+          cd rust || { echo "Error: Could not access rust directory"; exit 1; }
+
+          # Get all subdirectories containing Cargo.toml files, excluding problematic projects
+          RUST_PROJECTS=$(find . -name "Cargo.toml" -exec dirname {} \; | grep -vE "scripts/ci_utils|scripts/download_builds" | sort | uniq)
+
+          if [ -z "$RUST_PROJECTS" ]; then
+            echo "No Rust projects with Cargo.toml found"
+            exit 0
+          fi
+
+          # Initialize exit status and failed projects list
+          EXIT_STATUS=0
+          FAILED_PROJECTS=""
+
+          # Run cargo fetch on each project
+          for project in $RUST_PROJECTS; do
+            echo -e "\n===> Fetching dependencies for $project"
+            cd "$(pwd)/$project" || { echo "Error: Could not navigate to $project"; EXIT_STATUS=1; FAILED_PROJECTS+="$project (navigation failed)\n"; continue; }
+            
+            # Run cargo fetch
+            if ! cargo fetch --locked; then
+              echo "Error: cargo fetch failed for $project"
+              EXIT_STATUS=1
+              FAILED_PROJECTS+="$project\n"
+            fi
+            
+            # Return to the rust directory
+            cd - > /dev/null || { echo "Error: Could not navigate back"; EXIT_STATUS=1; FAILED_PROJECTS+="$project (return navigation failed)\n"; }
+          done
+
+          # Exit with the appropriate status
+          if [ $EXIT_STATUS -ne 0 ]; then
+            echo -e "\n❌ Dependency resolution failed for the following projects:\n$FAILED_PROJECTS"
+            exit 1
+          else
+            echo -e "\n✅ All projects' dependencies were successfully resolved!"
+            exit 0
+          fi

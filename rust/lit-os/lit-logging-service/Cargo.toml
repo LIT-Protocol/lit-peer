@@ -1,0 +1,51 @@
+[package]
+name = "lit-logging-service"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+async-trait = { version = "0.1.74" }
+derive_more = { version = "0.99.17" }
+hyper = { version = "0.14" }
+hyperlocal = { version = "0.8"}
+once_cell = { version = "1.18.0" }
+rand_chacha = { version = "0.3.1" }
+serde = { version = "1.0.189", features = ["derive"] }
+serde_bytes_base64 = { version = "0.1.1" }
+serde_json = { version = "1.0.107" }
+tempfile = { version = "3.8" }
+tokio = { version = "1.33.0", features = ["full"] }
+tokio-stream = { version = "0.1", features = ["net"] }
+futures = { version = "0.3.28" }
+uuid = { version = "1.5.0", features = ["v4"] }
+crossbeam-channel = { version = "0.5.8" }
+char-device = { version = "0.15.0" }
+sd-notify = "0.4.1"
+tonic = "0.12.3"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3" }
+
+[dependencies.lit-core]
+path = "../../lit-core/lit-core"
+
+[dependencies.lit-core-derive]
+path = "../../lit-core/lit-core-derive"
+
+[dependencies.lit-logging]
+path = "../../lit-core/lit-logging"
+features = ["service"]
+
+[dependencies.lit-observability]
+path = "../../lit-core/lit-observability"
+
+[dependencies.lit-api-core]
+path = "../../lit-core/lit-api-core"
+features = ["server-hyper", "client-hyper"]
+
+[dependencies.lit-os-core]
+path = "../lit-os-core"
+
+[dependencies.opentelemetry-proto]
+git = "https://github.com/hwrdtm/opentelemetry-rust"
+branch = "hwrdtm/fix-serde-v2"
+features = ["full"]
