@@ -24,6 +24,14 @@ This is a monorepo that holds everything needed to run a Lit Node. Check out the
 
 ## Contents
 
+> ⚠️ **Warning:**
+> When cloning this repository, it MUST be cloned into a folder called "lit-assets", otherwise scripts and builds may fail.
+
+Example:
+```bash
+git clone https://github.com/LIT-Protocol/lit-peer lit-assets
+```
+
 ### Rust
 
 - [lit-core](rust/lit-core) ([README.md](rust/lit-core/README.md))
