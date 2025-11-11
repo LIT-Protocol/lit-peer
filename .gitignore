@@ -4,7 +4,6 @@
 # IDEs
 *.iml
 .idea
-*.gz
 *.core
 
 # Rust tags created by rusty-tags
