@@ -146,6 +146,10 @@ jobs:
         run: zstd -d -c nextest-archive.tar.zst | tar xf -
       - name: Setup local files for testing
         run: make setup-local-files
+      - name: Copy lit-node binary to Shiva target directory
+        run: | 
+          mkdir -p ${{github.workspace}}/rust/lit-node/shiva/target/debug
+          cp ${{github.workspace}}/rust/lit-node/lit-node/target/debug/lit_node ${{github.workspace}}/rust/lit-node/shiva/target/debug/lit_node
       - name: Run Shiva Integration tests
         run: |
           mv ${{github.workspace}}/rust/lit-node/lit-node/rpc-config.example.yaml ./rpc-config.yaml

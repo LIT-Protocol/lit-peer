@@ -12,7 +12,7 @@ Tool for running multiple testnsts and controlling network mutation over an out 
 
 You will need to configure the `IPFS_API_KEY` which you can get from Piniata's IPFS Pinning service
 You will need to have dependencies installed within `../../../../blockchain/contracts`
-Currently works with `npm` and `NodeJS version 18.x.x`
+Currently works with `npm` and `NodeJS version 21.x.x`
 
 ## Generating TS Type Defs
 

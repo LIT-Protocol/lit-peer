@@ -226,7 +226,7 @@ impl TestSetupBuilder {
 
 static LOGGING_SETUP: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(false));
 #[doc = "Setup configuration as node #0 and logging for tests"]
-pub fn setup_logging() {
+pub fn setup_logging(log_id: &str) {
     if let Ok(mut lock) = LOGGING_SETUP.lock() {
         if *lock {
             return;
@@ -240,8 +240,7 @@ pub fn setup_logging() {
         let cfg = load_cfg().expect("failed to load LitConfig");
 
         // special prefix for testing
-        match simple_logging_subscriber(cfg.load().as_ref(), Some("lit-node-testnet -".to_string()))
-        {
+        match simple_logging_subscriber(cfg.load().as_ref(), Some(format!("{} -", log_id))) {
             Ok(sub) => {
                 sub.init();
             }

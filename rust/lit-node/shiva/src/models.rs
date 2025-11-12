@@ -24,12 +24,26 @@ pub struct TestNetCreateRequest {
 #[serde(rename_all = "camelCase")]
 pub struct TestNetResponse<T> {
     pub testnet_id: String,
-    pub command: String,
+    pub command: TestNetClientCommand,
     pub was_canceled: bool,
     pub body: Option<T>,
     pub last_state_observed: Option<String>,
     pub messages: Option<Vec<String>>,
     pub errors: Option<Vec<String>>,
+}
+
+impl<T> Default for TestNetResponse<T> {
+    fn default() -> Self {
+        Self {
+            testnet_id: "".to_string(),
+            command: TestNetClientCommand::Unknown,
+            was_canceled: false,
+            body: None,
+            last_state_observed: None,
+            messages: None,
+            errors: None,
+        }
+    }
 }
 
 #[derive(TS)]
@@ -62,22 +76,6 @@ pub struct TestNetInfo {
     pub contract_abis: ContractAbis,
 }
 
-#[derive(Debug, Clone)]
-pub enum TestNetMessage {
-    /*
-       Creates a new testnet instance mapped to an explicit identifier
-    */
-    Create(TestNetCreateParams),
-    Poke(String, flume::Sender<TestNetState>),
-    Delete(String, flume::Sender<bool>),
-    GetInfo(String, flume::Sender<Option<TestNetInfo>>),
-    Cleanup(String),
-    StopRandom(String, flume::Sender<Option<bool>>),
-    StopRandomAndWait(String, flume::Sender<Option<bool>>),
-    GetTestnets(flume::Sender<Vec<String>>),
-    TransitionEpochAndWait(String, flume::Sender<bool>),
-}
-
 pub enum TestNetCommand {
     GetInfo(flume::Sender<Option<TestNetInfo>>),
     StopRandom(flume::Sender<bool>),
@@ -108,6 +106,7 @@ pub enum TestNetState {
     Active,
     Mutating,
     Shutdown,
+    Term,
     UNKNOWN,
 }
 
@@ -133,4 +132,20 @@ pub struct ContractAbis {
     pub pkp_helper: String,
     pub contract_resolver: String,
     pub payment_delegation: String,
+}
+
+#[derive(TS)]
+#[ts(export)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+pub enum TestNetClientCommand {
+    CreateTestnet,
+    Shutdown,
+    Poke,
+    GetInfo,
+    GetTestnets,
+    StopRandom,
+    StopRandomAndWait,
+    TransitionEpochAndWait,
+    Unknown,
 }

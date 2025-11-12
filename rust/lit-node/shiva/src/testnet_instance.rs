@@ -1,11 +1,15 @@
-use std::process::{Child, Command};
+use std::{
+    env,
+    path::{Path, PathBuf},
+    process::{Child, Command},
+};
 
 use anyhow::anyhow;
 use ethers::types::U256;
 use lit_node_testnet::validator::ValidatorCollection;
-use tracing::info;
+use tracing::{info, warn};
 
-use crate::models::{ContractAbis, ContractAddresses, TestNetCreateParams};
+use crate::models::{ContractAbis, ContractAddresses, TestNetCreateParams, TestNetState};
 
 use lit_node_testnet::testnet::Testnet;
 use lit_node_testnet::testnet::contracts::StakingContractRealmConfig;
@@ -71,6 +75,7 @@ impl ContractAddresses {
 }
 
 pub struct TestnetInstance {
+    pub id: String,
     pub node_count: usize,
     pub polling_interval: String,
     pub epoch_length: i32,
@@ -82,10 +87,12 @@ pub struct TestnetInstance {
     pub test_net: Testnet,
     pub contracts: lit_node_testnet::testnet::TestnetContracts,
     pub validators: lit_node_testnet::validator::ValidatorCollection,
+    pub state: TestNetState,
 }
 
 impl TestnetInstance {
     pub async fn init(params: TestNetCreateParams) -> Result<Self, anyhow::Error> {
+        let _dir_guard = WorkingDirGuard::enter_workspace()?;
         let mut lit_action_process: Option<Child> = None;
         if params.custom_build_path.is_some()
             && params.lit_action_server_custom_build_path.is_some()
@@ -126,14 +133,15 @@ impl TestnetInstance {
 
         let validator_collection = ValidatorCollection::builder()
             .num_staked_nodes(params.node_count)
-            .custom_binary_path(params.custom_build_path)
+            // .custom_binary_path(params.custom_build_path)
             .build(&testnet)
             .await
             .map_err(|e| anyhow::anyhow!("Error while spawning validators: {}", e))?;
 
         let actions = testnet.actions();
 
-        Ok(TestnetInstance {
+        let mut instance = TestnetInstance {
+            id: params.uuid.clone(),
             node_count: params.node_count,
             polling_interval: params.polling_interval.clone(),
             epoch_length: params.epoch_length,
@@ -145,35 +153,25 @@ impl TestnetInstance {
             actions,
             contracts: testnet_contracts,
             validators: validator_collection,
-        })
+            state: TestNetState::Busy,
+        };
+
+        instance.set_state(TestNetState::Active);
+        Ok(instance)
     }
 
     pub async fn stop_random_node(&mut self) -> Result<(), anyhow::Error> {
-        info!("Stopping random node");
-        let realm_id = U256::from(1); // instance.realm_id.clone();
-        let current_epoch = self.validators.actions().get_current_epoch(realm_id).await;
-        let res = self.validators.stop_random_node().await;
-        if res.is_ok() {
-            info!("Stopped random node");
-            self.validators
-                .actions()
-                .wait_for_epoch(realm_id, current_epoch + 1)
-                .await;
-            return Ok(());
-        }
-
-        Err(anyhow::anyhow!("error while kicking random validator"))
+        self.stop_random_node_internal(false).await
     }
 
-    pub async fn wait_for_epoch(&mut self) {
-        let realm_id = U256::from(1); // instance.realm_id.clone();
-        info!("Stopping random node");
-        let current_epoch = self.validators.actions().get_current_epoch(realm_id).await;
-        let _res = self
-            .validators
-            .actions()
-            .wait_for_epoch(realm_id, current_epoch + 1)
-            .await;
+    pub async fn stop_random_node_and_wait(&mut self) -> Result<(), anyhow::Error> {
+        self.stop_random_node_internal(true).await
+    }
+
+    pub fn resolver_abi(&self) -> Result<String, anyhow::Error> {
+        let abi_string = serde_json::to_string(self.contracts.contracts().contract_resolver.abi())
+            .map_err(|e| anyhow!("Could not serialize contract data {}", e))?;
+        Ok(abi_string)
     }
 
     pub async fn stop_node(&mut self, address: String) -> Result<(), anyhow::Error> {
@@ -198,6 +196,103 @@ impl TestnetInstance {
 
         Err(anyhow::anyhow!("error while kicking random validator"))
     }
+
+    pub fn set_state(&mut self, state: TestNetState) {
+        self.state = state;
+    }
+
+    async fn stop_random_node_internal(
+        &mut self,
+        wait_for_epoch: bool,
+    ) -> Result<(), anyhow::Error> {
+        info!("Stopping random node");
+        self.set_state(TestNetState::Mutating);
+        let realm_id = U256::from(1); // instance.realm_id.clone();
+        let current_epoch = self.validators.actions().get_current_epoch(realm_id).await;
+        match self.validators.stop_random_node().await {
+            Ok(_) => {
+                info!("Stopped random node");
+                if wait_for_epoch {
+                    self.validators
+                        .actions()
+                        .wait_for_epoch(realm_id, current_epoch + 1)
+                        .await;
+                }
+                self.set_state(TestNetState::Active);
+                Ok(())
+            }
+            Err(e) => {
+                self.set_state(TestNetState::UNKNOWN);
+                Err(anyhow::anyhow!(
+                    "error while kicking random validator {}",
+                    e
+                ))
+            }
+        }
+    }
+}
+
+struct WorkingDirGuard {
+    previous: PathBuf,
+}
+
+impl WorkingDirGuard {
+    fn enter_workspace() -> Result<Option<Self>, anyhow::Error> {
+        let previous = env::current_dir()?;
+        let target = determine_workspace_dir(&previous);
+
+        if let Some(dir) = target {
+            if dir != previous {
+                env::set_current_dir(&dir)?;
+                info!("Set working directory to {:?}", dir);
+                return Ok(Some(Self { previous }));
+            }
+        }
+
+        Ok(Some(Self { previous }))
+    }
+}
+
+impl Drop for WorkingDirGuard {
+    fn drop(&mut self) {
+        if let Err(e) = env::set_current_dir(&self.previous) {
+            warn!(
+                "Failed to restore working directory {:?}: {}",
+                self.previous, e
+            );
+        }
+    }
+}
+
+fn determine_workspace_dir(previous: &Path) -> Option<PathBuf> {
+    if let Ok(root) = env::var("LIT_ASSETS_ROOT") {
+        let candidate = PathBuf::from(root).join("rust/lit-node/lit-node");
+        if candidate.exists() {
+            return Some(candidate);
+        }
+    }
+
+    let mut current = previous.to_path_buf();
+    loop {
+        let candidate = current.join("rust/lit-node/lit-node");
+        if candidate.exists() {
+            return Some(candidate);
+        }
+        if !current.pop() {
+            break;
+        }
+    }
+
+    if let Ok(exe_path) = env::current_exe() {
+        for ancestor in exe_path.ancestors() {
+            let candidate = ancestor.join("rust/lit-node/lit-node");
+            if candidate.exists() {
+                return Some(candidate);
+            }
+        }
+    }
+
+    None
 }
 
 impl Drop for TestnetInstance {
@@ -219,13 +314,14 @@ mod tests {
     use crate::testnet_instance;
 
     #[tokio::test]
-    #[ignore]
     async fn create_testnet_runtime() {
-        setup_logging();
+        setup_logging("SHIV");
 
+        const NODE_COUNT: usize = 5;
         fn test_exists_path(path: &str) -> bool {
             let file_exists = std::path::Path::new(path).exists();
             tracing::info!("File exists: {}", file_exists);
+            println!("File exists: {}", file_exists);
             file_exists
         }
 
@@ -237,9 +333,14 @@ mod tests {
         test_exists_path("../../lit_node");
         test_exists_path("./target/debug/lit_node");
 
+        println!(
+            "current dir: {}",
+            std::env::current_dir().unwrap().to_str().unwrap()
+        );
+
         let params: TestNetCreateParams = TestNetCreateParams {
             uuid: "test".to_string(),
-            node_count: 3,
+            node_count: NODE_COUNT,
             polling_interval: "30".to_string(),
             epoch_length: 200,
             existing_config_path: None,
@@ -273,7 +374,7 @@ mod tests {
                 "Asleep nodes should be 0"
             );
             assert!(
-                network.validators.size() == 3,
+                network.validators.size() == NODE_COUNT,
                 "Validator set size should match config"
             );
             assert!(

@@ -32,4 +32,4 @@ port = "7470"
 id = "24774a1ba7eadb5c692f213e984470de92ddc669"
 
 [logging]
-level = "debug"
+level = "debug,hyper=warn"

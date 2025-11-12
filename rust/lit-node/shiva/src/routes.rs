@@ -3,33 +3,23 @@ use rocket::response::status;
 use rocket::serde::json::{Json, Value, serde_json::json};
 use rocket::{State, get, http::Status, post};
 
-use crate::client::ShivaClient;
+use crate::models::TestNetClientCommand;
+use crate::shiva_client::ShivaClient;
 
-use super::models::{TestNetCreateRequest, TestNetInfo, TestNetMessage, TestNetResponse};
+use super::models::{TestNetCreateRequest, TestNetInfo, TestNetResponse, TestNetState};
 
 #[post("/test/create/testnet", format = "json", data = "<create_request>")]
 pub(crate) async fn create_testnet(
-    _quit_tx: &State<tokio::sync::broadcast::Sender<bool>>,
-    tnm_tx: &State<flume::Sender<TestNetMessage>>,
     client: &State<ShivaClient>,
     create_request: Json<TestNetCreateRequest>,
 ) -> status::Custom<Value> {
-    let testnet_ids = client.get_testnet_ids(tnm_tx.inner().clone()).await;
+    let testnet_ids = client.get_testnet_ids().await;
     let testnet_ids = testnet_ids.unwrap();
     if testnet_ids.len() > 1 {
-        return status::Custom(
-            Status::BadRequest,
-            json!(TestNetResponse::<()> {
-                testnet_id: "".to_string(),
-                command: "CREATE_TESTNET".to_string(),
-                was_canceled: false,
-                body: Some(()),
-                last_state_observed: None,
-                messages: None,
-                errors: Some(vec![
-                    "Currently only a single testnet may be managed at a time".to_string()
-                ]),
-            }),
+        return bad_request(
+            "".to_string(),
+            TestNetClientCommand::CreateTestnet,
+            vec!["Currently only a single testnet may be managed at a time".to_string()],
         );
     }
 
@@ -42,329 +32,217 @@ pub(crate) async fn create_testnet(
     if create_request.custom_build_path.is_none()
         || create_request.lit_action_server_custom_build_path.is_none()
     {
-        return status::Custom(
-            Status::BadRequest,
-            json!(TestNetResponse::<()> {
-                testnet_id: session_id,
-                command: "CREATE_TESTNET".to_string(),
-                was_canceled: false,
-                body: Some(()),
-                last_state_observed: None,
-                messages: None,
-                errors: Some(vec![
-                    "Must provide lit action and lit node binaries for running custom builds"
-                        .to_string()
-                ]),
-            }),
+        return bad_request(
+            session_id,
+            TestNetClientCommand::CreateTestnet,
+            vec![
+                "Must provide lit action and lit node binaries for running custom builds"
+                    .to_string(),
+            ],
         );
     };
 
-    let _res = client
-        .create_testnets(
-            tnm_tx.inner().clone(),
-            session_id.to_string(),
-            create_request.0,
-        )
-        .await;
-    status::Custom(
-        Status::Ok,
-        json!(TestNetResponse::<()> {
-            testnet_id: session_id,
-            command: "CREATE_TESTNET".to_string(),
-            was_canceled: false,
-            body: Some(()),
-            last_state_observed: Some("BUSY".to_string()),
-            messages: None,
-            errors: None,
-        }),
-    )
+    match client
+        .create_testnets(session_id.to_string(), create_request.0)
+        .await
+    {
+        Ok(state) => status::Custom(
+            Status::Ok,
+            json!(TestNetResponse::<()> {
+                testnet_id: session_id,
+                command: TestNetClientCommand::CreateTestnet,
+                body: Some(()),
+                last_state_observed: Some(format_state(&state)),
+                ..Default::default()
+            }),
+        ),
+        Err(e) => error_response(session_id, TestNetClientCommand::CreateTestnet, e),
+    }
 }
 
 #[get("/test/delete/testnet/<id>")]
-pub(crate) async fn delete_testnet(
-    _quit_tx: &State<tokio::sync::broadcast::Sender<bool>>,
-    client: &State<ShivaClient>,
-    tnm_tx: &State<flume::Sender<TestNetMessage>>,
-    id: &str,
-) -> status::Custom<Value> {
-    let del_status = client
-        .delete_testnet(tnm_tx.inner().clone(), id.to_string())
-        .await;
+pub(crate) async fn delete_testnet(client: &State<ShivaClient>, id: &str) -> status::Custom<Value> {
+    let del_status = client.delete_testnet(id.to_string()).await;
 
     match del_status {
-        Ok(status) => status::Custom(
+        Ok(state) => status::Custom(
             Status::Ok,
             json!(TestNetResponse::<bool> {
                 testnet_id: id.to_string(),
-                command: "SHUTDOWN".to_string(),
-                was_canceled: false,
-                body: Some(status),
-                last_state_observed: Some("TERM".to_string()),
-                messages: None,
-                errors: None,
+                command: TestNetClientCommand::Shutdown,
+                body: Some(true),
+                last_state_observed: Some(format_state(&state)),
+                ..Default::default()
             }),
         ),
-        Err(e) => status::Custom(
-            Status::InternalServerError,
-            json!(TestNetResponse::<()> {
-                testnet_id: id.to_string(),
-                command: "SHUTDOWN".to_string(),
-                was_canceled: false,
-                body: Some(()),
-                last_state_observed: Some("BUSY".to_string()),
-                messages: None,
-                errors: Some(vec![e.to_string()]),
-            }),
-        ),
+        Err(e) => error_response(id.to_string(), TestNetClientCommand::Shutdown, e),
     }
 }
 
 #[get("/test/poll/testnet/<id>")]
-pub(crate) async fn poll_testnet(
-    _quit_tx: &State<tokio::sync::broadcast::Sender<bool>>,
-    client: &State<ShivaClient>,
-    tnm_tx: &State<flume::Sender<TestNetMessage>>,
-    id: &str,
-) -> status::Custom<Value> {
-    let poll_status = client
-        .poll_testnet_status(tnm_tx.inner().clone(), id.to_string())
-        .await;
+pub(crate) async fn poll_testnet(client: &State<ShivaClient>, id: &str) -> status::Custom<Value> {
+    let poll_status = client.poll_testnet_state(id.to_string()).await;
 
     match poll_status {
         Ok(status) => status::Custom(
             Status::Ok,
             json!(TestNetResponse::<String> {
                 testnet_id: id.to_string(),
-                command: "POKE".to_string(),
-                was_canceled: false,
+                command: TestNetClientCommand::Poke,
                 body: Some(format!("{:?}", status)),
-                last_state_observed: Some(format!("{:?}", status)),
-                messages: None,
-                errors: None,
+                last_state_observed: Some(format_state(&status)),
+                ..Default::default()
             }),
         ),
-        Err(e) => status::Custom(
-            Status::InternalServerError,
-            json!(TestNetResponse::<String> {
-                testnet_id: id.to_string(),
-                command: "POKE".to_string(),
-                was_canceled: false,
-                body: Some("UNKNOWN".to_string()),
-                last_state_observed: Some("UNKNOWN".to_string()),
-                messages: None,
-                errors: Some(vec![e.to_string()]),
-            }),
-        ),
+        Err(e) => error_response(id.to_string(), TestNetClientCommand::Poke, e),
     }
 }
 
 #[get("/test/get/info/testnet/<id>")]
 pub(crate) async fn get_info_testnet(
-    _quit_tx: &State<tokio::sync::broadcast::Sender<bool>>,
     client: &State<ShivaClient>,
-    tnm_tx: &State<flume::Sender<TestNetMessage>>,
     id: &str,
 ) -> status::Custom<Value> {
-    let info_status = client
-        .get_tn_status(id.to_string(), tnm_tx.inner().clone())
-        .await;
+    let info_status = client.get_testnet_info(id.to_string()).await;
     match info_status {
-        Ok(info) => {
-            if let Some(testnet_info) = info {
-                let status = client
-                    .get_tn_status(id.to_string(), tnm_tx.inner().clone())
-                    .await;
-                status::Custom(
-                    Status::Ok,
-                    json!(TestNetResponse::<TestNetInfo> {
-                        testnet_id: id.to_string(),
-                        command: "GET_INFO".to_string(),
-                        was_canceled: false,
-                        body: Some(testnet_info),
-                        last_state_observed: Some(format!("{:?}", status.unwrap())),
-                        messages: None,
-                        errors: None,
-                    }),
-                )
-            } else {
-                status::Custom(
-                    Status::InternalServerError,
-                    json!(TestNetResponse::<TestNetInfo> {
-                        testnet_id: id.to_string(),
-                        command: "GET_INFO".to_string(),
-                        was_canceled: false,
-                        body: None,
-                        last_state_observed: Some("UNKNOWN".to_string()),
-                        messages: None,
-                        errors: None,
-                    }),
-                )
-            }
-        }
-        Err(e) => status::Custom(
-            Status::InternalServerError,
-            json!(TestNetResponse::<()> {
-                testnet_id: id.to_string(),
-                command: "GET_INFO".to_string(),
-                was_canceled: false,
-                body: Some(()),
-                last_state_observed: Some(format!("{:?}", "UNKNOWN")),
-                messages: None,
-                errors: Some(vec![e.to_string()]),
-            }),
-        ),
+        Ok(testnet_info) => match client.get_testnet_state(id.to_string()).await {
+            Ok(status) => status::Custom(
+                Status::Ok,
+                json!(TestNetResponse::<TestNetInfo> {
+                    testnet_id: id.to_string(),
+                    command: TestNetClientCommand::GetInfo,
+                    body: Some(testnet_info),
+                    last_state_observed: Some(format_state(&status)),
+                    ..Default::default()
+                }),
+            ),
+            Err(e) => error_response(id.to_string(), TestNetClientCommand::GetInfo, e),
+        },
+        Err(e) => error_response(id.to_string(), TestNetClientCommand::GetInfo, e),
     }
 }
 
 #[get("/test/get/testnets")]
-pub(crate) async fn get_testnets(
-    _quit_tx: &State<tokio::sync::broadcast::Sender<bool>>,
-    client: &State<ShivaClient>,
-    tnm_tx: &State<flume::Sender<TestNetMessage>>,
-) -> status::Custom<Value> {
-    let testnets = client.get_testnet_ids(tnm_tx.inner().clone()).await;
+pub(crate) async fn get_testnets(client: &State<ShivaClient>) -> status::Custom<Value> {
+    let testnets = client.get_testnet_ids().await;
     match testnets {
         Ok(ids) => status::Custom(Status::Ok, json!(ids.clone())),
-        Err(e) => status::Custom(
-            Status::InternalServerError,
-            json!(TestNetResponse::<()> {
-                testnet_id: "".to_string(),
-                command: "GET_TESTNETS".to_string(),
-                was_canceled: false,
-                body: Some(()),
-                last_state_observed: Some(format!("{:?}", "UNKNOWN")),
-                messages: None,
-                errors: Some(vec![e.to_string()]),
-            }),
-        ),
+        Err(e) => error_response("".to_string(), TestNetClientCommand::GetTestnets, e),
     }
 }
 
 #[get("/test/action/stop/random/<id>")]
 pub(crate) async fn stop_random_node_testnet(
-    _quit_tx: &State<tokio::sync::broadcast::Sender<bool>>,
     client: &State<ShivaClient>,
-    tnm_tx: &State<flume::Sender<TestNetMessage>>,
     id: &str,
 ) -> status::Custom<Value> {
-    let stop_status = client
-        .stop_random_node(id.to_string(), tnm_tx.inner().clone())
-        .await;
+    let stop_status = client.stop_random_node(id.to_string()).await;
     match stop_status {
         Ok(status) => {
-            let current_state = client
-                .get_tn_status(id.to_string(), tnm_tx.inner().clone())
-                .await;
+            let current_state = client.get_testnet_state(id.to_string()).await;
             status::Custom(
                 Status::Ok,
-                json!(TestNetResponse::<bool> {
+                json!(TestNetResponse::<usize> {
                     testnet_id: id.to_string(),
-                    command: "STOP_RANDOM".to_string(),
-                    was_canceled: false,
-                    body: Some(status.unwrap()),
-                    last_state_observed: Some(format!("{:?}", current_state.unwrap())),
-                    messages: None,
-                    errors: None,
+                    command: TestNetClientCommand::StopRandom,
+                    body: Some(status),
+                    last_state_observed: current_state.ok().as_ref().map(format_state),
+                    ..Default::default()
                 }),
             )
         }
-        Err(e) => status::Custom(
-            Status::InternalServerError,
-            json!(TestNetResponse::<()> {
-                testnet_id: "".to_string(),
-                command: "STOP_RANDOM".to_string(),
-                was_canceled: false,
-                body: Some(()),
-                last_state_observed: Some(format!("{:?}", "UNKNOWN")),
-                messages: None,
-                errors: Some(vec![e.to_string()]),
-            }),
-        ),
+        Err(e) => error_response(id.to_string(), TestNetClientCommand::StopRandom, e),
     }
 }
 
 #[get("/test/action/stop/random/wait/<id>")]
 pub(crate) async fn stop_random_node_and_wait_testnet(
-    _quit_tx: &State<tokio::sync::broadcast::Sender<bool>>,
     client: &State<ShivaClient>,
-    tnm_tx: &State<flume::Sender<TestNetMessage>>,
     id: &str,
 ) -> status::Custom<Value> {
-    let wait_status = client
-        .stop_random_node_wait(id.to_string(), tnm_tx.inner().clone())
-        .await;
+    let wait_status = client.stop_random_node_wait(id.to_string()).await;
     match wait_status {
         Ok(status) => {
-            let state = client
-                .get_tn_status(id.to_string(), tnm_tx.inner().clone())
-                .await;
+            let state = client.get_testnet_state(id.to_string()).await;
             status::Custom(
                 Status::Ok,
-                json!(TestNetResponse::<bool> {
+                json!(TestNetResponse::<usize> {
                     testnet_id: id.to_string(),
-                    command: "STOP_RANDOOM_AND_WAIT".to_string(),
-                    was_canceled: false,
-                    body: Some(status.unwrap()),
-                    last_state_observed: Some(format!("{:?}", state.unwrap())),
-                    messages: None,
-                    errors: None,
+                    command: TestNetClientCommand::StopRandomAndWait,
+                    body: Some(status),
+                    last_state_observed: state.ok().as_ref().map(format_state),
+                    ..Default::default()
                 }),
             )
         }
-        Err(e) => status::Custom(
-            Status::InternalServerError,
-            json!(TestNetResponse::<()> {
-                testnet_id: "".to_string(),
-                command: "STOP_RANDOOM_AND_WAIT".to_string(),
-                was_canceled: false,
-                body: Some(()),
-                last_state_observed: Some(format!("{:?}", "UNKNOWN")),
-                messages: None,
-                errors: Some(vec![e.to_string()]),
-            }),
-        ),
+        Err(e) => error_response(id.to_string(), TestNetClientCommand::StopRandomAndWait, e),
     }
 }
 
 #[get("/test/action/transition/epoch/wait/<id>")]
 pub(crate) async fn transition_epoch_and_wait(
-    _quit_tx: &State<tokio::sync::broadcast::Sender<bool>>,
     client: &State<ShivaClient>,
-    tnm_tx: &State<flume::Sender<TestNetMessage>>,
     id: &str,
 ) -> status::Custom<Value> {
-    let transition_status = client
-        .transition_epoch_wait(id.to_string(), tnm_tx.inner().clone())
-        .await;
+    let transition_status = client.transition_epoch_wait(id.to_string()).await;
     match transition_status {
         Ok(status) => {
-            let current_state = client
-                .get_tn_status(id.to_string(), tnm_tx.inner().clone())
-                .await;
+            let current_state = client.get_testnet_state(id.to_string()).await;
             status::Custom(
                 Status::Ok,
                 json!(TestNetResponse::<bool> {
                     testnet_id: id.to_string(),
-                    command: "TRANSITION_EPOCH_AND_WAIT".to_string(),
-                    was_canceled: false,
+                    command: TestNetClientCommand::TransitionEpochAndWait,
                     body: Some(status),
-                    last_state_observed: Some(format!("{:?}", current_state.unwrap())),
-                    messages: None,
-                    errors: None,
+                    last_state_observed: current_state.ok().as_ref().map(format_state),
+                    ..Default::default()
                 }),
             )
         }
-        Err(e) => status::Custom(
-            Status::InternalServerError,
-            json!(TestNetResponse::<()> {
-                testnet_id: "".to_string(),
-                command: "TRANSITION_EPOCH_AND_WAIT".to_string(),
-                was_canceled: false,
-                body: Some(()),
-                last_state_observed: Some(format!("{:?}", "UNKNOWN")),
-                messages: None,
-                errors: Some(vec![e.to_string()]),
-            }),
+        Err(e) => error_response(
+            id.to_string(),
+            TestNetClientCommand::TransitionEpochAndWait,
+            e,
         ),
     }
+}
+
+fn error_response(
+    id: String,
+    command: TestNetClientCommand,
+    error: anyhow::Error,
+) -> status::Custom<Value> {
+    status::Custom(
+        Status::InternalServerError,
+        json!(TestNetResponse::<()> {
+            testnet_id: id,
+            command: command,
+            body: Some(()),
+            last_state_observed: Some("UNKNOWN".to_string()),
+            errors: Some(vec![error.to_string()]),
+            ..Default::default()
+        }),
+    )
+}
+
+fn bad_request(
+    id: String,
+    command: TestNetClientCommand,
+    errors: Vec<String>,
+) -> status::Custom<Value> {
+    status::Custom(
+        Status::BadRequest,
+        json!(TestNetResponse::<()> {
+            testnet_id: id,
+            command,
+            body: Some(()),
+            last_state_observed: Some("BAD_REQUEST".to_string()),
+            errors: Some(errors),
+            ..Default::default()
+        }),
+    )
+}
+
+fn format_state(state: &TestNetState) -> String {
+    format!("{:?}", state)
 }

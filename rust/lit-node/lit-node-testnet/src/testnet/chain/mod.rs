@@ -19,7 +19,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 #[async_trait::async_trait]
-pub trait ChainTrait {
+pub trait ChainTrait: Send + Sync {
     fn chain_name(&self) -> &'static str;
     fn chain_id(&self) -> u64;
     // fn accounts(&self) -> Arc<Vec<NodeAccount>>;

@@ -14,7 +14,9 @@
     "ipAddresses": [
       "127.0.0.1:7470",
       "127.0.0.1:7471",
-      "127.0.0.1:7472"
+      "127.0.0.1:7472",
+      "127.0.0.1:7473",
+      "127.0.0.1:7474"
     ],
     "keyTypes": [
       1,
@@ -75,7 +77,7 @@
       "755e273950f5ae64f02096ae99fe7d4f478a28afd39ef2422068ee7304c636c0",
       "af6ecabcdbbfb2aefa8248b19d811234cd95caa51b8e59b6ffd3d4bbc2a6be4c"
     ],
-    "numberOfStakedAndJoinedWallets": 3,
+    "numberOfStakedAndJoinedWallets": 5,
     "numberOfStakedOnlyWallets": 0,
     "outputTempFilePath": "./deployed-lit-node-contracts-temp.json",
     "resolverContractAddress": "TBD",

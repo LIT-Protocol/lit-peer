@@ -475,9 +475,13 @@ pub async fn remote_deployment_and_config_creation(
     }
 
     // write the config
-    let config_path = "./config/test/deploy-config.json";
+    let config_path =   "./config/test/deploy-config.json";
+    
     let output = serde_json::to_string_pretty(&config).expect("Failed to serialize config to JSON");
     fs::write(config_path, output).expect("Unable to write config to file");
+
+    let config_path = fs::canonicalize(config_path).unwrap();
+    
 
     let args = [
         "ts-node",
@@ -485,7 +489,8 @@ pub async fn remote_deployment_and_config_creation(
         "--network",
         "localchain",
         "--deployConfig",
-        "../../rust/lit-node/lit-node/config/test/deploy-config.json",
+        config_path.to_str().unwrap(),
+        // "../../rust/lit-node/lit-node/config/test/deploy-config.json",
     ];
 
     let chain_deploy_start = SystemTime::now();
@@ -790,7 +795,9 @@ pub async fn save_to_test_state_cache(
         != (num_staked_and_joined_validators + num_staked_only_validators)
     {
         panic!(
-            "When saving chain state cache, number of nodes in latest_wallet_manifest.json does not match num_nodes in chain config"
+            "When saving chain state cache, number of nodes in latest_wallet_manifest.json ({}) does not match num_nodes in chain config ({})",
+            latest_wallet_manifest.len(),
+            num_staked_and_joined_validators + num_staked_only_validators
         );
     }
     // output latest_wallet_manifest into dir/wallet.json as json
