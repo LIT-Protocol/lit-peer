@@ -49,7 +49,7 @@ tests/sdk/package.json
 tests/sdk/yarn.lock
 tests/test_logs
 tests/chain_state_cache
-# tests/test_state_cache
+tests/test_state_cache
 test_logs/
 fault_tests.log
 out.log
