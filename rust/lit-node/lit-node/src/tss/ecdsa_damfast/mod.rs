@@ -3,6 +3,7 @@ use crate::metrics;
 use crate::p2p_comms::CommsManager;
 use crate::tasks::presign_manager::models::{Presign, PresignMessage, PresignRequest};
 use crate::tss::common::hd_keys::get_derived_keyshare;
+use crate::version::DataVersionReader;
 use crate::{
     error::Result,
     peers::peer_state::models::SimplePeerCollection,
@@ -237,16 +238,32 @@ impl DamFastState {
         let txn_prefix = &bytes_to_hex(&request_id);
 
         // generate a presignature
-        let presig = self
-            .get_presign(
-                message_bytes,
-                request_id.clone(),
+        let max_presign_count = DataVersionReader::read_field_unchecked(
+            &self.state.chain_data_config_manager.generic_config,
+            |config| config.max_presign_count,
+        );
+        let presig = if max_presign_count == 0 {
+            let mut signing_peers = signing_peers.clone();
+            self.create_presignature_for_peers::<C>(
                 txn_prefix,
-                threshold,
-                signing_peers.clone(),
+                &mut signing_peers,
+                threshold as usize,
             )
-            .await?
-            .expect_or_err("No presignature found!")?;
+            .await
+            .expect_or_err("Failed to create direct presignature!")?
+        } else {
+            let presig = self
+                .get_presign(
+                    message_bytes,
+                    request_id.clone(),
+                    txn_prefix,
+                    threshold,
+                    signing_peers.clone(),
+                )
+                .await?
+                .expect_or_err("No presignature found!")?;
+            *presig.share.unwrap::<C>()
+        };
 
         debug!("Got presign for during signing: {}", txn_prefix);
 
@@ -254,7 +271,7 @@ impl DamFastState {
             .generate_signature_share_from_key_id::<C>(
                 message_bytes,
                 root_pubkeys,
-                presig,
+                &presig,
                 &request_id,
                 &signing_peers,
                 &key_id,
@@ -288,7 +305,7 @@ impl DamFastState {
         &mut self,
         message_bytes: &[u8],
         root_pubkeys: Option<Vec<String>>,
-        presig: Presign,
+        presig: &PreSignature<C>,
         request_id: &[u8],
         peers: &SimplePeerCollection,
         key_id: &[u8],
@@ -363,7 +380,7 @@ impl DamFastState {
         )))
         .ok_or(unexpected_err("Could not convert peer id", None))?;
         let sig_share = SignatureShare::<C>::new_scalar(
-            presig.share.unwrap::<C>(),
+            presig,
             &participant_list,
             nonce,
             msg_digest,

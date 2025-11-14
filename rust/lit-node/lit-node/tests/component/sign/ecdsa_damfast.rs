@@ -174,7 +174,7 @@ pub async fn do_sign_with_pubkey<C>(
                 .generate_signature_share_from_key_id::<C>(
                     &loop_message_bytes,
                     Some(hd_root_keys),
-                    presign_share,
+                    &presign_share.share.unwrap::<C>().clone(),
                     request_id,
                     &peers,
                     key_id,
