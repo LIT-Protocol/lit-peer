@@ -22,7 +22,7 @@ sudo apt install libudev-dev libsqlite3-dev
 ## Running a local 3 node network on Yellowstone
 
 1. Install git submodules with `git submodule update --recursive --remote`
-2. Deploy the contracts. More docs are available [here](https://github.com/LIT-Protocol/lit-assets/blob/develop/blockchain/contracts/README.md#deploying)
+2. Deploy the contracts. More docs are available [here](https://github.com/LIT-Protocol/lit-peer/blob/develop/blockchain/contracts/README.md#deploying)
    1. cd into the lit-assets/blockchain/contracts folder.
    2. Run `npm i`
    3. Run `npm i -g concurrently`

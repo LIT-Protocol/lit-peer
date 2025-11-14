@@ -11,11 +11,11 @@ RestartSec=1
 User=root
 LimitNOFILE=64000
 LimitNPROC=64000
-WorkingDirectory=/home/debian/lit-assets/rust/lit-node/lit-node
+WorkingDirectory=/home/debian/lit-peer/rust/lit-node/lit-node
 Environment=LIT_CONFIG_FILE="./config/lit_config%i.toml"
 Environment=RUST_LOG=warn,lit_node=debug
 Environment=LIT_ATTESTATION_TYPE_OVERRIDE=ADMIN_SIGNED
-ExecStart=/home/debian/lit-assets/rust/lit-node/lit_node
+ExecStart=/home/debian/lit-peer/rust/lit-node/lit_node
 
 [Install]
 WantedBy=lit-node.service

@@ -6,11 +6,11 @@ After=network.target
 Type=simple
 Environment="RUST_LOG=warn,lit_actions=trace"
 Environment="LIT_LOGGING_JAEGER=1"
-ExecStart=/home/debian/lit-assets/rust/lit-actions/lit_actions --enable-observability-export --socket /tmp/actions_socket_747%i.sock
+ExecStart=/home/debian/lit-peer/rust/lit-actions/lit_actions --enable-observability-export --socket /tmp/actions_socket_747%i.sock
 Restart=always
 RestartSec=1
 User=root
-WorkingDirectory=/home/debian/lit-assets/rust/lit-actions/
+WorkingDirectory=/home/debian/lit-peer/rust/lit-actions/
 
 [Install]
 WantedBy=multi-user.target
