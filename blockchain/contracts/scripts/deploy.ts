@@ -14,6 +14,7 @@ const SUPPORTED_NETWORKS = [
   'localchain',
   'etna',
   'yellowstone',
+  'litMainnet',
 ];
 
 const networkToRequiredEnvVars: { [key: string]: string[] } = {
@@ -26,6 +27,7 @@ const networkToRequiredEnvVars: { [key: string]: string[] } = {
   etna: ['LIT_ROLLUP_MAINNET_DEPLOYER_PRIVATE_KEY'],
   vesuvius: ['LIT_ROLLUP_MAINNET_DEPLOYER_PRIVATE_KEY'],
   yellowstone: ['LIT_ROLLUP_MAINNET_DEPLOYER_PRIVATE_KEY'],
+  litMainnet: ['LIT_ROLLUP_MAINNET_DEPLOYER_PRIVATE_KEY'],
 };
 
 async function run() {

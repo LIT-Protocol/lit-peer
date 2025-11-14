@@ -475,13 +475,12 @@ pub async fn remote_deployment_and_config_creation(
     }
 
     // write the config
-    let config_path =   "./config/test/deploy-config.json";
-    
+    let config_path = "./config/test/deploy-config.json";
+
     let output = serde_json::to_string_pretty(&config).expect("Failed to serialize config to JSON");
     fs::write(config_path, output).expect("Unable to write config to file");
 
     let config_path = fs::canonicalize(config_path).unwrap();
-    
 
     let args = [
         "ts-node",

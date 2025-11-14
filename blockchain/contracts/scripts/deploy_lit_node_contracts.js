@@ -51,7 +51,8 @@ function isArbitrumChain(chainName) {
   return (
     chainName === 'localchainArbitrum' ||
     chainName === 'vesuvius' ||
-    chainName === 'yellowstone'
+    chainName === 'yellowstone' ||
+    chainName === 'litMainnet'
   );
 }
 

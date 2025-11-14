@@ -73,9 +73,11 @@ chains:
   lineaSepolia:
     - url: https://rpc.sepolia.linea.build
   lit:
-    - url: 'https://lit-protocol.calderachain.xyz/http'
+    - url: https://lit-protocol.calderachain.xyz/http
   litTestnet:
-    - url: 'https://lit.calderachain.xyz/http'
+    - url: https://lit.calderachain.xyz/http
+  litMainnet:
+    - url: https://lit-chain-rpc.litprotocol.com
   localchain:
     - url: http://127.0.0.1:8545
   localchainArbitrum:

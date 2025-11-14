@@ -15,10 +15,11 @@ pub const RPC_RESOLVER_CFG_SYSTEM: &str = "/etc/lit/rpc-config.yaml";
 
 pub const RPC_RESOLVER_CFG_PATHS: [&str; 2] = [RPC_RESOLVER_CFG_LOCAL, RPC_RESOLVER_CFG_SYSTEM];
 
-pub const RPC_RESOLVER_HTTPS_CHECK_EXCLUDES: [&str; 6] =
-    ["hardhat", "ganache", "anvil", "localchain", "localchainArbitrum", "yellowstone"];
+pub const RPC_RESOLVER_HTTPS_CHECK_EXCLUDES: [&str; 7] = [
+    "hardhat", "ganache", "anvil", "localchain", "localchainArbitrum", "yellowstone", "litMainnet",
+];
 
-pub const RPC_CONFIG_PROTECTED_CHAINS: [&str; 1] = ["yellowstone"];
+pub const RPC_CONFIG_PROTECTED_CHAINS: [&str; 2] = ["yellowstone", "litMainnet"];
 
 pub const RPC_REQUIRED_TYPES: [(&str, RpcKind); 3] =
     [("ipfs_gateways", RpcKind::IPFS), ("solana", RpcKind::SOLANA), ("cosmos", RpcKind::COSMOS)];
