@@ -1,5 +1,5 @@
 ---
-name: Deploy to Development (naga/datil)
+name: Deploy to naga-dev
 on:
   # Manually trigger the workflow with specific inputs
   workflow_dispatch:
