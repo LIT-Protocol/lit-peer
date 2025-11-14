@@ -251,7 +251,7 @@ Expected directory structure: /opt/assets/{lit-assets,lit-os}
 
 All releases are automatically published to a public website:
 
-**URL:** https://lit-protocol.github.io/lit-assets/
+**URL:** https://lit-protocol.github.io/lit-peer/
 
 **Features:**
 - Search and filter releases by network, version, or release ID

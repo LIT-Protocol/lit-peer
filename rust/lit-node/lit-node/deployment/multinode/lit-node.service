@@ -6,8 +6,8 @@ StartLimitIntervalSec=0
 [Service]
 Type=oneshot
 User=root
-WorkingDirectory=/home/debian/lit-assets/rust/lit-node
-ExecStart=/bin/bash /home/debian/lit-assets/rust/lit-node/lit-node/scripts/multi-start.sh
+WorkingDirectory=/home/debian/lit-peer/rust/lit-node
+ExecStart=/bin/bash /home/debian/lit-peer/rust/lit-node/lit-node/scripts/multi-start.sh
 RemainAfterExit=yes
 
 [Install]

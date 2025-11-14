@@ -7,7 +7,7 @@ downloadArchive () {
       -H "Accept: application/vnd.github+json" \
       -H "Authorization: Bearer ${GH_PAT}" \
       -H "X-GitHub-Api-Version: 2022-11-28" \
-      https://api.github.com/repos/lit-protocol/lit-assets/actions/artifacts?name=lit_node_${1} \
+      https://api.github.com/repos/lit-protocol/lit-peer/actions/artifacts?name=lit_node_${1} \
         | jq -r ".artifacts[0].archive_download_url") 
 
     echo "Downloading binary from archive url: $ARCHIVE"
