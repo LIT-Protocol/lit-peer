@@ -14,7 +14,6 @@ on:
         type: choice
         options:
           - naga-dev
-          - datil-dev
         default: 'naga-dev'
 
 jobs:
@@ -72,7 +71,7 @@ jobs:
             echo "Starting deployment of branch: '${DEPLOY_BRANCH}' to ${{ inputs.target_environment }}"
             # source profile and pull changes
             source .profile
-            cd lit-assets/rust/lit-node/lit-node
+            cd lit-peer/rust/lit-node/lit-node
             git fetch origin
             git checkout "${DEPLOY_BRANCH}"
             git pull origin "${DEPLOY_BRANCH}"
