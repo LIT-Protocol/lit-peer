@@ -44,7 +44,7 @@ jobs:
         ports:
           - 8545:8545
         credentials:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
   test_contracts:
@@ -71,7 +71,7 @@ jobs:
         ports:
           - 8545:8545
         credentials:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
   test_contracts_forge:

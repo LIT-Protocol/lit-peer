@@ -58,7 +58,7 @@ jobs:
         ports:
           - 8545:8545
         credentials:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     steps:
@@ -108,7 +108,7 @@ jobs:
         ports:
           - 8545:8545
         credentials:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     steps:
@@ -170,7 +170,7 @@ jobs:
         ports:
           - 8545:8545
         credentials:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     steps:
