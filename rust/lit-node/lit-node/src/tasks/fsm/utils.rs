@@ -153,10 +153,10 @@ pub(crate) async fn key_share_proofs_check(
     }
 
     let mut root_keys = Vec::new();
-    if let Ok(rk) = root_key_res {
-        if !rk.is_empty() {
-            root_keys = rk.clone();
-        }
+    if let Ok(rk) = root_key_res
+        && !rk.is_empty()
+    {
+        root_keys = rk.clone();
     }
     if root_keys.is_empty() {
         root_keys = tss_state.chain_data_config_manager.root_keys();

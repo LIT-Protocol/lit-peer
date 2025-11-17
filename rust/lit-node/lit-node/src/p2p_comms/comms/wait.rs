@@ -182,10 +182,10 @@ pub async fn node_share_await(
         // }
 
         // optionally exit early.
-        if let Some(exit_on_qty_recvd) = params.exit_on_qty_recvd {
-            if recvd_ans.len() >= exit_on_qty_recvd {
-                break 'waiting_loop;
-            };
+        if let Some(exit_on_qty_recvd) = params.exit_on_qty_recvd
+            && recvd_ans.len() >= exit_on_qty_recvd
+        {
+            break 'waiting_loop;
         };
     }
 

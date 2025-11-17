@@ -544,10 +544,10 @@ async fn check_condition_via_poap(
                 return Ok(true);
             }
         }
-        return Ok(false);
+        Ok(false)
     } else {
         warn!("Unsupported method for contract ABI: {}", condition.method);
-        return Ok(false);
+        Ok(false)
     }
 }
 
@@ -861,7 +861,7 @@ async fn check_condition_via_contract_call(
             Ok(false)
         }
     } else if condition.standard_contract_type == "ERC1155" {
-        return if condition.method == "balanceOf" {
+        if condition.method == "balanceOf" {
             let subbed_param = substitute_special_params(
                 &condition.parameters[0],
                 auth_sig,
@@ -967,7 +967,7 @@ async fn check_condition_via_contract_call(
         } else {
             warn!("Unsupported method for contract ABI");
             Ok(false)
-        };
+        }
     } else if condition.standard_contract_type == "ERC721" {
         return if condition.method == "ownerOf" {
             let token_id = match U256::from_dec_str(&condition.parameters[0]) {
@@ -1025,7 +1025,7 @@ async fn check_condition_via_contract_call(
             Ok(false)
         };
     } else if condition.standard_contract_type == "ERC20" {
-        return if condition.method == "balanceOf" {
+        if condition.method == "balanceOf" {
             let subbed_param = substitute_special_params(
                 &condition.parameters[0],
                 auth_sig,
@@ -1050,9 +1050,9 @@ async fn check_condition_via_contract_call(
         } else {
             warn!("Unsupported method for contract ABI");
             Ok(false)
-        };
+        }
     } else if condition.standard_contract_type == "MolochDAOv2.1" {
-        return if condition.method == "members" {
+        if condition.method == "members" {
             let subbed_param = substitute_special_params(
                 &condition.parameters[0],
                 auth_sig,
@@ -1085,9 +1085,9 @@ async fn check_condition_via_contract_call(
         } else {
             warn!("Unsupported method for contract ABI");
             Ok(false)
-        };
+        }
     } else if condition.standard_contract_type == "Creaton" {
-        return if condition.method == "subscribers" {
+        if condition.method == "subscribers" {
             let subbed_param = substitute_special_params(
                 &condition.parameters[0],
                 auth_sig,
@@ -1114,9 +1114,9 @@ async fn check_condition_via_contract_call(
         } else {
             warn!("Unsupported method for contract ABI");
             Ok(false)
-        };
+        }
     } else if condition.standard_contract_type == "ProofOfHumanity" {
-        return if condition.method == "isRegistered" {
+        if condition.method == "isRegistered" {
             let subbed_param = substitute_special_params(
                 &condition.parameters[0],
                 auth_sig,
@@ -1141,9 +1141,9 @@ async fn check_condition_via_contract_call(
         } else {
             warn!("Unsupported method for contract ABI");
             Ok(false)
-        };
+        }
     } else if condition.standard_contract_type == "CASK" {
-        return if condition.method == "getActiveSubscriptionCount" {
+        if condition.method == "getActiveSubscriptionCount" {
             let subbed_param = substitute_special_params(
                 &condition.parameters[0],
                 auth_sig,
@@ -1191,10 +1191,10 @@ async fn check_condition_via_contract_call(
         } else {
             warn!("Unsupported method for contract ABI");
             Ok(false)
-        };
+        }
     } else {
         warn!("Error - unsupported access control condition method on contract.");
-        return Ok(false);
+        Ok(false)
     }
 }
 
@@ -1218,18 +1218,18 @@ fn check_return_value_bool(
     if condition.return_value_test.comparator == ">" {
         Ok(returned_value > valid_return_value)
     } else if condition.return_value_test.comparator == "<" {
-        return Ok(returned_value < valid_return_value);
+        Ok(returned_value < valid_return_value)
     } else if condition.return_value_test.comparator == ">=" {
-        return Ok(returned_value >= valid_return_value);
+        Ok(returned_value >= valid_return_value)
     } else if condition.return_value_test.comparator == "<=" {
-        return Ok(returned_value <= valid_return_value);
+        Ok(returned_value <= valid_return_value)
     } else if condition.return_value_test.comparator == "=" {
-        return Ok(returned_value == valid_return_value);
+        Ok(returned_value == valid_return_value)
     } else if condition.return_value_test.comparator == "!=" {
-        return Ok(returned_value != valid_return_value);
+        Ok(returned_value != valid_return_value)
     } else {
         warn!("Error - unsupported return value test comparator");
-        return Ok(false);
+        Ok(false)
     }
 }
 
@@ -1258,18 +1258,18 @@ fn check_return_value_int(
     if condition.return_value_test.comparator == ">" {
         Ok(returned_value > valid_return_value)
     } else if condition.return_value_test.comparator == "<" {
-        return Ok(returned_value < valid_return_value);
+        Ok(returned_value < valid_return_value)
     } else if condition.return_value_test.comparator == ">=" {
-        return Ok(returned_value >= valid_return_value);
+        Ok(returned_value >= valid_return_value)
     } else if condition.return_value_test.comparator == "<=" {
-        return Ok(returned_value <= valid_return_value);
+        Ok(returned_value <= valid_return_value)
     } else if condition.return_value_test.comparator == "=" {
-        return Ok(returned_value == valid_return_value);
+        Ok(returned_value == valid_return_value)
     } else if condition.return_value_test.comparator == "!=" {
-        return Ok(returned_value != valid_return_value);
+        Ok(returned_value != valid_return_value)
     } else {
         warn!("Error - unsupported return value test comparator");
-        return Ok(false);
+        Ok(false)
     }
 }
 
@@ -1300,16 +1300,16 @@ async fn check_return_value_addr(
     if condition.return_value_test.comparator == ">" {
         Ok(returned_value > valid_return_value)
     } else if condition.return_value_test.comparator == "<" {
-        return Ok(returned_value < valid_return_value);
+        Ok(returned_value < valid_return_value)
     } else if condition.return_value_test.comparator == ">=" {
-        return Ok(returned_value >= valid_return_value);
+        Ok(returned_value >= valid_return_value)
     } else if condition.return_value_test.comparator == "<=" {
-        return Ok(returned_value <= valid_return_value);
+        Ok(returned_value <= valid_return_value)
     } else if condition.return_value_test.comparator == "=" {
-        return Ok(returned_value == valid_return_value);
+        Ok(returned_value == valid_return_value)
     } else {
         warn!("Error - unsupported return value test comparator");
-        return Ok(false);
+        Ok(false)
     }
 }
 
@@ -1328,22 +1328,22 @@ fn check_return_value_str(
     if condition.return_value_test.comparator == ">" {
         Ok(returned_value > valid_return_value)
     } else if condition.return_value_test.comparator == "<" {
-        return Ok(returned_value < valid_return_value);
+        Ok(returned_value < valid_return_value)
     } else if condition.return_value_test.comparator == ">=" {
-        return Ok(returned_value >= valid_return_value);
+        Ok(returned_value >= valid_return_value)
     } else if condition.return_value_test.comparator == "<=" {
-        return Ok(returned_value <= valid_return_value);
+        Ok(returned_value <= valid_return_value)
     } else if condition.return_value_test.comparator == "=" {
-        return Ok(returned_value == valid_return_value);
+        Ok(returned_value == valid_return_value)
     } else if condition.return_value_test.comparator == "!=" {
-        return Ok(returned_value != valid_return_value);
+        Ok(returned_value != valid_return_value)
     } else if condition.return_value_test.comparator == "contains" {
-        return Ok(returned_value.contains(&valid_return_value));
+        Ok(returned_value.contains(&valid_return_value))
     } else if condition.return_value_test.comparator == "!contains" {
-        return Ok(!returned_value.contains(&valid_return_value));
+        Ok(!returned_value.contains(&valid_return_value))
     } else {
         warn!("Error - unsupported return value test comparator");
-        return Ok(false);
+        Ok(false)
     }
 }
 
@@ -1363,10 +1363,10 @@ fn check_return_value_array(
     if condition.return_value_test.comparator == "contains" {
         Ok(returned_values.contains(&valid_return_value))
     } else if condition.return_value_test.comparator == "!contains" {
-        return Ok(!returned_values.contains(&valid_return_value));
+        Ok(!returned_values.contains(&valid_return_value))
     } else {
         warn!("Error - unsupported return value test comparator");
-        return Ok(false);
+        Ok(false)
     }
 }
 
@@ -1552,5 +1552,27 @@ mod tests {
             operator_b,
             condition_b
         ]));
+    }
+}
+
+pub(crate) fn eval_condition<P>(comparator: &str, returned_value: P, valid_return_value: P) -> bool
+where
+    P: Sized + Ord + PartialOrd + Eq + PartialEq,
+{
+    if comparator == ">" {
+        returned_value > valid_return_value
+    } else if comparator == "<" {
+        returned_value < valid_return_value
+    } else if comparator == ">=" {
+        returned_value >= valid_return_value
+    } else if comparator == "<=" {
+        returned_value <= valid_return_value
+    } else if comparator == "=" {
+        returned_value == valid_return_value
+    } else if comparator == "!=" {
+        returned_value != valid_return_value
+    } else {
+        warn!("Error - unsupported return value test comparator");
+        false
     }
 }

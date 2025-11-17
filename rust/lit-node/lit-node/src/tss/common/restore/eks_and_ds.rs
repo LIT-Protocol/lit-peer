@@ -7,19 +7,19 @@ use crate::tss::common::key_share_commitment::KeyShareCommitments;
 use crate::tss::common::storage::write_key_share_to_cache_only;
 use crate::utils::traits::SignatureCurve;
 use bulletproofs::BulletproofCurveArithmetic as BCA;
-use elliptic_curve::bigint::{NonZero, U256};
-use lit_node_core::CurveType;
-use lit_node_core::PeerId;
-use lit_node_core::{CompressedBytes, CompressedHex};
+use lit_node_core::{CompressedBytes, CompressedHex, CurveType, PeerId};
 use lit_recovery::models::EncryptedKeyShare;
+use lit_rust_crypto::{
+    elliptic_curve::bigint::{NonZero, U256},
+    vsss_rs::{
+        DefaultShare, FeldmanVerifierSet, IdentifierPrimeField, Share, ValueGroup,
+        VecFeldmanVerifierSet,
+    },
+};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::fmt::{Debug, Formatter};
 use verifiable_share_encryption::VerifiableEncryptionDecryptor;
-use vsss_rs::{
-    DefaultShare, FeldmanVerifierSet, IdentifierPrimeField, Share, ValueGroup,
-    VecFeldmanVerifierSet,
-};
 
 /// Identifier for a Recovery Party member.
 pub type RecPartyMemberIdType = String;

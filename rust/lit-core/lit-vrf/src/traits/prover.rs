@@ -1,4 +1,4 @@
-use elliptic_curve::{Field, Group};
+use lit_rust_crypto::{ff::Field, group::Group};
 
 use crate::{
     ChallengeGeneration, Coordinate, HashToCurve, NonceGeneration, Proof, ProofToHash, VrfError,
@@ -63,6 +63,7 @@ mod tests {
     use crate::VrfVerifier;
     use crate::utils::lagrange;
     use k256::{ProjectivePoint, Scalar, Secp256k1};
+    use lit_rust_crypto::{k256, vsss_rs};
     use rand::SeedableRng;
     use vsss_rs::{DefaultShare, IdentifierPrimeField, ValuePrimeField, shamir};
     type SecretShare = DefaultShare<IdentifierPrimeField<Scalar>, ValuePrimeField<Scalar>>;

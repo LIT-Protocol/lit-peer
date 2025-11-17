@@ -9,3 +9,4 @@ mod ed448;
 mod decaf377;
 mod ed25519;
 mod jubjub;
+mod pallas;

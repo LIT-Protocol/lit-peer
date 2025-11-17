@@ -4,7 +4,6 @@ use crate::error::{EC, Result, unexpected_err_code};
 use crate::tasks::presign_manager::models::PresignMessage;
 use ethers::providers::StreamExt;
 use lit_blockchain::contracts::staking::StakingEvents;
-use rocket::serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::mpsc;
 
@@ -149,12 +148,4 @@ impl PeerState {
         }
         Ok(())
     }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum PeerValidatorStatus {
-    Entering, // Not in current, but in locked next
-    Exiting,  // in current, but not in locked next
-    Survivor, // in both
-    Unknown,
 }

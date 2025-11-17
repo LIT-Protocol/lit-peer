@@ -1,4 +1,4 @@
-use log::{as_error, error, info};
+use log::{error, info};
 use nix::unistd::Uid;
 use std::process::exit;
 
@@ -16,7 +16,7 @@ pub async fn init() {
     // Init context
     let mut ctx = match InitContext::new(false) {
         Err(e) => {
-            error!(error = as_error!(e); "InitContext->new() failed");
+            error!(error:err = e; "InitContext->new() failed");
             exit(255);
         }
         Ok(ctx) => ctx,

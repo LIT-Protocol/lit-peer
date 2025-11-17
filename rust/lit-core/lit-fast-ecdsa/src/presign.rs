@@ -18,14 +18,14 @@ use ecdsa::{
     elliptic_curve::{CurveArithmetic, Field, Group, group::GroupEncoding},
 };
 use hd_keys_curves_wasm::{HDDerivable, HDDeriver};
+use lit_rust_crypto::vsss_rs::{
+    DefaultShare, IdentifierPrimeField, ShareVerifierGroup, ValuePrimeField, VecFeldmanVerifierSet,
+};
 use std::{
     fmt::{self, Debug, Formatter},
     ops::Add,
 };
 use subtle::ConstantTimeEq;
-use vsss_rs::{
-    DefaultShare, IdentifierPrimeField, ShareVerifierGroup, ValuePrimeField, VecFeldmanVerifierSet,
-};
 use zeroize::ZeroizeOnDrop;
 
 use crate::utils::{calc_min_threshold, lagrange};

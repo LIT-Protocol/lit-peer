@@ -1,4 +1,4 @@
-use bulletproofs::k256::ecdsa::{RecoveryId, Signature, SigningKey, VerifyingKey};
+use lit_rust_crypto::k256::ecdsa::{RecoveryId, Signature, SigningKey, VerifyingKey};
 use sha3::{Keccak256, digest::Digest};
 
 pub trait EthereumAddress {

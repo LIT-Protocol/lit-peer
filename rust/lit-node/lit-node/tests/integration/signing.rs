@@ -11,6 +11,7 @@ use lit_node_testnet::end_user::EndUser;
 
 use lit_node_core::SigningScheme;
 use lit_node_testnet::node_collection::get_identity_pubkeys_from_node_set;
+use lit_rust_crypto::k256;
 use rand::Rng;
 use rand_core::OsRng;
 use std::str::FromStr;
@@ -19,7 +20,7 @@ use std::{io::BufRead, time::Duration};
 use test_case::test_case;
 use tracing::{error, info};
 
-const ALL_SIGNING_SCHEMES: [SigningScheme; 14] = [
+const ALL_SIGNING_SCHEMES: [SigningScheme; 15] = [
     SigningScheme::Bls12381G1ProofOfPossession,
     SigningScheme::SchnorrEd25519Sha512,
     SigningScheme::SchnorrK256Sha256,
@@ -28,6 +29,7 @@ const ALL_SIGNING_SCHEMES: [SigningScheme; 14] = [
     SigningScheme::SchnorrRistretto25519Sha512,
     SigningScheme::SchnorrEd448Shake256,
     SigningScheme::SchnorrRedJubjubBlake2b512,
+    SigningScheme::SchnorrRedPallasBlake2b512,
     SigningScheme::SchnorrK256Taproot,
     SigningScheme::SchnorrRedDecaf377Blake2b512,
     SigningScheme::SchnorrkelSubstrate,

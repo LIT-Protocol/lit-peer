@@ -34,6 +34,7 @@ use lit_node_core::{
         CHAIN_LOCALCHAIN,
     },
 };
+use lit_rust_crypto::blsful::PublicKey;
 
 use lit_node::models::RequestConditions;
 
@@ -146,7 +147,7 @@ async fn test_encryption_decryption_eip1271(
     ))
     .get_resource_key()
     .into_bytes();
-    let pubkey = blsful::PublicKey::try_from(&hex::decode(&network_pubkey).unwrap()).unwrap();
+    let pubkey = PublicKey::try_from(&hex::decode(&network_pubkey).unwrap()).unwrap();
     let ciphertext =
         lit_sdk::encryption::encrypt_time_lock(&pubkey, message_bytes, &identity_param)
             .expect("Unable to encrypt");

@@ -1,4 +1,4 @@
-//!
+//! Handles OS metrics
 //!
 
 #![deny(unsafe_code)]

@@ -1,3 +1,4 @@
+use lit_rust_crypto::vsss_rs;
 use thiserror::Error;
 
 /// Error type for this crate

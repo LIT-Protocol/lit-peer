@@ -546,8 +546,8 @@ async function deployLitNodeContracts(deployNodeConfig) {
     monetaryValue: 0,
     completeIsolation: false,
     realms: [1],
-    curves: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-    counts: [1, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+    curves: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+    counts: [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
     recoveryPartyMembers: [],
   };
   tx = await stakingContract.setKeySet(defaultKeysetConfig);

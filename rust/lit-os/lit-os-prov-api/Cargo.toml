@@ -11,6 +11,7 @@ path = "./src/main.rs"
 
 [features]
 default = ["lit-attestation/generate-via-service"]
+proxy-collector = ["lit-observability/proxy-collector"]
 
 [dependencies]
 config = { workspace = true }

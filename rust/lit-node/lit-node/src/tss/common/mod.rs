@@ -10,7 +10,6 @@ pub mod models;
 pub mod peer_checker;
 pub mod peer_communication;
 pub mod restore;
-pub mod signing_scheme;
 pub mod storage;
 pub mod traits;
 pub mod tss_state;

@@ -162,7 +162,9 @@ async fn shadow_splicing_sign_encrypt() {
     .get_resource_key()
     .into_bytes();
 
-    let pubkey = blsful::PublicKey::try_from(hex::decode(&network_pubkey).unwrap()).unwrap();
+    let pubkey =
+        lit_rust_crypto::blsful::PublicKey::try_from(hex::decode(&network_pubkey).unwrap())
+            .unwrap();
 
     let ciphertext = lit_sdk::encryption::encrypt_time_lock(
         &pubkey,

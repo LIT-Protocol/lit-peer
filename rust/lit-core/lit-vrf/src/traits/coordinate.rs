@@ -1,5 +1,5 @@
 use crate::Handler;
-use elliptic_curve::Group;
+use lit_rust_crypto::group::Group;
 
 /// Trait for extracting the x coordinate of a point on the curve.
 pub trait Coordinate: Handler {

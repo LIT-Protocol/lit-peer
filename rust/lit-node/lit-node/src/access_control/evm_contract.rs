@@ -1,4 +1,4 @@
-use super::{rpc_call, substitute_special_params, validate_boolean_expression};
+use super::{eval_condition, rpc_call, substitute_special_params, validate_boolean_expression};
 use crate::auth::auth_material::JsonAuthSigExtendedRef;
 use crate::error::{EC, Result, conversion_err_code, validation_err, validation_err_code};
 use crate::utils::encoding;
@@ -345,22 +345,11 @@ fn check_return_value_bool(condition: &EVMContractCondition, returned_value: boo
         returned_value, condition.return_value_test.comparator, valid_return_value
     );
 
-    if condition.return_value_test.comparator == ">" {
-        Ok(returned_value > valid_return_value)
-    } else if condition.return_value_test.comparator == "<" {
-        return Ok(returned_value < valid_return_value);
-    } else if condition.return_value_test.comparator == ">=" {
-        return Ok(returned_value >= valid_return_value);
-    } else if condition.return_value_test.comparator == "<=" {
-        return Ok(returned_value <= valid_return_value);
-    } else if condition.return_value_test.comparator == "=" {
-        return Ok(returned_value == valid_return_value);
-    } else if condition.return_value_test.comparator == "!=" {
-        return Ok(returned_value != valid_return_value);
-    } else {
-        warn!("Error - unsupported return value test comparator");
-        return Ok(false);
-    }
+    Ok(eval_condition(
+        &condition.return_value_test.comparator,
+        returned_value,
+        valid_return_value,
+    ))
 }
 
 fn check_return_value_string(
@@ -376,24 +365,11 @@ fn check_return_value_string(
         returned_value, condition.return_value_test.comparator, valid_return_value
     );
 
-    if condition.return_value_test.comparator == ">" {
-        Ok(returned_value > valid_return_value)
-    } else if condition.return_value_test.comparator == "<" {
-        return Ok(returned_value < valid_return_value);
-    } else if condition.return_value_test.comparator == ">=" {
-        return Ok(returned_value >= valid_return_value);
-    } else if condition.return_value_test.comparator == "<=" {
-        return Ok(returned_value <= valid_return_value);
-    } else if condition.return_value_test.comparator == "=" {
-        return Ok(returned_value == valid_return_value);
-    } else if condition.return_value_test.comparator == "!=" {
-        return Ok(returned_value != valid_return_value);
-    } else if condition.return_value_test.comparator == "contains" {
-        return Ok(returned_value.contains(&valid_return_value));
-    } else {
-        warn!("Error - unsupported return value test comparator");
-        return Ok(false);
-    }
+    Ok(eval_condition(
+        &condition.return_value_test.comparator,
+        returned_value,
+        valid_return_value,
+    ))
 }
 
 // fn check_return_value_int(
@@ -447,22 +423,11 @@ fn check_return_value_uint(condition: &EVMContractCondition, returned_value: U25
         returned_value, condition.return_value_test.comparator, valid_return_value
     );
 
-    if condition.return_value_test.comparator == ">" {
-        Ok(returned_value > valid_return_value)
-    } else if condition.return_value_test.comparator == "<" {
-        return Ok(returned_value < valid_return_value);
-    } else if condition.return_value_test.comparator == ">=" {
-        return Ok(returned_value >= valid_return_value);
-    } else if condition.return_value_test.comparator == "<=" {
-        return Ok(returned_value <= valid_return_value);
-    } else if condition.return_value_test.comparator == "=" {
-        return Ok(returned_value == valid_return_value);
-    } else if condition.return_value_test.comparator == "!=" {
-        return Ok(returned_value != valid_return_value);
-    } else {
-        warn!("Error - unsupported return value test comparator");
-        return Ok(false);
-    }
+    Ok(eval_condition(
+        &condition.return_value_test.comparator,
+        returned_value,
+        valid_return_value,
+    ))
 }
 
 async fn check_return_value_addr(
@@ -491,20 +456,9 @@ async fn check_return_value_addr(
         returned_value, condition.return_value_test.comparator, valid_return_value
     );
 
-    if condition.return_value_test.comparator == ">" {
-        Ok(returned_value > valid_return_value)
-    } else if condition.return_value_test.comparator == "<" {
-        return Ok(returned_value < valid_return_value);
-    } else if condition.return_value_test.comparator == ">=" {
-        return Ok(returned_value >= valid_return_value);
-    } else if condition.return_value_test.comparator == "<=" {
-        return Ok(returned_value <= valid_return_value);
-    } else if condition.return_value_test.comparator == "=" {
-        return Ok(returned_value == valid_return_value);
-    } else if condition.return_value_test.comparator == "!=" {
-        return Ok(returned_value != valid_return_value);
-    } else {
-        warn!("Error - unsupported return value test comparator");
-        return Ok(false);
-    }
+    Ok(eval_condition(
+        &condition.return_value_test.comparator,
+        returned_value,
+        valid_return_value,
+    ))
 }

@@ -1,5 +1,5 @@
 use bulletproofs::BulletproofCurveArithmetic as BCA;
-use elliptic_curve::bigint::U256;
+use lit_rust_crypto::elliptic_curve::bigint::U256;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Formatter};
 use verifiable_share_encryption::{Ciphertext, Proof, v1};

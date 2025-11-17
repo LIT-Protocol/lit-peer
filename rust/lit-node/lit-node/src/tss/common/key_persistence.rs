@@ -3,10 +3,8 @@ use crate::error::{Result, unexpected_err};
 use crate::peers::peer_state::models::SimplePeerCollection;
 use crate::tss::common::key_share::KeyShare;
 use crate::tss::common::storage::{read_key_share_from_disk, write_key_share_to_disk};
-use elliptic_curve::group::{Group, GroupEncoding};
-use lit_node_core::CurveType;
-use lit_node_core::PeerId;
-use lit_node_core::{CompressedBytes, CompressedHex};
+use lit_node_core::{CompressedBytes, CompressedHex, CurveType, PeerId};
+use lit_rust_crypto::group::{Group, GroupEncoding};
 use std::fmt::Debug;
 
 pub const RECOVERY_DKG_EPOCH: u64 = 0;

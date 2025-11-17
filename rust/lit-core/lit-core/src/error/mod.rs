@@ -785,7 +785,10 @@ mod tests {
     fn ec_description_test() {
         let code = EC::CoreFatal;
 
-        assert_eq!(code.description(), Some("A fatal error occured in the lit core system".into()));
+        assert_eq!(
+            code.description(),
+            Some("A fatal error occurred in the lit core system".into())
+        );
         assert_eq!(code.kind(), Some(Kind::Unexpected));
         assert_eq!(code.http_status(), Some(500));
     }

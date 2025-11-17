@@ -239,7 +239,7 @@ impl GitPublisher {
 
         let gpg_output = TokioCommand::new("gpg")
             .current_dir(parent_dir)
-            .args(&["--detach-sign", "--armor", "-u", gpg_key, file_str])
+            .args(["--detach-sign", "--armor", "-u", gpg_key, file_str])
             .output()
             .await
             .map_err(|e| generic_err(e, Some("Failed to execute gpg signing command".into())))?;
@@ -264,7 +264,7 @@ impl Drop for GitPublisher {
         // We use a blocking `std::process::Command` here because `drop` cannot be async.
         let status = std::process::Command::new("git")
             .current_dir(&self.repo_path)
-            .args(&["checkout", &self.original_branch])
+            .args(["checkout", &self.original_branch])
             .status();
 
         if let Err(e) = status {
