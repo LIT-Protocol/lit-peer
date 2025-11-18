@@ -11,7 +11,7 @@ use crate::p2p_comms::web::chatter_server::launch_chatter_server;
 use crate::payment::delegated_usage::DelegatedUsageDB;
 use crate::peers::PeerState;
 use crate::tasks::chatter_sender::chatter_sender_worker;
-use crate::tasks::fsm_worker::CounterBasedFSMWorkerMetadata;
+use crate::tasks::fsm::fsm_worker::CounterBasedFSMWorkerMetadata;
 use crate::tasks::presign_manager::models::PresignManager;
 use crate::tss::common::{
     restore::RestoreState, traits::fsm_worker_metadata::FSMWorkerMetadata, tss_state,

@@ -15,6 +15,7 @@ use ethers::providers::Provider;
 use ethers::signers::Wallet;
 use lit_blockchain::contracts::erc20::ERC20;
 use lit_blockchain::contracts::staking::GlobalConfig;
+use lit_blockchain::contracts::staking::RealmConfig;
 use lit_blockchain::contracts::{
     backup_recovery::BackupRecovery, contract_resolver::*, ledger::Ledger,
     lit_token::lit_token::LITToken, payment_delegation::PaymentDelegation,
@@ -359,7 +360,7 @@ impl Contracts {
                 provider.clone(),
             );
 
-        if testnet.existing_config_path.is_none() && testnet.which != WhichTestnet::NoChain {
+        if testnet.which != WhichTestnet::NoChain {
             if let Some(staking_contract_global_config) = staking_contract_global_config {
                 Self::update_staking_global_config(staking.clone(), staking_contract_global_config)
                     .await?;
@@ -648,7 +649,7 @@ impl Contracts {
         staking: Staking<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
         realm_config: StakingContractRealmConfig,
     ) -> Result<()> {
-        info!("Updating staking contract realm config");
+        info!("Updating staking contract realm config: {:?}", realm_config);
 
         if let Some(complaint_reason_to_config) = realm_config.complaint_reason_to_config {
             info!("Updating staking contract complaint reason configs");
@@ -693,6 +694,25 @@ impl Contracts {
 
             let cc = staking.set_epoch_length(realm_config.realm_id, custom_epoch_length);
             Self::process_contract_call(cc, "updating staking epoch length").await;
+        }
+
+        if let Some(max_presign_count) = realm_config.max_presign_count {
+            let realm_id = realm_config.realm_id;
+            info!(
+                "Updating staking contract max presign count to {}",
+                max_presign_count
+            );
+            let mut new_config: RealmConfig = staking
+                .realm_config(realm_id)
+                .call()
+                .await
+                .map_err(|e| anyhow::anyhow!("unable to get realm config: {:?}", e))?;
+            new_config.max_presign_count = max_presign_count;
+            if let Some(min_presign_count) = realm_config.min_presign_count {
+                new_config.min_presign_count = min_presign_count
+            }
+            let cc = staking.set_realm_config(realm_id, new_config);
+            Self::process_contract_call(cc, "updating staking max presign count").await;
         }
 
         Ok(())

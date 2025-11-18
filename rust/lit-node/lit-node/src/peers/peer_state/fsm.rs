@@ -70,6 +70,12 @@ impl PeerState {
         Ok(NetworkState::from(state))
     }
 
+    pub async fn network_state_or_unknown(&self, realm_id: u64) -> NetworkState {
+        self.network_state(realm_id)
+            .await
+            .unwrap_or(NetworkState::Unknown)
+    }
+
     #[instrument(level = "debug", skip(self), fields(addr = addr.to_string()))]
     pub async fn get_ready_signal(&self, realm_id: u64, addr: H160) -> Result<bool> {
         let realm_id = U256::from(realm_id);

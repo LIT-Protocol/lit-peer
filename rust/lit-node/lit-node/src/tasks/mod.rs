@@ -1,7 +1,6 @@
 pub mod chatter_sender;
 pub mod endpoint_channels;
 pub mod fsm;
-pub mod fsm_worker;
 mod payment;
 pub mod peer_checker;
 pub mod presign_manager;
