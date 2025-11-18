@@ -40,6 +40,7 @@ jobs:
         with:
           repository: 'LIT-Protocol/lit-ansible'
           path: 'lit-ansible'
+          token: ${{ secrets.ABHI_GH_PAT }}
           # When triggered by a release, use the 'master' branch for UI code.
           # When triggered manually, use the branch specified in the input.
           ref: ${{ github.event.inputs.source_branch || 'master' }}
