@@ -7,7 +7,6 @@ pub mod key_persistence;
 pub mod key_share;
 pub mod key_share_commitment;
 pub mod models;
-pub mod peer_checker;
 pub mod peer_communication;
 pub mod restore;
 pub mod signing_scheme;

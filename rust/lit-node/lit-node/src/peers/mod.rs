@@ -10,10 +10,10 @@ use crate::error::{EC, Result, unexpected_err, unexpected_err_code};
 use crate::models::PeerValidator;
 use crate::p2p_comms::web::chatter_server::chatter::chatter_service_client::ChatterServiceClient;
 use crate::peers::peer_state::models::SimplePeerCollection;
+use crate::tasks::peer_checker::PeerCheckerMessage;
 use crate::tasks::presign_manager::models::PresignMessage;
 use crate::tss::common::tss_state::TssState;
-use crate::version::{DataVersionReader, get_unmarked_version};
-use arc_swap::ArcSwap;
+use crate::version::DataVersionReader;
 use ethers::prelude::{SignerMiddleware, U256};
 use ethers::providers::{Http, Provider};
 use ethers::signers::LocalWallet;
@@ -43,10 +43,7 @@ use xor_name::XorName;
 
 #[derive(Debug)]
 pub struct PeerState {
-    pub data: ArcSwap<PeerData>,
-    pub union_data: ArcSwap<PeerData>, // union of current peers & next peers
-    pub curr_data: ArcSwap<PeerData>,
-    pub peer_id: XorName,
+    pub id: XorName,
     pub addr: String,
     /// This needs to match the node address that is registered on the staking contract
     pub node_address: Address,
@@ -68,6 +65,7 @@ pub struct PeerState {
     pub ps_tx: flume::Sender<PresignMessage>,
     pub tss_state: Weak<TssState>,
     pub auto_join: bool,
+    pub peer_checker_tx: flume::Sender<PeerCheckerMessage>,
 }
 
 impl PeerState {
@@ -77,6 +75,7 @@ impl PeerState {
         lit_config: Arc<ReloadableLitConfig>,
         chain_data_config_manager: Arc<ChainDataConfigManager>,
         ps_tx: flume::Sender<PresignMessage>,
+        peer_checker_tx: flume::Sender<PeerCheckerMessage>,
     ) -> Result<PeerState> {
         let cfg = lit_config.load_full();
 
@@ -132,10 +131,7 @@ impl PeerState {
             .await?;
 
         Ok(PeerState {
-            data: ArcSwap::from(Arc::new(PeerData::new())),
-            curr_data: ArcSwap::from(Arc::new(PeerData::new())),
-            union_data: ArcSwap::from(Arc::new(PeerData::new())),
-            peer_id: XorName::from_content(addr.clone().as_bytes()),
+            id: XorName::from_content(addr.clone().as_bytes()),
             addr,
             node_address: attested_node_address,
             staking_address: staking_contract.address(),
@@ -152,7 +148,28 @@ impl PeerState {
             client_grpc_channels: GrpcClientPool::new(cfg.clone()),
             tss_state: Weak::new(),
             auto_join: true,
+            peer_checker_tx,
         })
+    }
+
+    pub async fn connected_nodes(&self) -> Arc<PeerData> {
+        let (tx, rx) = flume::bounded(1);
+        if let Err(e) = self
+            .peer_checker_tx
+            .send_async(PeerCheckerMessage::GetPeers(tx))
+            .await
+        {
+            warn!("Error sending peer checker message: {:?}", e);
+            return Arc::new(PeerData::default());
+        }
+        let peer_data = match rx.recv_async().await {
+            Ok(peer_data) => peer_data,
+            Err(e) => {
+                warn!("Error receiving peer data: {:?}", e);
+                return Arc::new(PeerData::default());
+            }
+        };
+        Arc::new(peer_data)
     }
 
     pub fn node_address(&self) -> Address {
@@ -209,73 +226,51 @@ impl PeerState {
 
     #[instrument(level = "debug", skip(self))]
     pub fn validators_in_current_epoch(&self) -> Vec<PeerValidator> {
-        let mut peers = {
-            DataVersionReader::new_unchecked(
-                &self.chain_data_config_manager.peers.peers_for_current_epoch,
-            )
-            .validators
-            .clone()
-        };
-        self.add_version_to_peer(&mut peers);
-        peers
+        DataVersionReader::new_unchecked(
+            &self.chain_data_config_manager.peers.peers_for_current_epoch,
+        )
+        .validators
+        .clone()
     }
 
     #[instrument(level = "debug", skip(self))]
     pub fn validators_in_next_epoch(&self) -> Vec<PeerValidator> {
-        let mut peers = {
-            DataVersionReader::new_unchecked(
-                &self.chain_data_config_manager.peers.peers_for_next_epoch,
-            )
+        DataVersionReader::new_unchecked(&self.chain_data_config_manager.peers.peers_for_next_epoch)
             .validators
             .clone()
-        };
-        self.add_version_to_peer(&mut peers);
-        peers
     }
 
     #[instrument(level = "debug", skip(self))]
     pub fn validators_in_prior_epoch(&self) -> Vec<PeerValidator> {
-        let mut peers = {
-            DataVersionReader::new_unchecked(
-                &self.chain_data_config_manager.peers.peers_for_prior_epoch,
-            )
-            .validators
-            .clone()
-        };
-        self.add_version_to_peer(&mut peers);
-        peers
+        DataVersionReader::new_unchecked(
+            &self.chain_data_config_manager.peers.peers_for_prior_epoch,
+        )
+        .validators
+        .clone()
     }
 
     #[instrument(level = "debug", skip(self))]
     pub fn validators_in_current_shadow_epoch(&self) -> Vec<PeerValidator> {
-        let mut peers = {
-            DataVersionReader::new_unchecked(
-                &self
-                    .chain_data_config_manager
-                    .shadow_peers
-                    .peers_for_current_epoch,
-            )
-            .validators
-            .clone()
-        };
-        self.add_version_to_peer(&mut peers);
-        peers
+        DataVersionReader::new_unchecked(
+            &self
+                .chain_data_config_manager
+                .shadow_peers
+                .peers_for_current_epoch,
+        )
+        .validators
+        .clone()
     }
 
     #[instrument(level = "debug", skip(self))]
     pub fn validators_in_next_shadow_epoch(&self) -> Vec<PeerValidator> {
-        let mut peers = {
-            DataVersionReader::new_unchecked(
-                &self
-                    .chain_data_config_manager
-                    .shadow_peers
-                    .peers_for_next_epoch,
-            )
-            .validators
-            .clone()
-        };
-        self.add_version_to_peer(&mut peers);
-        peers
+        DataVersionReader::new_unchecked(
+            &self
+                .chain_data_config_manager
+                .shadow_peers
+                .peers_for_next_epoch,
+        )
+        .validators
+        .clone()
     }
 
     pub fn validators_in_prior_epoch_current_intersection(&self) -> Vec<PeerValidator> {
@@ -328,19 +323,6 @@ impl PeerState {
         );
 
         validators_in_union_with_shadow
-    }
-
-    fn add_version_to_peer(&self, peer: &mut [PeerValidator]) {
-        for peer in peer {
-            match self.get_peer_item_from_staker_addr(peer.staker_address) {
-                Ok(p) => {
-                    peer.version = p.version.clone();
-                }
-                Err(_) => {
-                    peer.version = get_unmarked_version().to_string();
-                }
-            }
-        }
     }
 
     pub fn peer_node_addresses(&self) -> Vec<Address> {
@@ -412,7 +394,7 @@ impl PeerState {
             .find(|v| v.address == node_address)
             .ok_or_else(|| {
                 error!(
-                    "get_validator:Failed to find validator with address: {:?}",
+                    "get_validator_from_node_address:Failed to find validator with address: {:?}",
                     node_address
                 );
                 unexpected_err("Failed to find validator with address", None)
@@ -444,32 +426,6 @@ impl PeerState {
                 Err(unexpected_err("Failed to find validator with ip", None))
             }
         }
-    }
-
-    pub async fn connect_to_validators_union(self: &Arc<Self>) -> Result<()> {
-        let validators_in_union = self.validators_in_next_epoch_current_union();
-
-        self.find_peers_ext(validators_in_union, true).await?;
-        let connected_nodes = self.data.load().table.clone(); // reload since we modified it
-        let connected_ethaddrs_after =
-            BTreeSet::from_iter(connected_nodes.iter().map(|n| n.staker_address));
-
-        trace!(
-            "connect_to_validators_union: {:?}",
-            connected_ethaddrs_after
-        );
-
-        Ok(())
-    }
-
-    pub async fn next_epoch_validators_communicating(self: &Arc<Self>) -> Result<()> {
-        let next_validators = self.validators_in_next_epoch();
-
-        self.find_peers(next_validators).await.inspect_err(|_| {
-            error!(
-                    "[lock validators] Failed to communicate with next epoch peers as a pre-requisite for locking the validator set."
-                );
-        })
     }
 }
 

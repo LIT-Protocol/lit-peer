@@ -104,7 +104,7 @@ impl PeerState {
                         Some("Unable to get Validator from peer's staker address".into()),
                     )
                 })?;
-            let peer_item = self.get_peer_item_from_staker_addr(*staker_address)?;
+            let peer_item = self.get_peer_item_from_staker_addr(*staker_address).await?;
             let peer_validator = self.get_validator_from_node_address(peer_item.node_address)?;
             let peer = SimplePeer::from(&peer_validator);
 

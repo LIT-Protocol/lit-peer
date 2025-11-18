@@ -3,6 +3,7 @@ pub mod endpoint_channels;
 pub mod fsm;
 pub mod fsm_worker;
 mod payment;
+pub mod peer_checker;
 pub mod presign_manager;
 pub mod utils;
 
@@ -15,14 +16,15 @@ use crate::siwe_db::db;
 use crate::siwe_db::rpc::EthBlockhashCache;
 use crate::tasks::fsm::node_fsm_worker;
 use crate::tasks::payment::{batch_payment_processor, usage_processor};
+use crate::tasks::peer_checker::PeerCheckerMessage;
 use crate::tss::common::dkg_type::DkgType;
 use crate::tss::common::models::RoundData;
-use crate::tss::common::peer_checker::peer_checker_worker;
 use crate::tss::common::restore::RestoreState;
 use crate::tss::common::traits::fsm_worker_metadata::FSMWorkerMetadata;
 use crate::tss::common::tss_state::TssState;
 use lit_node_common::client_state::ClientState;
 use lit_node_common::config::LitNodeConfig;
+use peer_checker::peer_checker_worker;
 
 use lit_observability::channels::{TracedReceiver, TracedSender};
 use moka::future::Cache;
@@ -75,6 +77,8 @@ pub fn launch(
     action_store: ActionStore,
     client_state: Arc<ClientState>,
     http_client: reqwest::Client,
+    peer_checker_tx: flume::Sender<PeerCheckerMessage>,
+    peer_checker_rx: flume::Receiver<PeerCheckerMessage>,
 ) -> Result<Handle> {
     // Dedicated runtime just for tasks.  Give at least 4 threads, but
     // up to physical cpu count.
@@ -242,7 +246,7 @@ pub fn launch(
             {
                 let peer_state = tss_state.peer_state.clone();
                 tasks.push(spawn(move |q| async move {
-                    peer_checker_worker(q, peer_state).await;
+                    peer_checker_worker(q, peer_state, peer_checker_tx, peer_checker_rx).await;
                 }));
 
                 let lit_config_for_rounds_queue = cfg.clone();

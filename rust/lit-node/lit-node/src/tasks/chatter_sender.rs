@@ -192,6 +192,7 @@ async fn send_chatter(
     // TODO: add the header and footer to be integrity checked in encrypt_and_serialize
     let encrypted_entry =
         utils::serde_encrypt::encrypt_and_serialize(peer_state, &dest_addr_full, &data)
+            .await
             .map_err(|e| Status::internal(e.to_string()))?;
 
     let mut request = Request::new(NodeRecord {

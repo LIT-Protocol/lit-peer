@@ -43,7 +43,6 @@ impl PeerState {
                                         if state == NetworkState::NextValidatorSetLocked {
                                             // update peers
                                             // this will log any errors so we can skip the error handling here
-                                            let _ = self.next_epoch_validators_communicating().await;
                                         } else if state == NetworkState::Active {
                                             // update chain data manager state
                                             match self.chain_data_config_manager.set_peer_and_epoch_data_from_chain().await {
@@ -90,15 +89,12 @@ impl PeerState {
                                                 Err(e) => error!("Error in request_to_join: {}", e),
                                             }
                                         }
-                                        // update peers
-                                        let _ = self.next_epoch_validators_communicating().await;
                                     }
                                     StakingEvents::ValidatorRejoinedNextEpochFilter(
                                         validator_kicked_event,
                                     ) => {
                                         debug!("ValidatorRejoinedNextEpoch event");
                                         // update peers
-                                        let _ = self.next_epoch_validators_communicating().await;
                                     }
                                     StakingEvents::VersionRequirementsUpdatedFilter(
                                         version_requirements_updated_event,

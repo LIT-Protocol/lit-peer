@@ -22,8 +22,6 @@ pub async fn get_current_and_new_peer_addresses(
     is_shadow: bool,
     peer_state: Arc<PeerState>,
 ) -> Result<(SimplePeerCollection, SimplePeerCollection)> {
-    peer_state.connect_to_validators_union().await?;
-
     let (current_peers, new_peers) = if is_shadow {
         (
             peer_state.peers_in_current_shadow_epoch(),

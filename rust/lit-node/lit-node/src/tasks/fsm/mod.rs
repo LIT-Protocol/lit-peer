@@ -63,11 +63,6 @@ pub async fn node_fsm_worker(
     // faster and have missed many prior ticks.
     interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
 
-    // really more pertinent for nodes coming online with the network already up.
-    if let Err(e) = peer_state.connect_to_validators_union().await {
-        error!("Error in connect_to_validators_union: {}", e);
-    }
-
     let initial_network_state = peer_state
         .network_state(realm_id)
         .await
@@ -348,12 +343,6 @@ pub async fn node_fsm_worker(
         // if we're paused, just do another loop.
         if network_state == NetworkState::Paused {
             info!("Network state is Paused.  Pausing FSM node state polling.");
-            match peer_state.connect_to_validators_union().await {
-                Ok(_) => {}
-                Err(e) => {
-                    error!("Error in connect_to_validators_union: {}", e);
-                }
-            }
             continue;
         }
 
@@ -472,12 +461,6 @@ pub async fn node_fsm_worker(
                         }
 
                         if epoch_number > previous_included_epoch_number {
-                            match peer_state.connect_to_validators_union().await {
-                                Ok(_) => {}
-                                Err(e) => {
-                                    error!("Error in connect_to_validators_union: {}", e);
-                                }
-                            }
                             if network_state == NetworkState::NextValidatorSetLocked {
                                 // Here we have detected a chain state update. Let's forcibly update the CDM before we transition.
                                 // This is important because we need to make sure that the CDM is up to date before we start doing epoch change

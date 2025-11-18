@@ -1,5 +1,4 @@
 use super::channel_mapper::setup_background_channels;
-use arc_swap::ArcSwap;
 use ethers::{prelude::*, utils::secret_key_to_address};
 use flume::Receiver;
 use k256::ecdsa::SigningKey;
@@ -10,6 +9,7 @@ use lit_blockchain::resolver::contract::ContractResolver;
 use lit_core::config::ReloadableLitConfig;
 use lit_core::{config::LitConfig, utils::binary::bytes_to_hex};
 use lit_node::peers::peer_state::models::SimplePeerCollection;
+use lit_node::tasks::peer_checker::PeerCheckerMessage;
 use lit_node::utils::encoding;
 use lit_node::utils::key_share_proof::KeyShareProofs;
 use lit_node::version::DataVersionWriter;
@@ -395,24 +395,9 @@ impl VirtualNodeCollection {
             })
             .collect();
 
-        let mut peer_data = PeerData::new();
+        let mut peer_data = PeerData::default();
         for peer_item in peer_items {
             peer_data.insert(peer_item).unwrap();
-        }
-
-        for node in self.nodes.iter() {
-            node.tss_state
-                .peer_state
-                .data
-                .store(Arc::new(peer_data.clone()));
-            node.tss_state
-                .peer_state
-                .curr_data
-                .store(Arc::new(peer_data.clone()));
-            node.tss_state
-                .peer_state
-                .union_data
-                .store(Arc::new(peer_data.clone()));
         }
     }
 
@@ -442,10 +427,12 @@ async fn load_virtual_node_defaults(
 ) {
     let cfg = load_cfg().expect("failed to load LitConfig");
     let addr = format!("127.0.0.1:{}", port);
-    let chain_data_manager = Arc::new(ChainDataConfigManager::new(cfg.clone()).await);
+    let (peer_checker_tx, _pc_rx) = flume::bounded(10000);
+
+    let chain_data_manager =
+        Arc::new(ChainDataConfigManager::new(cfg.clone(), peer_checker_tx.clone()).await);
     let (pr_tx, _pr_rx) = new_traced_unbounded_channel();
     let (ps_tx, _ps_rx) = flume::bounded(10000);
-
     let peer_state = Arc::new(
         new_peer_state(
             addr.clone(),
@@ -455,6 +442,7 @@ async fn load_virtual_node_defaults(
             chain_data_manager.clone(),
             testnet,
             ps_tx.clone(),
+            peer_checker_tx.clone(),
         )
         .await,
     );
@@ -481,6 +469,7 @@ async fn new_peer_state(
     chain_data_config_manager: Arc<ChainDataConfigManager>,
     testnet: &Testnet,
     ps_tx: flume::Sender<PresignMessage>,
+    peer_checker_tx: flume::Sender<PeerCheckerMessage>,
 ) -> PeerState {
     let cfg = lit_config.load_full();
     let secret_key = SigningKey::from_bytes(k256::FieldBytes::from_slice(
@@ -514,10 +503,7 @@ async fn new_peer_state(
         .expect("failed to get coms_keys_receiver_privkey");
 
     PeerState {
-        data: ArcSwap::from(Arc::new(PeerData::new())),
-        curr_data: ArcSwap::from(Arc::new(PeerData::new())),
-        union_data: ArcSwap::from(Arc::new(PeerData::new())),
-        peer_id: XorName::from_content(addr.clone().as_bytes()),
+        id: XorName::from_content(addr.as_bytes()),
         addr,
         node_address,
         staking_address: staking_contract.address(),
@@ -535,5 +521,6 @@ async fn new_peer_state(
         tss_state: Weak::new(),
         client_grpc_channels: Default::default(),
         auto_join: false,
+        peer_checker_tx,
     }
 }
