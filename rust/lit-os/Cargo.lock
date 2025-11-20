@@ -10954,7 +10954,7 @@ dependencies = [
 
 [[package]]
 name = "lit_node"
-version = "2.1.3"
+version = "2.1.5"
 dependencies = [
  "anyhow",
  "apalis",
