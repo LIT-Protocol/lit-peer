@@ -21,6 +21,7 @@ use crate::models::PeerValidator;
 use crate::payment::dynamic::{LitActionPriceConfig, NodePriceMeasurement};
 use crate::payment::payed_endpoint::PayedEndpoint;
 use crate::peers::peer_reviewer::MAX_COMPLAINT_REASON_VALUE;
+use crate::tasks::peer_checker::PeerCheckerMessage;
 use crate::tasks::utils::generate_hash;
 use crate::utils::networking::get_web_addr_from_chain_info;
 use crate::version::{DataVersionReader, DataVersionWriter};
@@ -113,10 +114,14 @@ pub struct ChainDataConfigManager {
     pub version_requirements: Cache<U256, Version>,
     pub dynamic_lit_action_price_configs: AtomicShared<Vec<LitActionPriceConfig>>,
     pub base_network_prices: AtomicShared<Vec<U256>>,
+    peer_checker_tx: flume::Sender<PeerCheckerMessage>,
 }
 
 impl ChainDataConfigManager {
-    pub async fn new(config: ReloadableLitConfig) -> Self {
+    pub async fn new(
+        config: ReloadableLitConfig,
+        peer_checker_tx: flume::Sender<PeerCheckerMessage>,
+    ) -> Self {
         let peers_for_epoch = PeersForEpoch {
             validators: Vec::new(),
             epoch_id: "".to_string(),
@@ -192,6 +197,7 @@ impl ChainDataConfigManager {
             version_requirements: Cache::builder().build(),
             dynamic_lit_action_price_configs: AtomicShared::new(Vec::new()),
             base_network_prices: AtomicShared::new(Vec::new()),
+            peer_checker_tx,
         }
     }
 
@@ -857,12 +863,15 @@ impl ChainDataConfigManager {
                 )
             })?;
 
-        Ok(Self::sort_and_filter_validators(
+        let mut peer_validators = Self::sort_and_filter_validators(
             validators,
             kicked_validators,
             address_mapping,
             realm_id,
-        ))
+        );
+        self.update_validator_versions(&mut peer_validators).await;
+
+        Ok(peer_validators)
     }
 
     pub fn sort_and_filter_validators(
@@ -911,5 +920,39 @@ impl ChainDataConfigManager {
         });
 
         peer_validators
+    }
+
+    async fn update_validator_versions(&self, peer_validators: &mut Vec<PeerValidator>) {
+        let (tx, rx) = flume::bounded(1);
+
+        match self
+            .peer_checker_tx
+            .send_async(PeerCheckerMessage::GetPeers(tx))
+            .await
+        {
+            Ok(_) => {
+                let peer_data = match rx.recv_async().await {
+                    Ok(peer_data) => peer_data,
+                    Err(e) => {
+                        warn!("Error receiving peer data: {:?}", e);
+                        return;
+                    }
+                };
+                for peer_item in peer_data.peer_items() {
+                    if let Some(validator) = peer_validators
+                        .iter_mut()
+                        .find(|v| v.staker_address == peer_item.staker_address)
+                    {
+                        validator.version = peer_item.version.clone();
+                    }
+                }
+            }
+            Err(e) => {
+                warn!(
+                    "Error sending peer checker message, versions will be 0.0.0 for all validators: {:?}",
+                    e
+                );
+            }
+        }
     }
 }

@@ -114,7 +114,9 @@ impl ChatterService for ChatterServer {
             peer_state.as_ref(),
             XorName::from_content(header.sender_id.as_bytes()),
             &req.messages[0].message,
-        ) {
+        )
+        .await
+        {
             Ok(entry) => entry,
             Err(e) => {
                 error!("Error deserializing and decrypting entry: {:?}", e);
@@ -149,6 +151,7 @@ impl ChatterService for ChatterServer {
         &self,
         request: tonic::Request<ConnectRequest>,
     ) -> tonic::Result<tonic::Response<ConnectResponse>, tonic::Status> {
+        let remote_addr = request.remote_addr();
         let connect_request = request.into_inner();
         let noonce = connect_request.noonce;
         let tss_state = self.tss_state.clone();
@@ -183,7 +186,7 @@ impl ChatterService for ChatterServer {
         let public_key = libsecp256k1::PublicKey::from_secret_key(&secret_key);
 
         let mut peer_item = PeerItem {
-            id: peer_state.peer_id,
+            id: peer_state.id,
             public_key,
             node_address: peer_state.node_address(),
             sender_public_key: peer_state.comskeys.sender_public_key().to_bytes(),

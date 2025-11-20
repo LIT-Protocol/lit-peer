@@ -1,6 +1,6 @@
 use super::super::{
     PeerState,
-    peer_item::{PeerData, PeerItem},
+    peer_item::PeerItem,
     peer_reviewer::{Issue, PeerComplaint},
 };
 use std::{sync::Arc, time::Duration};
@@ -26,74 +26,12 @@ use lit_core::config::LitConfig;
 use lit_core::error::Unexpected;
 
 use super::models::PeerValidatorStatus;
-use crate::utils::key_share_proof::KeyShareProofs;
 use lit_attestation::verification::Policy;
 use lit_node_core::CompressedBytes;
 use lit_node_core::PeerId;
-use tokio::task::JoinSet;
 
 #[allow(dead_code)]
 impl PeerState {
-    // ############# Functions to read and alter the connected peers (and struct)
-    pub async fn find_peers(self: &Arc<Self>, peers: Vec<PeerValidator>) -> Result<()> {
-        self.find_peers_ext(peers, false).await
-    }
-
-    pub async fn find_peers_ext(
-        self: &Arc<Self>,
-        peers: Vec<PeerValidator>,
-        is_union: bool,
-    ) -> Result<()> {
-        let mut futures = JoinSet::new();
-        for peer in peers.into_iter() {
-            futures.spawn(self.clone().connect_to_node(peer));
-        }
-
-        let mut data = PeerData::clone(&self.data.load());
-        while let Some(node_info) = futures.join_next().await {
-            let node_info = match node_info {
-                Ok(node_info) => match node_info {
-                    Ok(node) => node,
-                    Err(e) => {
-                        warn!("Error connecting to peer: {:?}", e.msg());
-                        trace!("Details of error connecting to peer: {:?}", e);
-                        continue;
-                    }
-                },
-                Err(e) => {
-                    warn!("Error running task to connect to peer: {:?}", e);
-                    continue;
-                }
-            };
-
-            // to believe the node (public key is not on contract, but addr and staker addr is)
-            let pi = PeerItem::new(
-                &node_info.addr,
-                node_info.public_key,
-                node_info.node_address,
-                node_info.sender_public_key,
-                node_info.receiver_public_key,
-                node_info.staker_address,
-                PeerValidatorStatus::Unknown,
-                None,
-                node_info.version,
-                KeyShareProofs::default(),
-            );
-            data.insert(pi)
-                .expect_or_err("failed to insert into PeerItem")?;
-        }
-
-        data.table
-            .sort_by(|a, b| a.staker_address.cmp(&b.staker_address)); // keep it sorted
-
-        if is_union {
-            self.union_data.store(Arc::new(data.clone()));
-        }
-        self.data.store(Arc::new(data));
-
-        Ok(())
-    }
-
     pub async fn connect_to_node(self: Arc<Self>, peer: PeerValidator) -> Result<PeerItem> {
         // hang on, are we trying to connect to ourselves?
         // if so, let's just not do that.  let's just load up our own nodeinfo.
@@ -122,7 +60,7 @@ impl PeerState {
                 )
             })?;
             peer_item = PeerItem {
-                id: self.peer_id,
+                id: self.id,
                 public_key,
                 node_address: self.node_address,
                 sender_public_key: self.comskeys.sender_public_key().to_bytes(),
@@ -168,6 +106,19 @@ impl PeerState {
                         {
                             Ok(resp) => resp,
                             Err(e) => {
+                                let network_state = self.network_state(self.realm_id()).await?;
+                                if network_state == NetworkState::Paused
+                                    || network_state == NetworkState::Restore
+                                {
+                                    return Err(unexpected_err(
+                                        e,
+                                        Some(format!(
+                                            "Failed to connect to peer {} while network is {:?} ( will not complain ).",
+                                            addr, network_state,
+                                        )),
+                                    ));
+                                }
+
                                 error!(
                                     "Sending connect request to peer {:?} has failed, {:?}",
                                     &addr, e
@@ -485,90 +436,16 @@ impl PeerState {
         Ok(())
     }
 
-    pub fn get_peer_item_from_addr(&self, peer_addr: &str) -> Result<PeerItem> {
-        let peer_state_data = self.union_data.load();
-        peer_state_data
-            .get_peer_by_addr(peer_addr)
-            .expect_or_err(format!("PeerItem not found for peer_addr: {}", peer_addr))
-    }
-
-    pub fn get_peer_item_from_staker_addr(&self, staker_address: Address) -> Result<PeerItem> {
-        let peer_state_data = self.union_data.load();
+    pub async fn get_peer_item_from_staker_addr(
+        &self,
+        staker_address: Address,
+    ) -> Result<PeerItem> {
+        let peer_state_data = self.connected_nodes().await;
         peer_state_data
             .get_peer_by_staker_addr(staker_address)
             .expect_or_err(format!(
                 "PeerItem not found for staker address: {}",
                 staker_address
             ))
-    }
-
-    pub fn connected_nodes(&self) -> Result<Vec<PeerItem>> {
-        let peer_data = self.data.load();
-        let peer_items = &peer_data.table;
-
-        Ok(peer_items.clone())
-    }
-
-    pub fn curr_connected_nodes(&self) -> Result<Vec<PeerItem>> {
-        let peer_data = self.curr_data.load();
-        let peer_items = &peer_data.table;
-
-        Ok(peer_items.clone())
-    }
-
-    // Replaces existing curr_data with PeerData of target_peers
-    pub fn set_curr_data_peers(&self, target_peers: Vec<PeerValidator>) -> Result<()> {
-        let mut curr_data = PeerData::clone(&self.curr_data.load());
-        curr_data.clear_table();
-        self.append_curr_data_peers(target_peers)?;
-
-        Ok(())
-    }
-
-    // Appends to existing curr_data with PeerData of peer_addresses
-    pub fn append_curr_data_peers(&self, peer_addresses: Vec<PeerValidator>) -> Result<()> {
-        let mut curr_data = PeerData::clone(&self.curr_data.load());
-        let data = PeerData::clone(&self.data.load());
-        for peer in &self.data.load().table {
-            for validator in &peer_addresses {
-                if validator.address == peer.node_address {
-                    curr_data
-                        .insert(peer.clone())
-                        .expect_or_err("failed to insert into PeerItem")?;
-                }
-            }
-        }
-        curr_data
-            .table
-            .sort_by(|a, b| a.staker_address.cmp(&b.staker_address));
-        self.curr_data.store(Arc::new(curr_data));
-
-        Ok(())
-    }
-
-    pub fn connected_node_addrs(&self) -> Result<Vec<String>> {
-        let peer_data = self.data.load();
-        // collect all addr
-        let addrs = peer_data.table.iter().map(|pi| pi.addr.clone()).collect();
-        Ok(addrs)
-    }
-
-    pub async fn get_peer_staker_address_for_complain(&self, addr: &str) -> Result<Address> {
-        let peer_item = self.get_peer_item_from_addr(addr);
-        if let Ok(peer_item) = peer_item {
-            return Ok(peer_item.staker_address);
-        }
-
-        debug!(
-            "Failed to get peer item from addr: {:?}, trying from chain data",
-            addr
-        );
-
-        self.get_staker_address_from_socket_addr(addr).map_err(|e| {
-            unexpected_err(
-                e,
-                Some("Failed to get peer staker address from chain".into()),
-            )
-        })
     }
 }

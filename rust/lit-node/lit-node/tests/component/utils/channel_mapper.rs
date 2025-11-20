@@ -1,7 +1,7 @@
 use lit_core::config::LitConfig;
 use lit_node::{
     p2p_comms::web::internal::handle_node_share_set,
-    tasks::fsm_worker::NoopFSMWorkerMetadata,
+    tasks::fsm::fsm_worker::NoopFSMWorkerMetadata,
     tss::common::{
         models::{NodeTransmissionDetails, RoundData},
         traits::fsm_worker_metadata::FSMWorkerMetadata,

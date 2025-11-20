@@ -108,7 +108,8 @@ pub async fn do_share_download_from_rec_dkg(
         };
     let peer_item = tss_state
         .peer_state
-        .get_peer_item_from_staker_addr(staking_addr)?;
+        .get_peer_item_from_staker_addr(staking_addr)
+        .await?;
     let validator = tss_state
         .peer_state
         .get_validator_from_node_address(peer_item.node_address)?;
@@ -359,7 +360,8 @@ pub async fn do_delete_share_from_disk(
 
     let peer_item = tss_state
         .peer_state
-        .get_peer_item_from_staker_addr(staking_addr)?;
+        .get_peer_item_from_staker_addr(staking_addr)
+        .await?;
     let validator = tss_state
         .peer_state
         .get_validator_from_node_address(peer_item.node_address)?;

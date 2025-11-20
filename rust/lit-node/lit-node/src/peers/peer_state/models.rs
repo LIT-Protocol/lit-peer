@@ -2,6 +2,7 @@ use crate::{
     error::{Result, unexpected_err},
     models::PeerValidator,
 };
+use derive_more::Display;
 use ethers::types::H160;
 use lit_node_core::{NodeSet, PeerId};
 use rocket::serde::{Deserialize, Serialize};
@@ -19,7 +20,8 @@ pub enum PeerValidatorStatus {
     Unknown,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, Display, PartialEq, Eq, Clone)]
+#[display("{:?}", self)]
 pub enum NetworkState {
     Active = 0,
     NextValidatorSetLocked = 1,

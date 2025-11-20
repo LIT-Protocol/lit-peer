@@ -22,8 +22,6 @@ pub async fn get_current_and_new_peer_addresses(
     is_shadow: bool,
     peer_state: Arc<PeerState>,
 ) -> Result<(SimplePeerCollection, SimplePeerCollection)> {
-    peer_state.connect_to_validators_union().await?;
-
     let (current_peers, new_peers) = if is_shadow {
         (
             peer_state.peers_in_current_shadow_epoch(),
@@ -130,11 +128,15 @@ fn is_compatible_version(
     Ok(true)
 }
 
-pub(crate) async fn fsm_realm_id(peer_state: Arc<PeerState>, is_shadow: bool) -> u64 {
+pub(crate) async fn fsm_realm_id(peer_state: &Arc<PeerState>, is_shadow: bool) -> u64 {
     if is_shadow {
         peer_state.shadow_realm_id()
     } else {
-        peer_state.realm_id()
+        let realm_id = peer_state.realm_id();
+        if realm_id == 0 {
+            trace!("Node is not yet assigned to a realm.  Waiting for realm assignment.");
+        }
+        realm_id
     }
 }
 

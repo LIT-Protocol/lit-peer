@@ -11,7 +11,7 @@ use crate::p2p_comms::web::chatter_server::launch_chatter_server;
 use crate::payment::delegated_usage::DelegatedUsageDB;
 use crate::peers::PeerState;
 use crate::tasks::chatter_sender::chatter_sender_worker;
-use crate::tasks::fsm_worker::CounterBasedFSMWorkerMetadata;
+use crate::tasks::fsm::fsm_worker::CounterBasedFSMWorkerMetadata;
 use crate::tasks::presign_manager::models::PresignManager;
 use crate::tss::common::{
     restore::RestoreState, traits::fsm_worker_metadata::FSMWorkerMetadata, tss_state,
@@ -219,9 +219,16 @@ pub fn main() {
         .enable_all()
         .build()
         .expect("create tokio runtime");
-    let chain_data_manager = Arc::new(local_rt.block_on(ChainDataConfigManager::new(cfg.clone())));
+
+    let (peer_checker_tx, peer_checker_rx) = flume::unbounded();
+
+    let chain_data_manager = Arc::new(local_rt.block_on(ChainDataConfigManager::new(
+        cfg.clone(),
+        peer_checker_tx.clone(),
+    )));
 
     let (ps_tx, ps_rx) = flume::unbounded();
+
     let peer_state = Arc::new(
         local_rt
             .block_on(PeerState::new(
@@ -230,6 +237,7 @@ pub fn main() {
                 Arc::new(cfg.clone()),
                 chain_data_manager.clone(),
                 ps_tx.clone(),
+                peer_checker_tx.clone(),
             ))
             .expect("failed to create PeerState"),
     );
@@ -327,6 +335,8 @@ pub fn main() {
         action_store.clone(),
         client_state.clone(),
         http_client.clone(),
+        peer_checker_tx.clone(),
+        peer_checker_rx,
     )
     .expect("failed to launch tasks");
 

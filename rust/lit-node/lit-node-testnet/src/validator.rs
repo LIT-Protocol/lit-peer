@@ -1373,7 +1373,7 @@ impl Node {
 
         let response_text = response.text().await?;
 
-        trace!("Response from node {}: {}", port, response_text);
+        warn!("Response from node {}: {}", port, response_text);
 
         Ok(true)
     }

@@ -441,13 +441,13 @@ impl Actions {
                         "Error checking if validator state is active : {:?}",
                         res.unwrap_err()
                     );
-                    tokio::time::sleep(std::time::Duration::from_secs(15)).await;
+                    tokio::time::sleep(std::time::Duration::from_secs(5)).await;
                 }
             }
         }
 
-        info!("Sleeping for 1 second to make sure nodes sync up with new peer state...");
-        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+        info!("Sleeping for 3 seconds to make sure nodes sync up with new peer state...");
+        tokio::time::sleep(std::time::Duration::from_secs(3)).await;
     }
 
     #[doc = "Wait for state to become locked"]
