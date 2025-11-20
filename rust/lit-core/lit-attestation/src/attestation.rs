@@ -1068,7 +1068,6 @@ mod tests {
 #[cfg(feature = "generate-via-system")]
 async fn amdsev_snp_verify_success_test() {
     use crate::attestation::AmdSevSnpAttestation;
-    use lit_core::utils::binary::bytes_to_hex;
     use lit_node_core::AttestationType;
 
     if !Path::new("/dev/sev-guest").exists() {

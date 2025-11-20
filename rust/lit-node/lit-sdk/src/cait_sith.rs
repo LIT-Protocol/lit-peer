@@ -6,6 +6,7 @@ use ecdsa::{
     RecoveryId,
     elliptic_curve::{Group, scalar::IsHigh, subtle::ConditionallyNegatable},
 };
+use lit_frost::k256;
 use serde::Deserialize;
 
 /// Cait-Sith shares

@@ -20,6 +20,7 @@ import {
   StakingAdminFacet,
   StakingFacet,
   Forwarder,
+  PubkeyRouterViewsFacet,
 } from '../typechain-types';
 import { LITToken } from '../typechain-types/contracts/lit-node/LITToken';
 import { ip2int } from './index.js';
@@ -52,6 +53,7 @@ export async function setContractResolver(
     domainWalletRegistryContract,
     hdKeyDeriverContract,
     pubkeyRouterContract,
+    pubkeyRouterViewsContract,
     stylusContractP256,
     stylusContractK256,
   }: {
@@ -65,6 +67,7 @@ export async function setContractResolver(
     domainWalletRegistryContract?: DomainWalletRegistryFacet;
     hdKeyDeriverContract?: KeyDeriver;
     pubkeyRouterContract?: PubkeyRouterFacet;
+    pubkeyRouterViewsContract?: PubkeyRouterViewsFacet;
     stylusContractP256?: string;
     stylusContractK256?: string;
   }
@@ -138,6 +141,14 @@ export async function setContractResolver(
       await contractResolver.PUB_KEY_ROUTER_CONTRACT(),
       env,
       await pubkeyRouterContract.getAddress()
+    );
+  }
+
+  if (pubkeyRouterViewsContract) {
+    await contractResolver.setContract(
+      await contractResolver.PUB_KEY_ROUTER_VIEWS_CONTRACT(),
+      env,
+      await pubkeyRouterViewsContract.getAddress()
     );
   }
 

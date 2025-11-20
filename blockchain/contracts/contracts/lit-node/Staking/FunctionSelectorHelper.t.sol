@@ -63,104 +63,103 @@ contract FunctionSelectorHelper {
         functionSignatures[1] = "realmConfig(uint256)";
         functionSignatures[2] = "globalConfig()";
         functionSignatures[3] = "complaintConfig(uint256)";
-        functionSignatures[4] = "getKeyTypes()";
-        functionSignatures[5] = "contractResolver()";
-        functionSignatures[6] = "kickPenaltyPercentByReason(uint256)";
-        functionSignatures[7] = "getNodeDemerits(address)";
-        functionSignatures[8] = "nodeAddressToStakerAddress(address)";
-        functionSignatures[9] = "readyForNextEpoch(uint256,address)";
-        functionSignatures[10] = "state(uint256)";
-        functionSignatures[11] = "getTokenContractAddress()";
-        functionSignatures[12] = "validators(address)";
-        functionSignatures[13] = "isActiveValidator(uint256,address)";
+        functionSignatures[4] = "contractResolver()";
+        functionSignatures[5] = "kickPenaltyPercentByReason(uint256)";
+        functionSignatures[6] = "getNodeDemerits(address)";
+        functionSignatures[7] = "nodeAddressToStakerAddress(address)";
+        functionSignatures[8] = "readyForNextEpoch(uint256,address)";
+        functionSignatures[9] = "state(uint256)";
+        functionSignatures[10] = "getTokenContractAddress()";
+        functionSignatures[11] = "validators(address)";
+        functionSignatures[12] = "isActiveValidator(uint256,address)";
         functionSignatures[
-            14
+            13
         ] = "isActiveValidatorForNextEpoch(uint256,address)";
         functionSignatures[
-            15
+            14
         ] = "isActiveValidatorByNodeAddress(uint256,address)";
         functionSignatures[
-            16
+            15
         ] = "isActiveValidatorByNodeAddressForNextEpoch(uint256,address)";
         functionSignatures[
-            17
+            16
         ] = "getVotingStatusToKickValidator(uint256,uint256,address,address)";
-        functionSignatures[18] = "getValidatorsInCurrentEpoch(uint256)";
+        functionSignatures[17] = "getValidatorsInCurrentEpoch(uint256)";
         functionSignatures[
-            19
+            18
         ] = "getNonShadowValidatorsInCurrentEpochLength(uint256)";
-        functionSignatures[20] = "getValidatorsInNextEpoch(uint256)";
-        functionSignatures[21] = "getValidatorsStructs(address[])";
-        functionSignatures[22] = "getValidatorsStructsInCurrentEpoch(uint256)";
-        functionSignatures[23] = "getValidatorsStructsInNextEpoch(uint256)";
-        functionSignatures[24] = "getTotalStake(address)";
-        functionSignatures[25] = "getTotalStakeByUser(address,address)";
-        functionSignatures[26] = "getNodeStakerAddressMappings(address[])";
-        functionSignatures[27] = "getNodeAttestedPubKeyMappings(address[])";
+        functionSignatures[19] = "getValidatorsInNextEpoch(uint256)";
+        functionSignatures[20] = "getValidatorsStructs(address[])";
+        functionSignatures[21] = "getValidatorsStructsInCurrentEpoch(uint256)";
+        functionSignatures[22] = "getValidatorsStructsInNextEpoch(uint256)";
+        functionSignatures[23] = "getTotalStake(address)";
+        functionSignatures[24] = "getTotalStakeByUser(address,address)";
+        functionSignatures[25] = "getNodeStakerAddressMappings(address[])";
+        functionSignatures[26] = "getNodeAttestedPubKeyMappings(address[])";
         functionSignatures[
-            28
+            27
         ] = "countOfCurrentValidatorsReadyForNextEpoch(uint256)";
         functionSignatures[
-            29
+            28
         ] = "countOfNextValidatorsReadyForNextEpoch(uint256)";
-        functionSignatures[30] = "isReadyForNextEpoch(uint256)";
-        functionSignatures[31] = "shouldKickValidator(uint256,address)";
-        functionSignatures[32] = "currentValidatorCountForConsensus(uint256)";
-        functionSignatures[33] = "isRecentValidator(uint256,address)";
-        functionSignatures[34] = "nextValidatorCountForConsensus(uint256)";
-        functionSignatures[35] = "getKickedValidators(uint256)";
-        functionSignatures[36] = "getActiveUnkickedValidators(uint256)";
-        functionSignatures[37] = "getStakeRecordCount(address,address)";
-        functionSignatures[38] = "getValidatorsDelegated(address)";
-        functionSignatures[39] = "getStakeRecordsForUser(address,address)";
-        functionSignatures[40] = "getActiveUnkickedValidatorCount(uint256)";
-        functionSignatures[41] = "getActiveUnkickedValidatorStructs(uint256)";
+        functionSignatures[29] = "isReadyForNextEpoch(uint256)";
+        functionSignatures[30] = "shouldKickValidator(uint256,address)";
+        functionSignatures[31] = "currentValidatorCountForConsensus(uint256)";
+        functionSignatures[32] = "isRecentValidator(uint256,address)";
+        functionSignatures[33] = "nextValidatorCountForConsensus(uint256)";
+        functionSignatures[34] = "getKickedValidators(uint256)";
+        functionSignatures[35] = "getActiveUnkickedValidators(uint256)";
+        functionSignatures[36] = "getStakeRecordCount(address,address)";
+        functionSignatures[37] = "getValidatorsDelegated(address)";
+        functionSignatures[38] = "getStakeRecordsForUser(address,address)";
+        functionSignatures[39] = "getActiveUnkickedValidatorCount(uint256)";
+        functionSignatures[40] = "getActiveUnkickedValidatorStructs(uint256)";
         functionSignatures[
-            42
+            41
         ] = "getActiveUnkickedValidatorStructsAndCounts(uint256)";
         functionSignatures[
-            43
+            42
         ] = "getTimelockInEpoch(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address),uint256)";
         functionSignatures[
-            44
+            43
         ] = "getStakeWeightInEpoch(address,uint256,address,uint256)";
-        functionSignatures[45] = "calculateStakeWeight(uint256,uint256)";
+        functionSignatures[44] = "calculateStakeWeight(uint256,uint256)";
         functionSignatures[
-            46
+            45
         ] = "getTokensStaked(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address),uint256)";
-        functionSignatures[47] = "getRewardEpochNumber(uint256)";
-        functionSignatures[48] = "pow(uint256,uint256)";
+        functionSignatures[46] = "getRewardEpochNumber(uint256)";
+        functionSignatures[47] = "pow(uint256,uint256)";
         functionSignatures[
-            49
+            48
         ] = "calculateRewardsPerDay((uint256,uint256,address[],uint256))";
-        functionSignatures[50] = "getLitCirc()";
-        functionSignatures[51] = "getStakeRecord(address,uint256,address)";
+        functionSignatures[49] = "getLitCirc()";
+        functionSignatures[50] = "getStakeRecord(address,uint256,address)";
         functionSignatures[
-            52
+            51
         ] = "validatorSelfStakeWillExpire(uint256,address,bool)";
-        functionSignatures[53] = "getRewardEpochGlobalStats(uint256)";
-        functionSignatures[54] = "getTokenPrice()";
-        functionSignatures[55] = "minSelfStake()";
-        functionSignatures[56] = "minStake()";
-        functionSignatures[57] = "maxStake()";
-        functionSignatures[58] = "minTimeLock()";
-        functionSignatures[59] = "maxTimeLock()";
-        functionSignatures[60] = "getLowestRewardEpochNumber()";
-        functionSignatures[61] = "getAllReserveValidators()";
-        functionSignatures[62] = "getAllValidators()";
-        functionSignatures[63] = "getSelfStakeRecordCount(address)";
-        functionSignatures[64] = "permittedValidators(uint256)";
-        functionSignatures[65] = "permittedRealmsForValidator(address)";
-        functionSignatures[66] = "stakerToValidatorsTheyStakedTo(address)";
-        functionSignatures[67] = "operatorAddressToStakerAddress(address)";
+        functionSignatures[52] = "getRewardEpochGlobalStats(uint256)";
+        functionSignatures[53] = "getTokenPrice()";
+        functionSignatures[54] = "minSelfStake()";
+        functionSignatures[55] = "minStake()";
+        functionSignatures[56] = "maxStake()";
+        functionSignatures[57] = "minTimeLock()";
+        functionSignatures[58] = "maxTimeLock()";
+        functionSignatures[59] = "getLowestRewardEpochNumber()";
+        functionSignatures[60] = "getAllReserveValidators()";
+        functionSignatures[61] = "getAllValidators()";
+        functionSignatures[62] = "getSelfStakeRecordCount(address)";
+        functionSignatures[63] = "permittedValidators(uint256)";
+        functionSignatures[64] = "permittedRealmsForValidator(address)";
+        functionSignatures[65] = "stakerToValidatorsTheyStakedTo(address)";
+        functionSignatures[66] = "operatorAddressToStakerAddress(address)";
         functionSignatures[
-            68
+            67
         ] = "getDelegatedStakersWithUnfreezingStakes(address,uint256,uint256)";
         functionSignatures[
-            69
+            68
         ] = "getDelegatedStakersWithUnfreezingStakesCount(address)";
         functionSignatures[
-            70
+            69
         ] = "getUnfrozenStakeCountForUser(address,address)";
         return functionSignatures;
     }
@@ -210,7 +209,7 @@ contract FunctionSelectorHelper {
         functionSignatures[15] = "decreaseRewardPool(uint256,uint256)";
         functionSignatures[
             16
-        ] = "setConfig((uint256,uint256[],uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))";
+        ] = "setConfig((uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))";
         functionSignatures[
             17
         ] = "setComplaintConfig(uint256,(uint256,uint256,uint256,uint256))";

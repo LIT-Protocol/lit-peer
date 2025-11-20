@@ -32,7 +32,6 @@ use tokio::process::Command;
 use tokio_stream::StreamExt;
 use tracing::trace;
 
-use crate::config::chain::CachedRootKey;
 use crate::endpoints::auth_sig::{LITNODE_ADMIN_RES, check_auth_sig};
 use crate::error::{EC, Result, io_err, io_err_code, unexpected_err};
 use crate::peers::peer_state::models::SimplePeerCollection;
@@ -69,7 +68,7 @@ fn blinder_comm_fn(curve_type: CurveType) -> String {
 pub(crate) async fn encrypt_and_tar_backup_keys(
     cfg: Arc<LitConfig>,
     peer_id: PeerId,
-    root_keys: &[CachedRootKey],
+    key_set_root_keys: &HashMap<CurveType, Vec<String>>,
     blinders: &Blinders,
     recovery_party: &RecoveryParty,
     peers: &SimplePeerCollection,
@@ -114,17 +113,10 @@ pub(crate) async fn encrypt_and_tar_backup_keys(
 
     let key_cache = KeyCache::default();
     let mut tasks = tokio::task::JoinSet::new();
-    let mut root_keys_map = HashMap::with_capacity(root_keys.len());
-    for root_key in root_keys {
-        root_keys_map
-            .entry(root_key.curve_type)
-            .and_modify(|v: &mut Vec<String>| v.push(root_key.public_key.clone()))
-            .or_insert(vec![root_key.public_key.clone()]);
-    }
     let write_curve_recovery_data_args = Arc::new(WriteCurveRecoveryDataArgs {
         cfg: cfg.clone(),
         peer_id,
-        root_keys: root_keys_map,
+        root_keys: key_set_root_keys.clone(),
         epoch,
         staker_address: staker_address.clone(),
         peers: peers.clone(),
@@ -435,6 +427,19 @@ pub(crate) async fn untar_keys_stream<R: AsyncRead + Unpin>(
     );
     let threshold = read_from_disk(path.clone(), RECOVERY_PARTY_THRESHOLD_FN).await?;
     trace!("Threshold: {:?}", threshold);
+
+    let session_id: String = read_from_disk(path.clone(), SESSION_ID_FN).await?;
+    trace!(
+        "Session id: backup {}, key_set {}",
+        session_id,
+        restore_state.get_expected_recovery_session_id()
+    );
+
+    let peers: Result<SimplePeerCollection> = read_from_disk(path.clone(), PEERS_FN).await;
+    if let Ok(peers) = peers {
+        // Might be missing for legacy reasons
+        trace!("Peers: {:?}", peers);
+    }
 
     let bls_recovery_data = read_curve_recovery_data::<InnerBls12381G1>(
         blinders.bls_blinder,
@@ -856,7 +861,6 @@ fn parse_k256_blinder(blinder_str: &str) -> Result<<Secp256k1 as BCA>::Scalar> {
 #[cfg(test)]
 mod test {
     use crate::common::key_helper::KeyCache;
-    use crate::config::chain::CachedRootKey;
     use crate::endpoints::admin::utils::{encrypt_and_tar_backup_keys, untar_keys_stream};
     use crate::peers::peer_state::models::{SimplePeer, SimplePeerCollection};
     use crate::tests::key_shares::{
@@ -965,6 +969,11 @@ mod test {
             .expect("Failed to get staker address");
         let bls_key_helper = KeyPersistence::<G1Projective>::new(CurveType::BLS);
         let k256_key_helper = KeyPersistence::<ProjectivePoint>::new(CurveType::K256);
+        let recovery_party = get_test_recovery_party_with_encryption_keys();
+        let key_set_root_keys = maplit::hashmap! {
+            CurveType::BLS => vec!["83fc126ef56547bb28734a4a5393a873b8c22a9ba2d507036285a506567b2b3a376fc524cd589bb018613e24c51ebbae".to_string()],
+            CurveType::K256 => vec!["0268c27a16f03d19949f0a64d58c71ea32049b754888211cc25827f5449d26bf74".to_string()],
+        };
 
         // Make sure that there is at least one ECDSA and one BLS key share.
         let bls_key: KeyShare = serde_json::from_str(TEST_BLS_KEY_SHARE).unwrap();
@@ -1047,17 +1056,6 @@ mod test {
 
         // Call the function to be tested
         let blinders = RestoreState::generate_blinders();
-        let recovery_party = get_test_recovery_party_with_encryption_keys();
-        let root_keys = vec![
-            CachedRootKey {
-                public_key: bls_key.hex_public_key.clone(),
-                curve_type: CurveType::BLS,
-            },
-            CachedRootKey {
-                public_key: k256_key.hex_public_key.clone(),
-                curve_type: CurveType::K256,
-            },
-        ];
         let peers = SimplePeerCollection(vec![SimplePeer {
             socket_address: "127.0.0.1".to_string(),
             peer_id: bls_key.peer_id,
@@ -1071,7 +1069,7 @@ mod test {
         let child = encrypt_and_tar_backup_keys(
             cfg.clone(),
             bls_key.peer_id,
-            &root_keys,
+            &key_set_root_keys,
             &blinders,
             &recovery_party,
             &peers,

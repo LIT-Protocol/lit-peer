@@ -17,6 +17,7 @@ contract StakingAdminFacet is StakingCommon {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /* ========== Modifier Equivalents ========== */
+    /* ========== Modifier Equivalents ========== */
 
     function onlyOwner() internal view {
         if (msg.sender != LibDiamond.contractOwner()) {
@@ -244,24 +245,7 @@ contract StakingAdminFacet is StakingCommon {
             realmStorage.validatorsInNextEpoch.add(validatorsForNextEpoch[i]);
         }
     }
-
-    function setRealmConfig(
-        uint256 realmId,
-        LibStakingStorage.RealmConfig memory newConfig
-    ) external {
-        onlyOwner();
-        LibStakingStorage.RealmConfig storage config = realm(realmId)
-            .realm_configs[0];
-        config.maxConcurrentRequests = newConfig.maxConcurrentRequests;
-        config.maxPresignCount = newConfig.maxPresignCount;
-        config.minPresignCount = newConfig.minPresignCount;
-        config.peerCheckingIntervalSecs = newConfig.peerCheckingIntervalSecs;
-        config.maxPresignConcurrency = newConfig.maxPresignConcurrency;
-        config.rpcHealthcheckEnabled = newConfig.rpcHealthcheckEnabled;
-        config.minEpochForRewards = newConfig.minEpochForRewards;
-        config.permittedValidatorsOn = newConfig.permittedValidatorsOn;
-    }
-
+    
     function adminSlashValidator(
         uint256 percentage,
         address stakerAddress
@@ -318,7 +302,6 @@ contract StakingAdminFacet is StakingCommon {
             .globalConfig[0];
         config.tokenRewardPerTokenPerEpoch = newConfig
             .tokenRewardPerTokenPerEpoch;
-        config.keyTypes = newConfig.keyTypes;
         config.minimumValidatorCount = newConfig.minimumValidatorCount;
 
         // thunderhead
@@ -374,7 +357,8 @@ contract StakingAdminFacet is StakingCommon {
             maxPresignConcurrency: 2,
             rpcHealthcheckEnabled: true,
             minEpochForRewards: 3,
-            permittedValidatorsOn: false
+            permittedValidatorsOn: false,
+            defaultKeySet: ""
         });
         uint256 epochLengthSeconds = 1 seconds;
 

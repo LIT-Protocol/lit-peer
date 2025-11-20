@@ -1,5 +1,4 @@
 use crate::config::chain::CachedRootKey;
-use crate::error::unexpected_err;
 use crate::peers::peer_state::models::SimplePeerCollection;
 use crate::tasks::fsm::utils::parse_epoch_number_from_dkg_id;
 use crate::tss::common::dkg_type::DkgType;
@@ -8,6 +7,7 @@ use crate::tss::common::traits::fsm_worker_metadata::FSMWorkerMetadata;
 use crate::tss::dkg::manager::DkgManager;
 use ethers::types::U256;
 use lit_core::error::Result;
+use std::collections::HashMap;
 use std::sync::Arc;
 use tracing::instrument;
 
@@ -22,9 +22,9 @@ pub(crate) async fn perform_epoch_change(
     realm_id: u64,
     is_shadow: bool,
     epoch_number: U256,
-) -> Result<Option<Vec<CachedRootKey>>> {
+) -> Option<HashMap<String, Vec<CachedRootKey>>> {
     struct EpochChangeResOrUpdateNeeded {
-        pub epoch_change_res: Option<Option<Vec<CachedRootKey>>>,
+        pub epoch_change_res: Option<Option<HashMap<String, Vec<CachedRootKey>>>>,
         pub update_req: Option<u64>,
     }
 
@@ -52,8 +52,8 @@ pub(crate) async fn perform_epoch_change(
             match get_current_next_dkg_peers(dkg_manager, realm_id, is_shadow).await {
                 Ok((current_peers, new_peers)) => (current_peers, new_peers),
                 Err(e) => {
-                    error!("Error in get_current_next_dkg_peers: {}", e);
-                    return Err(e);
+                    warn!("get_current_next_dkg_peers failed: {}", e);
+                    return None;
                 }
             };
 
@@ -70,8 +70,8 @@ pub(crate) async fn perform_epoch_change(
                 let base_epoch_number = match base_epoch_number {
                     Ok(base_epoch_number) => base_epoch_number.1,
                     Err(e) => {
-                        error!(
-                            "Error in get_epoch for base epoch when shadow node is starting: {}",
+                        warn!(
+                            "get_epoch failed for base epoch when shadow node is starting: {}",
                             e
                         );
                         continue;
@@ -109,7 +109,7 @@ pub(crate) async fn perform_epoch_change(
                     match key_share_proofs_check(&dkg_manager.tss_state, &res, &new_peers, &latest_dkg_id, realm_id, epoch, lifecycle_id).await {
                         Err(e) => {
                             error!("Key share proofs check failed in realm {}: {}", realm_id, e);
-                            return Err(e);
+                            return None;
                         },
                         Ok(()) => {
                             debug!("Key share proofs check passed for realm {}", realm_id);
@@ -117,7 +117,7 @@ pub(crate) async fn perform_epoch_change(
                     }
                 }
                 EpochChangeResOrUpdateNeeded {
-                    epoch_change_res: Some(res.inspect_err(|e| error!("DKG error: {}", e)).ok()),
+                    epoch_change_res: Some(res.inspect_err(|e| error!("DKG error: {:?}", e)).ok()),
                     update_req: None,
                 }
             }
@@ -131,7 +131,7 @@ pub(crate) async fn perform_epoch_change(
                         "Error in get_current_next_dkg_peers in realm {}: {}",
                         realm_id, e
                     );
-                    return Err(e);
+                    return None;
                 }
             };
 
@@ -148,7 +148,7 @@ pub(crate) async fn perform_epoch_change(
         }
         // If there is a result, we immediately return the result.
         if let Some(res) = epoch_change_res_or_update_needed.epoch_change_res {
-            return Ok(res);
+            return res;
         }
 
         // If we are here, that means that we need to update the lifecycle ID and restart the epoch change.
@@ -156,10 +156,7 @@ pub(crate) async fn perform_epoch_change(
             Some(new_lifecycle_id) => new_lifecycle_id,
             None => {
                 error!("epoch_change_res_or_update_needed.update_req is None");
-                return Err(unexpected_err(
-                    "epoch_change_res_or_update_needed.update_req is None",
-                    None,
-                ));
+                return None;
             }
         };
 
@@ -169,7 +166,7 @@ pub(crate) async fn perform_epoch_change(
             Ok(existing_epoch_number) => existing_epoch_number,
             Err(e) => {
                 error!("Error in parse_epoch_number_from_dkg_id: {}", e);
-                return Err(e);
+                return None;
             }
         };
         trace!(
@@ -196,10 +193,7 @@ pub(crate) async fn perform_epoch_change(
 
     // If we are here, that means that we have aborted and restarted the epoch change too many times. Just return a failure.
     error!("Aborted and restarted the epoch change too many times. Aborting the epoch change.");
-    Err(unexpected_err(
-        "Aborted and restarted the epoch change too many times. Aborting the epoch change.",
-        None,
-    ))
+    None
 }
 
 pub fn derive_dkg_id(

@@ -105,7 +105,7 @@ async fn damfast_signature(vnc: &VirtualNodeCollection) -> bool {
     let _pubkey = super::super::dkg::dkg(&vnc, CurveType::K256, 0, None, &current_peers).await;
 
     let message_bytes = b"DamFast Test!";
-    let root_pubkeys = None;
+    let root_pubkeys = [];
     let tweak_preimage = None;
     let request_id = b"damfasttxn";
     let epoch = Some(1);
@@ -131,7 +131,7 @@ async fn damfast_signature(vnc: &VirtualNodeCollection) -> bool {
             let r = damfast_state
                 .sign_with_pubkey_internal::<k256::Secp256k1>(
                     message_bytes,
-                    root_pubkeys,
+                    &root_pubkeys,
                     tweak_preimage,
                     request_id.to_vec(),
                     epoch,

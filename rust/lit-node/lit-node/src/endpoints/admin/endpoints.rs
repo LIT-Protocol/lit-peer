@@ -8,6 +8,7 @@ use crate::tss::common::restore::{NodeRecoveryStatus, RestoreState, report_progr
 
 use crate::auth::auth_material::JsonAuthSigExtended;
 use crate::tss::common::tss_state::TssState;
+use crate::version::DataVersionReader;
 use chrono::{DateTime, Utc};
 use lit_api_core::error::ApiError;
 use lit_blockchain::resolver::rpc::config::{RPC_CONFIG_PROTECTED_CHAINS, RpcConfig};
@@ -257,13 +258,33 @@ pub async fn admin_get_key_backup(
         Ok(peer) => peer,
         Err(e) => return Err(e.handle()),
     };
-    let root_keys = tss_state.chain_data_config_manager.root_keys();
+    let default_key_set = DataVersionReader::read_field_unchecked(
+        &tss_state.chain_data_config_manager.generic_config,
+        |generic_config| generic_config.default_key_set.clone(),
+    );
+    let key_set_root_keys = DataVersionReader::read_field_unchecked(
+        &tss_state.chain_data_config_manager.key_sets,
+        |key_sets| match &default_key_set {
+            Some(id) => match key_sets.get(id) {
+                Some(key_set) => Ok(key_set.root_keys_by_curve.clone()),
+                None => Err(
+                    unexpected_err(format!("No key set root keys exist for {}", id), None).handle(),
+                ),
+            },
+            None => match key_sets.first_key_value() {
+                Some((_id, key_set)) => Ok(key_set.root_keys_by_curve.clone()),
+                None => {
+                    Err(unexpected_err("No key sets exist for backup".to_string(), None).handle())
+                }
+            },
+        },
+    )?;
 
     // Zip up and encrypt.
     match encrypt_and_tar_backup_keys(
         cfg,
         self_peer.peer_id,
-        &root_keys,
+        &key_set_root_keys,
         &blinders,
         &recovery_party,
         &peers,

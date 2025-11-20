@@ -9,7 +9,7 @@ use serde_json::Value;
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct JsonSDKHandshakeRequest {
+pub struct SDKHandshakeRequest {
     pub client_public_key: String,
     pub challenge: Option<String>,
 }

@@ -620,7 +620,7 @@ pub async fn eoa_session_sig_with_mgb_pkp_signing() {
     let (testnet, validator_collection, end_user) = TestSetupBuilder::default().build().await;
 
     info!("end user pkp info: {:?}", end_user.first_pkp().info());
-    let (pubkey, token_id, pkp_address) = end_user.first_pkp().info().clone();
+    let (pubkey, token_id, pkp_address, _key_set_id) = end_user.first_pkp().info().clone();
 
     let owner_wallet = end_user.signing_provider().clone();
 
