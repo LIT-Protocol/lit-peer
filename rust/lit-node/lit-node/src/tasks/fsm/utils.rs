@@ -8,7 +8,7 @@ use crate::tss::common::tss_state::TssState;
 use crate::utils::key_share_proof::{
     KeyShareProofs, compute_key_share_proofs, verify_key_share_proofs,
 };
-use crate::version::{DataVersionReader, get_version};
+use crate::version::get_version;
 use ethers::types::U256;
 use lit_blockchain::contracts::staking::Version;
 use lit_core::error::Result;
@@ -142,7 +142,7 @@ pub(crate) async fn fsm_realm_id(peer_state: &Arc<PeerState>, is_shadow: bool) -
 
 pub(crate) async fn key_share_proofs_check(
     tss_state: &Arc<TssState>,
-    root_key_res: &Result<HashMap<String, Vec<CachedRootKey>>>,
+    root_key_res: &Result<Vec<CachedRootKey>>,
     peers: &SimplePeerCollection,
     latest_dkg_id: &str,
     realm_id: u64,
@@ -154,126 +154,108 @@ pub(crate) async fn key_share_proofs_check(
         return Ok(()); // no need to compute key share proofs
     }
 
-    let mut root_keys = HashMap::new();
+    let mut root_keys = Vec::new();
     if let Ok(rk) = root_key_res {
         if !rk.is_empty() {
             root_keys = rk.clone();
         }
     }
-    trace!(
-        "Key share proofs check incoming root keys - root keys {:?}",
-        root_keys
+    if root_keys.is_empty() {
+        root_keys = tss_state.chain_data_config_manager.root_keys();
+    }
+
+    trace!("Root keys for key share proofs: {:?}", root_keys);
+    let mut root_keys_map = HashMap::<CurveType, Vec<String>>::with_capacity(root_keys.len());
+    for root_key in root_keys {
+        root_keys_map
+            .entry(root_key.curve_type)
+            .and_modify(|v| v.push(root_key.public_key.clone()))
+            .or_insert(vec![root_key.public_key.clone()]);
+    }
+
+    let noonce = format!("{}-{}", epoch, lifecycle_id);
+    trace!("Key share proofs nonce signed: {}", noonce);
+
+    let proofs = compute_key_share_proofs(
+        &noonce,
+        &root_keys_map,
+        &tss_state.addr,
+        peers,
+        realm_id,
+        epoch,
+    )
+    .await?;
+    trace!("Key share proofs generated");
+
+    let txn_prefix = format!(
+        "KEYSHAREPROOFS_{}-{}_1_{}_{}",
+        epoch,
+        lifecycle_id,
+        peers.hash(),
+        realm_id
     );
-    let root_keys_map: Vec<(String, HashMap<CurveType, Vec<String>>)> = if root_keys.is_empty() {
-        DataVersionReader::read_field_unchecked(
-            &tss_state.chain_data_config_manager.key_sets,
-            |key_sets| {
-                key_sets
-                    .values()
-                    .map(|config| (config.identifier.clone(), config.root_keys_by_curve.clone()))
-                    .collect()
-            },
-        )
-    } else {
-        let mut map = Vec::with_capacity(root_keys.len());
-        for (identifier, keys) in &root_keys {
-            let l = keys.len();
-            let mut dkg_keys = HashMap::with_capacity(l);
-            for k in keys {
-                dkg_keys
-                    .entry(k.curve_type)
-                    .and_modify(|v: &mut Vec<String>| v.push(k.public_key.clone()))
-                    .or_insert_with(|| {
-                        let mut v = Vec::with_capacity(l);
-                        v.push(k.public_key.clone());
-                        v
-                    });
-            }
-            map.push((identifier.clone(), dkg_keys));
-        }
-        map
-    };
-    trace!("Key share proof check - root keys: {:?}", root_keys_map);
 
-    for (identifier, map) in &root_keys_map {
-        let noonce = format!("{}-{}-{}", epoch, lifecycle_id, identifier);
-        trace!("Key share proofs nonce signed: {}", noonce);
-        let proofs =
-            compute_key_share_proofs(&noonce, map, &tss_state.addr, peers, realm_id, epoch).await?;
-        trace!("Key share proofs generated");
+    let cm = CommsManager::new_with_peers(tss_state, &txn_prefix, peers, "10").await?;
 
-        let txn_prefix = format!(
-            "KEYSHAREPROOFS_{}-{}_1_{}_{}",
-            epoch,
-            lifecycle_id,
-            peers.hash(),
-            realm_id
+    let received: Vec<(PeerId, KeyShareProofs)> = cm.broadcast_and_collect(&proofs).await?;
+    trace!("Received key share proofs: {}", received.len());
+
+    let mut any_failed = false;
+    for (peer_id, key_share_proofs) in received {
+        trace!(
+            "Key share proofs for peer: {} - {}",
+            peer_id,
+            key_share_proofs.proofs.len()
         );
+        let peer = peers.peer_by_id(&peer_id)?;
+        let res = verify_key_share_proofs(
+            &root_keys_map,
+            &noonce,
+            &tss_state.addr,
+            &peer.socket_address,
+            &tss_state.peer_state.hex_staker_address(),
+            &key_share_proofs,
+            peers,
+            epoch,
+            realm_id,
+        )
+        .await?;
 
-        let cm = CommsManager::new_with_peers(tss_state, &txn_prefix, peers, "10").await?;
-
-        let received: Vec<(PeerId, KeyShareProofs)> = cm.broadcast_and_collect(&proofs).await?;
-        trace!("Received key share proofs: {}", received.len());
-
-        let mut any_failed = false;
-        for (peer_id, key_share_proofs) in received {
-            trace!(
-                "Key share proofs for peer: {} - {}",
-                peer_id,
-                key_share_proofs.proofs.len()
-            );
-            let peer = peers.peer_by_id(&peer_id)?;
-            let res = verify_key_share_proofs(
-                map,
-                &noonce,
-                &tss_state.addr,
-                &peer.socket_address,
-                &tss_state.peer_state.hex_staker_address(),
-                &key_share_proofs,
-                peers,
-                epoch,
-                realm_id,
-            )
-            .await?;
-
-            for (curve, result) in res {
-                if result.is_err() {
-                    if !any_failed {
-                        any_failed = true;
-                        error!(
-                            "Key share proof verification failed for peer {} - curve {}: {:?} - complaining",
-                            peer.socket_address, curve, result
-                        );
-                        tss_state
-                            .peer_state
-                            .complaint_channel
-                            .send_async(PeerComplaint {
-                                complainer: tss_state.peer_state.addr.clone(),
-                                issue: Issue::KeyShareValidationFailure(curve),
-                                peer_node_staker_address: peer.staker_address,
-                                peer_node_socket_address: peer.socket_address.clone(),
-                            })
-                            .await
-                            .map_err(|e| {
-                                unexpected_err(e, Some("Unable to complain".to_string()))
-                            })?;
-                    } else {
-                        error!(
-                            "Key share proof verification failed for peer {} - curve {}: {:?} - already complained for this DKG.",
-                            peer.socket_address, curve, result
-                        );
-                    }
+        for (curve, result) in res {
+            if result.is_err() {
+                if !any_failed {
+                    any_failed = true;
+                    error!(
+                        "Key share proof verification failed for peer {} - curve {}: {:?} - complaining",
+                        peer.socket_address, curve, result
+                    );
+                    tss_state
+                        .peer_state
+                        .complaint_channel
+                        .send_async(PeerComplaint {
+                            complainer: tss_state.peer_state.addr.clone(),
+                            issue: Issue::KeyShareValidationFailure(curve),
+                            peer_node_staker_address: peer.staker_address,
+                            peer_node_socket_address: peer.socket_address.clone(),
+                        })
+                        .await
+                        .map_err(|e| unexpected_err(e, Some("Unable to complain".to_string())))?;
+                } else {
+                    error!(
+                        "Key share proof verification failed for peer {} - curve {}: {:?} - already complainted for this DKG.",
+                        peer.socket_address, curve, result
+                    );
                 }
             }
         }
-        if any_failed {
-            return Err(unexpected_err(
-                "Key share proof verification failed".to_string(),
-                None,
-            ));
-        }
-        trace!("Valid key share proofs for key set {}", identifier);
     }
+    if any_failed {
+        return Err(unexpected_err(
+            "Key share proof verification failed".to_string(),
+            None,
+        ));
+    }
+    trace!("Valid key share proofs");
     Ok(())
 }
 

@@ -770,6 +770,17 @@
       "type": "error"
     },
     {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "keySetId",
+          "type": "string"
+        }
+      ],
+      "name": "CannotKickBelowKeySetThreshold",
+      "type": "error"
+    },
+    {
       "inputs": [],
       "name": "CannotModifyUnfrozen",
       "type": "error"
@@ -824,6 +835,22 @@
     {
       "inputs": [],
       "name": "NoEmptyStakingSlot",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "validatorCount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "minimumValidatorCount",
+          "type": "uint256"
+        }
+      ],
+      "name": "NotEnoughValidatorsInNextEpoch",
       "type": "error"
     },
     {
@@ -3050,22 +3077,6 @@
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "validatorCount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "minimumValidatorCount",
-          "type": "uint256"
-        }
-      ],
-      "name": "NotEnoughValidatorsInNextEpoch",
-      "type": "error"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
           "name": "currentReadyValidatorCount",
           "type": "uint256"
         },
@@ -3484,13 +3495,6 @@
         }
       ],
       "name": "checkActiveOrUnlockedOrPausedState",
-      "outputs": [],
-      "stateMutability": "pure",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "exit",
       "outputs": [],
       "stateMutability": "pure",
       "type": "function"

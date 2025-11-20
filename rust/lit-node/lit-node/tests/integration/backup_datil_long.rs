@@ -131,66 +131,6 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
         ],
     );
     tx.send().await.unwrap();
-    let tx = validator_collection
-        .actions()
-        .contracts()
-        .pubkey_router
-        .admin_reset_root_keys(
-            testnet.actions().contracts().staking.address(),
-            "naga-keyset1".to_string(),
-        );
-    tx.send().await.unwrap();
-    let tx = validator_collection.actions().contracts().pubkey_router.admin_set_root_keys(
-        testnet.actions().contracts().staking.address(),
-        "naga-keyset1".to_string(),
-        vec![
-            RootKey {
-                key_type: U256::from(1),
-                pubkey: ethers::types::Bytes::from_hex("0xb500ba119f643feb1981d26ffe7235288fdd39c36d6ebd35aebea7a5f92a812798513c1ae710461a6d229c59a782e375").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x02a11f8d29fabb49b5bbcd92159698afe4f136bab8b4a33f8606a71bd03bd6dc27").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x02cd471f410f17f1e932886a90effbb522a7841d9107d256c034cfa04020ba64c6").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x02d63650585b90ae80acde8fc4c638c4db0a00945f9b1c40024c92064cd99bdbbe").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x03a9e669a6f3b662a6b91fcb3cfa08608ab705e83b9b01bbf4fc4c2fcac3163b23").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x03d16416e913ba7adc1ccd58c36ff9f2130fa64d36e510551af70fb1be2174bb74").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x022e26c96cdeabee0930344a08cf3ee290c9efb3344fc8d50e460706ef7b55c518").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x027b98e8d099788fae7d9dc79865f28d4ddc0f630c6c593e5e8d7ef94c0285d729").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x033c8c0840302669019a6d0d12108caa6b0581a1d96022d4ea87ab203fba94cf1e").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x039af7bc7d673c899cc45ec5e30ba518be438931e9acb916fef7a336b9954687e9").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x023403362ef1a693967858606e0cd9c5a67b30d5bd3a1a70a960c1286c15c8f68a").unwrap(),
-            },
-        ],
-    );
-    tx.send().await.unwrap();
 
     // stop old nodes but leave the test net up. Setting the network to restore state
     // should stop all the nodes

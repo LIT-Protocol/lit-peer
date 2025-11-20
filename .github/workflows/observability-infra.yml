@@ -1,0 +1,160 @@
+name: Infrastructure - Observability
+on:
+  # Run preview on pull requests
+  pull_request:
+    paths:
+      - 'infrastructure/observability/**'
+      - '!infrastructure/observability/irm/**'
+      - '!infrastructure/observability/opentelemetry-collector/**'
+      - .github/workflows/observability-infra.yml
+  # Apply changes automatically on PR merge
+  push:
+    branches:
+      - develop
+    paths:
+      - 'infrastructure/observability/**'
+      - '!infrastructure/observability/irm/**'
+      - '!infrastructure/observability/opentelemetry-collector/**'
+      - .github/workflows/observability-infra.yml
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'internal'
+        type: choice
+        options:
+          - internal
+          - datil-dev
+          - datil-test
+          - datil-prod
+          - naga-dev
+          - naga-staging
+          - naga-test
+        #  - naga-prod
+
+defaults:
+  run:
+    working-directory: infrastructure/observability/infrastructure
+
+jobs:
+  Observability:
+    name: Preview (or Apply To Dev)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    env:
+      IS_APPLY_MODE: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.environment == matrix.stack-name) }}
+    strategy:
+      matrix:
+        stack-name: [
+            'internal',
+            'datil-dev',
+            'datil-test',
+            'datil-prod',
+            'naga-dev',
+            'naga-staging',
+            'naga-test',
+            #  'naga-prod',
+          ]
+
+    # Refer to the corresponding Github Environment
+    # dynamically based on the matrix value
+    environment: ${{ matrix.stack-name }}
+    steps:
+      - uses: actions/checkout@v5
+
+      # Authenticate to GCP and set up SDK
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+
+      # Create repository if it doesn't exist before pushing
+      - name: Create Artifact Registry Repo if it does not exist
+        if: ${{ env.IS_APPLY_MODE }}
+        run: |
+          gcloud artifacts repositories describe observability --location=us-west2 --project=${{ vars.GCP_PROJECT_ID }} || \
+          gcloud artifacts repositories create observability \
+            --repository-format=docker \
+            --location=us-west2 \
+            --description="Observability Docker images" \
+            --project=${{ vars.GCP_PROJECT_ID }}
+        working-directory: .
+
+      # Login to Docker/GAR, requires GCP auth
+      - name: Login to GAR
+        if: ${{ env.IS_APPLY_MODE }}
+        uses: docker/login-action@v3
+        with:
+          registry: us-west2-docker.pkg.dev
+          username: _json_key
+          password: ${{ secrets.GCP_SA_KEY }}
+
+      # Set up Docker Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+
+      # Build and optionally push Docker images
+      - name: Build Docker image - Chain Probes
+        uses: docker/build-push-action@v6
+        with:
+          push: ${{ env.IS_APPLY_MODE }}
+          tags: |
+            us-west2-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/observability/chain-probe-image:latest
+            us-west2-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/observability/chain-probe-image:${{ github.sha }}
+          context: infrastructure/observability/probes
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          file: infrastructure/observability/probes/packages/chain-probes/Dockerfile
+
+      - name: Build Docker image - Network Probes
+        uses: docker/build-push-action@v6
+        with:
+          push: ${{ env.IS_APPLY_MODE }}
+          tags: |
+            us-west2-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/observability/network-probe-image:latest
+            us-west2-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/observability/network-probe-image:${{ github.sha }}
+          context: infrastructure/observability/probes
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          file: infrastructure/observability/probes/packages/network-probes/Dockerfile
+
+      # Set up Node for Pulumi
+      - uses: actions/setup-node@v6
+        with:
+          cache: 'yarn'
+          cache-dependency-path: infrastructure/observability/infrastructure/package-lock.json
+          node-version-file: infrastructure/observability/infrastructure/package.json
+      - name: Install dependencies
+        run: yarn install
+
+      # Determine Pulumi action
+      - name: Determine Pulumi Action
+        id: pulumi_config
+        shell: bash
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            echo "command=preview" >> "${GITHUB_OUTPUT}"
+          elif [[ "${{ env.IS_APPLY_MODE }}" == "true" ]]; then
+            echo "command=up" >> "${GITHUB_OUTPUT}"
+          else
+            echo "command=preview" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Run Pulumi
+        uses: pulumi/actions@v6
+        with:
+          command: ${{ steps.pulumi_config.outputs.command }}
+          stack-name: ${{ matrix.stack-name }}
+          work-dir: infrastructure/observability/infrastructure
+          comment-on-pr: true
+          comment-on-summary: true
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}

@@ -1,0 +1,63 @@
+name: Infrastructure - IRM
+
+on:
+  # Run preview when a PR is opened
+  pull_request:
+    paths:
+      - 'infrastructure/observability/irm/**'
+      - '.github/workflows/irm-infra.yml'
+  # Run up when a push is made to the develop branch
+  push:
+    branches:
+      - develop
+    paths:
+      - 'infrastructure/observability/irm/**'
+      - '.github/workflows/irm-infra.yml'
+  # Run up when the workflow is manually triggered
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: infrastructure/observability/irm
+
+jobs:
+  infrastructure:
+    name: Preview (or Apply To Dev)
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          cache: 'yarn'
+          cache-dependency-path: infrastructure/observability/irm/package-lock.json
+          node-version-file: infrastructure/observability/irm/package.json
+      - run: yarn install
+
+      - name: Determine Pulumi Action
+        id: pulumi_config
+        shell: bash
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            echo "command=preview" >> "${GITHUB_OUTPUT}"
+          elif [[ "${GITHUB_EVENT_NAME}" == "push" ]] || [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            echo "command=up" >> "${GITHUB_OUTPUT}"
+          else
+            echo "command=preview" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Run Pulumi
+        uses: pulumi/actions@v6
+        with:
+          command: ${{ steps.pulumi_config.outputs.command }}
+          stack-name: dev
+          work-dir: infrastructure/observability/irm
+          comment-on-pr: true
+          comment-on-summary: true
+        env:
+          GRAFANA_URL: ${{ vars.GRAFANA_URL }}
+          GRAFANA_AUTH: ${{ secrets.GRAFANA_IRM_SERVICE_ACCOUNT_TOKEN }}
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}
+          GRAFANA_ONCALL_URL: ${{ vars.GRAFANA_ONCALL_URL }}
+          GRAFANA_ONCALL_ACCESS_TOKEN: ${{ secrets.GRAFANA_ONCALL_ACCESS_TOKEN }}
