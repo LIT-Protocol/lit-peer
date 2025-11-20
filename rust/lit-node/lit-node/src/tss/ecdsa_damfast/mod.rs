@@ -305,7 +305,7 @@ impl DamFastState {
     pub async fn generate_signature_share_from_key_id<C>(
         &mut self,
         message_bytes: &[u8],
-        root_pubkeys: &[String],
+        root_pubkeys: Option<Vec<String>>,
         presig: &PreSignature<C>,
         request_id: &[u8],
         peers: &SimplePeerCollection,

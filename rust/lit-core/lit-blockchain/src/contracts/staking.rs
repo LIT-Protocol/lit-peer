@@ -1085,18 +1085,6 @@ pub mod staking {
                     ],
                 ),
                 (
-                    ::std::borrow::ToOwned::to_owned("exit"),
-                    ::std::vec![
-                        ::ethers::core::abi::ethabi::Function {
-                            name: ::std::borrow::ToOwned::to_owned("exit"),
-                            inputs: ::std::vec![],
-                            outputs: ::std::vec![],
-                            constant: ::core::option::Option::None,
-                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::Pure,
-                        },
-                    ],
-                ),
-                (
                     ::std::borrow::ToOwned::to_owned("facetAddress"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::Function {
@@ -7344,6 +7332,25 @@ pub mod staking {
                     ],
                 ),
                 (
+                    ::std::borrow::ToOwned::to_owned("CannotKickBelowKeySetThreshold"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "CannotKickBelowKeySetThreshold",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("keySetId"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("string"),
+                                    ),
+                                },
+                            ],
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned("CannotMigrateFromValidator"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::AbiError {
@@ -9073,12 +9080,6 @@ pub mod staking {
         ) -> ::ethers::contract::builders::ContractCall<M, Epoch> {
             self.0
                 .method_hash([84, 135, 197, 119], realm_id)
-                .expect("method not found (this should never happen)")
-        }
-        ///Calls the contract's `exit` (0xe9fad8ee) function
-        pub fn exit(&self) -> ::ethers::contract::builders::ContractCall<M, ()> {
-            self.0
-                .method_hash([233, 250, 216, 238], ())
                 .expect("method not found (this should never happen)")
         }
         ///Calls the contract's `facetAddress` (0xcdffacc6) function
@@ -11099,6 +11100,26 @@ pub mod staking {
         abi = "CannotKickBelowCurrentValidatorThreshold()"
     )]
     pub struct CannotKickBelowCurrentValidatorThreshold;
+    ///Custom Error type `CannotKickBelowKeySetThreshold` with signature `CannotKickBelowKeySetThreshold(string)` and selector `0x167353a3`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "CannotKickBelowKeySetThreshold",
+        abi = "CannotKickBelowKeySetThreshold(string)"
+    )]
+    pub struct CannotKickBelowKeySetThreshold {
+        pub key_set_id: ::std::string::String,
+    }
     ///Custom Error type `CannotMigrateFromValidator` with signature `CannotMigrateFromValidator()` and selector `0x4ffa7973`
     #[derive(
         Clone,
@@ -12321,6 +12342,7 @@ pub mod staking {
         CannotKickBelowCurrentValidatorThreshold(
             CannotKickBelowCurrentValidatorThreshold,
         ),
+        CannotKickBelowKeySetThreshold(CannotKickBelowKeySetThreshold),
         CannotMigrateFromValidator(CannotMigrateFromValidator),
         CannotModifyUnfrozen(CannotModifyUnfrozen),
         CannotMoveToLockedValidatorStateBeforeEpochEnds(
@@ -12445,6 +12467,11 @@ pub mod staking {
                 data,
             ) {
                 return Ok(Self::CannotKickBelowCurrentValidatorThreshold(decoded));
+            }
+            if let Ok(decoded) = <CannotKickBelowKeySetThreshold as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::CannotKickBelowKeySetThreshold(decoded));
             }
             if let Ok(decoded) = <CannotMigrateFromValidator as ::ethers::core::abi::AbiDecode>::decode(
                 data,
@@ -12805,6 +12832,9 @@ pub mod staking {
                 Self::CannotKickBelowCurrentValidatorThreshold(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
+                Self::CannotKickBelowKeySetThreshold(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::CannotMigrateFromValidator(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
@@ -13031,6 +13061,10 @@ pub mod staking {
                 }
                 _ if selector
                     == <CannotKickBelowCurrentValidatorThreshold as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
+                    == <CannotKickBelowKeySetThreshold as ::ethers::contract::EthError>::selector() => {
                     true
                 }
                 _ if selector
@@ -13311,6 +13345,9 @@ pub mod staking {
                 Self::CannotKickBelowCurrentValidatorThreshold(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
+                Self::CannotKickBelowKeySetThreshold(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
                 Self::CannotMigrateFromValidator(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
@@ -13527,6 +13564,11 @@ pub mod staking {
     for StakingErrors {
         fn from(value: CannotKickBelowCurrentValidatorThreshold) -> Self {
             Self::CannotKickBelowCurrentValidatorThreshold(value)
+        }
+    }
+    impl ::core::convert::From<CannotKickBelowKeySetThreshold> for StakingErrors {
+        fn from(value: CannotKickBelowKeySetThreshold) -> Self {
+            Self::CannotKickBelowKeySetThreshold(value)
         }
     }
     impl ::core::convert::From<CannotMigrateFromValidator> for StakingErrors {
@@ -15684,21 +15726,6 @@ pub mod staking {
     pub struct EpochCall {
         pub realm_id: ::ethers::core::types::U256,
     }
-    ///Container type for all input parameters for the `exit` function with signature `exit()` and selector `0xe9fad8ee`
-    #[derive(
-        Clone,
-        ::ethers::contract::EthCall,
-        ::ethers::contract::EthDisplay,
-        serde::Serialize,
-        serde::Deserialize,
-        Default,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash
-    )]
-    #[ethcall(name = "exit", abi = "exit()")]
-    pub struct ExitCall;
     ///Container type for all input parameters for the `facetAddress` function with signature `facetAddress(bytes4)` and selector `0xcdffacc6`
     #[derive(
         Clone,
@@ -18386,7 +18413,6 @@ pub mod staking {
         EmitClearOfflinePhaseData(EmitClearOfflinePhaseDataCall),
         EmitCountOfflinePhaseData(EmitCountOfflinePhaseDataCall),
         Epoch(EpochCall),
-        Exit(ExitCall),
         FacetAddress(FacetAddressCall),
         FacetAddresses(FacetAddressesCall),
         FacetFunctionSelectors(FacetFunctionSelectorsCall),
@@ -18703,11 +18729,6 @@ pub mod staking {
                 data,
             ) {
                 return Ok(Self::Epoch(decoded));
-            }
-            if let Ok(decoded) = <ExitCall as ::ethers::core::abi::AbiDecode>::decode(
-                data,
-            ) {
-                return Ok(Self::Exit(decoded));
             }
             if let Ok(decoded) = <FacetAddressCall as ::ethers::core::abi::AbiDecode>::decode(
                 data,
@@ -19516,7 +19537,6 @@ pub mod staking {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::Epoch(element) => ::ethers::core::abi::AbiEncode::encode(element),
-                Self::Exit(element) => ::ethers::core::abi::AbiEncode::encode(element),
                 Self::FacetAddress(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
@@ -20008,7 +20028,6 @@ pub mod staking {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::Epoch(element) => ::core::fmt::Display::fmt(element, f),
-                Self::Exit(element) => ::core::fmt::Display::fmt(element, f),
                 Self::FacetAddress(element) => ::core::fmt::Display::fmt(element, f),
                 Self::FacetAddresses(element) => ::core::fmt::Display::fmt(element, f),
                 Self::FacetFunctionSelectors(element) => {
@@ -20484,11 +20503,6 @@ pub mod staking {
     impl ::core::convert::From<EpochCall> for StakingCalls {
         fn from(value: EpochCall) -> Self {
             Self::Epoch(value)
-        }
-    }
-    impl ::core::convert::From<ExitCall> for StakingCalls {
-        fn from(value: ExitCall) -> Self {
-            Self::Exit(value)
         }
     }
     impl ::core::convert::From<FacetAddressCall> for StakingCalls {

@@ -201,7 +201,7 @@ impl PeerState {
             &self.chain_data_config_manager.peers.peers_for_current_epoch
         };
 
-        DataVersionReader::new_unchecked(peers_in_current_epoch).epoch_length
+        DataVersionReader::read_field_unchecked(peers_in_current_epoch, |peers| peers.epoch_length)
     }
 
     pub fn realm_id(&self) -> u64 {

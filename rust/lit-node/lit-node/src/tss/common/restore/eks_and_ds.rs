@@ -186,7 +186,6 @@ where
         })
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub async fn try_restore(
         &self,
         blinder: &C::Scalar,

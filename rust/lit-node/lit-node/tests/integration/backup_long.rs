@@ -1,7 +1,8 @@
 use crate::common::ecdsa::simple_single_sign_with_hd_key;
 use crate::common::recovery_party::SiweSignature;
-use blsful::inner_types::{Group, GroupEncoding};
 use chrono::{Duration, Utc};
+use elliptic_curve::Group;
+use elliptic_curve::group::GroupEncoding;
 use ethers::prelude::{H160, LocalWallet, Signer, U256};
 use ethers::types::Address;
 use k256::ecdsa::{SigningKey, VerifyingKey};

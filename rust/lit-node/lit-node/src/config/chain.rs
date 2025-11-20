@@ -174,8 +174,8 @@ impl ChainDataConfigManager {
             generic_config: AtomicShared::new(GenericConfig {
                 token_reward_per_token_per_epoch: 0,
                 minimum_validator_count: 2,
-                max_presign_count: 25,
-                min_presign_count: 10,
+                max_presign_count: 0,
+                min_presign_count: 0,
                 peer_checking_interval_secs: 5,
                 max_presign_concurrency: 2,
                 rpc_healthcheck_enabled: false,
