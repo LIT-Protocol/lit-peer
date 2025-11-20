@@ -21,6 +21,16 @@ use vsss_rs::{
     VecFeldmanVerifierSet,
 };
 
+/// Parameters for restoring key shares
+pub struct RestoreParams<'a> {
+    pub threshold: usize,
+    pub current_peer_id: &'a PeerId,
+    pub epoch: u64,
+    pub realm_id: u64,
+    pub staker_address: &'a str,
+    pub restore_key_cache: &'a KeyCache,
+}
+
 /// Identifier for a Recovery Party member.
 pub type RecPartyMemberIdType = String;
 /// Decryption shares
@@ -60,28 +70,10 @@ where
     <C as BCA>::Point: CompressedBytes,
     C::Scalar: CompressedBytes + From<PeerId>,
 {
-    pub async fn try_restore(
-        &self,
-        threshold: usize,
-        current_peer_id: &PeerId,
-        epoch: u64,
-        realm_id: u64,
-        staker_address: &str,
-        restore_key_cache: &KeyCache,
-    ) -> Vec<String> {
+    pub async fn try_restore(&self, params: &RestoreParams<'_>) -> Vec<String> {
         let mut restored_keys = Vec::new();
         for eks_and_ds in self.eks_and_ds.iter() {
-            let restore_result = eks_and_ds
-                .try_restore(
-                    threshold,
-                    &self.blinder,
-                    current_peer_id,
-                    epoch,
-                    realm_id,
-                    staker_address,
-                    restore_key_cache,
-                )
-                .await;
+            let restore_result = eks_and_ds.try_restore(&self.blinder, params).await;
             if let Some(public_key) = restore_result {
                 restored_keys.push(public_key);
             };
@@ -194,23 +186,17 @@ where
         })
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub async fn try_restore(
         &self,
-        threshold: usize,
         blinder: &C::Scalar,
-        current_peer_id: &PeerId,
-        epoch: u64,
-        realm_id: u64,
-        staker_address: &str,
-        restore_key_cache: &KeyCache,
+        params: &RestoreParams<'_>,
     ) -> Option<String> {
         // If this key is already restored, return.
         if self.restored {
             return None;
         }
         // If this key does not have enough decryption shares, don't attempt.
-        if self.decryption_shares.len() < threshold {
+        if self.decryption_shares.len() < params.threshold {
             return None;
         }
 
@@ -266,7 +252,7 @@ where
             threshold: self.encrypted_key_share.threshold,
             total_shares: self.encrypted_key_share.total_shares,
             txn_prefix: self.encrypted_key_share.txn_prefix.clone(),
-            realm_id,
+            realm_id: params.realm_id,
             peers: self
                 .encrypted_key_share
                 .peers
@@ -279,11 +265,11 @@ where
             &self.encrypted_key_share.public_key,
             // Make sure to compute the file name with the peer id of
             // the current peer, so that it can later be found by this node.
-            current_peer_id,
-            staker_address,
-            epoch,
-            realm_id,
-            restore_key_cache,
+            params.current_peer_id,
+            params.staker_address,
+            params.epoch,
+            params.realm_id,
+            params.restore_key_cache,
             &key_share,
         )
         .await

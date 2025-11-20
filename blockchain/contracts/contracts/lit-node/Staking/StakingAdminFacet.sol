@@ -245,23 +245,6 @@ contract StakingAdminFacet is StakingCommon {
         }
     }
 
-    function setRealmConfig(
-        uint256 realmId,
-        LibStakingStorage.RealmConfig memory newConfig
-    ) external {
-        onlyOwner();
-        LibStakingStorage.RealmConfig storage config = realm(realmId)
-            .realm_configs[0];
-        config.maxConcurrentRequests = newConfig.maxConcurrentRequests;
-        config.maxPresignCount = newConfig.maxPresignCount;
-        config.minPresignCount = newConfig.minPresignCount;
-        config.peerCheckingIntervalSecs = newConfig.peerCheckingIntervalSecs;
-        config.maxPresignConcurrency = newConfig.maxPresignConcurrency;
-        config.rpcHealthcheckEnabled = newConfig.rpcHealthcheckEnabled;
-        config.minEpochForRewards = newConfig.minEpochForRewards;
-        config.permittedValidatorsOn = newConfig.permittedValidatorsOn;
-    }
-
     function adminSlashValidator(
         uint256 percentage,
         address stakerAddress
@@ -318,7 +301,6 @@ contract StakingAdminFacet is StakingCommon {
             .globalConfig[0];
         config.tokenRewardPerTokenPerEpoch = newConfig
             .tokenRewardPerTokenPerEpoch;
-        config.keyTypes = newConfig.keyTypes;
         config.minimumValidatorCount = newConfig.minimumValidatorCount;
 
         // thunderhead
@@ -374,7 +356,8 @@ contract StakingAdminFacet is StakingCommon {
             maxPresignConcurrency: 2,
             rpcHealthcheckEnabled: true,
             minEpochForRewards: 3,
-            permittedValidatorsOn: false
+            permittedValidatorsOn: false,
+            defaultKeySet: ""
         });
         uint256 epochLengthSeconds = 1 seconds;
 
@@ -561,6 +544,12 @@ contract StakingAdminFacet is StakingCommon {
         if (threshold > target_validators.length) {
             revert("Not enough new validators to replace all shadow nodes");
         }
+
+        StakingUtilsLib.checkValidatorCountAgainstKeySetsInRealm(
+            target_realmId,
+            threshold,
+            1
+        );
 
         // add the source validators to the target realm as shadow nodes
         for (uint256 i = 0; i < threshold; i++) {

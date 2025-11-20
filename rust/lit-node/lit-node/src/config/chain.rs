@@ -10,14 +10,16 @@ use moka::future::Cache;
 use rocket::serde::{Deserialize, Serialize};
 use sdd::AtomicShared;
 use sha2::{Digest, Sha256};
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::mpsc;
 use tracing::{Instrument, debug_span, info, instrument, trace, warn};
 
-use crate::error::{EC, Result, blockchain_err, conversion_err, io_err, unexpected_err_code};
-use crate::models::PeerValidator;
+use crate::error::{
+    EC, Result, blockchain_err, conversion_err, io_err, unexpected_err, unexpected_err_code,
+};
+use crate::models::{KeySetConfig, PeerValidator};
 use crate::payment::dynamic::{LitActionPriceConfig, NodePriceMeasurement};
 use crate::payment::payed_endpoint::PayedEndpoint;
 use crate::peers::peer_reviewer::MAX_COMPLAINT_REASON_VALUE;
@@ -46,13 +48,13 @@ impl std::fmt::Display for PeerGroupEpoch {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GenericConfig {
     pub token_reward_per_token_per_epoch: u64,
-    pub key_types: Vec<CurveType>,
     pub minimum_validator_count: u64,
     pub max_presign_count: u64,
     pub min_presign_count: u64,
     pub peer_checking_interval_secs: u64,
     pub max_presign_concurrency: u64,
     pub rpc_healthcheck_enabled: bool,
+    pub default_key_set: Option<String>,
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
@@ -104,10 +106,10 @@ pub struct ChainDataConfigManager {
     pub peers: PeersByRealm,
     pub shadow_peers: PeersByRealm,
     pub realm_id: AtomicShared<U256>,
+    pub key_sets: AtomicShared<BTreeMap<String, KeySetConfig>>,
     pub shadow_realm_id: AtomicShared<U256>,
     pub staker_address: AtomicShared<Address>,
     pub config: ReloadableLitConfig,
-    pub root_keys: AtomicShared<Vec<CachedRootKey>>,
     pub generic_config: AtomicShared<GenericConfig>,
     pub actions_config: AtomicShared<ActionsConfig>,
     pub complaint_reason_to_config: Cache<U256, ComplaintConfig>,
@@ -167,17 +169,17 @@ impl ChainDataConfigManager {
             realm_id: AtomicShared::new(U256::from(0)),
             staker_address: AtomicShared::new(Address::zero()),
             shadow_realm_id: AtomicShared::new(U256::from(0)),
+            key_sets: AtomicShared::new(BTreeMap::new()),
             config,
-            root_keys: AtomicShared::new(Vec::new()),
             generic_config: AtomicShared::new(GenericConfig {
                 token_reward_per_token_per_epoch: 0,
-                key_types: Vec::new(),
                 minimum_validator_count: 2,
                 max_presign_count: 0,
                 min_presign_count: 0,
                 peer_checking_interval_secs: 5,
                 max_presign_concurrency: 2,
                 rpc_healthcheck_enabled: false,
+                default_key_set: None,
             }),
             actions_config: AtomicShared::new(ActionsConfig {
                 timeout_ms: 30000,
@@ -237,7 +239,7 @@ impl ChainDataConfigManager {
                         warn!("Error setting peer and epoch config: {e:?}");
                     }
 
-                    let res = self.set_root_keys_from_chain().await;
+                    let res = self.set_key_sets_from_chain().await;
                     if let Err(e) = res {
                         warn!("Error setting root pubkeys from chain: {e:?}");
                     }
@@ -279,50 +281,68 @@ impl ChainDataConfigManager {
     }
 
     #[instrument(level = "debug", skip_all)]
-    pub(crate) async fn set_root_keys_from_chain(&self) -> Result<()> {
+    pub(crate) async fn set_key_sets_from_chain(&self) -> Result<()> {
+        let Some(realm_id) = self.get_realm_id() else {
+            return Err(unexpected_err("realm_id needs to be set", None));
+        };
         let (config, contract_resolver) = self.get_config_with_resolver()?;
         let staking_contract = contract_resolver.staking_contract(&config).await?;
+
+        let block_chain_key_sets =
+            staking_contract.key_sets().call().await.map_err(|e| {
+                blockchain_err(e, Some("Unable to get key sets from contract".into()))
+            })?;
         let staking_contract_address = staking_contract.address();
         let contract = contract_resolver.pub_key_router_contract(&config).await?;
 
-        let root_keys: Vec<lit_blockchain::contracts::pubkey_router::RootKey> = contract
-            .get_root_keys(
-                staking_contract_address,
-                crate::tss::util::DEFAULT_KEY_SET_NAME.to_string(),
-            )
-            .call()
-            .await
-            .map_err(|e| blockchain_err(e, Some("Unable to get root keys from contract".into())))?;
-
-        let mut cache = Vec::with_capacity(root_keys.len());
-        for k in root_keys.into_iter() {
-            cache.push(CachedRootKey {
-                public_key: bytes_to_hex(&k.pubkey),
-                curve_type: CurveType::try_from(k.key_type).map_err(|e| io_err(e, None))?,
-            });
+        let mut key_sets = BTreeMap::new();
+        for key_set_config in block_chain_key_sets {
+            trace!("Fetching root keys for key set: {:?}", key_set_config);
+            let root_keys = contract
+                .get_root_keys(staking_contract_address, key_set_config.identifier.clone())
+                .call()
+                .await
+                .map_err(|e| {
+                    let revert = decode_revert(&e, contract.abi());
+                    blockchain_err(
+                        e,
+                        Some(format!("Unable to get root keys from contract: {}", revert)),
+                    )
+                })?;
+            let mut key_set = KeySetConfig::try_from(key_set_config)?;
+            for k in root_keys.into_iter() {
+                let curve_type = CurveType::try_from(k.key_type).map_err(|e| io_err(e, None))?;
+                let public_key = bytes_to_hex(&k.pubkey);
+                let public_key_clone = public_key.clone();
+                key_set
+                    .root_keys_by_curve
+                    .entry(curve_type)
+                    .and_modify(|pubkeys| pubkeys.push(public_key))
+                    .or_insert_with(|| vec![public_key_clone]);
+            }
+            let entry = key_sets.entry(key_set.identifier.clone());
+            let key_set_clone = key_set.clone();
+            entry.and_modify(|v| *v = key_set).or_insert(key_set_clone);
         }
-        DataVersionWriter::store(&self.root_keys, cache);
+        DataVersionWriter::store(&self.key_sets, key_sets);
+
         Ok(())
     }
 
     pub fn get_realm_id(&self) -> Option<U256> {
-        let realm_id = DataVersionReader::new(&self.realm_id).map(|r| *r);
-        if realm_id == Some(U256::zero()) {
+        let realm_id = DataVersionReader::new(&self.realm_id).map(|r| *r)?;
+        if realm_id.is_zero() {
             return None;
         }
-        realm_id
+        Some(realm_id)
     }
 
     pub fn get_shadow_realm_id(&self) -> Option<U256> {
-        let realm_id = DataVersionReader::new(&self.shadow_realm_id).map(|r| *r);
-        if realm_id == Some(U256::zero()) {
+        let realm_id = DataVersionReader::new(&self.shadow_realm_id).map(|r| *r)?;
+        if realm_id.is_zero() {
             return None;
         }
-        realm_id
-    }
-
-    pub fn root_keys(&self) -> Vec<CachedRootKey> {
-        DataVersionReader::new_unchecked(&self.root_keys).clone()
+        Some(realm_id)
     }
 
     pub fn get_actions_config(&self) -> ActionsConfig {
@@ -348,30 +368,17 @@ impl ChainDataConfigManager {
         DataVersionWriter::store(&self.staker_address, my_staker_address);
 
         let realm_id = staking
-            .get_realm_id_for_staker_address(my_staker_address)
-            .call()
-            .await
-            .map_err(|e| {
-                blockchain_err(
-                    decode_revert(&e, staking.abi()),
-                    Some("Unable to contact chain to get realm id for node in the current/next epoch".into()),
-                )
-            });
+                .get_realm_id_for_staker_address(my_staker_address)
+                .call()
+                .await
+                .map_err(|e| {
+                    blockchain_err(
+                        decode_revert(&e, staking.abi()),
+                        Some(format!("Unable to contact chain to get realm id for node with staker {:?} in the current/next epoch", my_staker_address)),
+                    )
+                })?;
 
-        let realm_id = match realm_id {
-            Ok(realm_id) => realm_id,
-            Err(e) => {
-                return Err(blockchain_err(
-                    anyhow::Error::msg(format!(
-                        "Unable to get realm id for node with staker {:?} in the current/next epoch",
-                        my_staker_address
-                    )),
-                    None,
-                ));
-            }
-        };
-
-        if realm_id == U256::zero() {
+        if realm_id.is_zero() {
             // return an error if the realm id is zero
             return Err(blockchain_err(
                 anyhow::Error::msg(
@@ -391,7 +398,7 @@ impl ChainDataConfigManager {
 
         let shadow_realm_id = shadow_realm_id.unwrap_or_else(|e| U256::from(0));
 
-        if shadow_realm_id != U256::zero() {
+        if !shadow_realm_id.is_zero() {
             DataVersionWriter::store(&self.shadow_realm_id, shadow_realm_id);
         }
 
@@ -411,7 +418,7 @@ impl ChainDataConfigManager {
 
         trace!("set_peer_and_epoch_data_from_chain");
 
-        if realm_id != U256::from(0) {
+        if !realm_id.is_zero() {
             self.set_peers_and_epoch_data_from_chain_by_realm(realm_id, &self.peers)
                 .await?;
         }
@@ -430,12 +437,8 @@ impl ChainDataConfigManager {
         trace!("set_dynamic_payment_config_from_chain()");
 
         let configs = self.get_lit_action_price_configs().await?;
+        DataVersionWriter::store(&self.dynamic_lit_action_price_configs, configs);
 
-        let mut dynamic_payment_config =
-            DataVersionWriter::new_unchecked(&self.dynamic_lit_action_price_configs);
-        dynamic_payment_config.clear();
-        dynamic_payment_config.extend(configs.into_iter());
-        dynamic_payment_config.commit();
         Ok(())
     }
 
@@ -630,11 +633,6 @@ impl ChainDataConfigManager {
             .token_reward_per_token_per_epoch
             .as_u64();
 
-        let key_types = staking_contract_config
-            .key_types
-            .iter()
-            .map(|k| CurveType::try_from(*k).expect("Key Types in Staking Config should be valid."))
-            .collect::<Vec<CurveType>>();
         let minimum_validator_count = staking_contract_config.minimum_validator_count.as_u64();
 
         let realm_config = contract.realm_config(realm_id).call().await.map_err(|e| {
@@ -646,15 +644,20 @@ impl ChainDataConfigManager {
         let peer_checking_interval_secs = realm_config.peer_checking_interval_secs.as_u64();
         let max_presign_concurrency = realm_config.max_presign_concurrency.as_u64();
         let rpc_healthcheck_enabled = realm_config.rpc_healthcheck_enabled;
+        let default_key_set = if realm_config.default_key_set.is_empty() {
+            None
+        } else {
+            Some(realm_config.default_key_set)
+        };
 
         let mut generic_config = DataVersionWriter::new_unchecked(&self.generic_config);
-        generic_config.key_types = key_types;
         generic_config.minimum_validator_count = minimum_validator_count;
         generic_config.max_presign_count = max_presign_count;
         generic_config.min_presign_count = min_presign_count;
         generic_config.peer_checking_interval_secs = peer_checking_interval_secs;
         generic_config.max_presign_concurrency = max_presign_concurrency;
         generic_config.rpc_healthcheck_enabled = rpc_healthcheck_enabled;
+        generic_config.default_key_set = default_key_set;
 
         let lit_actions_config =
             contract
@@ -813,7 +816,7 @@ impl ChainDataConfigManager {
         current_or_next: PeerGroupEpoch,
         realm_id: U256,
     ) -> Result<Vec<PeerValidator>> {
-        if realm_id == U256::from(0) {
+        if realm_id.is_zero() {
             return Ok(vec![]);
         }
 

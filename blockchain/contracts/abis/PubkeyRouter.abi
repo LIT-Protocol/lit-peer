@@ -497,6 +497,12 @@
         "internalType": "bytes32",
         "name": "derivedKeyId",
         "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "keySetIdentifier",
+        "type": "string"
       }
     ],
     "name": "PubkeyRoutingDataSet",
@@ -614,6 +620,156 @@
       }
     ],
     "name": "adminSetRootKeys",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getTrustedForwarder",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newResolverAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setContractResolver",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "pubkey",
+        "type": "bytes"
+      },
+      {
+        "internalType": "address",
+        "name": "stakingContractAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "keyType",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "derivedKeyId",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "keySetIdentifier",
+        "type": "string"
+      }
+    ],
+    "name": "setRoutingData",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes",
+        "name": "pubkey",
+        "type": "bytes"
+      },
+      {
+        "internalType": "address",
+        "name": "stakingContract",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "keyType",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "derivedKeyId",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "keySetIdentifier",
+        "type": "string"
+      }
+    ],
+    "name": "setRoutingDataAsAdmin",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "forwarder",
+        "type": "address"
+      }
+    ],
+    "name": "setTrustedForwarder",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "stakingContractAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "identifier",
+        "type": "string"
+      },
+      {
+        "components": [
+          {
+            "internalType": "bytes",
+            "name": "pubkey",
+            "type": "bytes"
+          },
+          {
+            "internalType": "uint256",
+            "name": "keyType",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct IPubkeyRouter.RootKey[]",
+        "name": "newRootKeys",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "voteForRootKeys",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -916,24 +1072,16 @@
             "internalType": "bytes32",
             "name": "derivedKeyId",
             "type": "bytes32"
+          },
+          {
+            "internalType": "string",
+            "name": "keySetIdentifier",
+            "type": "string"
           }
         ],
         "internalType": "struct LibPubkeyRouterStorage.PubkeyRoutingData",
         "name": "",
         "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getTrustedForwarder",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -984,6 +1132,11 @@
             "internalType": "bytes32",
             "name": "derivedKeyId",
             "type": "bytes32"
+          },
+          {
+            "internalType": "string",
+            "name": "keySetIdentifier",
+            "type": "string"
           }
         ],
         "internalType": "struct LibPubkeyRouterStorage.PubkeyRoutingData",
@@ -992,133 +1145,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "newResolverAddress",
-        "type": "address"
-      }
-    ],
-    "name": "setContractResolver",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "tokenId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes",
-        "name": "pubkey",
-        "type": "bytes"
-      },
-      {
-        "internalType": "address",
-        "name": "stakingContractAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "keyType",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "derivedKeyId",
-        "type": "bytes32"
-      }
-    ],
-    "name": "setRoutingData",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "tokenId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes",
-        "name": "pubkey",
-        "type": "bytes"
-      },
-      {
-        "internalType": "address",
-        "name": "stakingContract",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "keyType",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "derivedKeyId",
-        "type": "bytes32"
-      }
-    ],
-    "name": "setRoutingDataAsAdmin",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "forwarder",
-        "type": "address"
-      }
-    ],
-    "name": "setTrustedForwarder",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "stakingContractAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "string",
-        "name": "identifier",
-        "type": "string"
-      },
-      {
-        "components": [
-          {
-            "internalType": "bytes",
-            "name": "pubkey",
-            "type": "bytes"
-          },
-          {
-            "internalType": "uint256",
-            "name": "keyType",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct IPubkeyRouter.RootKey[]",
-        "name": "newRootKeys",
-        "type": "tuple[]"
-      }
-    ],
-    "name": "voteForRootKeys",
-    "outputs": [],
-    "stateMutability": "nonpayable",
     "type": "function"
   }
 ]

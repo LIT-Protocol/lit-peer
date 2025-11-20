@@ -1,0 +1,7 @@
+config:
+  gcp:project: naga-staging-cb97ce8
+  lit:chain-name: yellowstone
+  lit:contracts-pkp: 0x991d56EdC98a0DAeb93E91F70588598f79875701
+  lit:contracts-staking: 0x781C6d227dA4D058890208B68DDA1da8f6EBbE54
+  lit:network-probe-private-key:
+    secure: AAABANV3lkriAyUDfMlOT8hRoWXAoKQmBm7EX/XinwNI/YbnEnyW+hQOJFsb9/oCPg1pBbAaMdclsUVDsvptL1ACskds64RAX1AiuPlGkWlMn+gcjGVYEXz0HYBCkbUzD1c=

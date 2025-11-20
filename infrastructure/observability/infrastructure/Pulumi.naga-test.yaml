@@ -1,0 +1,7 @@
+config:
+  gcp:project: naga-test-feebcdc
+  lit:chain-name: yellowstone
+  lit:contracts-pkp: 0xAf49B3Dd17F0D251E7E0ED510b22B7624c6878CA
+  lit:contracts-staking: 0x28C626d92c5061AdeeDF59d483304b8d35613212
+  lit:network-probe-private-key:
+    secure: AAABABx/rVgLldheyVay7vPaJZxpRGXzxmG10MdadekcAxnVDqS6ar0nx+vPykWSSHVexxC94xk2I4C/wuH6u7uV06EqAFRdzfvQaUHrYBWCbTkukUYk+G7nqQEIkgFwFcY=

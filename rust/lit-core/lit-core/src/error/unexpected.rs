@@ -69,16 +69,14 @@ where
     {
         match self {
             Ok(v) => Ok(v),
-            Err(e) => {
-                return Err(Error::new(
-                    Some(Kind::Unexpected),
-                    err_pkg_name(),
-                    Some(format!("unexpected err in Result: {}", msg.as_ref())),
-                    None,
-                    Some(e),
-                    Some(Location::caller()),
-                ));
-            }
+            Err(e) => Err(Error::new(
+                Some(Kind::Unexpected),
+                err_pkg_name(),
+                Some(format!("unexpected err in Result: {}", msg.as_ref())),
+                None,
+                Some(e),
+                Some(Location::caller()),
+            )),
         }
     }
 
@@ -91,16 +89,14 @@ where
     {
         match self {
             Ok(v) => Ok(v),
-            Err(e) => {
-                return Err(Error::new(
-                    Some(Kind::Unexpected),
-                    err_pkg_name(),
-                    Some(format!("unexpected err in Result: {}", msg.as_ref())),
-                    Some(Arc::new(code)),
-                    Some(e),
-                    Some(Location::caller()),
-                ));
-            }
+            Err(e) => Err(Error::new(
+                Some(Kind::Unexpected),
+                err_pkg_name(),
+                Some(format!("unexpected err in Result: {}", msg.as_ref())),
+                Some(Arc::new(code)),
+                Some(e),
+                Some(Location::caller()),
+            )),
         }
     }
 }

@@ -201,15 +201,20 @@ impl PeerState {
             &self.chain_data_config_manager.peers.peers_for_current_epoch
         };
 
-        DataVersionReader::new_unchecked(peers_in_current_epoch).epoch_length
+        DataVersionReader::read_field_unchecked(peers_in_current_epoch, |peers| peers.epoch_length)
     }
 
     pub fn realm_id(&self) -> u64 {
-        DataVersionReader::new_unchecked(&self.chain_data_config_manager.realm_id).as_u64()
+        DataVersionReader::read_field_unchecked(&self.chain_data_config_manager.realm_id, |realm| {
+            realm.as_u64()
+        })
     }
 
     pub fn shadow_realm_id(&self) -> u64 {
-        DataVersionReader::new_unchecked(&self.chain_data_config_manager.shadow_realm_id).as_u64()
+        DataVersionReader::read_field_unchecked(
+            &self.chain_data_config_manager.shadow_realm_id,
+            |realm| realm.as_u64(),
+        )
     }
 
     pub fn peer_id_in_current_epoch(&self) -> Result<PeerId> {
@@ -218,10 +223,10 @@ impl PeerState {
     }
 
     pub fn epoch(&self) -> u64 {
-        DataVersionReader::new_unchecked(
+        DataVersionReader::read_field_unchecked(
             &self.chain_data_config_manager.peers.peers_for_current_epoch,
+            |peers| peers.epoch_number,
         )
-        .epoch_number
     }
 
     #[instrument(level = "debug", skip(self))]

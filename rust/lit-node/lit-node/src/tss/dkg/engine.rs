@@ -99,10 +99,17 @@ impl DkgEngine {
     }
 
     /// Add a DKG to be computed
-    pub fn add_dkg(&mut self, dkg_id: &str, curve_type: CurveType, pubkey: Option<String>) {
+    pub fn add_dkg(
+        &mut self,
+        dkg_id: &str,
+        key_set_id: &str,
+        curve_type: CurveType,
+        pubkey: Option<String>,
+    ) {
         let dkg_data = DkgData {
             dkg_id: dkg_id.to_string(),
             curve_type,
+            key_set_id: key_set_id.to_string(),
             pubkey: pubkey.clone(),
             result: None,
         };
@@ -299,7 +306,7 @@ impl DkgEngine {
             }
         }
 
-        let txn_prefix = format!("{}.{}_keyset1", root_dkg_id, self.dkg_type);
+        let txn_prefix = format!("{}.{}_keyset", root_dkg_id, self.dkg_type);
         trace!(
             "Node {} - Using DKG txn prefix: {}, realm_id: {}",
             self_peer.peer_id, txn_prefix, realm_id
@@ -940,28 +947,22 @@ impl DkgEngine {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct DkgData {
     pub(crate) dkg_id: String,
+    pub(crate) key_set_id: String,
     pub(crate) curve_type: CurveType,
     pub(crate) pubkey: Option<String>,
     pub(crate) result: Option<DkgResult>,
 }
 
-impl Default for DkgData {
-    fn default() -> Self {
-        Self {
-            dkg_id: "".to_string(),
-            curve_type: CurveType::BLS,
-            pubkey: None,
-            result: None,
-        }
-    }
-}
-
 impl DkgData {
     pub fn dkg_id(&self) -> &str {
         &self.dkg_id
+    }
+
+    pub fn key_set_id(&self) -> &str {
+        &self.key_set_id
     }
 
     pub fn curve_type(&self) -> CurveType {

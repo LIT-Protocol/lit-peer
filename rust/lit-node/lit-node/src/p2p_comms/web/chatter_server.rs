@@ -183,7 +183,6 @@ impl ChatterService for ChatterServer {
             }
         };
         let public_key = libsecp256k1::PublicKey::from_secret_key(&secret_key);
-
         let mut peer_item = PeerItem {
             id: peer_state.id,
             public_key,

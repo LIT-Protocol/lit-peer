@@ -1,0 +1,64 @@
+name: Infrastructure - Project Manager
+on:
+  # Run preview on pull requests
+  pull_request:
+    paths:
+      - 'infrastructure/project-manager/**'
+      - .github/workflows/base-infra.yml
+  # Run up when a push is made to the develop branch
+  push:
+    branches:
+      - develop
+    paths:
+      - 'infrastructure/project-manager/**'
+      - .github/workflows/base-infra.yml
+  # Run up when manually triggered
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: infrastructure/project-manager
+
+jobs:
+  infrastructure:
+    name: Preview (or Apply To Dev)
+    runs-on: ubuntu-latest
+    environment: project-manager
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          cache: 'yarn'
+          cache-dependency-path: infrastructure/project-manager/yarn.lock
+          node-version-file: infrastructure/project-manager/package.json
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+      - run: yarn install
+
+      # Determine Pulumi action
+      - name: Determine Pulumi Action
+        id: pulumi_config
+        shell: bash
+        run: |
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            echo "command=preview" >> "${GITHUB_OUTPUT}"
+          elif [[ "${GITHUB_EVENT_NAME}" == "push" ]] || [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            echo "command=up" >> "${GITHUB_OUTPUT}"
+          else
+            echo "command=preview" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Run Pulumi
+        uses: pulumi/actions@v6
+        with:
+          command: ${{ steps.pulumi_config.outputs.command }}
+          stack-name: base
+          work-dir: infrastructure/project-manager
+          comment-on-pr: true
+          comment-on-summary: true
+        env:
+          PULUMI_ACCESS_TOKEN: ${{ secrets.PULUMI_ACCESS_TOKEN }}

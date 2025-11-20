@@ -10,6 +10,7 @@ use lit_node::auth::auth_material::JsonAuthSigExtended;
 use lit_node::endpoints::auth_sig::LITNODE_ADMIN_RES;
 use lit_node::peers::peer_state::models::NetworkState;
 use lit_node::tss::common::restore::NodeRecoveryStatus;
+use lit_node::tss::util::DEFAULT_KEY_SET_NAME;
 use lit_node_core::JsonAuthSig;
 use lit_node_testnet::TestSetupBuilder;
 use lit_node_testnet::testnet::Testnet;
@@ -26,6 +27,12 @@ const TARBALL_NAME: &str = "lit_backup_encrypted_keys.tar.gz";
 
 #[tokio::test]
 async fn recover_datil_into_naga_test() {
+    unsafe {
+        std::env::set_var(
+            "IPFS_API_KEY",
+            "NkOJGWDsFcLTn7gXH37bS85HIMJJ4-d-r2qVHJWBXOXyxJYtG7FbyXATZCEAyf2s",
+        );
+    }
     std::thread::Builder::new()
         .stack_size(128 * 1024 * 1024) // 32MB stack
         .spawn(move || {
@@ -70,12 +77,12 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
         .pubkey_router
         .admin_reset_root_keys(
             testnet.actions().contracts().staking.address(),
-            "naga-keyset1".to_string(),
+            DEFAULT_KEY_SET_NAME.to_string(),
         );
     tx.send().await.unwrap();
     let tx = validator_collection.actions().contracts().pubkey_router.admin_set_root_keys(
         testnet.actions().contracts().staking.address(),
-        "naga-keyset1".to_string(),
+        DEFAULT_KEY_SET_NAME.to_string(),
         vec![
             RootKey {
                 key_type: U256::from(1),

@@ -1085,18 +1085,6 @@ pub mod staking {
                     ],
                 ),
                 (
-                    ::std::borrow::ToOwned::to_owned("exit"),
-                    ::std::vec![
-                        ::ethers::core::abi::ethabi::Function {
-                            name: ::std::borrow::ToOwned::to_owned("exit"),
-                            inputs: ::std::vec![],
-                            outputs: ::std::vec![],
-                            constant: ::core::option::Option::None,
-                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::Pure,
-                        },
-                    ],
-                ),
-                (
                     ::std::borrow::ToOwned::to_owned("facetAddress"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::Function {
@@ -1708,41 +1696,13 @@ pub mod staking {
                                                     ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                                 ),
                                             ),
-                                            ::ethers::core::abi::ethabi::ParamType::Array(
-                                                ::std::boxed::Box::new(
-                                                    ::ethers::core::abi::ethabi::ParamType::Address,
-                                                ),
-                                            ),
+                                            ::ethers::core::abi::ethabi::ParamType::Bytes,
                                         ],
                                     ),
                                     internal_type: ::core::option::Option::Some(
                                         ::std::borrow::ToOwned::to_owned(
                                             "struct LibStakingStorage.KeySetConfig",
                                         ),
-                                    ),
-                                },
-                            ],
-                            constant: ::core::option::Option::None,
-                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
-                        },
-                    ],
-                ),
-                (
-                    ::std::borrow::ToOwned::to_owned("getKeyTypes"),
-                    ::std::vec![
-                        ::ethers::core::abi::ethabi::Function {
-                            name: ::std::borrow::ToOwned::to_owned("getKeyTypes"),
-                            inputs: ::std::vec![],
-                            outputs: ::std::vec![
-                                ::ethers::core::abi::ethabi::Param {
-                                    name: ::std::string::String::new(),
-                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
-                                        ::std::boxed::Box::new(
-                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
-                                        ),
-                                    ),
-                                    internal_type: ::core::option::Option::Some(
-                                        ::std::borrow::ToOwned::to_owned("uint256[]"),
                                     ),
                                 },
                             ],
@@ -3542,11 +3502,6 @@ pub mod staking {
                                     kind: ::ethers::core::abi::ethabi::ParamType::Tuple(
                                         ::std::vec![
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
-                                            ::ethers::core::abi::ethabi::ParamType::Array(
-                                                ::std::boxed::Box::new(
-                                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
-                                                ),
-                                            ),
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
@@ -4170,11 +4125,7 @@ pub mod staking {
                                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                                         ),
                                                     ),
-                                                    ::ethers::core::abi::ethabi::ParamType::Array(
-                                                        ::std::boxed::Box::new(
-                                                            ::ethers::core::abi::ethabi::ParamType::Address,
-                                                        ),
-                                                    ),
+                                                    ::ethers::core::abi::ethabi::ParamType::Bytes,
                                                 ],
                                             ),
                                         ),
@@ -4831,6 +4782,7 @@ pub mod staking {
                                             ::ethers::core::abi::ethabi::ParamType::Bool,
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                             ::ethers::core::abi::ethabi::ParamType::Bool,
+                                            ::ethers::core::abi::ethabi::ParamType::String,
                                         ],
                                     ),
                                     internal_type: ::core::option::Option::Some(
@@ -5121,11 +5073,6 @@ pub mod staking {
                                     kind: ::ethers::core::abi::ethabi::ParamType::Tuple(
                                         ::std::vec![
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
-                                            ::ethers::core::abi::ethabi::ParamType::Array(
-                                                ::std::boxed::Box::new(
-                                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
-                                                ),
-                                            ),
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
@@ -5428,11 +5375,7 @@ pub mod staking {
                                                     ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                                 ),
                                             ),
-                                            ::ethers::core::abi::ethabi::ParamType::Array(
-                                                ::std::boxed::Box::new(
-                                                    ::ethers::core::abi::ethabi::ParamType::Address,
-                                                ),
-                                            ),
+                                            ::ethers::core::abi::ethabi::ParamType::Bytes,
                                         ],
                                     ),
                                     internal_type: ::core::option::Option::Some(
@@ -5687,6 +5630,7 @@ pub mod staking {
                                             ::ethers::core::abi::ethabi::ParamType::Bool,
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                             ::ethers::core::abi::ethabi::ParamType::Bool,
+                                            ::ethers::core::abi::ethabi::ParamType::String,
                                         ],
                                     ),
                                     internal_type: ::core::option::Option::Some(
@@ -6412,96 +6356,6 @@ pub mod staking {
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                         ],
                                     ),
-                                    indexed: false,
-                                },
-                            ],
-                            anonymous: false,
-                        },
-                    ],
-                ),
-                (
-                    ::std::borrow::ToOwned::to_owned("ConfigSet"),
-                    ::std::vec![
-                        ::ethers::core::abi::ethabi::Event {
-                            name: ::std::borrow::ToOwned::to_owned("ConfigSet"),
-                            inputs: ::std::vec![
-                                ::ethers::core::abi::ethabi::EventParam {
-                                    name: ::std::borrow::ToOwned::to_owned(
-                                        "newTokenRewardPerTokenPerEpoch",
-                                    ),
-                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
-                                        256usize,
-                                    ),
-                                    indexed: false,
-                                },
-                                ::ethers::core::abi::ethabi::EventParam {
-                                    name: ::std::borrow::ToOwned::to_owned("newKeyTypes"),
-                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
-                                        ::std::boxed::Box::new(
-                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
-                                        ),
-                                    ),
-                                    indexed: false,
-                                },
-                                ::ethers::core::abi::ethabi::EventParam {
-                                    name: ::std::borrow::ToOwned::to_owned(
-                                        "newMinimumValidatorCount",
-                                    ),
-                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
-                                        256usize,
-                                    ),
-                                    indexed: false,
-                                },
-                                ::ethers::core::abi::ethabi::EventParam {
-                                    name: ::std::borrow::ToOwned::to_owned(
-                                        "newMaxConcurrentRequests",
-                                    ),
-                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
-                                        256usize,
-                                    ),
-                                    indexed: false,
-                                },
-                                ::ethers::core::abi::ethabi::EventParam {
-                                    name: ::std::borrow::ToOwned::to_owned(
-                                        "newMaxPresignCount",
-                                    ),
-                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
-                                        256usize,
-                                    ),
-                                    indexed: false,
-                                },
-                                ::ethers::core::abi::ethabi::EventParam {
-                                    name: ::std::borrow::ToOwned::to_owned(
-                                        "newMinPresignCount",
-                                    ),
-                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
-                                        256usize,
-                                    ),
-                                    indexed: false,
-                                },
-                                ::ethers::core::abi::ethabi::EventParam {
-                                    name: ::std::borrow::ToOwned::to_owned(
-                                        "newPeerCheckingIntervalSecs",
-                                    ),
-                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
-                                        256usize,
-                                    ),
-                                    indexed: false,
-                                },
-                                ::ethers::core::abi::ethabi::EventParam {
-                                    name: ::std::borrow::ToOwned::to_owned(
-                                        "newMaxPresignConcurrency",
-                                    ),
-                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
-                                        256usize,
-                                    ),
-                                    indexed: false,
-                                },
-                                ::ethers::core::abi::ethabi::EventParam {
-                                    name: ::std::borrow::ToOwned::to_owned(
-                                        "newRpcHealthcheckEnabled",
-                                    ),
-                                    kind: ::ethers::core::abi::ethabi::ParamType::Bool,
                                     indexed: false,
                                 },
                             ],
@@ -7474,6 +7328,25 @@ pub mod staking {
                                 "CannotKickBelowCurrentValidatorThreshold",
                             ),
                             inputs: ::std::vec![],
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("CannotKickBelowKeySetThreshold"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "CannotKickBelowKeySetThreshold",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("keySetId"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("string"),
+                                    ),
+                                },
+                            ],
                         },
                     ],
                 ),
@@ -9209,12 +9082,6 @@ pub mod staking {
                 .method_hash([84, 135, 197, 119], realm_id)
                 .expect("method not found (this should never happen)")
         }
-        ///Calls the contract's `exit` (0xe9fad8ee) function
-        pub fn exit(&self) -> ::ethers::contract::builders::ContractCall<M, ()> {
-            self.0
-                .method_hash([233, 250, 216, 238], ())
-                .expect("method not found (this should never happen)")
-        }
         ///Calls the contract's `facetAddress` (0xcdffacc6) function
         pub fn facet_address(
             &self,
@@ -9381,17 +9248,6 @@ pub mod staking {
         ) -> ::ethers::contract::builders::ContractCall<M, KeySetConfig> {
             self.0
                 .method_hash([163, 5, 229, 254], identifier)
-                .expect("method not found (this should never happen)")
-        }
-        ///Calls the contract's `getKeyTypes` (0xf1b877a8) function
-        pub fn get_key_types(
-            &self,
-        ) -> ::ethers::contract::builders::ContractCall<
-            M,
-            ::std::vec::Vec<::ethers::core::types::U256>,
-        > {
-            self.0
-                .method_hash([241, 184, 119, 168], ())
                 .expect("method not found (this should never happen)")
         }
         ///Calls the contract's `getKickedValidators` (0x4b6afbbb) function
@@ -10373,13 +10229,13 @@ pub mod staking {
                 .method_hash([68, 14, 141, 34], (reason, config))
                 .expect("method not found (this should never happen)")
         }
-        ///Calls the contract's `setConfig` (0x077b0d40) function
+        ///Calls the contract's `setConfig` (0xd94c412d) function
         pub fn set_config(
             &self,
             new_config: GlobalConfig,
         ) -> ::ethers::contract::builders::ContractCall<M, ()> {
             self.0
-                .method_hash([7, 123, 13, 64], (new_config,))
+                .method_hash([217, 76, 65, 45], (new_config,))
                 .expect("method not found (this should never happen)")
         }
         ///Calls the contract's `setContractResolver` (0xf95d71b1) function
@@ -10461,13 +10317,13 @@ pub mod staking {
                 .method_hash([44, 128, 181, 73], (ip, ipv_6, port, operator_address))
                 .expect("method not found (this should never happen)")
         }
-        ///Calls the contract's `setKeySet` (0x74d0be87) function
+        ///Calls the contract's `setKeySet` (0x774d0151) function
         pub fn set_key_set(
             &self,
             update: KeySetConfig,
         ) -> ::ethers::contract::builders::ContractCall<M, ()> {
             self.0
-                .method_hash([116, 208, 190, 135], (update,))
+                .method_hash([119, 77, 1, 81], (update,))
                 .expect("method not found (this should never happen)")
         }
         ///Calls the contract's `setLitActionConfig` (0xe7d1f9a1) function
@@ -10529,14 +10385,14 @@ pub mod staking {
                 .method_hash([116, 162, 44, 81], (realm_id, permitted_validators_on))
                 .expect("method not found (this should never happen)")
         }
-        ///Calls the contract's `setRealmConfig` (0x7d35690f) function
+        ///Calls the contract's `setRealmConfig` (0x006d27b6) function
         pub fn set_realm_config(
             &self,
             realm_id: ::ethers::core::types::U256,
             new_config: RealmConfig,
         ) -> ::ethers::contract::builders::ContractCall<M, ()> {
             self.0
-                .method_hash([125, 53, 105, 15], (realm_id, new_config))
+                .method_hash([0, 109, 39, 182], (realm_id, new_config))
                 .expect("method not found (this should never happen)")
         }
         ///Calls the contract's `setTokenTotalSupplyStandIn` (0xe941a733) function
@@ -10758,16 +10614,6 @@ pub mod staking {
             ::std::sync::Arc<M>,
             M,
             ComplaintConfigSetFilter,
-        > {
-            self.0.event()
-        }
-        ///Gets the contract's `ConfigSet` event
-        pub fn config_set_filter(
-            &self,
-        ) -> ::ethers::contract::builders::Event<
-            ::std::sync::Arc<M>,
-            M,
-            ConfigSetFilter,
         > {
             self.0.event()
         }
@@ -11254,6 +11100,26 @@ pub mod staking {
         abi = "CannotKickBelowCurrentValidatorThreshold()"
     )]
     pub struct CannotKickBelowCurrentValidatorThreshold;
+    ///Custom Error type `CannotKickBelowKeySetThreshold` with signature `CannotKickBelowKeySetThreshold(string)` and selector `0x167353a3`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "CannotKickBelowKeySetThreshold",
+        abi = "CannotKickBelowKeySetThreshold(string)"
+    )]
+    pub struct CannotKickBelowKeySetThreshold {
+        pub key_set_id: ::std::string::String,
+    }
     ///Custom Error type `CannotMigrateFromValidator` with signature `CannotMigrateFromValidator()` and selector `0x4ffa7973`
     #[derive(
         Clone,
@@ -12476,6 +12342,7 @@ pub mod staking {
         CannotKickBelowCurrentValidatorThreshold(
             CannotKickBelowCurrentValidatorThreshold,
         ),
+        CannotKickBelowKeySetThreshold(CannotKickBelowKeySetThreshold),
         CannotMigrateFromValidator(CannotMigrateFromValidator),
         CannotModifyUnfrozen(CannotModifyUnfrozen),
         CannotMoveToLockedValidatorStateBeforeEpochEnds(
@@ -12600,6 +12467,11 @@ pub mod staking {
                 data,
             ) {
                 return Ok(Self::CannotKickBelowCurrentValidatorThreshold(decoded));
+            }
+            if let Ok(decoded) = <CannotKickBelowKeySetThreshold as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::CannotKickBelowKeySetThreshold(decoded));
             }
             if let Ok(decoded) = <CannotMigrateFromValidator as ::ethers::core::abi::AbiDecode>::decode(
                 data,
@@ -12960,6 +12832,9 @@ pub mod staking {
                 Self::CannotKickBelowCurrentValidatorThreshold(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
+                Self::CannotKickBelowKeySetThreshold(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::CannotMigrateFromValidator(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
@@ -13186,6 +13061,10 @@ pub mod staking {
                 }
                 _ if selector
                     == <CannotKickBelowCurrentValidatorThreshold as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
+                    == <CannotKickBelowKeySetThreshold as ::ethers::contract::EthError>::selector() => {
                     true
                 }
                 _ if selector
@@ -13466,6 +13345,9 @@ pub mod staking {
                 Self::CannotKickBelowCurrentValidatorThreshold(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
+                Self::CannotKickBelowKeySetThreshold(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
                 Self::CannotMigrateFromValidator(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
@@ -13682,6 +13564,11 @@ pub mod staking {
     for StakingErrors {
         fn from(value: CannotKickBelowCurrentValidatorThreshold) -> Self {
             Self::CannotKickBelowCurrentValidatorThreshold(value)
+        }
+    }
+    impl ::core::convert::From<CannotKickBelowKeySetThreshold> for StakingErrors {
+        fn from(value: CannotKickBelowKeySetThreshold) -> Self {
+            Self::CannotKickBelowKeySetThreshold(value)
         }
     }
     impl ::core::convert::From<CannotMigrateFromValidator> for StakingErrors {
@@ -14094,33 +13981,6 @@ pub mod staking {
     pub struct ComplaintConfigSetFilter {
         pub reason: ::ethers::core::types::U256,
         pub config: ComplaintConfig,
-    }
-    #[derive(
-        Clone,
-        ::ethers::contract::EthEvent,
-        ::ethers::contract::EthDisplay,
-        serde::Serialize,
-        serde::Deserialize,
-        Default,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash
-    )]
-    #[ethevent(
-        name = "ConfigSet",
-        abi = "ConfigSet(uint256,uint256[],uint256,uint256,uint256,uint256,uint256,uint256,bool)"
-    )]
-    pub struct ConfigSetFilter {
-        pub new_token_reward_per_token_per_epoch: ::ethers::core::types::U256,
-        pub new_key_types: ::std::vec::Vec<::ethers::core::types::U256>,
-        pub new_minimum_validator_count: ::ethers::core::types::U256,
-        pub new_max_concurrent_requests: ::ethers::core::types::U256,
-        pub new_max_presign_count: ::ethers::core::types::U256,
-        pub new_min_presign_count: ::ethers::core::types::U256,
-        pub new_peer_checking_interval_secs: ::ethers::core::types::U256,
-        pub new_max_presign_concurrency: ::ethers::core::types::U256,
-        pub new_rpc_healthcheck_enabled: bool,
     }
     #[derive(
         Clone,
@@ -14785,7 +14645,6 @@ pub mod staking {
         AttestedWalletRegisteredFilter(AttestedWalletRegisteredFilter),
         ClearOfflinePhaseDataFilter(ClearOfflinePhaseDataFilter),
         ComplaintConfigSetFilter(ComplaintConfigSetFilter),
-        ConfigSetFilter(ConfigSetFilter),
         CountOfflinePhaseDataFilter(CountOfflinePhaseDataFilter),
         DebugEventFilter(DebugEventFilter),
         DevopsAdminSetFilter(DevopsAdminSetFilter),
@@ -14837,9 +14696,6 @@ pub mod staking {
             }
             if let Ok(decoded) = ComplaintConfigSetFilter::decode_log(log) {
                 return Ok(StakingEvents::ComplaintConfigSetFilter(decoded));
-            }
-            if let Ok(decoded) = ConfigSetFilter::decode_log(log) {
-                return Ok(StakingEvents::ConfigSetFilter(decoded));
             }
             if let Ok(decoded) = CountOfflinePhaseDataFilter::decode_log(log) {
                 return Ok(StakingEvents::CountOfflinePhaseDataFilter(decoded));
@@ -14964,7 +14820,6 @@ pub mod staking {
                 Self::ComplaintConfigSetFilter(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
-                Self::ConfigSetFilter(element) => ::core::fmt::Display::fmt(element, f),
                 Self::CountOfflinePhaseDataFilter(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
@@ -15081,11 +14936,6 @@ pub mod staking {
     impl ::core::convert::From<ComplaintConfigSetFilter> for StakingEvents {
         fn from(value: ComplaintConfigSetFilter) -> Self {
             Self::ComplaintConfigSetFilter(value)
-        }
-    }
-    impl ::core::convert::From<ConfigSetFilter> for StakingEvents {
-        fn from(value: ConfigSetFilter) -> Self {
-            Self::ConfigSetFilter(value)
         }
     }
     impl ::core::convert::From<CountOfflinePhaseDataFilter> for StakingEvents {
@@ -15876,21 +15726,6 @@ pub mod staking {
     pub struct EpochCall {
         pub realm_id: ::ethers::core::types::U256,
     }
-    ///Container type for all input parameters for the `exit` function with signature `exit()` and selector `0xe9fad8ee`
-    #[derive(
-        Clone,
-        ::ethers::contract::EthCall,
-        ::ethers::contract::EthDisplay,
-        serde::Serialize,
-        serde::Deserialize,
-        Default,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash
-    )]
-    #[ethcall(name = "exit", abi = "exit()")]
-    pub struct ExitCall;
     ///Container type for all input parameters for the `facetAddress` function with signature `facetAddress(bytes4)` and selector `0xcdffacc6`
     #[derive(
         Clone,
@@ -16176,21 +16011,6 @@ pub mod staking {
     pub struct GetKeySetCall {
         pub identifier: ::std::string::String,
     }
-    ///Container type for all input parameters for the `getKeyTypes` function with signature `getKeyTypes()` and selector `0xf1b877a8`
-    #[derive(
-        Clone,
-        ::ethers::contract::EthCall,
-        ::ethers::contract::EthDisplay,
-        serde::Serialize,
-        serde::Deserialize,
-        Default,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash
-    )]
-    #[ethcall(name = "getKeyTypes", abi = "getKeyTypes()")]
-    pub struct GetKeyTypesCall;
     ///Container type for all input parameters for the `getKickedValidators` function with signature `getKickedValidators(uint256)` and selector `0x4b6afbbb`
     #[derive(
         Clone,
@@ -17891,7 +17711,7 @@ pub mod staking {
         pub reason: ::ethers::core::types::U256,
         pub config: ComplaintConfig,
     }
-    ///Container type for all input parameters for the `setConfig` function with signature `setConfig((uint256,uint256[],uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))` and selector `0x077b0d40`
+    ///Container type for all input parameters for the `setConfig` function with signature `setConfig((uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))` and selector `0xd94c412d`
     #[derive(
         Clone,
         ::ethers::contract::EthCall,
@@ -17901,7 +17721,7 @@ pub mod staking {
     )]
     #[ethcall(
         name = "setConfig",
-        abi = "setConfig((uint256,uint256[],uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))"
+        abi = "setConfig((uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))"
     )]
     pub struct SetConfigCall {
         pub new_config: GlobalConfig,
@@ -18055,7 +17875,7 @@ pub mod staking {
         pub port: u32,
         pub operator_address: ::ethers::core::types::Address,
     }
-    ///Container type for all input parameters for the `setKeySet` function with signature `setKeySet((uint32,uint32,bool,string,string,uint256[],uint256[],uint256[],address[]))` and selector `0x74d0be87`
+    ///Container type for all input parameters for the `setKeySet` function with signature `setKeySet((uint32,uint32,bool,string,string,uint256[],uint256[],uint256[],bytes))` and selector `0x774d0151`
     #[derive(
         Clone,
         ::ethers::contract::EthCall,
@@ -18070,7 +17890,7 @@ pub mod staking {
     )]
     #[ethcall(
         name = "setKeySet",
-        abi = "setKeySet((uint32,uint32,bool,string,string,uint256[],uint256[],uint256[],address[]))"
+        abi = "setKeySet((uint32,uint32,bool,string,string,uint256[],uint256[],uint256[],bytes))"
     )]
     pub struct SetKeySetCall {
         pub update: KeySetConfig,
@@ -18200,7 +18020,7 @@ pub mod staking {
         pub realm_id: ::ethers::core::types::U256,
         pub permitted_validators_on: bool,
     }
-    ///Container type for all input parameters for the `setRealmConfig` function with signature `setRealmConfig(uint256,(uint256,uint256,uint256,uint256,uint256,bool,uint256,bool))` and selector `0x7d35690f`
+    ///Container type for all input parameters for the `setRealmConfig` function with signature `setRealmConfig(uint256,(uint256,uint256,uint256,uint256,uint256,bool,uint256,bool,string))` and selector `0x006d27b6`
     #[derive(
         Clone,
         ::ethers::contract::EthCall,
@@ -18215,7 +18035,7 @@ pub mod staking {
     )]
     #[ethcall(
         name = "setRealmConfig",
-        abi = "setRealmConfig(uint256,(uint256,uint256,uint256,uint256,uint256,bool,uint256,bool))"
+        abi = "setRealmConfig(uint256,(uint256,uint256,uint256,uint256,uint256,bool,uint256,bool,string))"
     )]
     pub struct SetRealmConfigCall {
         pub realm_id: ::ethers::core::types::U256,
@@ -18593,7 +18413,6 @@ pub mod staking {
         EmitClearOfflinePhaseData(EmitClearOfflinePhaseDataCall),
         EmitCountOfflinePhaseData(EmitCountOfflinePhaseDataCall),
         Epoch(EpochCall),
-        Exit(ExitCall),
         FacetAddress(FacetAddressCall),
         FacetAddresses(FacetAddressesCall),
         FacetFunctionSelectors(FacetFunctionSelectorsCall),
@@ -18616,7 +18435,6 @@ pub mod staking {
             GetDelegatedStakersWithUnfreezingStakesCountCall,
         ),
         GetKeySet(GetKeySetCall),
-        GetKeyTypes(GetKeyTypesCall),
         GetKickedValidators(GetKickedValidatorsCall),
         GetLastStakeRecord(GetLastStakeRecordCall),
         GetLitCirc(GetLitCircCall),
@@ -18912,11 +18730,6 @@ pub mod staking {
             ) {
                 return Ok(Self::Epoch(decoded));
             }
-            if let Ok(decoded) = <ExitCall as ::ethers::core::abi::AbiDecode>::decode(
-                data,
-            ) {
-                return Ok(Self::Exit(decoded));
-            }
             if let Ok(decoded) = <FacetAddressCall as ::ethers::core::abi::AbiDecode>::decode(
                 data,
             ) {
@@ -18996,11 +18809,6 @@ pub mod staking {
                 data,
             ) {
                 return Ok(Self::GetKeySet(decoded));
-            }
-            if let Ok(decoded) = <GetKeyTypesCall as ::ethers::core::abi::AbiDecode>::decode(
-                data,
-            ) {
-                return Ok(Self::GetKeyTypes(decoded));
             }
             if let Ok(decoded) = <GetKickedValidatorsCall as ::ethers::core::abi::AbiDecode>::decode(
                 data,
@@ -19729,7 +19537,6 @@ pub mod staking {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::Epoch(element) => ::ethers::core::abi::AbiEncode::encode(element),
-                Self::Exit(element) => ::ethers::core::abi::AbiEncode::encode(element),
                 Self::FacetAddress(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
@@ -19774,9 +19581,6 @@ pub mod staking {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::GetKeySet(element) => {
-                    ::ethers::core::abi::AbiEncode::encode(element)
-                }
-                Self::GetKeyTypes(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::GetKickedValidators(element) => {
@@ -20224,7 +20028,6 @@ pub mod staking {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::Epoch(element) => ::core::fmt::Display::fmt(element, f),
-                Self::Exit(element) => ::core::fmt::Display::fmt(element, f),
                 Self::FacetAddress(element) => ::core::fmt::Display::fmt(element, f),
                 Self::FacetAddresses(element) => ::core::fmt::Display::fmt(element, f),
                 Self::FacetFunctionSelectors(element) => {
@@ -20261,7 +20064,6 @@ pub mod staking {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::GetKeySet(element) => ::core::fmt::Display::fmt(element, f),
-                Self::GetKeyTypes(element) => ::core::fmt::Display::fmt(element, f),
                 Self::GetKickedValidators(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
@@ -20703,11 +20505,6 @@ pub mod staking {
             Self::Epoch(value)
         }
     }
-    impl ::core::convert::From<ExitCall> for StakingCalls {
-        fn from(value: ExitCall) -> Self {
-            Self::Exit(value)
-        }
-    }
     impl ::core::convert::From<FacetAddressCall> for StakingCalls {
         fn from(value: FacetAddressCall) -> Self {
             Self::FacetAddress(value)
@@ -20789,11 +20586,6 @@ pub mod staking {
     impl ::core::convert::From<GetKeySetCall> for StakingCalls {
         fn from(value: GetKeySetCall) -> Self {
             Self::GetKeySet(value)
-        }
-    }
-    impl ::core::convert::From<GetKeyTypesCall> for StakingCalls {
-        fn from(value: GetKeyTypesCall) -> Self {
-            Self::GetKeyTypes(value)
         }
     }
     impl ::core::convert::From<GetKickedValidatorsCall> for StakingCalls {
@@ -21841,20 +21633,6 @@ pub mod staking {
         Hash
     )]
     pub struct GetKeySetReturn(pub KeySetConfig);
-    ///Container type for all return fields from the `getKeyTypes` function with signature `getKeyTypes()` and selector `0xf1b877a8`
-    #[derive(
-        Clone,
-        ::ethers::contract::EthAbiType,
-        ::ethers::contract::EthAbiCodec,
-        serde::Serialize,
-        serde::Deserialize,
-        Default,
-        Debug,
-        PartialEq,
-        Eq,
-        Hash
-    )]
-    pub struct GetKeyTypesReturn(pub ::std::vec::Vec<::ethers::core::types::U256>);
     ///Container type for all return fields from the `getKickedValidators` function with signature `getKickedValidators(uint256)` and selector `0x4b6afbbb`
     #[derive(
         Clone,
@@ -23152,7 +22930,7 @@ pub mod staking {
         pub start_time: ::ethers::core::types::U256,
         pub last_advance_vote_time: ::ethers::core::types::U256,
     }
-    ///`GlobalConfig(uint256,uint256[],uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)`
+    ///`GlobalConfig(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)`
     #[derive(
         Clone,
         ::ethers::contract::EthAbiType,
@@ -23167,7 +22945,6 @@ pub mod staking {
     )]
     pub struct GlobalConfig {
         pub token_reward_per_token_per_epoch: ::ethers::core::types::U256,
-        pub key_types: ::std::vec::Vec<::ethers::core::types::U256>,
         pub minimum_validator_count: ::ethers::core::types::U256,
         pub reward_epoch_duration: ::ethers::core::types::U256,
         pub max_time_lock: ::ethers::core::types::U256,
@@ -23189,7 +22966,7 @@ pub mod staking {
         pub min_threshold_to_clamp_at: ::ethers::core::types::U256,
         pub vote_to_advance_time_out: ::ethers::core::types::U256,
     }
-    ///`KeySetConfig(uint32,uint32,bool,string,string,uint256[],uint256[],uint256[],address[])`
+    ///`KeySetConfig(uint32,uint32,bool,string,string,uint256[],uint256[],uint256[],bytes)`
     #[derive(
         Clone,
         ::ethers::contract::EthAbiType,
@@ -23211,7 +22988,7 @@ pub mod staking {
         pub realms: ::std::vec::Vec<::ethers::core::types::U256>,
         pub curves: ::std::vec::Vec<::ethers::core::types::U256>,
         pub counts: ::std::vec::Vec<::ethers::core::types::U256>,
-        pub recovery_party_members: ::std::vec::Vec<::ethers::core::types::Address>,
+        pub recovery_session_id: ::ethers::core::types::Bytes,
     }
     ///`LitActionConfig(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool)`
     #[derive(
@@ -23257,7 +23034,7 @@ pub mod staking {
         pub node_address: ::ethers::core::types::Address,
         pub pub_key: UncompressedK256Key,
     }
-    ///`RealmConfig(uint256,uint256,uint256,uint256,uint256,bool,uint256,bool)`
+    ///`RealmConfig(uint256,uint256,uint256,uint256,uint256,bool,uint256,bool,string)`
     #[derive(
         Clone,
         ::ethers::contract::EthAbiType,
@@ -23279,6 +23056,7 @@ pub mod staking {
         pub rpc_healthcheck_enabled: bool,
         pub min_epoch_for_rewards: ::ethers::core::types::U256,
         pub permitted_validators_on: bool,
+        pub default_key_set: ::std::string::String,
     }
     ///`RewardEpoch(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool)`
     #[derive(

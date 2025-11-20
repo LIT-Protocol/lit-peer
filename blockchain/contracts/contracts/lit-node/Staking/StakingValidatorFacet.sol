@@ -33,6 +33,7 @@ contract StakingValidatorFacet {
         uint256 minimumValidatorCountToBeReady
     );
     error CannotKickBelowCurrentValidatorThreshold();
+    error CannotKickBelowKeySetThreshold(string keySetId);
     error CannotRejoinUntilNextEpochBecauseKicked(address stakingAddress);
     error CannotRejoinBecauseBanned(address stakingAddress);
     error ActiveValidatorsCannotLeave();
@@ -694,12 +695,6 @@ contract StakingValidatorFacet {
         );
     }
 
-    /// Exit staking and get any outstanding rewards
-    function exit() external pure {
-        //    "Not implemented - check the docs to validate a proper withdrawl process."
-        revert ActiveValidatorsCannotLeave();
-    }
-
     /// If more than the threshold of validators vote to kick someone, kick them.
     /// It's expected that this will be called by the node directly, so LibERC2771._msgSender() will be the nodeAddress
     function kickValidatorInNextEpoch(
@@ -746,19 +741,32 @@ contract StakingValidatorFacet {
         bool isValidatorInCurrentSet = realmStorage
             .validatorsInCurrentEpoch
             .contains(validatorToKickStakerAddress);
+
         if (
             StakingUtilsLib.views().epoch(realmId).number > 1 &&
-            realmStorage.currentValidatorsKickedFromNextEpoch.length() >=
-            (StakingUtilsLib
+            StakingUtilsLib
                 .views()
                 .getValidatorsInCurrentEpoch(realmId)
-                .length -
+                .length >=
+            (realmStorage.currentValidatorsKickedFromNextEpoch.length() +
                 StakingUtilsLib.views().currentValidatorCountForConsensus(
                     realmId
                 ))
         ) {
             revert CannotKickBelowCurrentValidatorThreshold();
         }
+
+        uint256 nextValidatorCnt = StakingUtilsLib
+            .views()
+            .getValidatorsInCurrentEpoch(realmId)
+            .length -
+            realmStorage.currentValidatorsKickedFromNextEpoch.length();
+
+        StakingUtilsLib.checkValidatorCountAgainstKeySetsInRealm(
+            realmId,
+            nextValidatorCnt,
+            3
+        );
 
         LibStakingStorage.Epoch memory currentEpoch = mutableEpoch(realmId);
         // Vote to kick
@@ -1018,16 +1026,6 @@ contract StakingValidatorFacet {
         checkActiveOrUnlockedOrPausedState(
             StakingUtilsLib.realm(realmId).state
         );
-
-        if (
-            StakingUtilsLib.realm(realmId).validatorsInNextEpoch.length() - 1 <
-            s().globalConfig[0].minimumValidatorCount
-        ) {
-            revert StakingUtilsLib.NotEnoughValidatorsInNextEpoch(
-                StakingUtilsLib.realm(realmId).validatorsInNextEpoch.length(),
-                s().globalConfig[0].minimumValidatorCount
-            );
-        }
         StakingUtilsLib.removeValidatorFromNextEpoch(realmId, stakerAddress);
 
         // ensure this won't drop us below the minimum validator count.
@@ -1035,6 +1033,7 @@ contract StakingValidatorFacet {
         // it should be okay, since this node is "gracefully" leaving and participating in the Reshare.
         // but we still need to prevent it from dropping below the threshold due to kicks.
         StakingUtilsLib.checkNextSetAboveThreshold(realmId);
+
         emit RequestToLeave(stakerAddress);
     }
 
@@ -1086,17 +1085,6 @@ contract StakingValidatorFacet {
     event StakingTokenSet(address newStakingTokenAddress);
     event KickPenaltyPercentSet(uint256 reason, uint256 newKickPenaltyPercent);
     event ResolverContractAddressSet(address newResolverContractAddress);
-    event ConfigSet(
-        uint256 newTokenRewardPerTokenPerEpoch,
-        uint256[] newKeyTypes,
-        uint256 newMinimumValidatorCount,
-        uint256 newMaxConcurrentRequests,
-        uint256 newMaxPresignCount,
-        uint256 newMinPresignCount,
-        uint256 newPeerCheckingIntervalSecs,
-        uint256 newMaxPresignConcurrency,
-        bool newRpcHealthcheckEnabled
-    );
     event ComplaintConfigSet(
         uint256 reason,
         LibStakingStorage.ComplaintConfig config
