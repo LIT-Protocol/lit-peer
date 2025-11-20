@@ -5,20 +5,19 @@
     "networkName": "yellowstone",
     "newOwnerAddress": "0x046BF7BB88E0e0941358CE3F5A765C9acddA7B9c",
     "newDomainWalletAdminAddress": "0x046BF7BB88E0e0941358CE3F5A765C9acddA7B9c",
-    "numberOfStakedAndJoinedWallets": 7,
+    "numberOfStakedAndJoinedWallets": 6,
     "numberOfStakedOnlyWallets": 0,
     "resolverContractAddress": "TBD",
     "useLitCoreDeploymentResolverContractAddress": true,
     "outputTempFilePath": "./deployed-lit-node-contracts-temp.json",
     "copyNodeConfigsToRustProject": false,
     "ipAddresses": [
-      "158.69.34.226:443",
-      "158.69.34.228:443",
-      "167.114.17.203:443",
-      "167.114.17.204:443",
-      "167.114.17.205:443",
-      "199.115.117.115:443",
-      "108.62.0.105:443"
+      "108.62.117.203:443",
+      "74.201.72.187:443",
+      "158.69.108.66:443",
+      "173.208.0.35:443",
+      "140.235.158.16:443",
+      "23.105.169.121:443"
     ],
     "keyTypes": [1, 2],
     "existingContracts": {
@@ -32,7 +31,7 @@
     "networkName": "yellowstone",
     "subnetOwnerAddress": "0xB77AEBbC262Bb809933D991A919A0e4A6A3b2f65",
     "subnetAdminPublicKey": "0x045f96e860435fccf287d9c2592fa129edfca7159c8dd2260cf2def38a9d5ee627ba73afef636467bc95fe551f10c862e910f18eafb751226d6901eab7d5b2794a",
-    "subnetProvAddress": "0x3324439C8b9181eF07D54030E32d2CD22FF0C6A7",
+    "subnetProvAddress": "0xdE225D564AbC3bf3Dce6f7472203FCd05c2d2da7",
     "outputTempFilePath": "./deployed-lit-core-contracts-temp.json"
   }
 }
