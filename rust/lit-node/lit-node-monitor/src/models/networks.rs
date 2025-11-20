@@ -93,7 +93,7 @@ impl GlobalState {
                 write_status_signal,
             )
             .await;
-            active_network.set("datil-dev".to_string());
+            active_network.set("naga-dev".to_string());
         }
 
         #[cfg(any(feature = "naga-test", feature = "naga-all"))]
@@ -130,6 +130,18 @@ impl GlobalState {
             )
             .await;
             active_network.set("naga-prod".to_string());
+        }
+
+        #[cfg(any(feature = "naga-proto", feature = "naga-all"))]
+        {
+            let _r = Self::refresh_single_network(
+                "naga-proto",
+                new_networks,
+                new_common_addresses,
+                write_status_signal,
+            )
+            .await;
+            active_network.set("naga-proto".to_string());
         }
 
         #[cfg(any(feature = "internalDev", feature = "naga-all"))]
@@ -211,6 +223,7 @@ async fn get_network_config(network_name: &str) -> Result<(NetworkConfig, Facets
         "naga-prod" => ("10-prod/10-naga.yml", "naga-prod"),
         "naga-dev" => ("30-test-centralized/30-naga_dev.yml", "naga-dev"),
         "naga-staging" => ("15-staging/15-naga_staging.yml", "naga-staging"),
+        "naga-proto" => ("10-prod/10-naga_proto.yml", "naga-proto"),
         "internalDev" => ("20-test-decentralized/20-internaldev.yml", "internal-dev"),
         _ => return Err("Network Not Found.".to_string()),
     };
@@ -330,17 +343,18 @@ async fn get_network_data(network_src_url: &str) -> Result<ChainDetails, String>
 pub async fn get_staker_names() -> Result<HashMap<String, String>, String> {
     let mut stakers = HashMap::new();
 
-    let _ = get_staker_names_from_url("02-nodes-external/02-ovh.yml", &mut stakers).await;
-    let _ = get_staker_names_from_url("02-nodes-external/02-leaseweb.yml", &mut stakers).await;
-    let _ = get_staker_names_from_url("01-nodes-internal/01-ovh.yml", &mut stakers).await;
-    let _ = get_staker_names_from_url("01-nodes-internal/01-dedicated.yml", &mut stakers).await;
-    let _ = get_staker_names_from_url("01-nodes-internal/01-leaseweb.yml", &mut stakers).await;
-    let _ = get_staker_names_from_url("01-nodes-internal/01-cherryserver.yml", &mut stakers).await;
+    let _ = staker_names_from("02-nodes-external/02-ovh.yml", &mut stakers).await;
+    let _ = staker_names_from("02-nodes-external/02-leaseweb.yml", &mut stakers).await;
+    let _ = staker_names_from("02-nodes-external/02-selfhosted.yml", &mut stakers).await;
+    let _ = staker_names_from("01-nodes-internal/01-ovh.yml", &mut stakers).await;
+    let _ = staker_names_from("01-nodes-internal/01-dedicated.yml", &mut stakers).await;
+    let _ = staker_names_from("01-nodes-internal/01-leaseweb.yml", &mut stakers).await;
+    let _ = staker_names_from("01-nodes-internal/01-cherryserver.yml", &mut stakers).await;
 
     Ok(stakers)
 }
 
-pub async fn get_staker_names_from_url(
+pub async fn staker_names_from(
     src_url: &str,
     staker_names: &mut HashMap<String, String>,
 ) -> Result<bool, String> {
@@ -430,11 +444,8 @@ pub async fn get_common_addresses(
         crate::contracts::staking::Staking::node_monitor_load(cfg, staking_contract_address)
             .unwrap();
 
-    // let status_signal = RwSignal::new("Loading ... please wait.".to_string());
-    // let (_, status_signal) = status_signal.split();
-    let handshake_state = RwSignal::new("Loading... Please wait...".to_string());
     let validators =
-        crate::pages::validators::get_validators(&staking, true, 1, handshake_state, false).await;
+        crate::pages::validators::get_validators(&staking, true, 1).await;
 
     for validator in validators {
         common_addresses.insert(validator.wallet_address, validator.host_name);

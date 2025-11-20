@@ -291,7 +291,11 @@ pub async fn fetch_chain_rows(
     let page_size = move || page_size_signal.get().parse::<u64>().unwrap();
     let gs = use_context::<GlobalState>().expect("Global State Failed to Load");
     let rpc_api_type = gs.active_network().rpc_api_type.into();
-    let chain_api_url = &format!("{}{}", &gs.proxy_url, &gs.active_network().chain_api_url);
+    let chain_api_url =match &gs.active_network().chain_api_url.contains("127.0.0.1")  {
+        true => &gs.active_network().chain_api_url,
+        false => &format!("{}{}", &gs.proxy_url, &gs.active_network().chain_api_url)
+    };
+    
     let address = &get_address(crate::contracts::STAKING_CONTRACT)
         .await
         .expect("Error getting staking contract address");

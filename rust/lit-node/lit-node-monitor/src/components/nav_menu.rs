@@ -1,10 +1,17 @@
-use crate::models::GlobalState;
+use crate::{models::GlobalState, utils::base_path};
 use leptos::prelude::*;
 use thaw::{NavCategory, NavCategoryItem, NavDrawer, NavItem, NavSubItem};
+use web_sys::window;
 
 #[component]
 pub fn NavMenu(page_name_signal: RwSignal<String>) -> impl IntoView {
-    let nav_value = RwSignal::new("/home".to_string());
+    
+    let url = window()
+            .and_then(|win| win.location().pathname().ok())
+            .unwrap_or_else(|| "home".to_string());
+    let url = url.replace(base_path(), "");
+    
+    let nav_value = RwSignal::new(url);
     let (nav_value_get, _nav_value_set) = nav_value.split();
 
     let gs = use_context::<GlobalState>().expect("Global State Failed to Load");
@@ -50,6 +57,9 @@ pub fn NavMenu(page_name_signal: RwSignal<String>) -> impl IntoView {
                     </NavSubItem>
                     <NavSubItem value="/network_configuration" icon=icondata::AiSettingOutlined>
                         "Network Configuration"
+                    </NavSubItem>
+                    <NavSubItem value="/pricing" icon=icondata::AiDollarOutlined>
+                        "Pricing"
                     </NavSubItem>
                     <NavSubItem value="/epoch" icon=icondata::AiClockCircleOutlined>
                         "Epoch Details"

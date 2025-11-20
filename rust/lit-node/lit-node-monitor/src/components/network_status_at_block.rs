@@ -101,13 +101,6 @@ pub async fn get_network_status(
     next_validators_call.block = Some(block_number.into());
     let next_validators = next_validators_call.call().await.unwrap();
 
-    // format!(
-    //     "Network Status: {} at epoch# {} | Validators: {} | Kicked Validators: {}",
-    //     network_state,
-    //     epoch_number,
-    //     validators.len(),
-    //     kicked_validators.len()
-    // )
     (
         network_state,
         epoch_number.as_u64(),

@@ -10,6 +10,7 @@ naga-dev = []
 naga-test = []
 naga-staging = []
 naga-prod = []
+naga-proto = []
 naga-all = []
 internalDev = []
 
@@ -47,6 +48,7 @@ uuid = "1.11.0"
 tokio = { version = "1.40.0", default-features = false, features = ["macros"] }
 serde_bytes_base64 = "0.1.1"
 yaml-rust2 = "0.10.3"
+web-sys = "0.3"
 
 
 [package.metadata.leptos] 

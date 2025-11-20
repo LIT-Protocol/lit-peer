@@ -100,23 +100,24 @@ pub fn App() -> impl IntoView {
                         <div class="col">
                             <main>
                                 <Routes fallback=|| "Not found.">
-                                    <Route path=path!(".") view=pages::home::Home />
-                                    <Route path=path!("home") view=pages::home::Home />
-                                    <Route path=path!("history") view=pages::history::History />
-                                    <Route path=path!("contracts") view=pages::network_settings::contracts::Contracts />
+                                    <Route path=path!("/") view=pages::home::Home />
+                                    <Route path=path!("/home") view=pages::home::Home />
+                                    <Route path=path!("/history") view=pages::history::History />
+                                    <Route path=path!("/contracts") view=pages::network_settings::contracts::Contracts />
                                     <Route path=path!("events") view=pages::events::Events />
-                                    <Route path=path!("action_playground") view=pages::action_playground::ActionPlayground />
-                                    <Route path=path!("epoch") view=pages::network_settings::epoch::Epoch />
-                                    <Route path=path!("network_configuration") view=pages::network_settings::network_configuration::NetworkConfiguration />
+                                    <Route path=path!("/action_playground") view=pages::action_playground::ActionPlayground />
+                                    <Route path=path!("/epoch") view=pages::network_settings::epoch::Epoch />
+                                    <Route path=path!("/network_configuration") view=pages::network_settings::network_configuration::NetworkConfiguration />
                                     <Route path=path!("pkps") view=pages::network_settings::pkps::PKPs />
-                                    <Route path=path!("root_keys") view=pages::network_settings::root_keys::RootKeys />
-                                    <Route path=path!("validators") view=pages::validators::Validators />
-                                    <Route path=path!("staking") view=pages::staking::staking_details::StakingDetails />
-                                    <Route path=path!("wallets") view=pages::staking::wallets::Wallets />
-                                    <Route path=path!("rewards") view=pages::staking::rewards::Rewards />
-                                    <Route path=path!("admin") view=pages::admin::realms::Realms />
-                                    <Route path=path!("validator_admin") view=pages::admin::validator_admin::ValidatorAdmin />
-                                    <Route path=path!("chain_config") view=pages::app_settings::ChainConfig />
+                                    <Route path=path!("/root_keys") view=pages::network_settings::root_keys::RootKeys />
+                                    <Route path=path!("/validators") view=pages::validators::Validators />
+                                    <Route path=path!("/staking") view=pages::staking::staking_details::StakingDetails />
+                                    <Route path=path!("/wallets") view=pages::staking::wallets::Wallets />
+                                    <Route path=path!("/rewards") view=pages::staking::rewards::Rewards />
+                                    <Route path=path!("/admin") view=pages::admin::realms::Realms />
+                                    <Route path=path!("/validator_admin") view=pages::admin::validator_admin::ValidatorAdmin />
+                                    <Route path=path!("/chain_config") view=pages::app_settings::ChainConfig />
+                                    <Route path=path!("/pricing") view=pages::network_settings::pricing::Pricing />
                                 </Routes>
                             </main>
                         </div>
