@@ -144,6 +144,14 @@ const config: HardhatUserConfig = {
       }),
       chainId: 175200,
       // @ts-ignore
+      stylusContractsForTests: {
+        p256:
+          process.env.LIT_STYLUS_P256_CONTRACT_ADDRESS ||
+          '0xBf7D170515a7D956951bF2f35Cea9c3793b10c1b',
+        k256:
+          process.env.LIT_STYLUS_K256_CONTRACT_ADDRESS ||
+          '0x4bb266678E7116D8A1df7aAe7625f9347b01eE85',
+      },
       wlitAddress: '0x0996A48f8cc3c7c52Caf10d34c804eF5C9E7748B',
       trustedForwarderAddress: '0xa6A0Db95022e7859f1dff81D0Fedd5f9e38f042D',
     },

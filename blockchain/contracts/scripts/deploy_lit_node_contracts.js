@@ -273,8 +273,8 @@ async function deployLitNodeContracts(deployNodeConfig) {
     const minEthPerNode = minStakeEth + 0.1; // minimum stake + 0.1 ETH for gas
 
     amountForStakers = ethers.parseUnits(
-      // send twice the min stake for each node and an extra 100 so the deployer has some
-      (totalStakers * minEthPerNode * 2 + 100).toString(),
+      // send twice the min stake for each node and an extra 5 so the deployer has some
+      (totalStakers * minEthPerNode * 2 + 5).toString(),
       18
     );
     const wrapTx = await litToken.deposit({ value: amountForStakers });
@@ -509,6 +509,121 @@ async function deployLitNodeContracts(deployNodeConfig) {
   );
   const priceFeedContract = deployResult.diamond;
   deployedFacets['PriceFeed'] = deployResult.deployedFacets;
+
+  // ========== SET PAYMENT PRICES (TEMPORARY - REVERT BEFORE MERGE) ==========
+  console.log('Setting payment prices on PriceFeed contract...');
+  const priceFeedFacet = await ethers.getContractAt(
+    'PriceFeedFacet',
+    await priceFeedContract.getAddress()
+  );
+
+  // Base price - using a very low value for proto/testing
+  const basePrice = ethers.parseUnits('0.000001', 18); // 0.000001 ether
+  const maxPrice = basePrice * 100n; // 100x base price
+  const productIds = [0, 1, 2, 3]; // PkpSign, EncSign, LitAction, SignSessionKey
+
+  let priceTx = await priceFeedFacet.setBaseNetworkPrices(
+    basePrice,
+    productIds
+  );
+  await priceTx.wait();
+  console.log(
+    '✅ Base network prices set to:',
+    ethers.formatUnits(basePrice, 18)
+  );
+
+  priceTx = await priceFeedFacet.setMaxNetworkPrices(maxPrice, productIds);
+  await priceTx.wait();
+  console.log(
+    '✅ Max network prices set to:',
+    ethers.formatUnits(maxPrice, 18)
+  );
+
+  // Set Lit Action prices using the same fractional ratios as the constructor
+  console.log('Setting Lit Action price configs...');
+
+  // Enum values matching LibPriceFeedStorage.sol
+  const lac_baseAmount = 0;
+  const lac_runtimeLength = 1;
+  const lac_memoryUsage = 2;
+  const lac_codeLength = 3;
+  const lac_responseLength = 4;
+  const lac_signatures = 5;
+  const lac_broadcasts = 6;
+  const lac_contractCalls = 7;
+  const lac_callDepth = 8;
+  const lac_decrypts = 9;
+  const lac_fetches = 10;
+
+  const perSecond = 0;
+  const perMegabyte = 1;
+  const perCount = 2;
+
+  // Using bigint arithmetic to maintain fractional relationships from constructor
+  const litActionPriceConfigs = [
+    {
+      priceComponent: lac_baseAmount,
+      priceMeasurement: perCount,
+      price: basePrice / 2n, // baseAmount / 2
+    },
+    {
+      priceComponent: lac_runtimeLength,
+      priceMeasurement: perSecond,
+      price: basePrice / 10n, // baseAmount / 10
+    },
+    {
+      priceComponent: lac_memoryUsage,
+      priceMeasurement: perMegabyte,
+      price: basePrice / 100n, // baseAmount / 100
+    },
+    {
+      priceComponent: lac_codeLength,
+      priceMeasurement: perMegabyte,
+      price: basePrice / 10n, // baseAmount / 10
+    },
+    {
+      priceComponent: lac_responseLength,
+      priceMeasurement: perMegabyte,
+      price: basePrice / 10n, // baseAmount / 10
+    },
+    {
+      priceComponent: lac_signatures,
+      priceMeasurement: perCount,
+      price: basePrice, // baseAmount (most expensive)
+    },
+    {
+      priceComponent: lac_broadcasts,
+      priceMeasurement: perCount,
+      price: basePrice / 10n, // baseAmount / 10
+    },
+    {
+      priceComponent: lac_contractCalls,
+      priceMeasurement: perCount,
+      price: basePrice / 10n, // baseAmount / 10
+    },
+    {
+      priceComponent: lac_callDepth,
+      priceMeasurement: perCount,
+      price: basePrice / 10n, // baseAmount / 10
+    },
+    {
+      priceComponent: lac_decrypts,
+      priceMeasurement: perCount,
+      price: basePrice / 10n, // baseAmount / 10
+    },
+    {
+      priceComponent: lac_fetches,
+      priceMeasurement: perCount,
+      price: basePrice / 10n, // baseAmount / 10
+    },
+  ];
+
+  priceTx = await priceFeedFacet.setLitActionPriceConfigs(
+    litActionPriceConfigs
+  );
+  await priceTx.wait();
+  console.log('✅ Lit Action price configs set.');
+  // =======================================
 
   // *** 17.4 Deploy Forwarder Contract
   // Set the Forwarder as the trusted forwarder for all relevant contracts
