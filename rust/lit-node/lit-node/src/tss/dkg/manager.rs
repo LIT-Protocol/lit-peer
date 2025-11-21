@@ -1,11 +1,12 @@
 use crate::config::chain::CachedRootKey;
 use crate::error::{Result, unexpected_err};
+use crate::models::KeySetConfig;
 use crate::peers::peer_state::models::SimplePeerCollection;
 use crate::tss::common::dkg_type::DkgType;
 use crate::tss::common::tss_state::TssState;
 use crate::tss::dkg::engine::{DkgAfterRestore, DkgEngine};
 use crate::tss::dkg::models::Mode;
-use crate::version::{DataVersionReader, DataVersionWriter};
+use crate::version::DataVersionWriter;
 use lit_core::error::Unexpected;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -36,6 +37,7 @@ impl DkgManager {
         realm_id: u64,
         current_peers: &SimplePeerCollection,
         new_peers: &SimplePeerCollection,
+        key_sets: &Vec<KeySetConfig>,
     ) -> Result<HashMap<String, Vec<CachedRootKey>>> {
         let threshold = self
             .tss_state
@@ -53,10 +55,6 @@ impl DkgManager {
             new_peers,
             self.next_dkg_after_restore.clone(),
         );
-        let key_sets = DataVersionReader::read_field_unchecked(
-            &self.tss_state.chain_data_config_manager.key_sets,
-            |key_sets| key_sets.values().cloned().collect::<Vec<_>>(),
-        );
 
         if key_sets.is_empty() {
             error!("No key sets exist to do DKGs");
@@ -66,13 +64,12 @@ impl DkgManager {
             ));
         }
 
-        for key_set_config in &key_sets {
+        for key_set_config in key_sets {
             for (&curve_type, &hd_root_key_count) in &key_set_config.root_key_counts {
                 let hd_root_key_count = match self.dkg_type {
                     DkgType::RecoveryParty => 1,
                     DkgType::Standard => hd_root_key_count,
                 };
-
                 let epoch_dkg_id = format!("{}.{}.{}", dkg_id, curve_type, self.dkg_type);
                 let existing_root_keys = key_set_config
                     .root_keys_by_curve
@@ -80,21 +77,16 @@ impl DkgManager {
                     .expect("expected existing root keys but got none")
                     .clone();
                 for i in 0..hd_root_key_count {
+                    let dkg_id = format!("{}_key_{}", epoch_dkg_id, i);
                     if current_peers.is_empty() {
-                        let dkg_id = format!("{}_key_{}", epoch_dkg_id, i);
                         dkg_engine.add_dkg(&dkg_id, &key_set_config.identifier, curve_type, None);
                     } else {
                         let root_key = existing_root_keys.get(i).expect_or_err(format!(
                             "root key missing at index {} for curve: {}",
                             i, curve_type
                         ))?;
-                        let dkg_id = format!("{}_key_{}", epoch_dkg_id, i);
-                        dkg_engine.add_dkg(
-                            &dkg_id,
-                            &key_set_config.identifier,
-                            curve_type,
-                            Some(root_key.clone()),
-                        );
+                        let key = Some(root_key.clone());
+                        dkg_engine.add_dkg(&dkg_id, &key_set_config.identifier, curve_type, key);
                     }
                 }
             }

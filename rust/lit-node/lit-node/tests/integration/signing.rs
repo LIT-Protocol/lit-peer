@@ -11,6 +11,7 @@ use lit_node_testnet::end_user::EndUser;
 
 use lit_node_core::SigningScheme;
 use lit_node_testnet::node_collection::get_identity_pubkeys_from_node_set;
+use lit_node_testnet::validator::ValidatorCollection;
 use rand::Rng;
 use rand_core::OsRng;
 use std::str::FromStr;
@@ -256,36 +257,10 @@ pub async fn test_pkp_hd_sign_and_submit_eth_txn() {
 pub async fn test_pkp_hd_sign_generic_key() {
     crate::common::setup_logging();
     info!("Starting test: test_hd_pkp_sign");
-    let setup_time = std::time::Instant::now();
     let (testnet, validator_collection, end_user) = TestSetupBuilder::default().build().await;
-
     let pubkey = end_user.first_pkp().pubkey.clone();
 
-    info!("Setup time: {:?}", setup_time.elapsed());
-
-    // We loop instead of running this test multiple times due to spinning up and tearing down
-    // the network. Essentially, this accomplishes the exact same thing.
-    for scheme in ALL_SIGNING_SCHEMES {
-        let start = std::time::Instant::now();
-        info!(
-            "Starting test_pkp_hd_sign_generic_key for signing_scheme: {}",
-            scheme
-        );
-        // check to see that we can sign
-        info!("Signing with scheme: {:?}", scheme);
-        assert!(
-            simple_single_sign_with_hd_key(
-                &validator_collection,
-                &end_user,
-                pubkey.clone(),
-                scheme,
-                &vec![]
-            )
-            .await,
-            "Failed to sign first time with all nodes up."
-        );
-        info!("Time elapsed: {:?}", start.elapsed());
-    }
+    sign_with_each_curve_type(&validator_collection, &end_user, pubkey.clone()).await;
 
     drop(testnet);
 }
@@ -302,25 +277,10 @@ pub async fn test_pkp_hd_sign_generic_key_with_epoch_change() {
     let pubkey = end_user.first_pkp().pubkey.clone();
 
     let realm_id = U256::from(1);
-    let current_epoch = validator_collection
-        .actions()
-        .get_current_epoch(realm_id)
-        .await;
+    let current_epoch = actions.get_current_epoch(realm_id).await;
 
     // check to see that we can sign
-    for scheme in ALL_SIGNING_SCHEMES {
-        assert!(
-            simple_single_sign_with_hd_key(
-                &validator_collection,
-                &end_user,
-                pubkey.clone(),
-                scheme,
-                &vec![]
-            )
-            .await,
-            "Failed to sign first time with all nodes up."
-        );
-    }
+    sign_with_each_curve_type(&validator_collection, &end_user, pubkey.clone()).await;
 
     // Wait for the new node to be active.
     actions.wait_for_active(realm_id).await;
@@ -335,20 +295,7 @@ pub async fn test_pkp_hd_sign_generic_key_with_epoch_change() {
     actions.wait_for_epoch(realm_id, current_epoch + 1).await;
 
     // check to see that we can sign
-    for scheme in ALL_SIGNING_SCHEMES {
-        info!("Signing with scheme: {:?}", scheme);
-        assert!(
-            simple_single_sign_with_hd_key(
-                &validator_collection,
-                &end_user,
-                pubkey.clone(),
-                scheme,
-                &vec![]
-            )
-            .await,
-            "Failed to sign after epoch change."
-        );
-    }
+    sign_with_each_curve_type(&validator_collection, &end_user, pubkey.clone()).await;
 }
 
 #[tokio::test]
@@ -366,19 +313,7 @@ pub async fn test_pkp_signing_when_nodes_drop() {
 
     let pubkey = end_user.first_pkp().pubkey.clone();
 
-    for scheme in ALL_SIGNING_SCHEMES {
-        assert!(
-            simple_single_sign_with_hd_key(
-                &validator_collection,
-                &end_user,
-                pubkey.clone(),
-                scheme,
-                &vec![]
-            )
-            .await,
-            "Failed to sign with all nodes up."
-        );
-    }
+    sign_with_each_curve_type(&validator_collection, &end_user, pubkey.clone()).await;
 
     assert!(validator_collection.stop_node(node_to_kill).await.is_ok());
     let realm_id = U256::from(1);
@@ -422,6 +357,25 @@ pub async fn test_pkp_signing_when_nodes_drop() {
             .await,
             "Failed to sign after node drops."
         );
+    }
+}
+
+pub async fn sign_with_each_curve_type(
+    validator_collection: &ValidatorCollection,
+    end_user: &EndUser,
+    pubkey: String,
+) {
+    for scheme in ALL_SIGNING_SCHEMES {
+        info!("Signing with scheme: {:?}", scheme);
+        let result = simple_single_sign_with_hd_key(
+            &validator_collection,
+            &end_user,
+            pubkey.clone(),
+            scheme,
+            &vec![],
+        )
+        .await;
+        assert!(result, "Failed to sign with all nodes up.");
     }
 }
 

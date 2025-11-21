@@ -142,7 +142,7 @@ pub(crate) async fn fsm_realm_id(peer_state: &Arc<PeerState>, is_shadow: bool) -
 
 pub(crate) async fn key_share_proofs_check(
     tss_state: &Arc<TssState>,
-    root_key_res: &Result<HashMap<String, Vec<CachedRootKey>>>,
+    root_key_res: &HashMap<String, Vec<CachedRootKey>>,
     peers: &SimplePeerCollection,
     latest_dkg_id: &str,
     realm_id: u64,
@@ -155,10 +155,8 @@ pub(crate) async fn key_share_proofs_check(
     }
 
     let mut root_keys = HashMap::new();
-    if let Ok(rk) = root_key_res {
-        if !rk.is_empty() {
-            root_keys = rk.clone();
-        }
+    if !root_key_res.is_empty() {
+        root_keys = root_key_res.clone();
     }
     trace!(
         "Key share proofs check incoming root keys - root keys {:?}",
