@@ -1,4 +1,4 @@
-use elliptic_curve::{Field, Group, subtle::ConstantTimeEq};
+use lit_rust_crypto::elliptic_curve::{Field, Group, subtle::ConstantTimeEq};
 
 use crate::{
     ChallengeGeneration, Coordinate, HashToCurve, Proof, ProofToHash, VrfError, VrfResult,

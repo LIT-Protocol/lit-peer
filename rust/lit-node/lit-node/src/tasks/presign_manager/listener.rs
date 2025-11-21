@@ -8,13 +8,14 @@ use crate::tasks::presign_manager::models::Presign;
 use crate::tss::common::storage::{delete_presign, read_presign_from_disk, write_presign_to_disk};
 use crate::tss::ecdsa_damfast::DamFastState;
 use crate::version::DataVersionReader;
-use elliptic_curve::bigint::{self, U256};
 use flume::Sender;
 use lit_core::config::ReloadableLitConfig;
 use lit_node_common::config::{CFG_KEY_SIGNING_ROUND_TIMEOUT_MS_DEFAULT, LitNodeConfig};
-use lit_node_core::CurveType;
-use lit_node_core::PeerId;
-use lit_node_core::SigningScheme;
+use lit_node_core::{CurveType, PeerId, SigningScheme};
+use lit_rust_crypto::{
+    elliptic_curve::bigint::{self, U256},
+    k256, p256, p384,
+};
 use std::num::NonZeroU64;
 use std::time::Duration;
 use tracing::instrument;
@@ -1114,16 +1115,15 @@ impl PresignManager {
                 }
             };
 
-            if presign_leader_response.remaining_presigns < min_presigns {
-                if let Err(e) = local_tx
+            if presign_leader_response.remaining_presigns < min_presigns
+                && let Err(e) = local_tx
                     .send_async(PresignMessage::InformNonParticipants(
                         request_key_hash,
                         nonparticipants,
                     ))
                     .await
-                {
-                    error!("Error sending inform non participants message: {}", e);
-                }
+            {
+                error!("Error sending inform non participants message: {}", e);
             }
 
             let presign_message = PresignMessage::FullfillPresignRequest(

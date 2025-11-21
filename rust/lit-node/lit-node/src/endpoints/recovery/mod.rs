@@ -4,23 +4,27 @@ use crate::endpoints::recovery::utils::delete_key_shares_from_disk;
 use crate::error::{config_err, conversion_err, unexpected_err};
 use crate::peers::peer_state::models::SimplePeer;
 use crate::tss::common::tss_state::TssState;
-use blsful::inner_types::G1Projective;
-use ed448_goldilocks::EdwardsPoint;
 use ethers::{
     middleware::SignerMiddleware,
     providers::{Http, Provider},
     signers::Wallet,
     types::H160,
 };
-use jubjub::SubgroupPoint;
-use k256::ecdsa::SigningKey;
 use lit_blockchain::contracts::backup_recovery::{BackupRecovery, NextStateDownloadable};
 use lit_core::{config::LitConfig, utils::binary::bytes_to_hex};
 use lit_node_common::config::LitNodeConfig as _;
 use lit_node_core::CurveType;
 use lit_recovery::models::DownloadedShareData;
+use lit_rust_crypto::{
+    blsful::inner_types::G1Projective,
+    decaf377,
+    ed448_goldilocks::EdwardsPoint,
+    jubjub::SubgroupPoint,
+    k256::{self, ecdsa::SigningKey},
+    p256, p384, pallas,
+    vsss_rs::curve25519::{WrappedEdwards, WrappedRistretto},
+};
 use std::sync::Arc;
-use vsss_rs::curve25519::{WrappedEdwards, WrappedRistretto};
 
 pub mod endpoints;
 mod models;
@@ -134,25 +138,6 @@ pub async fn do_share_download_from_rec_dkg(
     };
 
     // k256 and bls public points (public keys)
-    let bls_pub_key = recovery_shares.bls_encryption_share.public_key_as_bytes()?;
-    let k256_pub_key = recovery_shares.k256_signing_share.public_key_as_bytes()?;
-    let p256_pub_key = recovery_shares.p256_signing_share.public_key_as_bytes()?;
-    let p384_pub_key = recovery_shares.p384_signing_share.public_key_as_bytes()?;
-    let ed25519_pub_key = recovery_shares
-        .ed25519_signing_share
-        .public_key_as_bytes()?;
-    let ristretto25519_pub_key = recovery_shares
-        .ristretto25519_signing_share
-        .public_key_as_bytes()?;
-    let ed448_pub_key = recovery_shares.ed448_signing_share.public_key_as_bytes()?;
-    let jubjub_pub_key = recovery_shares.jubjub_signing_share.public_key_as_bytes()?;
-    let decaf377_pub_key = recovery_shares
-        .decaf377_signing_share
-        .public_key_as_bytes()?;
-    let bls12381g1_pub_key = recovery_shares
-        .bls12381g1_signing_share
-        .public_key_as_bytes()?;
-
     let session_id = next_backup_state.session_id.to_string();
 
     Ok(vec![
@@ -285,6 +270,18 @@ pub async fn do_share_download_from_rec_dkg(
             curve: CurveType::BLS12381G1.to_string(),
             subnet_id: subnet_id.clone(),
         },
+        DownloadedShareData {
+            session_id: session_id.clone(),
+            encryption_key: recovery_shares.pallas_signing_share.hex_public_key.clone(),
+            decryption_key_share: serde_json::to_string(
+                &recovery_shares
+                    .pallas_signing_share
+                    .default_share::<pallas::Point>()?,
+            )
+            .map_err(|e| unexpected_err(e, None))?,
+            curve: CurveType::RedPallas.to_string(),
+            subnet_id: subnet_id.clone(),
+        },
     ])
 }
 
@@ -317,25 +314,16 @@ pub async fn do_delete_share_from_disk(
     };
 
     trace!("reading staker address from config");
-    let staking_address = match cfg.staker_address() {
-        Ok(addr) => addr,
-        Err(e) => {
-            return Err(config_err(
-                e,
-                Some("Error while loading staker address".into()),
-            ));
-        }
-    };
+    let staking_address = cfg
+        .staker_address()
+        .map_err(|e| config_err(e, Some("Error while loading staker address".into())))?;
 
-    let staking_addr: H160 = match staking_address.parse() {
-        Ok(addr) => addr,
-        Err(e) => {
-            return Err(conversion_err(
-                e,
-                Some("Could not convert staking address to H160 type".into()),
-            ));
-        }
-    };
+    let staking_addr = staking_address.parse::<H160>().map_err(|e| {
+        conversion_err(
+            e,
+            Some("Could not convert staking address to H160 type".into()),
+        )
+    })?;
 
     let mut index: Option<u16> = None;
     for (i, addr) in recovery_peer_addresses.iter().enumerate() {
@@ -393,7 +381,7 @@ pub fn get_staker_address(cfg: &LitConfig) -> crate::error::Result<String> {
         Err(e) => return Err(unexpected_err(e, None)),
     };
 
-    let staker_address: ethers::types::H160 = match staker_address.parse() {
+    let staker_address: H160 = match staker_address.parse() {
         Ok(addr) => addr,
         Err(e) => {
             return Err(conversion_err(

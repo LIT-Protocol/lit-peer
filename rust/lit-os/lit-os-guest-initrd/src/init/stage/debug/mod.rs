@@ -70,10 +70,10 @@ async fn test_network(_ctx: &mut InitContext) -> Result<()> {
                 );
             }
             Ok(_) => {
-                error!("Failed to ping: {} ({}) (no response)", host, ip.to_string())
+                error!("Failed to ping: {} ({}) (no response)", host, ip)
             }
             Err(e) => {
-                error!("Failed to ping: {} ({}) - {:?}", host, ip.to_string(), e)
+                error!("Failed to ping: {} ({}) - {:?}", host, ip, e)
             }
         }
     }

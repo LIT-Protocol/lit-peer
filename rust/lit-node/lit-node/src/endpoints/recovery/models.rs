@@ -12,4 +12,5 @@ pub struct RecoveryShares {
     pub jubjub_signing_share: KeyShare,
     pub decaf377_signing_share: KeyShare,
     pub bls12381g1_signing_share: KeyShare,
+    pub pallas_signing_share: KeyShare,
 }

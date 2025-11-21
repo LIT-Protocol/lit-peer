@@ -180,7 +180,7 @@ mod tests {
         assert_eq!(public.error_kind, Kind::SevSnp);
         assert_eq!(public.error_code, Some("CoreFatal".into()));
         assert_eq!(public.status, 500);
-        assert_eq!(public.message, Some("A fatal error occured in the lit core system".into()));
+        assert_eq!(public.message, Some("A fatal error occurred in the lit core system".into()));
         assert_eq!(public.correlation_id, None);
         assert_eq!(public.details, Vec::<String>::new());
 
@@ -202,7 +202,7 @@ mod tests {
 
         assert_eq!(
             json,
-            "{\"details\":[\"Some juicy details\",\"Some more\"],\"errorCode\":\"CoreFatal\",\"errorKind\":\"SevSnp\",\"message\":\"A fatal error occured in the lit core system\",\"status\":500}"
+            "{\"details\":[\"Some juicy details\",\"Some more\"],\"errorCode\":\"CoreFatal\",\"errorKind\":\"SevSnp\",\"message\":\"A fatal error occurred in the lit core system\",\"status\":500}"
         );
     }
 
@@ -241,7 +241,7 @@ mod tests {
 
         assert_eq!(
             format!("{:?}", new_err),
-            "upstream::Error { kind: SevSnp, code: CoreFatal, source: \"lit_core::PublicError { error_kind: SevSnp, error_code: \\\"CoreFatal\\\", message: \\\"A fatal error occured in the lit core system\\\", details: [\\\"Some juicy details\\\", \\\"Some more\\\"] }\" }"
+            "upstream::Error { kind: SevSnp, code: CoreFatal, source: \"lit_core::PublicError { error_kind: SevSnp, error_code: \\\"CoreFatal\\\", message: \\\"A fatal error occurred in the lit core system\\\", details: [\\\"Some juicy details\\\", \\\"Some more\\\"] }\" }"
         );
     }
 }

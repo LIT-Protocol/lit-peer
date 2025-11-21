@@ -40,10 +40,8 @@ pub(crate) fn unmount(mnt: PathBuf, force: bool, unlink: bool) {
             error!("error unmounting: {}", e);
         }
 
-        if unlink {
-            if let Err(e) = fs::remove_dir_all(mnt.as_path()) {
-                error!("error removing dir ({:?}): {}", mnt, e);
-            }
+        if unlink && let Err(e) = fs::remove_dir_all(mnt.as_path()) {
+            error!("error removing dir ({:?}): {}", mnt, e);
         }
     }
 }

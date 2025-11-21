@@ -7,22 +7,16 @@ edition.workspace = true
 default = []
 
 [dependencies]
-blsful.workspace = true
-curve25519-dalek.workspace = true
-decaf377.workspace = true
 ed25519-dalek.workspace = true
-ed448-goldilocks.workspace = true
 ethabi.workspace = true
 ethers.workspace = true
-hd-keys-curves-wasm = { git = "https://github.com/LIT-Protocol/hd-keys-curves-wasm", default-features = false, features = ["bls", "k256", "p256", "p384", "curve25519", "ed448", "jubjub", "decaf377"] }
+hd-keys-curves-wasm.workspace = true
 hex.workspace = true
-jubjub.workspace = true
-k256 = { version = "0.13", features = ["ecdsa", "serde"] }
-p256 = { version = "0.13", features = ["ecdsa", "serde"] }
-p384 = { version = "0.13.1", features = ["ecdsa", "serde"] }
+lit-rust-crypto.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror = "2.0"
-vsss-rs.workspace = true
 
 [dev-dependencies]
+rand_chacha = "0.3.1"
+rand_core = "0.6.4"

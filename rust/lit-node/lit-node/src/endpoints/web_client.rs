@@ -1295,19 +1295,19 @@ pub(crate) async fn sign_session_key(
     };
     timing.insert("parsed siwe message".to_string(), before.elapsed());
 
-    if let Some(statement) = &parsed_siwe.statement {
-        if statement.contains(LIT_RESOURCE_PREFIX_RAC) {
-            return client_session.json_encrypt_err_custom_response(
-                "missing resource prefix",
-                validation_err_code(
-                    "Can't define Auth Context resources in capability",
-                    EC::NodeInvalidAuthContextResource,
-                    None,
-                )
-                .add_msg_to_details()
-                .handle(),
-            );
-        }
+    if let Some(statement) = &parsed_siwe.statement
+        && statement.contains(LIT_RESOURCE_PREFIX_RAC)
+    {
+        return client_session.json_encrypt_err_custom_response(
+            "missing resource prefix",
+            validation_err_code(
+                "Can't define Auth Context resources in capability",
+                EC::NodeInvalidAuthContextResource,
+                None,
+            )
+            .add_msg_to_details()
+            .handle(),
+        );
     }
 
     let origin_domain = match get_domain_from_request_origin(

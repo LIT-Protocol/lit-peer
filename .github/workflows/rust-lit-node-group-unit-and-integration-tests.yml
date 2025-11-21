@@ -78,7 +78,7 @@ jobs:
       - name: Install rust
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: '1.86' # keep in sync with rust/lit-node/rust-toolchain.toml
+          toolchain: '1.91' # keep in sync with rust/lit-node/rust-toolchain.toml
       - name: Rust Cache
         uses: WarpBuilds/rust-cache@v2
         with:
@@ -201,7 +201,7 @@ jobs:
       - name: Install rust because the version upgrade tests do a recompile
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: '1.86' # keep in sync with rust/lit-node/rust-toolchain.toml
+          toolchain: '1.91' # keep in sync with rust/lit-node/rust-toolchain.toml
           components: rust-src
       - name: Install nextest
         run: curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C "${CARGO_HOME:-$HOME/.cargo}/bin"

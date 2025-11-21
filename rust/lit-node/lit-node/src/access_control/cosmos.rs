@@ -402,19 +402,18 @@ async fn check_return_value(
                     // need to check the type here.  because if this is a string, we can concatenate for the "contains" operator.  i suppose we shouldn't do that if it's a number.
                     if filtered_vals.len() > 1
                         && condition.return_value_test.comparator == "contains"
+                        && let serde_json::Value::String(_) = value_to_check
                     {
-                        if let serde_json::Value::String(_) = value_to_check {
-                            // it's a string.  concate all items
-                            let mut concatenated_string = String::new();
-                            for item in filtered_vals {
-                                concatenated_string.push_str(
-                                    item.as_str()
-                                        .expect_or_err("could not get string from item")?,
-                                );
-                                concatenated_string.push(' ');
-                            }
-                            value_to_check = serde_json::Value::String(concatenated_string);
+                        // it's a string.  concate all items
+                        let mut concatenated_string = String::new();
+                        for item in filtered_vals {
+                            concatenated_string.push_str(
+                                item.as_str()
+                                    .expect_or_err("could not get string from item")?,
+                            );
+                            concatenated_string.push(' ');
                         }
+                        value_to_check = serde_json::Value::String(concatenated_string);
                     }
                 }
             }

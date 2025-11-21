@@ -2,7 +2,6 @@ use crate::error::{EC, parser_err, unexpected_err, unexpected_err_code};
 use crate::p2p_comms::CommsManager;
 use crate::peers::peer_state::models::SimplePeer;
 use crate::tss::common::hd_keys::get_derived_keyshare;
-use crate::tss::common::signing_scheme::signing_scheme_to_frost_scheme;
 use crate::tss::common::traits::signable::Signable;
 use crate::{
     error::Result,
@@ -10,19 +9,22 @@ use crate::{
     peers::peer_state::models::SimplePeerCollection,
     tss::common::{dkg_type::DkgType, tss_state::TssState},
 };
-use blsful::inner_types::GroupEncoding;
-use hd_keys_curves::{HDDerivable, HDDeriver};
 use lit_core::error::Unexpected;
 use lit_core::utils::binary::bytes_to_hex;
 use lit_frost::{
     Identifier, KeyPackage, Scheme, SignatureShare, SigningCommitments, SigningShare, VerifyingKey,
     VerifyingShare,
 };
-use lit_node_core::CompressedBytes;
-use lit_node_core::CurveType;
-use lit_node_core::NodeSet;
-use lit_node_core::PeerId;
-use lit_node_core::{FrostSignedMessageShare, SignableOutput, SigningAlgorithm, SigningScheme};
+use lit_node_core::{
+    CompressedBytes, CurveType, FrostSignedMessageShare, NodeSet, PeerId, SignableOutput,
+    SigningAlgorithm, SigningScheme,
+    hd_keys_curves_wasm::{HDDerivable, HDDeriver},
+};
+use lit_rust_crypto::{
+    curve25519_dalek, decaf377, ed448_goldilocks, group::GroupEncoding, jubjub, k256, p256, p384,
+    pallas, vsss_rs,
+};
+use lit_sdk::signature::signing_scheme_to_frost_scheme;
 use std::{num::NonZeroU16, sync::Arc};
 use verifiable_share_encryption::legacy_vsss_rs::ShareIdentifier;
 
@@ -85,7 +87,8 @@ impl FrostState {
         // setup signing protocol
         let mut rng = rand::rngs::OsRng;
         let self_peer = peers.peer_at_address(&self.state.addr)?;
-        let scheme: Scheme = signing_scheme_to_frost_scheme(signature_scheme)?;
+        let scheme: Scheme = signing_scheme_to_frost_scheme(signature_scheme)
+            .map_err(|e| unexpected_err(e, None))?;
         let identifier = self.peer_id_to_frost_identifier(self_peer.peer_id)?;
 
         let verifying_share = scheme.verifying_share(secret_share).map_err(|e| {
@@ -172,7 +175,8 @@ impl FrostState {
         )
         .await?;
 
-        let scheme = signing_scheme_to_frost_scheme(self.signing_scheme)?;
+        let scheme = signing_scheme_to_frost_scheme(self.signing_scheme)
+            .map_err(|e| unexpected_err(e, None))?;
         let vk = VerifyingKey {
             scheme,
             value: pk.to_compressed(),
@@ -197,6 +201,7 @@ impl FrostState {
                 .to_vec(),
             CurveType::RedJubjub => jubjub::Scalar::from(peer_id).to_bytes().to_vec(),
             CurveType::RedDecaf377 => decaf377::Fr::from(peer_id).to_bytes().to_vec(),
+            CurveType::RedPallas => pallas::Scalar::from(peer_id).to_le_bytes().to_vec(),
             _ => {
                 // Shouldn't happen but just in case
                 return Err(unexpected_err(
@@ -205,7 +210,8 @@ impl FrostState {
                 ));
             }
         };
-        let scheme = signing_scheme_to_frost_scheme(self.signing_scheme)?;
+        let scheme = signing_scheme_to_frost_scheme(self.signing_scheme)
+            .map_err(|e| unexpected_err(e, None))?;
         Ok(Identifier { scheme, id: bytes })
     }
 }
@@ -311,6 +317,16 @@ impl Signable for FrostState {
             SigningScheme::SchnorrRedDecaf377Blake2b512 => {
                 let deriver = decaf377::Fr::create(&key_id, self.signing_scheme.id_sign_ctx());
                 self.derive_frost_signing_components::<decaf377::Element>(
+                    deriver,
+                    root_pubkeys,
+                    &self_peer,
+                    epoch,
+                )
+                .await?
+            }
+            SigningScheme::SchnorrRedPallasBlake2b512 => {
+                let deriver = pallas::Scalar::create(&key_id, self.signing_scheme.id_sign_ctx());
+                self.derive_frost_signing_components::<pallas::Point>(
                     deriver,
                     root_pubkeys,
                     &self_peer,

@@ -9,7 +9,7 @@ use lit_core::utils::option::bool_option_to_bool;
 use lit_os_core::config::LitOsGuestConfig;
 use lit_os_core::error::{Result, config_err, io_err, validation_err};
 use lit_os_core::guest::types::GuestType;
-use log::{as_error, error, info};
+use log::{error, info};
 use std::path::Path;
 
 pub(crate) async fn run(ctx: &mut InitContext) -> Result<Outcome> {
@@ -20,7 +20,7 @@ pub(crate) async fn run(ctx: &mut InitContext) -> Result<Outcome> {
     }
 
     if let Err(e) = verify_tee() {
-        error!(error = as_error!(e); "unable to proceed: TEE invalid");
+        error!(error:err = e; "unable to proceed: TEE invalid");
 
         return Ok(Outcome::Break);
     }
@@ -30,7 +30,7 @@ pub(crate) async fn run(ctx: &mut InitContext) -> Result<Outcome> {
 
     match verify(ctx) {
         Err(e) => {
-            error!(error = as_error!(e); "unable to proceed: context verification failed");
+            error!(error:err = e; "unable to proceed: context verification failed");
 
             Ok(Outcome::Break)
         }
@@ -151,7 +151,7 @@ fn check_dev_exists(path: &Path, label: &str) -> bool {
     if !path.exists() {
         let err = io_err(format!("{label} dev ({path:?}) does not exist!"), None);
 
-        error!(error = as_error!(err); "unable to proceed: required device missing");
+        error!(error:err = err; "unable to proceed: required device missing");
 
         return false;
     }

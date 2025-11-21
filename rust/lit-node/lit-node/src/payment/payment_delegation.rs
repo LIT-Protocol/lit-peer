@@ -128,8 +128,7 @@ pub async fn check_for_payment_delegation(
 
         if let Ok(Some(delegation)) =
             check_verified_siwe_for_a_payment_delegator(user_address, signed_message)
-        {
-            if let Ok((true, spending_limit)) = validate_delegation_requirements(
+            && let Ok((true, spending_limit)) = validate_delegation_requirements(
                 &delegation,
                 required_scope,
                 required_funds,
@@ -138,9 +137,8 @@ pub async fn check_for_payment_delegation(
                 ledger,
             )
             .await
-            {
-                return Ok(Some((delegation.delegator, spending_limit)));
-            }
+        {
+            return Ok(Some((delegation.delegator, spending_limit)));
         };
     }
 

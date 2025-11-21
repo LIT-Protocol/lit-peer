@@ -50,10 +50,10 @@ impl HandshakeRequestBuilder {
                 ));
             }
 
-            if let Some(challenge) = &request.challenge {
-                if challenge.is_empty() {
-                    return Err(SdkError::Build("No challenge is specified".to_string()));
-                }
+            if let Some(challenge) = &request.challenge
+                && challenge.is_empty()
+            {
+                return Err(SdkError::Build("No challenge is specified".to_string()));
             }
         }
         Ok(())

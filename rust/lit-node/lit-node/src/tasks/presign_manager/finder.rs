@@ -11,10 +11,10 @@ use crate::tss::common::storage::read_presign_from_disk_direct;
 use async_std::fs::{self, DirEntry};
 use async_std::io::Error;
 use async_std::path::PathBuf;
-use elliptic_curve::bigint::{self, U256};
 use futures::StreamExt;
 use lit_node_common::config::presign_path;
 use lit_node_core::CurveType;
+use lit_rust_crypto::elliptic_curve::bigint::{self, U256};
 use xorf::Filter;
 
 impl PresignManager {
@@ -81,13 +81,12 @@ impl PresignManager {
                 let path = entry.path();
                 Box::pin(self.recurse_dirs(path, presign_list, peers, node_addr, curve_type))
                     .await?;
-            } else if filetype.is_file() {
-                if let Err(r) = self
+            } else if filetype.is_file()
+                && let Err(r) = self
                     .attempt_load_presign(entry.clone(), presign_list, peers, node_addr, curve_type)
                     .await
-                {
-                    error!("Error loading presign {:?}: {:?}", entry, r);
-                }
+            {
+                error!("Error loading presign {:?}: {:?}", entry, r);
             }
         }
         Ok(())
@@ -108,7 +107,7 @@ impl PresignManager {
             Err(e) => {
                 error!("Error reading filename: {:?}", e);
                 return Err(unexpected_err(
-                    Error::new(std::io::ErrorKind::Other, "file"),
+                    Error::other("file"),
                     Some("Presign filename read error.".into()),
                 ));
             }
@@ -120,7 +119,7 @@ impl PresignManager {
             None => {
                 error!("Error reading filename: {:?}", entry.path());
                 return Err(unexpected_err(
-                    Error::new(std::io::ErrorKind::Other, "file"),
+                    Error::other("file"),
                     Some("Presign filename read error.".into()),
                 ));
             }
@@ -194,14 +193,14 @@ impl PresignManager {
                 }
                 if found {
                     // even if there is a peer_group, we need to check if it's empty
-                    if let Some(s) = pregen_list.get(peer_group_id) {
-                        if !s.is_empty() {
-                            info!(
-                                "Found peer group_id {} with threshold {}.",
-                                peer_group_id, xor_filter_with_threshold.threshold
-                            );
-                            return *peer_group_id;
-                        }
+                    if let Some(s) = pregen_list.get(peer_group_id)
+                        && !s.is_empty()
+                    {
+                        info!(
+                            "Found peer group_id {} with threshold {}.",
+                            peer_group_id, xor_filter_with_threshold.threshold
+                        );
+                        return *peer_group_id;
                     }
                 }
             }

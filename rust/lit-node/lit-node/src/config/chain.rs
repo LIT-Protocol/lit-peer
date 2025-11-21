@@ -922,7 +922,7 @@ impl ChainDataConfigManager {
         peer_validators
     }
 
-    async fn update_validator_versions(&self, peer_validators: &mut Vec<PeerValidator>) {
+    async fn update_validator_versions(&self, peer_validators: &mut [PeerValidator]) {
         let (tx, rx) = flume::bounded(1);
 
         match self
