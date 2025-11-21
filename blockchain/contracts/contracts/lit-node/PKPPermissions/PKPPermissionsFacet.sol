@@ -8,7 +8,7 @@ import "solidity-bytes-utils/contracts/BytesLib.sol";
 import { LibDiamond } from "../../libraries/LibDiamond.sol";
 
 import { ContractResolver } from "../../lit-core/ContractResolver.sol";
-import { PubkeyRouterFacet } from "../PubkeyRouter/PubkeyRouterFacet.sol";
+import { PubkeyRouterViewsFacet } from "../PubkeyRouter/PubkeyRouterViewsFacet.sol";
 import { PKPNFTFacet } from "../PKPNFT/PKPNFTFacet.sol";
 
 import { LibPKPPermissionsStorage } from "./LibPKPPermissionsStorage.sol";
@@ -78,20 +78,24 @@ contract PKPPermissionsFacet is ERC2771 {
     function getRouterAddress() public view returns (address) {
         return
             s().contractResolver.getContract(
-                s().contractResolver.PUB_KEY_ROUTER_CONTRACT(),
+                s().contractResolver.PUB_KEY_ROUTER_VIEWS_CONTRACT(),
                 s().env
             );
     }
 
     /// get the eth address for the keypair, as long as it's an ecdsa keypair
     function getEthAddress(uint256 tokenId) public view returns (address) {
-        PubkeyRouterFacet router = PubkeyRouterFacet(getRouterAddress());
+        PubkeyRouterViewsFacet router = PubkeyRouterViewsFacet(
+            getRouterAddress()
+        );
         return router.getEthAddress(tokenId);
     }
 
     /// includes the 0x04 prefix so you can pass this directly to ethers.utils.computeAddress
     function getPubkey(uint256 tokenId) public view returns (bytes memory) {
-        PubkeyRouterFacet router = PubkeyRouterFacet(getRouterAddress());
+        PubkeyRouterViewsFacet router = PubkeyRouterViewsFacet(
+            getRouterAddress()
+        );
         return router.getPubkey(tokenId);
     }
 

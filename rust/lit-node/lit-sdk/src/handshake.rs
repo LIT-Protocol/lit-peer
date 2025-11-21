@@ -2,26 +2,23 @@ use crate::common::{Request, Response, UrlPrefix};
 use crate::{SdkError, SdkResult};
 use lit_node_core::{
     NodeSet,
-    request::JsonSDKHandshakeRequest,
-    response::{GenericResponse, JsonSDKHandshakeResponse},
+    request::SDKHandshakeRequest,
+    response::{GenericResponse, SDKHandshakeResponseV0},
 };
 use std::{collections::HashMap, marker::PhantomData};
 use uuid::Uuid;
 
 /// The handshake request struct
-pub type HandshakeRequest = Request<
-    HandshakeRequestBuilder,
-    JsonSDKHandshakeRequest,
-    GenericResponse<JsonSDKHandshakeResponse>,
->;
+pub type HandshakeRequest =
+    Request<HandshakeRequestBuilder, SDKHandshakeRequest, GenericResponse<SDKHandshakeResponseV0>>;
 
 /// The response type for handshake calls
-pub type HandshakeResponse = Response<GenericResponse<JsonSDKHandshakeResponse>>;
+pub type HandshakeResponse = Response<GenericResponse<SDKHandshakeResponseV0>>;
 
 basic_builder!(
     HandshakeRequestBuilder,
-    JsonSDKHandshakeRequest,
-    GenericResponse<JsonSDKHandshakeResponse>,
+    SDKHandshakeRequest,
+    GenericResponse<SDKHandshakeResponseV0>,
     "web/handshake"
 );
 
@@ -30,14 +27,14 @@ impl HandshakeRequestBuilder {
         client_public_key,
         client_public_key,
         String,
-        JsonSDKHandshakeRequest,
+        SDKHandshakeRequest,
         client_public_key
     );
     builder_setter!(
         challenge,
         challenge,
         Option<String>,
-        JsonSDKHandshakeRequest,
+        SDKHandshakeRequest,
         challenge
     );
 
@@ -82,7 +79,7 @@ mod tests {
     #[test]
     fn set_request() {
         let request = HandshakeRequest::new()
-            .request(JsonSDKHandshakeRequest {
+            .request(SDKHandshakeRequest {
                 challenge: None,
                 client_public_key: "blah".to_string(),
             })

@@ -189,15 +189,18 @@ pub mod middleware {
             let typed_tx: Eip1559TransactionRequest = match typed_tx {
                 TypedTransaction::Legacy(legacy_tx) => {
                     // Map to Eip1559TransactionRequest
-                    let mut eip1559_tx = Eip1559TransactionRequest::default();
-                    eip1559_tx.from = legacy_tx.from;
-                    eip1559_tx.to = legacy_tx.to;
-                    eip1559_tx.value = legacy_tx.value;
-                    eip1559_tx.gas = legacy_tx.gas;
-                    eip1559_tx.nonce = legacy_tx.nonce;
-                    eip1559_tx.data = legacy_tx.data;
-                    eip1559_tx.chain_id = legacy_tx.chain_id;
-                    eip1559_tx
+                    Eip1559TransactionRequest {
+                        from: legacy_tx.from,
+                        to: legacy_tx.to,
+                        value: legacy_tx.value,
+                        gas: legacy_tx.gas,
+                        nonce: legacy_tx.nonce,
+                        data: legacy_tx.data,
+                        chain_id: legacy_tx.chain_id,
+                        access_list: Default::default(),
+                        max_priority_fee_per_gas: Default::default(),
+                        max_fee_per_gas: Default::default(),
+                    }
                 }
                 TypedTransaction::Eip1559(tx) => tx,
                 _ => return Err(EIP2771GasRelayerMiddlewareError::UnsupportedTransactionType),
@@ -240,10 +243,10 @@ pub mod middleware {
                             .0,
                     ),
                     value: alloy::primitives::U256::from_limbs(
-                        U256::from(typed_tx.value.unwrap_or(U256::from(0))).0,
+                        typed_tx.value.unwrap_or_else(U256::zero).0,
                     ),
                     gas: alloy::primitives::U256::from_limbs(gas.0),
-                    nonce: alloy::primitives::U256::from_limbs(U256::from(nonce).0),
+                    nonce: alloy::primitives::U256::from_limbs(nonce.0),
                     data: alloy::primitives::Bytes::from(
                         typed_tx
                             .data

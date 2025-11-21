@@ -11,8 +11,6 @@ use lit_node_core::CurveType;
 use lit_node_core::PeerId;
 use tracing::instrument;
 
-pub const ID_SIGN_CTX: &[u8] = b"LIT_HD_KEY_ID_K256_XMD:SHA-256_SSWU_RO_NUL_";
-
 #[allow(clippy::too_many_arguments)]
 #[instrument(level = "debug", skip_all)]
 pub async fn get_derived_keyshare<G>(

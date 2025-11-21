@@ -54,8 +54,7 @@ pub enum EcdsaError {
     /// Invalid round 3 payload error
     #[error("Invalid round 3 payload")]
     InvalidRound3Payload,
-    /// Invalid round 4 payload error
-    /// Insufficient shares error
+    /// Insufficient round 1 payloads error
     #[error("Insufficient round 1 payloads received")]
     InsufficientRound1Payloads,
     /// Invalid ID in commitment or share error
@@ -67,7 +66,6 @@ pub enum EcdsaError {
     /// Insufficient round 3 payloads error
     #[error("Insufficient round 3 payloads received")]
     InsufficientRound3Payloads,
-    /// Invalid round 4 payload error
     /// Invalid computed pre-signature big R error
     #[error("Invalid computed pre-signature big R")]
     InvalidBigR,

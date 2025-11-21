@@ -18,6 +18,7 @@ describe('PubkeyRouter', function () {
   let pkpContract;
   let routerDiamond;
   let router;
+  let routerViews;
   let pkpHelper;
   let pkpPermissions;
   let pkpPermissionsDiamond;
@@ -57,7 +58,7 @@ describe('PubkeyRouter', function () {
       await contractResolver.getAddress(),
       Environment.DEV,
       {
-        additionalFacets: ['PubkeyRouterFacet'],
+        additionalFacets: ['PubkeyRouterFacet', 'PubkeyRouterViewsFacet'],
         verifyContracts: false,
         waitForDeployment: false,
       }
@@ -65,6 +66,10 @@ describe('PubkeyRouter', function () {
     routerDiamond = deployResult.diamond;
     router = await ethers.getContractAt(
       'PubkeyRouterFacet',
+      await routerDiamond.getAddress()
+    );
+    routerViews = await ethers.getContractAt(
+      'PubkeyRouterViewsFacet',
       await routerDiamond.getAddress()
     );
     deployResult = await deployDiamond(
@@ -151,7 +156,7 @@ describe('PubkeyRouter', function () {
       realms: [1],
       curves: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       counts: [1, 2, 2, 2, 2, 2, 2, 2, 2, 2],
-      recoveryPartyMembers: [],
+      recoverySessionId: '0x',
     });
 
     // Mint enough tokens for the deployer
@@ -178,7 +183,7 @@ describe('PubkeyRouter', function () {
       [deployer, ...signers] = signers;
 
       // vote for the root keys
-      let existingRootKeys = await router.getRootKeys(
+      let existingRootKeys = await routerViews.getRootKeys(
         await staking.getAddress(),
         'naga-keyset1'
       );
@@ -216,15 +221,15 @@ describe('PubkeyRouter', function () {
     context('when routing data is unset', async () => {
       beforeEach(async () => {
         router = router.connect(deployer);
+        routerViews = routerViews.connect(deployer);
       });
 
       it('retrieves empty routing data', async () => {
         const fakePubkey =
           '0x0443d46287aa31a62f8319438b6210e169fd9e686a11fad81f6cf375e84ed9ba38a3909e41cc52c0c2f2ad95b4cf32982a6295e410b1ff6d455a7c7a4c44463f48';
         const pubkeyHash = ethers.keccak256(fakePubkey);
-        const [pubkey, stakingContract, keyType] = await router.getRoutingData(
-          pubkeyHash
-        );
+        const [pubkey, stakingContract, keyType] =
+          await routerViews.getRoutingData(pubkeyHash);
         expect(pubkey).equal('0x');
         expect(stakingContract).equal(
           '0x0000000000000000000000000000000000000000'
@@ -247,9 +252,10 @@ describe('PubkeyRouter', function () {
             [creator, tester, ...signers] = signers;
 
             router = await router.connect(deployer);
+            routerViews = await routerViews.connect(deployer);
 
             // vote for the root keys
-            let existingRootKeys = await router.getRootKeys(
+            let existingRootKeys = await routerViews.getRootKeys(
               await staking.getAddress(),
               'naga-keyset1'
             );
@@ -283,7 +289,7 @@ describe('PubkeyRouter', function () {
 
             // validate that it was set
             const [pubkeyAfter, keyTypeAfter, _derivedKeyIdAfter] =
-              await router.getRoutingData(tokenId);
+              await routerViews.getRoutingData(tokenId);
             expect(pubkeyAfter).equal(pubkey);
             expect(keyTypeAfter).equal(2);
 
@@ -294,20 +300,20 @@ describe('PubkeyRouter', function () {
           it('checks the PKP eth address and the reverse mapping', async () => {
             // validate that the address matches what ethers calculates
             const ethersResult = ethers.computeAddress(pubkey);
-            const pubkeyFromContract = await router.getPubkey(tokenId);
-            let ethAddressOfPKP = await router.getEthAddress(tokenId);
+            const pubkeyFromContract = await routerViews.getPubkey(tokenId);
+            let ethAddressOfPKP = await routerViews.getEthAddress(tokenId);
             expect(ethAddressOfPKP).equal(ethersResult);
             expect(pubkey).equal(pubkeyFromContract);
 
             // check the reverse mapping
-            const tokenIdFromContract = await router.ethAddressToPkpId(
+            const tokenIdFromContract = await routerViews.ethAddressToPkpId(
               ethAddressOfPKP
             );
             expect(tokenIdFromContract).equal(tokenId);
           });
 
           it('gets and sets root keys', async () => {
-            const fetchedRootKeys = await router.getRootKeys(
+            const fetchedRootKeys = await routerViews.getRootKeys(
               await staking.getAddress(),
               'naga-keyset1'
             );

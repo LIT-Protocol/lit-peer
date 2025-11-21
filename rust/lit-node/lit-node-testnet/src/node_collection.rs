@@ -5,7 +5,7 @@ use ethers::types::U256;
 use ethers::utils::hex;
 use futures::future::join_all;
 use lit_node_core::response::GenericResponse;
-use lit_node_core::response::JsonSDKHandshakeResponse;
+use lit_node_core::response::SDKHandshakeResponseV0;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt::Debug;
@@ -199,7 +199,7 @@ pub async fn get_identity_pubkeys_from_node_set(
 async fn handshake_nodes(
     actions: &Actions,
     realm_id: U256,
-) -> Vec<GenericResponse<JsonSDKHandshakeResponse>> {
+) -> Vec<GenericResponse<SDKHandshakeResponseV0>> {
     let validators = actions.get_current_validator_structs(realm_id).await;
     let node_set = validators
         .iter()

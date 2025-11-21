@@ -3,11 +3,14 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+/// Supported attestation types for node verification.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[allow(unused)]
 pub enum AttestationType {
+    /// AMD SEV-SNP (Secure Encrypted Virtualization - Secure Nested Paging) attestation.
     AmdSevSnp,
+    /// Admin-signed attestation for development/testing.
     AdminSigned,
 }
 

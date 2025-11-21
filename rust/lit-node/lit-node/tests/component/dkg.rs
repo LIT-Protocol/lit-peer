@@ -7,7 +7,7 @@ use futures::future::join_all;
 use lit_blockchain::contracts::backup_recovery::RecoveredPeerId;
 use lit_core::utils::binary::bytes_to_hex;
 use lit_node::common::key_helper::KeyCache;
-use lit_node::config::chain::CachedRootKey;
+use lit_node::models::KeySetConfig;
 use lit_node::peers::peer_state::models::SimplePeerCollection;
 use lit_node::tss::common::dkg_type::DkgType;
 use lit_node::tss::common::key_share::KeyShare;
@@ -16,12 +16,13 @@ use lit_node::tss::common::storage::{
     write_key_share_to_cache_only,
 };
 use lit_node::tss::dkg::engine::{DkgAfterRestore, DkgAfterRestoreData, DkgEngine};
+use lit_node::tss::util::DEFAULT_KEY_SET_NAME;
 use lit_node::utils::key_share_proof::{compute_key_share_proofs, verify_key_share_proofs};
 use lit_node::version::DataVersionWriter;
 use lit_node_core::CompressedBytes;
 use lit_node_core::CurveType;
 use lit_node_core::PeerId;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use test_case::test_case;
 use tokio::task::JoinHandle;
 use tracing::{error, info};
@@ -70,14 +71,32 @@ pub async fn dkg_and_key_share_proofs(curve_type: CurveType) {
             );
             peers_in_current_epoch.epoch_number = epoch;
             peers_in_current_epoch.commit();
-            let mut root_keys = DataVersionWriter::new_unchecked(
-                &node.tss_state.chain_data_config_manager.root_keys,
+            let mut key_sets = DataVersionWriter::new_unchecked(
+                &node.tss_state.chain_data_config_manager.key_sets,
             );
-            root_keys.push(CachedRootKey {
-                curve_type,
-                public_key: pubkey.clone(),
-            });
-            root_keys.commit();
+            let mut realms = HashSet::with_capacity(1);
+            realms.insert(1);
+            let mut root_keys_by_curve = HashMap::with_capacity(1);
+            root_keys_by_curve.insert(curve_type, vec![pubkey.clone()]);
+            let mut root_key_counts = HashMap::with_capacity(1);
+            root_key_counts.insert(curve_type, 1);
+
+            key_sets.insert(
+                DEFAULT_KEY_SET_NAME.to_string(),
+                KeySetConfig {
+                    identifier: DEFAULT_KEY_SET_NAME.to_string(),
+                    description: "".to_string(),
+                    minimum_threshold: 3,
+                    monetary_value: 0,
+                    complete_isolation: false,
+                    realms,
+                    root_keys_by_curve,
+                    root_key_counts,
+                    recovery_session_id: "".to_string(),
+                },
+            );
+
+            key_sets.commit();
             root_keys_map
                 .entry(curve_type)
                 .and_modify(|v| v.push(pubkey.clone()))
@@ -300,7 +319,7 @@ pub async fn dkg_after_restore<G>(
         );
         for i in 0..2 {
             let dkg_id = format!("{}{}_key_{}", dkg_id, curve_type, i + 1);
-            dkg_engine.add_dkg(&dkg_id, curve_type, None);
+            dkg_engine.add_dkg(&dkg_id, DEFAULT_KEY_SET_NAME, curve_type, None);
         }
         join_set.spawn(async move {
             let r = dkg_engine.execute(dkg_id, realm_id).await;
@@ -391,7 +410,12 @@ pub async fn dkg_after_restore<G>(
         );
         for (i, pubkey) in root_keys.iter().enumerate() {
             let dkg_id = format!("{}{}_key_{}", dkg_id, curve_type, i + 1);
-            dkg_engine.add_dkg(&dkg_id, curve_type, Some(pubkey.clone()));
+            dkg_engine.add_dkg(
+                &dkg_id,
+                DEFAULT_KEY_SET_NAME,
+                curve_type,
+                Some(pubkey.clone()),
+            );
         }
         join_set.spawn(async move {
             let r = dkg_engine.execute(dkg_id, realm_id).await;
@@ -628,7 +652,7 @@ pub async fn dkg(
             &next_peers,
             DkgAfterRestore::False,
         );
-        dkg_engine.add_dkg(dkg_id, curve_type, pubkey.clone());
+        dkg_engine.add_dkg(dkg_id, DEFAULT_KEY_SET_NAME, curve_type, pubkey.clone());
 
         let jh: JoinHandle<String> = tokio::task::spawn(async move {
             let r = dkg_engine.execute(dkg_id, realm_id).await;
@@ -706,7 +730,7 @@ pub async fn dkg_all_curves(
         for curve_type in CurveType::into_iter() {
             for i in 0..2 {
                 let dkg_id = format!("{}{}_key_{}", dkg_id, curve_type, i);
-                dkg_engine.add_dkg(&dkg_id, curve_type, None);
+                dkg_engine.add_dkg(&dkg_id, DEFAULT_KEY_SET_NAME, curve_type, None);
             }
         }
 

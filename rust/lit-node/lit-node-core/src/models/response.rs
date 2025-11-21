@@ -2,11 +2,31 @@ use super::{DynamicPaymentItem, SignableOutput, SignedData, default_epoch};
 use blsful::{Bls12381G2Impl, SignatureShare};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use serde_json::Value;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct JsonSDKHandshakeResponse {
+pub struct SDKHandshakeResponseV1 {
+    pub client_sdk_version: String,
+    pub attestation: Option<Value>,
+    pub latest_blockhash: String,
+    pub node_version: String,
+    pub node_identity_key: String,
+    pub git_commit_hash: String,
+    pub key_sets: BTreeMap<String, KeySetHandshake>,
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct KeySetHandshake {
+    pub realm_id: u64,
+    #[serde(default = "default_epoch")]
+    pub epoch: u64,
+}
+
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SDKHandshakeResponseV0 {
     pub server_public_key: String,
     pub subnet_public_key: String,
     pub network_public_key: String,
