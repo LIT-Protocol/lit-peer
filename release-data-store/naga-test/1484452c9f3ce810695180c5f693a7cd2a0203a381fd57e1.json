@@ -3,7 +3,7 @@
   "releaseId": "1484452c9f3ce810695180c5f693a7cd2a0203a381fd57e1",
   "version": "2.1.5",
   "networkName": "naga-test",
-  "releaseDate": "2025-11-21T14:36:02.734395374Z",
+  "releaseDate": "2025-11-21T14:51:58.986217998Z",
   "status": "active",
   "source": {
     "litOs": {
@@ -16,7 +16,7 @@
     }
   },
   "artifacts": {
-    "manifestCid": "QmRpnFeJyYmkzFvCAZJoGLsETq23RpsR7Uy8aar7Y8esYj",
+    "manifestCid": "QmVF9YbCXf92mVEST3twNusREyXzvwkwWUDQZWYavSvJUU",
     "dockerImage": "No docker image for this release"
   },
   "verification": {
