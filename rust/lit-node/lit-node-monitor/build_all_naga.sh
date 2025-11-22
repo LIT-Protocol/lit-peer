@@ -7,6 +7,9 @@ trunk build --release --features="naga-prod" --public-url "https://lit-protocol.
 echo "Building naga-dev"
 trunk build --release --features="naga-dev" --public-url "https://lit-protocol.github.io/monitor/naga-dev/" --dist="naga-dev"
 
+echo "Building naga-proto"
+trunk build --release --features="naga-proto" --public-url "https://lit-protocol.github.io/monitor/naga-proto/" --dist="naga-proto"
+
 echo "Building naga-staging"
 trunk build --release --features="naga-staging" --public-url "https://lit-protocol.github.io/monitor/naga-staging/" --dist="naga-staging"
 

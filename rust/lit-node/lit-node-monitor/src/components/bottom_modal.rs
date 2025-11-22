@@ -24,7 +24,7 @@ pub fn BottomModal(
                             "x"
                         </Button>
                     </DrawerHeaderTitleAction>
-                            <h6>{ move ||title.get() }</h6>
+                    <h6 class="text-center">{ move ||title.get() }</h6>
                 </DrawerHeaderTitle>
             </DrawerHeader>
             <DrawerBody>

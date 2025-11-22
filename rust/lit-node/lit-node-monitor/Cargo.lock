@@ -3089,6 +3089,7 @@ dependencies = [
  "thaw",
  "tokio",
  "uuid 1.18.1",
+ "web-sys",
  "yaml-rust2",
 ]
 
