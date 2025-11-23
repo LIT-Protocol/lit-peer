@@ -141,8 +141,9 @@ pub async fn get_global_config() -> Vec<NetworkConfig> {
         }
     };
 
-    let key_types = staking.get_key_types().call().await.unwrap();
+    // let key_types = staking.get_key_types().call().await.unwrap();
 
+    let key_types = vec!["staking", "function", "get_key_types", "removed"];
     //     uint256 tokenRewardPerTokenPerEpoch;
     // // the key type of the node.  // 1 = BLS, 2 = ECDSA.  Not doing this in an enum so we can add more keytypes in the future without redeploying.
     // uint256[] keyTypes;
@@ -167,8 +168,6 @@ pub async fn get_global_config() -> Vec<NetworkConfig> {
     // uint256 maxStakeAmount;
     // uint256 minSelfStake;
     // uint256 minSelfStakeTimelock;
-
-    
 
     let rows = vec![
         NetworkConfig {
@@ -256,14 +255,18 @@ pub async fn get_global_config() -> Vec<NetworkConfig> {
 }
 
 pub async fn get_price_feed() -> Vec<NetworkConfig> {
-    
-        let address = get_address(crate::contracts::PRICE_FEED_CONTRACT)
+    let address = get_address(crate::contracts::PRICE_FEED_CONTRACT)
         .await
         .unwrap();
     let cfg = &get_lit_config();
     let price_feed = PriceFeed::node_monitor_load(cfg, address).unwrap();
     let product_ids = vec![U256::from(1), U256::from(2), U256::from(3), U256::from(4)];
-    let product_id_desc = vec!["Encryption Sign", "Lit Action", "PKP Sign", "Session Key Sign"];
+    let product_id_desc = vec![
+        "Encryption Sign",
+        "Lit Action",
+        "PKP Sign",
+        "Session Key Sign",
+    ];
     let config = price_feed.base_network_prices(product_ids).call().await;
 
     let config = match config {

@@ -103,6 +103,7 @@ pub fn App() -> impl IntoView {
                                     <Route path=path!("/") view=pages::home::Home />
                                     <Route path=path!("/home") view=pages::home::Home />
                                     <Route path=path!("/history") view=pages::history::History />
+                                    <Route path=path!("/status_at_time") view=pages::status_at_time::StatusAtTime />
                                     <Route path=path!("/contracts") view=pages::network_settings::contracts::Contracts />
                                     <Route path=path!("events") view=pages::events::Events />
                                     <Route path=path!("/action_playground") view=pages::action_playground::ActionPlayground />

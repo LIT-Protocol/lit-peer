@@ -444,8 +444,7 @@ pub async fn get_common_addresses(
         crate::contracts::staking::Staking::node_monitor_load(cfg, staking_contract_address)
             .unwrap();
 
-    let validators =
-        crate::pages::validators::get_validators(&staking, true, 1).await;
+    let validators = crate::pages::validators::get_validators(&staking, true, 1).await;
 
     for validator in validators {
         common_addresses.insert(validator.wallet_address, validator.host_name);

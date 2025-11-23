@@ -16,6 +16,7 @@ internalDev = []
 
 [dependencies]
 chrono = "0.4.36"
+chrono-tz = "0.10.4"
 codee = "0.3.0"
 lit-blockchain-lite = { path = "../../lit-core/lit-blockchain-lite" }
 ethers = { version = "2" }

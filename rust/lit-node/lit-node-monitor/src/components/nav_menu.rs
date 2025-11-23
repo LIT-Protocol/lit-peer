@@ -5,12 +5,11 @@ use web_sys::window;
 
 #[component]
 pub fn NavMenu(page_name_signal: RwSignal<String>) -> impl IntoView {
-    
     let url = window()
-            .and_then(|win| win.location().pathname().ok())
-            .unwrap_or_else(|| "home".to_string());
+        .and_then(|win| win.location().pathname().ok())
+        .unwrap_or_else(|| "home".to_string());
     let url = url.replace(base_path(), "");
-    
+
     let nav_value = RwSignal::new(url);
     let (nav_value_get, _nav_value_set) = nav_value.split();
 
@@ -38,6 +37,9 @@ pub fn NavMenu(page_name_signal: RwSignal<String>) -> impl IntoView {
                 </NavItem>
                 <NavItem icon=icondata::AiLinkOutlined value="/history">
                     "History"
+                </NavItem>
+                <NavItem icon=icondata::AiClockCircleOutlined value="/status_at_time">
+                    "Status At Time"
                 </NavItem>
                 <NavItem value="/pkps" icon=icondata::AiKeyOutlined>
                     "PKPs"

@@ -1,12 +1,12 @@
 use crate::utils::{get_address, get_lit_config};
+use ethers::providers::Provider;
 use ethers::types::U256;
+use ethers_providers::Http;
 use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_struct_table::*;
 use lit_blockchain_lite::contracts::price_feed::{LitActionPriceConfig, PriceFeed};
 use serde::{Deserialize, Serialize};
-use ethers_providers::Http;
-use ethers::providers::Provider;
 #[derive(TableRow, Clone, Serialize, Deserialize)]
 #[table(
     sortable,
@@ -22,9 +22,9 @@ pub struct NetworkConfig {
 pub fn Pricing() -> impl IntoView {
     crate::utils::set_header("Network Configuration");
 
-
     let price_feed_data = LocalResource::new(|| async move { get_price_feed().await });
-    let lit_action_prices_data = LocalResource::new(|| async move { get_lit_action_prices().await });
+    let lit_action_prices_data =
+        LocalResource::new(|| async move { get_lit_action_prices().await });
     view! {
         <Title text="Pricing"/>
         <div class="card" >
@@ -72,12 +72,15 @@ async fn get_price_feed_contract() -> PriceFeed<Provider<Http>> {
 }
 
 pub async fn get_price_feed() -> Vec<NetworkConfig> {
-    
     let price_feed = get_price_feed_contract().await;
     let product_ids = vec![U256::from(0), U256::from(1), U256::from(2), U256::from(3)];
 
-   
-    let product_id_desc = vec!["Encryption Sign", "Lit Action", "PKP Sign", "Session Key Sign"];
+    let product_id_desc = vec![
+        "Encryption Sign",
+        "Lit Action",
+        "PKP Sign",
+        "Session Key Sign",
+    ];
     let config = price_feed.base_network_prices(product_ids).call().await;
 
     let config = match config {
@@ -101,9 +104,25 @@ pub async fn get_price_feed() -> Vec<NetworkConfig> {
 
 pub async fn get_lit_action_prices() -> Vec<NetworkConfig> {
     let price_feed = get_price_feed_contract().await;
-    let la_prices: Vec<LitActionPriceConfig> = price_feed.get_lit_action_price_configs().call().await.unwrap();
+    let la_prices: Vec<LitActionPriceConfig> = price_feed
+        .get_lit_action_price_configs()
+        .call()
+        .await
+        .unwrap();
 
-    let la_price_desc = vec!["baseAmount", "runtimeLength", "memoryUsage", "codeLength", "responseLength", "signatures", "broadcasts", "contractCalls", "callDepth", "decrypts", "fetches"];
+    let la_price_desc = vec![
+        "baseAmount",
+        "runtimeLength",
+        "memoryUsage",
+        "codeLength",
+        "responseLength",
+        "signatures",
+        "broadcasts",
+        "contractCalls",
+        "callDepth",
+        "decrypts",
+        "fetches",
+    ];
     let mut rows = vec![];
     for (i, price) in la_prices.iter().enumerate() {
         rows.push(NetworkConfig {

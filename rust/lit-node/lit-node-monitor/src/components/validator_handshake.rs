@@ -1,15 +1,17 @@
 use leptos::prelude::*;
 // use std::time::Instant;
-use crate::{pages::validators::Validator, utils::sdk_models::{JsonSDKHandshakeResponse, ResponseWrapper}};
+use crate::{
+    pages::validators::Validator,
+    utils::sdk_models::{JsonSDKHandshakeResponse, ResponseWrapper},
+};
 
 #[component]
 pub fn ValidatorHandshake(row: RwSignal<Validator>) -> impl IntoView {
-    
     let data = LocalResource::new(move || {
         let row = row.clone();
         async move { handshake_node(row).await }
-    });    
-    
+    });
+
     view! {
         <p>{move || match data.get().as_deref() {
             None => view! { <p>"Loading..."</p> }.into_any(),
@@ -18,10 +20,7 @@ pub fn ValidatorHandshake(row: RwSignal<Validator>) -> impl IntoView {
     }
 }
 
-
-
 async fn handshake_node(row: RwSignal<Validator>) -> JsonSDKHandshakeResponse {
-    
     let socket_address = row.get_untracked().socket_address.clone();
     let socket_address = format!("https://{}", socket_address);
     log::info!("Handshaking node: {:?}", socket_address);
@@ -56,7 +55,7 @@ async fn handshake_node(row: RwSignal<Validator>) -> JsonSDKHandshakeResponse {
         }
     };
     log::info!("Response: {:?}", resp_string);
-    
+
     let response_wrapper: ResponseWrapper = match serde_json::from_str(&resp_string) {
         Ok(response_wrapper) => response_wrapper,
         Err(e) => {

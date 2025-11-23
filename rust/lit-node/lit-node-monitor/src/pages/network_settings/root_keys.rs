@@ -16,14 +16,17 @@ pub struct RootKeys {
 }
 #[component]
 pub fn RootKeys() -> impl IntoView {
-    let data = LocalResource::new(|| async move { get_root_keys().await });
+    let data =
+        LocalResource::new(|| async move { get_root_keys("naga-keyset1".to_string()).await });
+    let data2 =
+        LocalResource::new(|| async move { get_root_keys("naga_keyset_2".to_string()).await });
 
     crate::utils::set_header("Root Keys");
     view! {
         <Title text="Root Keys"/>
         <div class="card" >
             <div class="card-header">
-                <b class="card-title">Root Keys</b>
+                <b class="card-title">Root Keys - Naga Key Set 1</b>
             </div>
             <div class="card-body">
 
@@ -37,10 +40,26 @@ pub fn RootKeys() -> impl IntoView {
                 }}
             </div>
         </div>
+        <div class="card" >
+            <div class="card-header">
+                <b class="card-title">Root Keys - Naga Key Set 2</b>
+            </div>
+            <div class="card-body">
+
+                {   move || match data2.get().as_deref() {
+                    None => view! { <p>"Loading..."</p> }.into_any(),
+                Some(rows) => view! {
+                        <table class="table">
+                            <TableContent rows = rows.clone() scroll_container="html"  />
+                        </table>
+                        }.into_any()
+                }}
+            </div>
+        </div>
     }
 }
 
-pub async fn get_root_keys() -> Vec<RootKeys> {
+pub async fn get_root_keys(key_set_id: String) -> Vec<RootKeys> {
     use crate::contracts::pubkey_router::RootKey;
 
     let pubkey_router_address = get_address(crate::contracts::PUB_KEY_ROUTER_CONTRACT)
@@ -53,9 +72,8 @@ pub async fn get_root_keys() -> Vec<RootKeys> {
     let cfg = &get_lit_config();
     let pubkey_router = PubkeyRouter::node_monitor_load(cfg, pubkey_router_address).unwrap();
 
-    const DEFAULT_KEY_SET_NAME: &str = "naga-keyset1";
     let root_keys = pubkey_router
-        .get_root_keys(staking_contract_address, DEFAULT_KEY_SET_NAME.to_string())
+        .get_root_keys(staking_contract_address, key_set_id.to_string())
         .call()
         .await;
 
