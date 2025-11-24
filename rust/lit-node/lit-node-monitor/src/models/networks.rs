@@ -84,6 +84,11 @@ impl GlobalState {
             // log::info!("Staker details: {:?} / {:?}", key.clone(), value.clone());
         });
 
+        for i in 0..=20 {
+            new_staker_names.write().insert(format!("127.0.0.1:{}", 7470 +i), format!("Local-{}", i));
+        }
+        Self::populate_common_addresses(&Self::local_network(), new_common_addresses).await;
+
         #[cfg(any(feature = "naga-dev", feature = "naga-all"))]
         {
             let _ = Self::refresh_single_network(
@@ -180,6 +185,11 @@ impl GlobalState {
             add_facet_details(pubkey_router, new_common_addresses);
         };
 
+        Self::populate_common_addresses(&network, new_common_addresses).await;
+        true
+    }
+
+    async fn populate_common_addresses(network: &NetworkConfig, new_common_addresses: WriteSignal<HashMap<String, String>>) -> bool {
         let common_addresses = get_common_addresses(&network).await.unwrap();
         common_addresses.iter().for_each(|(key, value)| {
             new_common_addresses

@@ -96,7 +96,7 @@ impl RpcCalls {
         let response = client.get(&url).send().await?;
         let response_string = response.text().await?;
 
-        log::info!("blockScoutResponse: {:?}", response_string);
+        // log::info!("blockScoutResponse: {:?}", response_string);
         if response_string.trim().is_empty() {
             Err("No data returned".into())
         } else {

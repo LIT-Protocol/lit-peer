@@ -22,7 +22,10 @@ pub fn ValidatorHandshake(row: RwSignal<Validator>) -> impl IntoView {
 
 async fn handshake_node(row: RwSignal<Validator>) -> JsonSDKHandshakeResponse {
     let socket_address = row.get_untracked().socket_address.clone();
-    let socket_address = format!("https://{}", socket_address);
+    let socket_address = match socket_address.contains("127.0.0.1") {
+        true => format!("http://{}", socket_address),
+        false => format!("https://{}", socket_address),
+    };
     log::info!("Handshaking node: {:?}", socket_address);
     if socket_address.contains("0.0.0.0") {
         return JsonSDKHandshakeResponse::default();
@@ -54,7 +57,7 @@ async fn handshake_node(row: RwSignal<Validator>) -> JsonSDKHandshakeResponse {
             return JsonSDKHandshakeResponse::default();
         }
     };
-    log::info!("Response: {:?}", resp_string);
+    // log::info!("Response: {:?}", resp_string);
 
     let response_wrapper: ResponseWrapper = match serde_json::from_str(&resp_string) {
         Ok(response_wrapper) => response_wrapper,

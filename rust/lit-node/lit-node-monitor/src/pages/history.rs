@@ -14,7 +14,7 @@ use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_struct_table::*;
 use lit_blockchain_lite::contracts::{
-    contract_resolver, lit_token, pkp_helper, pkpnft, pubkey_router, staking,
+    contract_resolver, lit_token, pkp_helper, pkpnft, pubkey_router, staking, ledger, price_feed
 };
 use serde::{Deserialize, Serialize};
 use thaw::DatePicker;
@@ -377,7 +377,10 @@ pub async fn fetch_chain_rows(
     let page_size = move || page_size.get().parse::<u64>().unwrap();
     let gs = use_context::<GlobalState>().expect("Global State Failed to Load");
     let rpc_api_type = gs.active_network().rpc_api_type.into();
-    let chain_api_url = &format!("{}{}", &gs.proxy_url, &gs.active_network().chain_api_url);
+    let chain_api_url =  match   &gs.active_network().chain_api_url.contains("127.0.0.1") {
+        true =>  gs.active_network().chain_api_url.clone(),
+        false =>   format!("{}{}", &gs.proxy_url, &gs.active_network().chain_api_url)
+    };
     let address = &get_address(crate::contracts::STAKING_CONTRACT)
         .await
         .expect("Error getting staking contract address");
@@ -407,7 +410,7 @@ pub async fn fetch_chain_rows(
     // let block_end = 161000001000;
     let txs = rpc_calls::get_tx_list_async(
         rpc_api_type,
-        chain_api_url,
+        &chain_api_url,
         address,
         block_start,
         block_end,
@@ -455,7 +458,7 @@ pub fn simple_hex(input: String) -> String {
 }
 
 pub fn get_description(input: String) -> String {
-    log::info!("Input: {:?}", input);
+    // log::info!("Input: {:?}", input);
     if input.is_empty() {
         return "".to_string();
     }
@@ -553,12 +556,19 @@ fn get_abi_function(short_signature: &str) -> (&str, &ethers::abi::Function) {
         return ("ContractResolver", abi_function);
     }
 
-    // let abi_function = price_feed::PRICEFEED_ABI
-    //     .functions()
-    //     .find(|f| hex::encode(f.short_signature()) == short_signature);
-    // if let Some(abi_function) = abi_function {
-    //     return ("PriceFeed", abi_function);
-    // }
+    let abi_function = ledger::LEDGER_ABI
+        .functions()
+        .find(|f| hex::encode(f.short_signature()) == short_signature);
+    if let Some(abi_function) = abi_function {
+        return ("Ledger", abi_function);
+    }
+
+    let abi_function = price_feed::PRICEFEED_ABI
+        .functions()
+        .find(|f| hex::encode(f.short_signature()) == short_signature);
+    if let Some(abi_function) = abi_function {
+        return ("PriceFeed", abi_function);
+    }
     log::error!("Unknown function: {:?}", short_signature);
     let abi_function = staking::STAKING_ABI.functions().last().unwrap();
     ("Unknown", abi_function)
