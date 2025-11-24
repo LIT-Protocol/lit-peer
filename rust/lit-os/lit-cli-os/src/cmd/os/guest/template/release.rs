@@ -111,7 +111,7 @@ pub(crate) struct GuestTemplateRelease {
     #[arg(long)]
     pub(crate) no_pinning: bool,
     /// GitHub repository in format owner/repo for publishing release information
-    #[arg(long, default_value = "LIT-Protocol/lit-assets")]
+    #[arg(long, default_value = "LIT-Protocol/lit-peer")]
     pub(crate) github_repo: String,
     /// The branch to commit release data to within the repository
     #[arg(long, default_value = "releases-info")]
