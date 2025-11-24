@@ -69,6 +69,8 @@ pub(crate) enum NetworkName {
     DatilProto,
     #[value(name = "naga-prod")]
     NagaProd,
+    #[value(name = "naga-proto")]
+    NagaProto,
     #[value(name = "naga-staging")]
     NagaStaging,
     #[value(name = "naga-test")]

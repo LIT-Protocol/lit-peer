@@ -45,7 +45,7 @@ lit os guest template release abc12345 \
 - **Staging:** `naga-staging`
 - **Test:** `datil-test`, `naga-test`
 - **Development:** `datil-dev`, `naga-dev`, `internal-dev`
-- **Proto:** `datil-proto`
+- **Proto:** `datil-proto`, `naga-proto`
 
 ---
 
