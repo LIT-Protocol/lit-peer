@@ -83,6 +83,8 @@ async fn init_observability(args: &Args) -> Result<ObservabilityProviders> {
             &cfg,
             otel_resource.clone(),
             sdktrace::Config::default().with_resource(otel_resource.clone()),
+            #[cfg(feature = "proxy-collector")]
+            "lit-actions",
         )
         .await
         .map_err(|e| anyhow::anyhow!("Failed to create OTEL providers: {}", e))?;
