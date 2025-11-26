@@ -3,16 +3,14 @@ use rocket::fairing::AdHoc;
 use tracing::info;
 
 thread_local! {
-    static PRIVACY_MODE: std::cell::Cell<bool> = std::cell::Cell::new(false);
+    static PRIVACY_MODE: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
 }
 
 /// Extract privacy_mode from query parameters or headers
 fn extract_privacy_mode(req: &Request<'_>) -> bool {
     // Check query parameters first
-    if let Some(privacy_mode) = req.query_value::<bool>("privacy_mode") {
-        if let Ok(true) = privacy_mode {
-            return true;
-        }
+    if let Some(Ok(true)) = req.query_value::<bool>("privacy_mode") {
+        return true;
     }
 
     // Check headers
