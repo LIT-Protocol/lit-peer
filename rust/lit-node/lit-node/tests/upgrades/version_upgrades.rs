@@ -233,7 +233,7 @@ async fn test_version_upgrade_against_old_version(target_branch: &str) {
 
     // Set up a network of nodes running the old build.
 
-    info!("TEST: node_boot_invalid_version");
+    info!("TEST: test_version_upgrade_against_old_version");
     // Set up a network with 6 nodes.
     let num_nodes = 6;
     // set epoch length to 30 mins so it never elapses unless we advance the clock
