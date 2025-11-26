@@ -1,5 +1,7 @@
-use super::signing::sign_with_each_curve_type;
+use crate::common::ecdsa::simple_single_sign_with_hd_key;
+
 use ethers::types::U256;
+use lit_node_core::SigningScheme;
 use lit_node_testnet::TestSetupBuilder;
 use tracing::info;
 
@@ -15,10 +17,10 @@ pub async fn test_add_second_keyset() {
     let pubkey = end_user.first_pkp().pubkey.clone();
 
     let realm_id = U256::from(1);
-    let current_epoch = actions.get_current_epoch(realm_id).await;
 
     // check to see that we can sign
-    sign_with_each_curve_type(&validator_collection, &end_user, pubkey.clone()).await;
+    let result = simple_single_sign_with_hd_key(&validator_collection, &end_user, pubkey.clone(), SigningScheme::EcdsaK256Sha256, &vec![]).await;
+    assert!(result, "Failed to sign with all nodes up.");
 
     info!("**** Adding second keyset ****");
     // add a second keyset
@@ -39,7 +41,8 @@ pub async fn test_add_second_keyset() {
 
         actions.sleep_millis(2000).await;
         // test signing
-        sign_with_each_curve_type(&validator_collection, &end_user, pubkey.clone()).await;
+        let result = simple_single_sign_with_hd_key(&validator_collection, &end_user, pubkey.clone(), SigningScheme::EcdsaK256Sha256, &vec![]).await;
+        assert!(result, "Failed to sign with all nodes up.");
     }
 
     actions.sleep_millis(2000000).await;
