@@ -65,8 +65,9 @@ impl Default for KeyCache {
 impl Debug for KeyCache {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let mut entries = Vec::with_capacity(self.0.len());
-        self.0.scan(|key, value| {
+        self.0.iter_sync(|key, value| {
             entries.push(key.clone());
+            true
         });
         write!(f, "KeyCache {{ {:#?} }}", entries)
     }
@@ -75,8 +76,9 @@ impl Debug for KeyCache {
 impl Display for KeyCache {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let mut entries = Vec::with_capacity(self.0.len());
-        self.0.scan(|key, value| {
+        self.0.iter_sync(|key, value| {
             entries.push(key.clone());
+            true
         });
         write!(f, "KeyCache {{ {} }}", entries.join(", "))
     }

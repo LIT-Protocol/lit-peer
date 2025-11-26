@@ -7,6 +7,7 @@ use crate::models;
 use crate::models::AuthContext;
 use crate::models::RequestConditions;
 use crate::models::auth::SessionKeySignedMessageV2;
+use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::tss_state::TssState;
 use crate::utils::encoding;
 use ethers::utils::keccak256;
@@ -800,10 +801,13 @@ pub fn pubkey_to_token_id(pubkey: &str) -> Result<String> {
     Ok(token_id)
 }
 
-pub async fn get_bls_root_pubkey(tss_state: &TssState) -> Result<String> {
-    let curve_state = tss_state.get_dkg_state(CurveType::BLS)?;
-    let bls_root_pubkeys = curve_state.root_keys().await;
-    match bls_root_pubkeys.first() {
+pub fn get_bls_root_pubkey(tss_state: &Arc<TssState>, key_set_id: Option<&str>) -> Result<String> {
+    let curve_state = CurveState::new(
+        tss_state.peer_state.clone(),
+        CurveType::BLS,
+        key_set_id.map(|k| k.to_string()),
+    );
+    match curve_state.root_keys()?.first() {
         Some(bls_root_key) => Ok(bls_root_key.clone()),
         None => Err(unexpected_err_code(
             "No BLS root key found",

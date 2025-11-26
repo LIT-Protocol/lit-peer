@@ -1269,4 +1269,51 @@ impl Actions {
         }
         Ok(())
     }
+
+    pub async fn add_second_keyset(&self, realm_id: U256) -> Result<()> {
+        let update_key_set_request = staking::KeySetConfig {
+            minimum_threshold: 3,
+            monetary_value: 0,
+            complete_isolation: false,
+            identifier: "naga_keyset_2".to_string(),
+            description: "Naga Keyset 2".to_string(),
+            realms: vec![realm_id],
+            curves: vec![
+                U256::from(1),
+                U256::from(2),
+                U256::from(3),
+                U256::from(4),
+                U256::from(5),
+                U256::from(6),
+                U256::from(7),
+                U256::from(8),
+                U256::from(9),
+                U256::from(10),
+            ],
+            counts: vec![
+                U256::from(1),
+                U256::from(2),
+                U256::from(2),
+                U256::from(2),
+                U256::from(2),
+                U256::from(2),
+                U256::from(2),
+                U256::from(2),
+                U256::from(2),
+                U256::from(2),
+            ],
+            recovery_session_id: Bytes::from_static(&[]),
+        };
+
+        let cc = self.contracts.staking.set_key_set(update_key_set_request);
+        let result = cc
+            .send()
+            .await
+            .map_err(|e| anyhow::anyhow!("Error sending tx to add second keyset! {:?}", e))?;
+        let _result = result.log_msg("add_second_keyset").await.map_err(|e| {
+            anyhow::anyhow!("Error waiting for successful add second keyset tx! {:?}", e)
+        })?;
+        info!("Second keyset added successfully");
+        Ok(())
+    }
 }

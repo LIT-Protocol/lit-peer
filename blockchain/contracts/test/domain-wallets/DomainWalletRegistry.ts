@@ -10,6 +10,7 @@ import {
   PKPNFTFacet,
   PKPPermissionsFacet,
   PubkeyRouterFacet,
+  PubkeyRouterViewsFacet,
   StakingAdminFacet,
   StakingFacet,
   StakingKeySetsFacet,
@@ -36,6 +37,7 @@ describe('DomainWalletRegistry', function () {
   let pkpPermissionsFacet: PKPPermissionsFacet;
   let pkpNftMetadata: PKPNFTMetadata;
   let pubkeyRouter: PubkeyRouterFacet;
+  let pubkeyRouterViews: PubkeyRouterViewsFacet;
   let keyDeriver: KeyDeriver;
   let domainWalletRegistryFacet: DomainWalletRegistryFacet;
   let domainWalletRegistryViewsFacet: DomainWalletRegistryViewsFacet;
@@ -129,7 +131,7 @@ describe('DomainWalletRegistry', function () {
       await contractResolver.getAddress(),
       Environment.DEV,
       {
-        additionalFacets: ['PubkeyRouterFacet'],
+        additionalFacets: ['PubkeyRouterFacet', 'PubkeyRouterViewsFacet'],
         verifyContracts: false,
         waitForDeployment: false,
       }
@@ -137,6 +139,10 @@ describe('DomainWalletRegistry', function () {
 
     pubkeyRouter = await ethers.getContractAt(
       'PubkeyRouterFacet',
+      await pubkeyRouterDiamond.getAddress()
+    );
+    pubkeyRouterViews = await ethers.getContractAt(
+      'PubkeyRouterViewsFacet',
       await pubkeyRouterDiamond.getAddress()
     );
 
@@ -192,6 +198,7 @@ describe('DomainWalletRegistry', function () {
       pkpPermissionsContract: pkpPermissionsFacet,
       pkpNftMetadataContract: pkpNftMetadata,
       pubkeyRouterContract: pubkeyRouter,
+      pubkeyRouterViewsContract: pubkeyRouterViews,
       hdKeyDeriverContract: keyDeriver,
       stakingContract: stakingFacet,
       tokenContract: token,
@@ -206,7 +213,7 @@ describe('DomainWalletRegistry', function () {
       realms: [1],
       curves: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       counts: [1, 2, 2, 2, 2, 2, 2, 2, 2, 2],
-      recoveryPartyMembers: [],
+      recoverySessionId: '0x',
     });
 
     // Mint enough tokens for the deployer

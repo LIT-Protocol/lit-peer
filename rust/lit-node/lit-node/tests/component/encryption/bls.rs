@@ -43,7 +43,7 @@ pub async fn sign_min_threshold() {
 
         // Sign the message using the blsful secret key share.
         let (signature_share, _share_index) = match cipher_state
-            .sign_with_pubkey(&message_bytes.clone(), &pubkey, None)
+            .sign_with_pubkey(&message_bytes.clone(), &pubkey, None, None)
             .await
         {
             Ok(signature_share) => signature_share,
@@ -96,7 +96,7 @@ pub async fn sign_with_pubkey() {
 
         // Sign the message using the blsful secret key share.
         let (signature_share, _share_index) = match cipher_state
-            .sign_with_pubkey(&message_bytes.clone(), &pubkey, None)
+            .sign_with_pubkey(&message_bytes.clone(), &pubkey, None, None)
             .await
         {
             Ok(signature_share) => signature_share,

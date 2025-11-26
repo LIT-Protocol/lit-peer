@@ -1,5 +1,6 @@
 use ethers::types::{Address, U256};
 
+use crate::error::blockchain_err;
 use crate::functions::action_client::ExecutionState;
 use crate::functions::{JobId, JobStatus};
 use iri_string::spec::UriSpec;
@@ -16,7 +17,7 @@ use lit_recovery::models::UploadedShareData;
 use moka::future::Cache;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 #[cfg(feature = "lit-actions")]
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
@@ -346,6 +347,70 @@ pub struct EthBlock {
     pub blockhash: String,
     pub timestamp: String,
     pub block_number: usize,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct KeySetConfig {
+    pub identifier: String,
+    pub description: String,
+    pub minimum_threshold: usize,
+    pub monetary_value: usize,
+    pub complete_isolation: bool,
+    pub realms: HashSet<usize>,
+    pub root_keys_by_curve: HashMap<CurveType, Vec<String>>,
+    pub root_key_counts: HashMap<CurveType, usize>,
+    pub recovery_session_id: String,
+}
+
+impl TryFrom<lit_blockchain::contracts::staking::KeySetConfig> for KeySetConfig {
+    type Error = lit_core::error::Error;
+
+    fn try_from(
+        config: lit_blockchain::contracts::staking::KeySetConfig,
+    ) -> lit_core::error::Result<Self> {
+        let mut root_keys_by_curve = HashMap::with_capacity(config.curves.len());
+        let mut root_key_counts = HashMap::with_capacity(config.curves.len());
+        for (curve, count) in config.curves.iter().zip(config.counts.iter()) {
+            let curve_type = CurveType::try_from(*curve).map_err(|e| blockchain_err(e, None))?;
+            root_keys_by_curve.insert(curve_type, Vec::with_capacity(count.as_usize()));
+            root_key_counts.insert(curve_type, count.as_usize());
+        }
+
+        Ok(Self {
+            identifier: config.identifier,
+            description: config.description,
+            minimum_threshold: config.minimum_threshold as usize,
+            monetary_value: config.monetary_value as usize,
+            complete_isolation: config.complete_isolation,
+            realms: config.realms.into_iter().map(|r| r.as_usize()).collect(),
+            recovery_session_id: hex::encode(config.recovery_session_id),
+            root_keys_by_curve,
+            root_key_counts,
+        })
+    }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct PubKeyRoutingData {
+    pub pubkey: Vec<u8>,
+    pub curve_type: CurveType,
+    pub tweak_preimage: [u8; 32],
+    pub key_set_identifier: String,
+}
+
+impl TryFrom<lit_blockchain::contracts::pubkey_router::PubkeyRoutingData> for PubKeyRoutingData {
+    type Error = lit_core::error::Error;
+
+    fn try_from(
+        data: lit_blockchain::contracts::pubkey_router::PubkeyRoutingData,
+    ) -> lit_core::error::Result<Self> {
+        Ok(Self {
+            pubkey: data.pubkey.to_vec(),
+            curve_type: CurveType::try_from(data.key_type).map_err(|e| blockchain_err(e, None))?,
+            tweak_preimage: data.derived_key_id,
+            key_set_identifier: data.key_set_identifier,
+        })
+    }
 }
 
 #[test]

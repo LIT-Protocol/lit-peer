@@ -10,7 +10,7 @@ contract ContractResolver is AccessControl {
 
     // the comments following each one of these are the keccak256 hashes of the string values
     // this is very useful if you have to manually set any of these, so that you
-    // don't have to calculate the hahes yourself.
+    // don't have to calculate the hashes yourself.
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN"); // 0xdf8b4c520ffe197c5343c6f5aec59570151ef9a492f2c624fd45ddde6135ec42
 
@@ -23,6 +23,8 @@ contract ContractResolver is AccessControl {
     bytes32 public constant LIT_TOKEN_CONTRACT = keccak256("LIT_TOKEN");
     bytes32 public constant PUB_KEY_ROUTER_CONTRACT =
         keccak256("PUB_KEY_ROUTER"); // 0xb1f79813bc7630a52ae948bc99781397e409d0dd3521953bf7d8d7a2db6147f7
+    bytes32 public constant PUB_KEY_ROUTER_VIEWS_CONTRACT =
+        keccak256("PUB_KEY_ROUTER_VIEWS"); // 0x4c3f3e2f3e5d3e6f0c8e4f6b7a1e8c9d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8091
     bytes32 public constant PKP_NFT_CONTRACT = keccak256("PKP_NFT"); // 0xb7b4fde9944d3c13e9a78835431c33a5084d90a7f0c73def76d7886315fe87b0
     bytes32 public constant RATE_LIMIT_NFT_CONTRACT =
         keccak256("RATE_LIMIT_NFT"); // 0xb931b2719aeb2a65a5035fa0a190bfdc4c8622ce8cbff7a3d1ab42531fb1a918

@@ -69,7 +69,7 @@ pub(crate) async fn pkp_sign(
     let resource_ability = resource.signing_ability();
 
     // Validate auth sig item
-    let bls_root_pubkey = match get_bls_root_pubkey(tss_state).await {
+    let bls_root_pubkey = match get_bls_root_pubkey(tss_state, None) {
         Ok(bls_root_pubkey) => bls_root_pubkey,
         Err(e) => {
             return client_session

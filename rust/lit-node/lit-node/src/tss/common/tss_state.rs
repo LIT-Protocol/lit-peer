@@ -1,6 +1,5 @@
 use super::models::{NodeTransmissionDetails, RoundData};
 use super::traits::cipherable::Cipherable;
-use super::traits::dkg::BasicDkg;
 use super::traits::signable::Signable;
 use crate::common::key_helper::KeyCache;
 use crate::config::chain::ChainDataConfigManager;
@@ -187,12 +186,6 @@ impl TssState {
         Ok(cipher_state)
     }
 
-    #[instrument(level = "debug", skip(self))]
-    pub fn get_dkg_state(&self, curve_type: CurveType) -> Result<Box<dyn BasicDkg>> {
-        let state = Arc::new(self.clone());
-        Ok(Box::new(CurveState { state, curve_type }) as Box<dyn BasicDkg>)
-    }
-
     pub async fn get_threshold_using_current_epoch_realm_peers_for_curve(
         &self,
         peers: &SimplePeerCollection,
@@ -201,8 +194,10 @@ impl TssState {
     ) -> Result<usize> {
         let self_peer = peers.peer_at_address(&self.addr)?;
 
-        let dkg_state = self.get_dkg_state(curve_type)?;
-        let root_keys = dkg_state.root_keys().await;
+        // Shouldn't matter which key set is used, all the keys on this
+        // node should have the same threshold
+        let curve_state = CurveState::new(self.peer_state.clone(), curve_type, None);
+        let root_keys = curve_state.root_keys()?;
 
         if root_keys.is_empty() {
             return Err(unexpected_err(
@@ -213,10 +208,7 @@ impl TssState {
 
         let staker_address = &bytes_to_hex(self_peer.staker_address.as_bytes());
         let realm_id = self.peer_state.realm_id();
-        let epoch = match epoch {
-            Some(e) => e,
-            None => self.peer_state.epoch(),
-        };
+        let epoch = epoch.unwrap_or_else(|| self.peer_state.epoch());
 
         let keyshare = read_key_share_from_disk::<KeyShare>(
             curve_type,

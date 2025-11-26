@@ -390,6 +390,19 @@
   },
   {
     "inputs": [],
+    "name": "PUB_KEY_ROUTER_VIEWS_CONTRACT",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "RATE_LIMIT_NFT_CONTRACT",
     "outputs": [
       {

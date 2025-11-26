@@ -4,6 +4,7 @@ use lit_blockchain::contracts::{backup_recovery::RecoveryKey, staking::Validator
 use lit_blockchain::util::decode_revert;
 use lit_core::error::Result;
 use sha2::Sha256;
+use std::collections::HashMap;
 use std::time::Duration;
 
 use super::{super::PeerState, models::SimplePeer};
@@ -155,55 +156,61 @@ impl PeerState {
     }
 
     // No retries for this function similar to Standard DKG
-    pub async fn register_recovery_keys(&self, recovery_root_keys: Vec<CachedRootKey>) {
-        let mut recovery_keys: Vec<RecoveryKey> = Vec::new();
-
+    pub async fn register_recovery_keys(
+        &self,
+        recovery_root_keys: HashMap<String, Vec<CachedRootKey>>,
+    ) {
         info!("Registering Recovery DKG keys: {:?}", recovery_root_keys);
-        let mut hasher = Sha256::default();
-        for recovery_key in recovery_root_keys {
-            let pubkey_bytes = match hex_to_bytes(&recovery_key.public_key) {
-                Ok(pubkey_bytes) => pubkey_bytes,
-                Err(e) => {
-                    debug!("Error converting pubkey to bytes w/: {:?}", e);
-                    return;
-                }
-            };
-            hasher.update(&pubkey_bytes);
-            recovery_keys.push(RecoveryKey {
-                pubkey: Bytes::from(pubkey_bytes),
-                key_type: recovery_key.curve_type.into(),
-            });
-        }
-        let session_id = Bytes::from(hasher.finalize().to_vec());
-
-        let func = self
-            .backup_recovery_contract
-            .register_recovery_keys(recovery_keys, session_id);
-        let gas_estimate = func.estimate_gas().await;
-        match gas_estimate {
-            Ok(gas_estimate) => {
-                let func_with_gas = func.gas(gas_estimate * U256::from(5));
-                let result = func_with_gas.send().await;
-
-                match result {
-                    Ok(_) => {
-                        debug!("register pubkey for Recovery dkg");
-
-                        // Once the recovery keys are registered, we sleep briefly to make sure any future chain reads will see the updated state.
-                        tokio::time::sleep(Duration::from_secs(1)).await;
-                    }
+        for (key_set_id, dkg_recovery_keys) in recovery_root_keys {
+            let mut recovery_keys: Vec<RecoveryKey> = Vec::new();
+            let mut hasher = Sha256::default();
+            for recovery_key in dkg_recovery_keys {
+                let pubkey_bytes = match hex_to_bytes(&recovery_key.public_key) {
+                    Ok(pubkey_bytes) => pubkey_bytes,
                     Err(e) => {
-                        debug!("Failed to register pubkey for Recovery dkg w/ err {:?}", e);
-                        debug!("{}", decode_revert(&e, self.backup_recovery_contract.abi()));
+                        debug!("Error converting pubkey to bytes w/: {:?}", e);
+                        return;
+                    }
+                };
+                hasher.update(&pubkey_bytes);
+                recovery_keys.push(RecoveryKey {
+                    pubkey: Bytes::from(pubkey_bytes),
+                    key_type: recovery_key.curve_type.into(),
+                });
+            }
+            let session_id = Bytes::from(hasher.finalize().to_vec());
+
+            let func = self.backup_recovery_contract.register_recovery_keys(
+                recovery_keys,
+                session_id,
+                key_set_id.clone(),
+            );
+            let gas_estimate = func.estimate_gas().await;
+            match gas_estimate {
+                Ok(gas_estimate) => {
+                    let func_with_gas = func.gas(gas_estimate * U256::from(5));
+                    let result = func_with_gas.send().await;
+
+                    match result {
+                        Ok(_) => {
+                            debug!("register pubkey for Recovery dkg");
+
+                            // Once the recovery keys are registered, we sleep briefly to make sure any future chain reads will see the updated state.
+                            tokio::time::sleep(Duration::from_secs(1)).await;
+                        }
+                        Err(e) => {
+                            debug!("Failed to register pubkey for Recovery dkg w/ err {:?}", e);
+                            debug!("{}", decode_revert(&e, self.backup_recovery_contract.abi()));
+                        }
                     }
                 }
-            }
-            Err(e) => {
-                debug!(
-                    "Failed to estimate gas for registerRecoveryKeys w/ err {:?}",
-                    e
-                );
-                debug!("{}", decode_revert(&e, self.backup_recovery_contract.abi()));
+                Err(e) => {
+                    debug!(
+                        "Failed to estimate gas for registerRecoveryKeys w/ err {:?}",
+                        e
+                    );
+                    debug!("{}", decode_revert(&e, self.backup_recovery_contract.abi()));
+                }
             }
         }
     }

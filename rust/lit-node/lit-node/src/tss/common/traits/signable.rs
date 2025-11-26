@@ -9,9 +9,9 @@ pub trait Signable: Debug + Send + Sync {
         &mut self,
         message_bytes: &[u8],
         public_key: Vec<u8>,
-        root_pubkeys: Option<Vec<String>>,
         tweak_preimage: Option<Vec<u8>>,
         request_id: Vec<u8>,
+        key_set_id: Option<&str>,
         epoch: Option<u64>,
         nodeset: &[NodeSet],
     ) -> Result<SignableOutput>;

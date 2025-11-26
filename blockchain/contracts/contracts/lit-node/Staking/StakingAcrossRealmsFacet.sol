@@ -6,6 +6,7 @@ import { ContractResolver } from "../../lit-core/ContractResolver.sol";
 import { LibDiamond } from "../../libraries/LibDiamond.sol";
 import { StakingViewsFacet } from "./StakingViewsFacet.sol";
 import { LibStakingStorage } from "./LibStakingStorage.sol";
+import { StakingUtilsLib } from "./StakingUtilsLib.sol";
 import "hardhat/console.sol";
 
 contract StakingAcrossRealmsFacet {
@@ -22,6 +23,18 @@ contract StakingAcrossRealmsFacet {
         returns (LibStakingStorage.GlobalStakingStorage storage)
     {
         return LibStakingStorage.getStakingStorage();
+    }
+
+    modifier onlyOwner() {
+        if (msg.sender != LibDiamond.contractOwner())
+            revert StakingUtilsLib.CallerNotOwner();
+        _;
+    }
+
+    function realm(
+        uint256 realmId
+    ) internal view returns (LibStakingStorage.RealmStorage storage) {
+        return LibStakingStorage.getRealmStorage(realmId);
     }
 
     function numRealms() public view returns (uint256) {
@@ -168,5 +181,22 @@ contract StakingAcrossRealmsFacet {
         address stakerAddress
     ) public view returns (LibStakingStorage.Validator memory) {
         return s().validators[stakerAddress];
+    }
+
+    function setRealmConfig(
+        uint256 realmId,
+        LibStakingStorage.RealmConfig memory newConfig
+    ) external onlyOwner {
+        LibStakingStorage.RealmConfig storage config = realm(realmId)
+            .realm_configs[0];
+        config.maxConcurrentRequests = newConfig.maxConcurrentRequests;
+        config.maxPresignCount = newConfig.maxPresignCount;
+        config.minPresignCount = newConfig.minPresignCount;
+        config.peerCheckingIntervalSecs = newConfig.peerCheckingIntervalSecs;
+        config.maxPresignConcurrency = newConfig.maxPresignConcurrency;
+        config.rpcHealthcheckEnabled = newConfig.rpcHealthcheckEnabled;
+        config.minEpochForRewards = newConfig.minEpochForRewards;
+        config.permittedValidatorsOn = newConfig.permittedValidatorsOn;
+        config.defaultKeySet = newConfig.defaultKeySet;
     }
 }

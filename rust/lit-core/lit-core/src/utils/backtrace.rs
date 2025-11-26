@@ -4,7 +4,7 @@ use std::panic::PanicHookInfo;
 pub fn backtrace_to_vec(backtrace: &Backtrace) -> Vec<String> {
     let backtrace_str = format!("{backtrace}");
     let backtrace: Vec<String> =
-        backtrace_str.split('\n').map(|s| s.trim().to_string()).filter(|s| !s.eq("")).collect();
+        backtrace_str.split('\n').map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).collect();
 
     backtrace
 }

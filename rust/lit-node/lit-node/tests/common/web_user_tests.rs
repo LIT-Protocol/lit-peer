@@ -454,7 +454,7 @@ pub async fn generate_session_sigs_execute_lit_action(
 
     end_user: &EndUser,
 ) -> Result<Vec<GenericResponse<JsonExecutionResponse>>> {
-    let (pubkey, _token_id, pkp_eth_address) = end_user.first_pkp().info();
+    let (pubkey, _token_id, pkp_eth_address, _key_set_id) = end_user.first_pkp().info();
     let wallet = end_user.wallet.clone();
     // add the PKP itself as a permitted address, so that our session sig from the PKP will be able to sign with it
     end_user

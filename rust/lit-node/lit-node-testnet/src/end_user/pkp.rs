@@ -18,6 +18,7 @@ pub struct Pkp {
     pub pubkey: String,
     pub token_id: U256,
     pub eth_address: H160,
+    pub key_set_id: String,
 }
 
 impl Pkp {
@@ -88,11 +89,17 @@ impl Pkp {
             pubkey: pubkey.clone(),
             token_id,
             eth_address,
+            key_set_id: "naga-keyset1".to_string(),
         })
     }
 
-    pub fn info(&self) -> (String, U256, H160) {
-        (self.pubkey.clone(), self.token_id, self.eth_address)
+    pub fn info(&self) -> (String, U256, H160, String) {
+        (
+            self.pubkey.clone(),
+            self.token_id,
+            self.eth_address,
+            self.key_set_id.clone(),
+        )
     }
 
     #[doc = "Grant an address permission to use a PKP"]
@@ -349,6 +356,7 @@ impl Pkp {
             actions: Arc::new(end_user.actions().clone()),
             pubkey,
             token_id,
+            key_set_id: "naga-keyset1".to_string(),
             eth_address: eth_address.into(),
         })
     }
