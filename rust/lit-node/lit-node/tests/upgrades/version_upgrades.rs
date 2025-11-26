@@ -241,6 +241,7 @@ async fn test_version_upgrade_against_old_version(target_branch: &str) {
 
     let (testnet, mut validator_collection, end_user) = TestSetupBuilder::default()
         .num_staked_and_joined_validators(num_nodes)
+        .custom_binary_path(Some(old_build_path))
         .force_deploy(true)
         .build()
         .await;

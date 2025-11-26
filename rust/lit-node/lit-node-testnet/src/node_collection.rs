@@ -264,7 +264,7 @@ pub async fn get_node_versions(node_set: &Vec<NodeSet>) -> Vec<String> {
     // Parse response headers
     headers
         .iter()
-        .map(|header| header.get("X-Lit-Node-Version").unwrap().clone())
+        .map(|header| header.get("x-lit-node-version").unwrap().clone())
         .collect::<Vec<String>>()
 }
 

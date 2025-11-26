@@ -37,6 +37,7 @@ pub struct TestSetupBuilder {
     wait_for_root_keys: bool,
     fund_wallet: bool,
     fund_ledger_for_wallet: bool,
+    custom_binary_path: Option<String>,
 }
 
 impl Default for TestSetupBuilder {
@@ -57,6 +58,7 @@ impl Default for TestSetupBuilder {
             wait_for_root_keys: true,
             fund_wallet: true,
             fund_ledger_for_wallet: true,
+            custom_binary_path: None,
         }
     }
 }
@@ -140,6 +142,11 @@ impl TestSetupBuilder {
         self
     }
 
+    pub fn custom_binary_path(mut self, custom_binary_path: Option<String>) -> Self {
+        self.custom_binary_path = custom_binary_path;
+        self
+    }
+
     pub async fn build(self) -> (Testnet, ValidatorCollection, EndUser) {
         let node_keys_path = Path::new("./node_keys");
         if node_keys_path.exists() {
@@ -204,6 +211,7 @@ impl TestSetupBuilder {
             .wait_initial_epoch(self.wait_initial_epoch)
             .wait_for_root_keys(self.wait_for_root_keys)
             .node_binary_feature_flags(node_binary_feature_flags)
+            .custom_binary_path(self.custom_binary_path)
             .build(&testnet)
             .await
             .expect("Failed to build validator collection");
