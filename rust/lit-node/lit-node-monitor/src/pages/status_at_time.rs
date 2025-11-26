@@ -5,7 +5,7 @@ use crate::{
 use chrono::{FixedOffset, Local, NaiveDate, NaiveDateTime, NaiveTime, TimeDelta};
 use leptos::prelude::*;
 use leptos_meta::*;
-use thaw::{DatePicker, Slider, SliderLabel, TimePicker, Button};
+use thaw::{Button, DatePicker, Slider, SliderLabel, TimePicker};
 
 #[component]
 pub fn StatusAtTime() -> impl IntoView {
@@ -60,11 +60,13 @@ pub fn StatusAtTime() -> impl IntoView {
         }
     });
 
-
     Effect::new(move || {
         if selected_date.get().is_some() && selected_time.get().is_some() {
-            selected_date_time_write.set(Some(NaiveDateTime::new(selected_date.get().unwrap(), selected_time.get().unwrap())));
-        }       
+            selected_date_time_write.set(Some(NaiveDateTime::new(
+                selected_date.get().unwrap(),
+                selected_time.get().unwrap(),
+            )));
+        }
     });
     view! {
         <Title text="Status At Time"/>
@@ -124,8 +126,6 @@ pub async fn get_block_time(
     slider_max_write: WriteSignal<f64>,
     slider_min_write: WriteSignal<f64>,
 ) {
-    
-
     block_number_write.set(None);
 
     let selected_date_time = selected_date_time_read.get().unwrap();

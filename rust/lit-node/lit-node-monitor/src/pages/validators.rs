@@ -323,10 +323,10 @@ pub async fn get_validators(
         };
 
         let socket_address = format!("{}:{}", ip_address, v.port);
-        let guest_ip =  match socket_address.contains("127.0.0.1") {
+        let guest_ip = match socket_address.contains("127.0.0.1") {
             true => socket_address.clone(),
-            false => socket_address.split(":").nth(0).unwrap().to_string()
-        }; 
+            false => socket_address.split(":").nth(0).unwrap().to_string(),
+        };
         // log::info!("Guest IP: {:?} / {:?}", guest_ip, gs.staker_names.get());
         let info = gs
             .staker_names

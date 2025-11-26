@@ -14,7 +14,7 @@ use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_struct_table::*;
 use lit_blockchain_lite::contracts::{
-    contract_resolver, lit_token, pkp_helper, pkpnft, pubkey_router, staking, ledger, price_feed
+    contract_resolver, ledger, lit_token, pkp_helper, pkpnft, price_feed, pubkey_router, staking,
 };
 use serde::{Deserialize, Serialize};
 use thaw::DatePicker;
@@ -377,9 +377,9 @@ pub async fn fetch_chain_rows(
     let page_size = move || page_size.get().parse::<u64>().unwrap();
     let gs = use_context::<GlobalState>().expect("Global State Failed to Load");
     let rpc_api_type = gs.active_network().rpc_api_type.into();
-    let chain_api_url =  match   &gs.active_network().chain_api_url.contains("127.0.0.1") {
-        true =>  gs.active_network().chain_api_url.clone(),
-        false =>   format!("{}{}", &gs.proxy_url, &gs.active_network().chain_api_url)
+    let chain_api_url = match &gs.active_network().chain_api_url.contains("127.0.0.1") {
+        true => gs.active_network().chain_api_url.clone(),
+        false => format!("{}{}", &gs.proxy_url, &gs.active_network().chain_api_url),
     };
     let address = &get_address(crate::contracts::STAKING_CONTRACT)
         .await

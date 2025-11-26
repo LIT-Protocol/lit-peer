@@ -85,7 +85,9 @@ impl GlobalState {
         });
 
         for i in 0..=20 {
-            new_staker_names.write().insert(format!("127.0.0.1:{}", 7470 +i), format!("Local-{}", i));
+            new_staker_names
+                .write()
+                .insert(format!("127.0.0.1:{}", 7470 + i), format!("Local-{}", i));
         }
         Self::populate_common_addresses(&Self::local_network(), new_common_addresses).await;
 
@@ -189,7 +191,10 @@ impl GlobalState {
         true
     }
 
-    async fn populate_common_addresses(network: &NetworkConfig, new_common_addresses: WriteSignal<HashMap<String, String>>) -> bool {
+    async fn populate_common_addresses(
+        network: &NetworkConfig,
+        new_common_addresses: WriteSignal<HashMap<String, String>>,
+    ) -> bool {
         let common_addresses = get_common_addresses(&network).await.unwrap();
         common_addresses.iter().for_each(|(key, value)| {
             new_common_addresses
