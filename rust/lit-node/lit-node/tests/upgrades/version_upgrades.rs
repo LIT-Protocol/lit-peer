@@ -222,7 +222,6 @@ async fn test_version_upgrade_against_old_version(target_branch: &str) {
     let old_build_commit_hash =
         utils::get_target_branch_commit_hash(target_branch).expect("Failed to get commit hash");
 
-
     info!("Old build commit hash: {}", old_build_commit_hash);
     // First check if we have the build.
     let old_build_path = format!("./target/test-run/debug/lit_node_{}", old_build_commit_hash);
