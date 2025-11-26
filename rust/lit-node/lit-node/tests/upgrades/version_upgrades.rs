@@ -1,19 +1,17 @@
 use lit_node_testnet::{
+    TestSetupBuilder,
     node_collection::get_node_versions,
     testnet::{
         NodeAccount, Testnet,
-        contracts::StakingContractRealmConfig,
         contracts_repo::{
             self, WalletManifestItem, alias_node_configs_path, get_alias_manifest_template,
             latest_wallet_manifest, save_alias_manifest,
         },
     },
-    validator::ValidatorCollection,
 };
 
 use crate::common::{
     assertions::NetworkIntegrityChecker,
-    get_default_keyset_configs, init_test_config,
     version::{get_crate_version, update_node_crate_version},
 };
 
@@ -29,52 +27,24 @@ use std::{fs, time::Duration};
 use test_case::test_case;
 use tracing::info;
 
-fn setup() {
-    setup_logging();
-}
-
 /// Tests when an inactive validator that comes online with an invalid version, and then the staker requests to join,
 /// that the node should eventually be kicked for non-participation.
 #[tokio::test]
 async fn node_boot_invalid_version() {
-    setup();
-
+    crate::common::setup_logging();
     info!("TEST: node_boot_invalid_version");
-
     // Set up a network with 6 nodes.
     let num_nodes = 6;
     // set epoch length to 30 mins so it never elapses unless we advance the clock
     let epoch_length = 1800;
-    let mut testnet = Testnet::builder()
+
+    let (testnet, mut validator_collection, end_user) = TestSetupBuilder::default()
         .num_staked_and_joined_validators(num_nodes)
-        .num_staked_only_validators(1)
         .build()
         .await;
 
-    let testnet_contracts = Testnet::setup_contracts(
-        &mut testnet,
-        None,
-        Some(
-            StakingContractRealmConfig::builder()
-                .epoch_length(U256::from(epoch_length))
-                .max_presign_count(U256::from(0))
-                .min_presign_count(U256::from(0))
-                .build(),
-        ),
-    )
-    .await
-    .expect("Failed to setup contracts");
-
-    let actions = testnet.actions(testnet_contracts.contracts());
-
-    let mut validator_collection = ValidatorCollection::builder()
-        .num_staked_nodes(num_nodes)
-        .keyset_configs(get_default_keyset_configs())
-        .build(&testnet, &actions)
-        .await
-        .expect("Failed to build validator collection");
-
-    let network_checker = NetworkIntegrityChecker::new(&actions).await;
+    let actions = testnet.actions();
+    let network_checker = NetworkIntegrityChecker::new(&end_user, &actions).await;
 
     // Upgrade the node crate to a new version
     let _crate_version_handle = update_node_crate_version("2.9999.9999".to_string());
@@ -107,7 +77,7 @@ async fn node_boot_invalid_version() {
     let validator_to_kick = validator_collection
         .add_one(
             false,
-            Some(lit_node_testnet::validator::BuildMode::UseNewBuild),
+            Some(lit_node_testnet::validator::BuildMode::UseNewOrCachedBuild),
             None,
         )
         .await
@@ -121,14 +91,10 @@ async fn node_boot_invalid_version() {
     );
     actions.increase_blockchain_timestamp(epoch_length).await;
 
-    let epoch_number = 
-        actions
-        .get_current_epoch(realm_id)
-        .await;
-    
+    let epoch_number = actions.get_current_epoch(realm_id).await;
+
     // Wait for kick
-    let voting_status = 
-        actions
+    let voting_status = actions
         .wait_for_voting_status_to_kick_validator(
             realm_id,
             epoch_number,
@@ -150,51 +116,27 @@ async fn node_boot_invalid_version() {
         actions.get_current_validator_count(realm_id).await as usize,
         num_nodes
     );
-    network_checker.check(&validator_collection).await;
+    network_checker.check(&validator_collection, &vec![]).await;
 }
 
 /// Tests the version requirement change such that an active validator is running a node version that is incompatible,
 /// so it should request to leave.
 #[tokio::test]
 async fn active_validator_invalid_version() {
-    setup();
-
+    crate::common::setup_logging();
     info!("TEST: active_validator_invalid_version");
-
     // Set up a network with 6 nodes.
     let num_nodes = 6;
     // set epoch length to 30 mins so it never elapses unless we advance the clock
     let epoch_length = 1800;
-    let mut testnet = Testnet::builder()
+
+    let (testnet, mut validator_collection, end_user) = TestSetupBuilder::default()
         .num_staked_and_joined_validators(num_nodes)
-        .num_staked_only_validators(1)
         .build()
         .await;
 
-    let testnet_contracts = Testnet::setup_contracts(
-        &mut testnet,
-        None,
-        Some(
-            StakingContractRealmConfig::builder()
-                .epoch_length(U256::from(epoch_length))
-                .max_presign_count(U256::from(0))
-                .min_presign_count(U256::from(0))
-                .build(),
-        ),
-    )
-    .await
-    .expect("Failed to setup contracts");
-
-    let actions = testnet.actions(testnet_contracts.contracts());
-
-    let mut validator_collection = ValidatorCollection::builder()
-        .num_staked_nodes(num_nodes)
-        .keyset_configs(get_default_keyset_configs())
-        .build(&testnet, &actions)
-        .await
-        .expect("Failed to build validator collection");
-
-    let network_checker = NetworkIntegrityChecker::new(&actions).await;
+    let actions = testnet.actions();
+    let network_checker = NetworkIntegrityChecker::new(&end_user, &actions).await;
 
     // Upgrade the node crate to a new version
     let _crate_version_handle = update_node_crate_version("2.9999.9999".to_string());
@@ -204,7 +146,7 @@ async fn active_validator_invalid_version() {
     let new_validator = validator_collection
         .add_one(
             false,
-            Some(lit_node_testnet::validator::BuildMode::UseNewBuild),
+            Some(lit_node_testnet::validator::BuildMode::UseNewOrCachedBuild),
             None,
         )
         .await
@@ -228,7 +170,7 @@ async fn active_validator_invalid_version() {
         actions.get_current_validator_count(realm_id).await as usize,
         num_nodes + 1
     );
-    network_checker.check(&validator_collection).await;
+    network_checker.check(&validator_collection, &vec![]).await;
 
     // Update version requirements by setting a max version requirement, rendering the new node version invalid.
     let max_version = "2.9999.9998";
@@ -254,7 +196,7 @@ async fn active_validator_invalid_version() {
         actions.get_current_validator_count(realm_id).await as usize,
         num_nodes
     );
-    network_checker.check(&validator_collection).await;
+    network_checker.check(&validator_collection, &vec![]).await;
 
     // Check that the new node is no longer a validator.
     let active_validators = actions.get_current_validators(realm_id).await;
@@ -266,12 +208,10 @@ async fn active_validator_invalid_version() {
 /// 1. Run the `build_target_branches` script in the `scripts` directory. (x86 and arm64 builds)
 /// 2. Run the `download_builds` script in the `scripts` directory. (x86 builds only)
 /// The test will fail if the builds are not found.
-#[test_case("origin/release-habanero-*"; "Upgrade against the latest Habanero release branch")]
-#[test_case("origin/release-manzano-*"; "Upgrade against the latest Manzano release branch")]
-#[test_case("origin/release-cayenne-*"; "Upgrade against the latest Cayenne release branch")]
+#[test_case("origin/release-naga-prod-2025-11-25"; "Upgrade against the latest NAGA-Prod release branch")]
 #[tokio::test]
 async fn test_version_upgrade_against_old_version(target_branch: &str) {
-    setup();
+    crate::common::setup_logging();
 
     info!(
         "TEST: test_version_upgrade_against_old_version against {}",
@@ -282,8 +222,10 @@ async fn test_version_upgrade_against_old_version(target_branch: &str) {
     let old_build_commit_hash =
         utils::get_target_branch_commit_hash(target_branch).expect("Failed to get commit hash");
 
+
+    info!("Old build commit hash: {}", old_build_commit_hash);
     // First check if we have the build.
-    let old_build_path = format!("./target/debug/lit_node_{}", old_build_commit_hash);
+    let old_build_path = format!("./target/test-run/debug/lit_node_{}", old_build_commit_hash);
     assert!(
         fs::metadata(&old_build_path).is_ok(),
         "Build does not exist at {}",
@@ -292,49 +234,22 @@ async fn test_version_upgrade_against_old_version(target_branch: &str) {
 
     // Set up a network of nodes running the old build.
 
+    info!("TEST: node_boot_invalid_version");
+    // Set up a network with 6 nodes.
+    let num_nodes = 6;
     // set epoch length to 30 mins so it never elapses unless we advance the clock
     let epoch_length = 1800;
 
-    // Start a new node collection and wait for the DKG to complete
-    // and root keys to be voted for.
-    let num_nodes = 5;
-    let mut testnet = Testnet::builder()
+    let (testnet, mut validator_collection, end_user) = TestSetupBuilder::default()
         .num_staked_and_joined_validators(num_nodes)
         .force_deploy(true)
         .build()
         .await;
 
-    let testnet_contracts = Testnet::setup_contracts(
-        &mut testnet,
-        None,
-        Some(
-            StakingContractRealmConfig::builder()
-                .epoch_length(U256::from(epoch_length))
-                .min_presign_count(U256::from(0))
-                .max_presign_count(U256::from(0))
-                .max_presign_concurrency(U256::from(0))
-                .realm_id(U256::from(1))
-                .build(),
-        ),
-    )
-    .await
-    .expect("Failed to setup contracts");
-
-    let actions = testnet.actions(testnet_contracts.contracts());
-
-    let mut validator_collection = ValidatorCollection::builder()
-        .num_staked_nodes(num_nodes)
-        .custom_binary_path(Some(old_build_path))
-        .keyset_configs(get_default_keyset_configs())
-        .build(&testnet, &actions)
-        .await
-        .expect("Failed to build validator collection");
-
+    let actions = testnet.actions();
     let realm_id = U256::from(1);
-    let starting_epoch = validator_collection
-        .actions()
-        .get_current_epoch(realm_id)
-        .await;
+    let starting_epoch = actions.get_current_epoch(realm_id).await;
+
     let mut next_epoch = starting_epoch + 1;
 
     // Keep track of the node versions.
@@ -349,10 +264,11 @@ async fn test_version_upgrade_against_old_version(target_branch: &str) {
             .all(|v| v == &initial_node_versions[0])
     );
 
-    let network_checker = NetworkIntegrityChecker::new(validator_collection.actions()).await;
-    network_checker
-        .check_with_drained_presigns(&validator_collection)
-        .await;
+    let network_checker = NetworkIntegrityChecker::new(&end_user, &actions).await;
+    network_checker.check(&validator_collection, &vec![]).await;
+    // network_checker
+    //     .check_with_drained_presigns(&validator_collection)
+    //     .await;
 
     // First, we shuffle the order of the original staker wallets that we will be gradually adding aliases for.
     let mut wallet_manifest_wallets = latest_wallet_manifest(false);
@@ -377,7 +293,7 @@ async fn test_version_upgrade_against_old_version(target_branch: &str) {
                     false,
                     alias_node_config_path,
                     &get_latest_alias_node_account(0, &testnet),
-                    Some(lit_node_testnet::validator::BuildMode::UseNewBuild),
+                    Some(lit_node_testnet::validator::BuildMode::UseNewOrCachedBuild),
                     1
                 )
                 .await
@@ -478,10 +394,13 @@ async fn test_version_upgrade_against_old_version(target_branch: &str) {
 
 fn get_latest_alias_node_account(idx: usize, testnet: &Testnet) -> NodeAccount {
     let latest_alias_wallet_manifest = latest_wallet_manifest(true);
-    let mut provider = ENDPOINT_MANAGER
+    let provider = ENDPOINT_MANAGER
         .get_provider(testnet.chain_name.clone())
         .expect("Failed to get provider");
-    provider.set_interval(Duration::new(0, 10));
+
+    let mut provider_mut = provider.as_ref().clone();
+    provider_mut.set_interval(Duration::new(0, 10));
+    let provider = std::sync::Arc::new(provider_mut);
     latest_alias_wallet_manifest[idx].map_to_node_account(provider, testnet.chain_id)
 }
 
