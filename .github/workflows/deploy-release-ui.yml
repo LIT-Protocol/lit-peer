@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - name: Checkout UI Code from lit-ansible
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: 'LIT-Protocol/lit-ansible'
           path: 'lit-ansible'

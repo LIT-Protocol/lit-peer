@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout lit-assets
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Download actionlint
         run: |
           curl -sfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash | bash -s -- latest ${{ github.workspace }}
