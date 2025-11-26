@@ -45,10 +45,10 @@ jobs:
           # When triggered manually, use the branch specified in the input.
           ref: ${{ github.event.inputs.source_branch || 'master' }}
 
-      - name: Checkout Release Data from lit-assets
+      - name: Checkout Release Data from lit-peer
         uses: actions/checkout@v5
         with:
-          repository: 'LIT-Protocol/lit-assets'
+          repository: 'LIT-Protocol/lit-peer'
           ref: 'releases-info'
           path: 'lit-ansible/release-data-store'
 
