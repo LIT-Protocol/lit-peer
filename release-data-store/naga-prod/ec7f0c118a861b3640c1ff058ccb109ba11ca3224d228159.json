@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "releaseId": "ec7f0c118a861b3640c1ff058ccb109ba11ca3224d228159",
+  "version": "2.1.5",
+  "networkName": "naga-prod",
+  "releaseDate": "2025-11-26T21:14:01Z", 
+  "status": "active",
+  "source": {
+    "litOs": {
+      "branch": "develop", 
+      "commit": "3cddc8017a7b7e0afb2a80ef8426a72ab5316df3" 
+    },
+    "litAssets": {
+      "branch": "develop",
+      "commit": "948a5175616c60240f670d15c75ecfceb691d060"
+    }
+  },
+  "artifacts": {
+    "manifestCid": "QmcQGub7aDNbGdx6ks5AZPWPPbASYJgFNg1sFjoM4tczFo", 
+    "dockerImage": "litptcl/build-env:ec7f0c118a861b3640c1ff058ccb109ba11ca3224d228159"
+  },
+  "verification": {
+    "signedGitTag": "v2.1.5-naga-prod",
+    "gpgKeyFingerprint": "85A96358DA3ED400"
+  }
+}
