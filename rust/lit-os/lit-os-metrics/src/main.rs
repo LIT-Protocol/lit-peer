@@ -177,8 +177,6 @@ async fn init_observability(
             cfg,
             otel_resource.clone(),
             sdktrace::Config::default().with_resource(otel_resource.clone()),
-            #[cfg(feature = "proxy-collector")]
-            PKG_NAME,
         )
         .await
         .map_err(|e| unexpected_err(e, Some("Failed to create observability providers".into())))?;
