@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "release_id": "cd14fe9428759afc5989b961d0a8eb236c9074c4141baea1",
+  "version": "2.1.6",
+  "network_name": "naga-proto",
+  "release_date": "2025-11-26T21:14:01Z", 
+  "status": "active",
+  "source": {
+    "lit_os": {
+      "branch": "develop", 
+      "commit": "3cddc8017a7b7e0afb2a80ef8426a72ab5316df3" 
+    },
+    "lit_assets": {
+      "branch": "develop",
+      "commit": "94b3242b331883379b69ca4d04b248741db67dc9"
+    }
+  },
+  "artifacts": {
+    "manifest_cid": "QmT2YYj8rBoW76RfV3anoGHPgLw7inhENDWbYvVeWZPpjh", 
+    "docker_image": "litptcl/build-env:cd14fe9428759afc5989b961d0a8eb236c9074c4141baea1"
+  },
+  "verification": {
+    "signed_git_tag": "v2.1.6-naga-proto",
+    "gpg_key_fingerprint": "C56479E6C15EA84E"
+  }
+}
