@@ -38,10 +38,7 @@ pub async fn test_privacy_mode_logging() {
         std::fs::read_to_string("./tests/lit_action_scripts/broadcast_and_collect.js")
             .expect("failed to read broadcast_and_collect.js");
     let lit_action_code = data_encoding::BASE64.encode(lit_action_code.as_bytes());
-
-    let (pubkey, _token_id, _eth_address) = end_user.first_pkp().info();
-    let mut js_params = serde_json::Map::new();
-    js_params.insert("publicKey".to_string(), pubkey.into());
+    let js_params = serde_json::Map::new();
 
     // Generate session sigs
     let session_sigs_and_node_set = get_session_sigs_for_auth(
@@ -128,7 +125,7 @@ pub async fn test_privacy_mode_logging() {
         .collect();
 
     let my_private_key = OsRng.r#gen();
-    let mut execute_request = lit_sdk::ExecuteFunctionRequest::new()
+    let execute_request = lit_sdk::ExecuteFunctionRequest::new()
         .url_prefix(lit_sdk::UrlPrefix::Http)
         .add_custom_header("X-Privacy-Mode", "true")
         .node_set(
