@@ -354,7 +354,7 @@ pub fn generate_wallet_and_add_as_alias() {
         "scripts/generate_wallet_and_add_as_alias.ts",
     ];
     info!(
-        "Running full command in {}: npx {}",
+        "Running full generate_wallet_and_add_as_alias command in {}: npx {}",
         LITCONTRACTPATH,
         args.join(" ")
     );
