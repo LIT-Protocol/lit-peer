@@ -59,21 +59,6 @@ contract BackupRecoveryViewsFacet {
         return s().pastBackupStates[sessionId];
     }
 
-    function getNextBackupState()
-        public
-        view
-        returns (
-            LibBackupRecoveryStorage.NextStateDownloadable memory nextState
-        )
-    {
-        return
-            LibBackupRecoveryStorage.NextStateDownloadable(
-                s().nextState[0].partyMembers,
-                s().nextState[0].registeredRecoveryKeys,
-                s().nextState[0].sessionId
-            );
-    }
-
     /**
      * @dev
      * returns the mapped backup party member to a member of the peer set

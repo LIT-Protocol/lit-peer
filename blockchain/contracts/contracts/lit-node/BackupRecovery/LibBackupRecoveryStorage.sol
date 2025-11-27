@@ -74,12 +74,6 @@ library LibBackupRecoveryStorage {
         bytes ecdsaVerificationKey;
     }
 
-    struct NextStateDownloadable {
-        address[] partyMembers;
-        RecoveryKey[] registeredRecoveryKeys;
-        bytes sessionId;
-    }
-
     struct BackupRecoveryStorage {
         bytes1 verificationVersion;
         // current state of the backup recovery
@@ -99,7 +93,8 @@ library LibBackupRecoveryStorage {
         // A mapping from the node address and peer id of a recovering node to the peer id
         // of the node which generated the the private shares that it recovered.
         // Necessary for the first DKG after the recovery
-        RecoveredPeerId[] recovered_peer_ids;
+        // Use recovered_peer_ids[0] for now.
+        mapping(uint256 => RecoveredPeerId[]) recovered_peer_ids;
     }
 
     function getStorage()
