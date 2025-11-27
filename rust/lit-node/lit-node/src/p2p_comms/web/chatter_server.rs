@@ -32,6 +32,7 @@ use tracing::{debug, error, info, instrument};
 use xor_name::XorName;
 
 #[allow(clippy::unwrap_used)]
+#[allow(dead_code)]
 pub mod chatter {
     tonic::include_proto!("chatter");
 }

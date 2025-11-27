@@ -31,6 +31,7 @@ pub const ED448: &str = "Ed448";
 pub const JUBJUB: &str = "RedJubjub";
 pub const DECAF377: &str = "RedDecaf377";
 pub const BLS12381G1_SIGN: &str = "BLS12381G1Sign";
+pub const PALLAS: &str = "RedPallas";
 
 pub const CONFIG_STORAGE: [&str; 2] = [concat!(".", env!("CARGO_PKG_NAME")), "config.json"];
 
@@ -46,4 +47,5 @@ pub const ED448_ENCRYPTION_KEY_FN: &str = "ed448_encryption_key";
 pub const JUBJUB_ENCRYPTION_KEY_FN: &str = "jubjub_encryption_key";
 pub const DECAF377_ENCRYPTION_KEY_FN: &str = "decaf377_encryption_key";
 pub const BLS12381G1_ENCRYPTION_KEY_FN: &str = "bls12381g1_encryption_key";
+pub const PALLAS_ENCRYPTION_KEY_FN: &str = "pallas_encryption_key";
 pub const SESSION_ID_FN: &str = "session_id";

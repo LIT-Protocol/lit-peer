@@ -10,13 +10,24 @@ use crate::{
         storage::read_key_share_commitments_from_disk,
     },
 };
-use blsful::{Pairing, SecretKeyShare, Signature};
-use elliptic_curve::Group;
 use futures::future::join_all;
-use hd_keys_curves::{HDDerivable, HDDeriver};
 use lit_core::error::Result;
 use lit_core::utils::binary::bytes_to_hex;
-use lit_node_core::{CompressedBytes, CurveType, PeerId};
+use lit_node_core::{
+    CompressedBytes, CurveType, PeerId,
+    hd_keys_curves_wasm::{HDDerivable, HDDeriver},
+};
+use lit_rust_crypto::{
+    blsful::{
+        Bls12381G2Impl, Pairing, PublicKey, SecretKey, SecretKeyShare, Signature, SignatureSchemes,
+        SignatureShare,
+        inner_types::{G1Projective, Scalar},
+    },
+    ed448_goldilocks,
+    group::Group,
+    k256, p256, p384, pallas,
+    vsss_rs::{IdentifierPrimeField, Share},
+};
 use lit_vrf::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -25,7 +36,6 @@ use std::{
     fmt::{self, Debug, Display, Formatter},
 };
 use tracing::instrument;
-use vsss_rs::{IdentifierPrimeField, Share};
 
 const VRF_KEY_SHARE_VALIDATION_PREFIX: &str = "vrf-key-share-validation-";
 /// Proofs for key share validation
@@ -181,23 +191,19 @@ pub async fn compute_key_share_proof(
         )
         .await?;
 
-        let identifier = <<blsful::Bls12381G2Impl as Pairing>::PublicKey as Group>::Scalar::from(
-            bls_key_share.peer_id,
-        );
-        let value = bls_key_share.secret::<<blsful::Bls12381G2Impl as Pairing>::PublicKey>()?;
+        let identifier =
+            <<Bls12381G2Impl as Pairing>::PublicKey as Group>::Scalar::from(bls_key_share.peer_id);
+        let value = bls_key_share.secret::<<Bls12381G2Impl as Pairing>::PublicKey>()?;
 
-        let secret_key_share: SecretKeyShare<blsful::Bls12381G2Impl> = SecretKeyShare(
-            <blsful::Bls12381G2Impl as Pairing>::SecretKeyShare::with_identifier_and_value(
+        let secret_key_share: SecretKeyShare<Bls12381G2Impl> = SecretKeyShare(
+            <Bls12381G2Impl as Pairing>::SecretKeyShare::with_identifier_and_value(
                 IdentifierPrimeField(identifier),
                 IdentifierPrimeField(value),
             ),
         );
 
         let sks = secret_key_share
-            .sign(
-                blsful::SignatureSchemes::ProofOfPossession,
-                noonce.as_bytes(),
-            )
+            .sign(SignatureSchemes::ProofOfPossession, noonce.as_bytes())
             .map_err(|e| unexpected_err(format!("Failed to sign message: {:?}", e), None))?;
 
         return postcard::to_stdvec(&sks)
@@ -230,12 +236,19 @@ pub async fn compute_key_share_proof(
         CurveType::RedJubjub => {
             compute_key_share_proof_internal::<bulletproofs::JubJub>(
                 &args,
-                Some(lit_frost::red_jubjub_generator()),
+                Some(lit_rust_crypto::red_jubjub_signing_generator()),
             )
             .await
         }
         CurveType::RedDecaf377 => {
             compute_key_share_proof_internal::<bulletproofs::Decaf377>(&args, None).await
+        }
+        CurveType::RedPallas => {
+            compute_key_share_proof_internal::<pallas::Pallas>(
+                &args,
+                Some(lit_rust_crypto::red_pallas_signing_generator()),
+            )
+            .await
         }
         CurveType::BLS12381G1 => {
             if root_keys.is_empty() {
@@ -247,12 +260,10 @@ pub async fn compute_key_share_proof(
             let vrf_deriver_id =
                 format!("{}{}", VRF_KEY_SHARE_VALIDATION_PREFIX, curve_type.as_str());
 
-            let deriver = <blsful::inner_types::Scalar as HDDeriver>::create(
-                vrf_deriver_id.as_bytes(),
-                curve_type.vrf_ctx(),
-            );
+            let deriver =
+                <Scalar as HDDeriver>::create(vrf_deriver_id.as_bytes(), curve_type.vrf_ctx());
             let key_cache = KeyCache::default();
-            let (sk, _) = get_derived_keyshare::<blsful::inner_types::G1Projective>(
+            let (sk, _) = get_derived_keyshare::<G1Projective>(
                 deriver,
                 root_keys,
                 curve_type,
@@ -263,11 +274,8 @@ pub async fn compute_key_share_proof(
                 &key_cache,
             )
             .await?;
-            let signature: Signature<blsful::Bls12381G2Impl> = blsful::SecretKey(sk)
-                .sign(
-                    blsful::SignatureSchemes::ProofOfPossession,
-                    noonce.as_bytes(),
-                )
+            let signature: Signature<Bls12381G2Impl> = SecretKey(sk)
+                .sign(SignatureSchemes::ProofOfPossession, noonce.as_bytes())
                 .map_err(|_| unexpected_err("cannot generate BLS proof".to_string(), None))?;
 
             postcard::to_stdvec(&signature)
@@ -413,42 +421,37 @@ pub async fn verify_key_share_proofs(
                     return Err(unexpected_err("No root keys found!".to_string(), None));
                 }
                 let key_cache = KeyCache::default();
-                let commitments = read_key_share_commitments_from_disk::<
-                    KeyShareCommitments<blsful::inner_types::G1Projective>,
-                >(
-                    curve_type,
-                    &args.root_keys[0],
-                    staker_address,
-                    &self_peer.peer_id,
-                    epoch, // this will possibly not be the same epoch as the node doing the request, and the results will be mismatched proofs.
-                    realm_id,
-                    &key_cache,
-                )
-                .await?;
-                let sig_share = postcard::from_bytes::<
-                    blsful::SignatureShare<blsful::Bls12381G2Impl>,
-                >(args.proof)
-                .map_err(|e| unexpected_err(e, Some("cannot deserialize BLS proof".to_string())))?;
+                let commitments =
+                    read_key_share_commitments_from_disk::<KeyShareCommitments<G1Projective>>(
+                        curve_type,
+                        &args.root_keys[0],
+                        staker_address,
+                        &self_peer.peer_id,
+                        epoch, // this will possibly not be the same epoch as the node doing the request, and the results will be mismatched proofs.
+                        realm_id,
+                        &key_cache,
+                    )
+                    .await?;
+                let sig_share = postcard::from_bytes::<SignatureShare<Bls12381G2Impl>>(args.proof)
+                    .map_err(|e| {
+                        unexpected_err(e, Some("cannot deserialize BLS proof".to_string()))
+                    })?;
 
                 let signature_point = sig_share.as_raw_value().0.value.0;
                 let signature = match sig_share {
-                    blsful::SignatureShare::Basic(sig) => {
-                        blsful::Signature::<blsful::Bls12381G2Impl>::Basic(signature_point)
+                    SignatureShare::Basic(sig) => {
+                        Signature::<Bls12381G2Impl>::Basic(signature_point)
                     }
-                    blsful::SignatureShare::MessageAugmentation(sig) => {
-                        blsful::Signature::<blsful::Bls12381G2Impl>::MessageAugmentation(
-                            signature_point,
-                        )
+                    SignatureShare::MessageAugmentation(sig) => {
+                        Signature::<Bls12381G2Impl>::MessageAugmentation(signature_point)
                     }
-                    blsful::SignatureShare::ProofOfPossession(sig) => {
-                        blsful::Signature::<blsful::Bls12381G2Impl>::ProofOfPossession(
-                            signature_point,
-                        )
+                    SignatureShare::ProofOfPossession(sig) => {
+                        Signature::<Bls12381G2Impl>::ProofOfPossession(signature_point)
                     }
                 };
-                let key_share_commitment = commitments
-                    .compute_key_share_commitment(&blsful::inner_types::Scalar::from(peer_id));
-                let pub_key = blsful::PublicKey::<blsful::Bls12381G2Impl>(key_share_commitment);
+                let key_share_commitment =
+                    commitments.compute_key_share_commitment(&Scalar::from(peer_id));
+                let pub_key = PublicKey::<Bls12381G2Impl>(key_share_commitment);
                 verification_checks.insert(
                     curve_type,
                     signature.verify(&pub_key, noonce.as_bytes()).map_err(|e| {
@@ -498,7 +501,7 @@ pub async fn verify_key_share_proofs(
                     curve_type,
                     verify_key_share_proofs_internal::<bulletproofs::JubJub>(
                         &args,
-                        Some(lit_frost::red_jubjub_generator()),
+                        Some(lit_rust_crypto::red_jubjub_signing_generator()),
                     )
                     .await,
                 );
@@ -509,48 +512,52 @@ pub async fn verify_key_share_proofs(
                     verify_key_share_proofs_internal::<bulletproofs::Decaf377>(&args, None).await,
                 );
             }
+            CurveType::RedPallas => {
+                verification_checks.insert(
+                    curve_type,
+                    verify_key_share_proofs_internal::<pallas::Pallas>(
+                        &args,
+                        Some(lit_rust_crypto::red_pallas_signing_generator()),
+                    )
+                    .await,
+                );
+            }
             CurveType::BLS12381G1 => {
                 if args.root_keys.is_empty() {
                     return Err(unexpected_err("No root keys found!".to_string(), None));
                 }
-                let peer_id_scalar = blsful::inner_types::Scalar::from(peer_id);
+                let peer_id_scalar = Scalar::from(peer_id);
                 let mut key_share_commitments = Vec::with_capacity(root_keys.len());
                 let key_cache = KeyCache::default();
                 for (i, root_key) in args.root_keys.iter().enumerate() {
-                    let commitments = read_key_share_commitments_from_disk::<
-                        KeyShareCommitments<blsful::inner_types::G1Projective>,
-                    >(
-                        curve_type,
-                        root_key,
-                        staker_address,
-                        &self_peer.peer_id,
-                        epoch, // this will possibly not be the same epoch as the node doing the request, and the results will be mismatched proofs.
-                        realm_id,
-                        &key_cache,
-                    )
-                    .await?;
+                    let commitments =
+                        read_key_share_commitments_from_disk::<KeyShareCommitments<G1Projective>>(
+                            curve_type,
+                            root_key,
+                            staker_address,
+                            &self_peer.peer_id,
+                            epoch, // this will possibly not be the same epoch as the node doing the request, and the results will be mismatched proofs.
+                            realm_id,
+                            &key_cache,
+                        )
+                        .await?;
                     let key_share_commitment =
                         commitments.compute_key_share_commitment(&peer_id_scalar);
                     key_share_commitments.push(key_share_commitment);
                 }
-                let signature = postcard::from_bytes::<Signature<blsful::Bls12381G2Impl>>(
-                    args.proof,
-                )
-                .map_err(|e| unexpected_err(e, Some("cannot deserialize BLS proof".to_string())))?;
+                let signature = postcard::from_bytes::<Signature<Bls12381G2Impl>>(args.proof)
+                    .map_err(|e| {
+                        unexpected_err(e, Some("cannot deserialize BLS proof".to_string()))
+                    })?;
 
                 let vrf_deriver_id =
                     format!("{}{}", VRF_KEY_SHARE_VALIDATION_PREFIX, curve_type.as_str());
-                let deriver = <blsful::inner_types::Scalar as HDDeriver>::create(
-                    vrf_deriver_id.as_bytes(),
-                    curve_type.vrf_ctx(),
-                );
+                let deriver =
+                    <Scalar as HDDeriver>::create(vrf_deriver_id.as_bytes(), curve_type.vrf_ctx());
 
                 let key_share_commitment =
-                    <blsful::inner_types::Scalar as HDDeriver>::hd_derive_public_key(
-                        &deriver,
-                        &key_share_commitments,
-                    );
-                let pub_key = blsful::PublicKey::<blsful::Bls12381G2Impl>(key_share_commitment);
+                    <Scalar as HDDeriver>::hd_derive_public_key(&deriver, &key_share_commitments);
+                let pub_key = PublicKey::<Bls12381G2Impl>(key_share_commitment);
                 verification_checks.insert(
                     curve_type,
                     signature.verify(&pub_key, noonce.as_bytes()).map_err(|e| {
@@ -634,9 +641,11 @@ struct VerifyKeyShareProofArgs<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use elliptic_curve::Field;
+    use lit_rust_crypto::{
+        ff::Field,
+        vsss_rs::{DefaultShare, IdentifierPrimeField, shamir},
+    };
     use rand::{RngCore, SeedableRng};
-    use vsss_rs::{DefaultShare, IdentifierPrimeField, shamir};
 
     #[test]
     fn dkg_and_test_vrf() {

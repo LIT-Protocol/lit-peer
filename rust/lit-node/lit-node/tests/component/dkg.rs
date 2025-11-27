@@ -1,7 +1,5 @@
 use super::utils::virtual_node_collection::{VirtualNode, VirtualNodeCollection};
 use crate::common::interpolation::{get_secret_and_shares, interpolate_secret};
-use ed448_goldilocks::EdwardsPoint;
-use elliptic_curve::{Group, group::GroupEncoding};
 use ethers::types::{H160, U256};
 use futures::future::join_all;
 use lit_blockchain::contracts::backup_recovery::RecoveredPeerId;
@@ -18,14 +16,18 @@ use lit_node::tss::common::storage::{
 use lit_node::tss::dkg::engine::{DkgAfterRestore, DkgAfterRestoreData, DkgEngine};
 use lit_node::utils::key_share_proof::{compute_key_share_proofs, verify_key_share_proofs};
 use lit_node::version::DataVersionWriter;
-use lit_node_core::CompressedBytes;
-use lit_node_core::CurveType;
-use lit_node_core::PeerId;
+use lit_node_core::{CompressedBytes, CurveType, PeerId};
+use lit_rust_crypto::{
+    blsful, decaf377,
+    ed448_goldilocks::EdwardsPoint,
+    elliptic_curve::{Group, group::GroupEncoding},
+    jubjub, k256, p256, p384, pallas,
+    vsss_rs::curve25519::{WrappedEdwards, WrappedRistretto},
+};
 use std::collections::HashMap;
 use test_case::test_case;
 use tokio::task::JoinHandle;
 use tracing::{error, info};
-use vsss_rs::curve25519::{WrappedEdwards, WrappedRistretto};
 
 // The following tests show how components can be tested in isolation.
 #[test_case(CurveType::K256; "K256 Key generation")]
@@ -36,6 +38,7 @@ use vsss_rs::curve25519::{WrappedEdwards, WrappedRistretto};
 #[test_case(CurveType::P256; "P256 Key generation")]
 #[test_case(CurveType::P384; "P384 Key generation")]
 #[test_case(CurveType::RedJubjub; "RedJubjub Key generation")]
+#[test_case(CurveType::RedPallas; "RedPallas Key generation")]
 #[test_case(CurveType::RedDecaf377; "RedDecaf377 Key generation")]
 #[test_case(CurveType::BLS12381G1; "Bls12381G1 Key Generation")]
 #[tokio::test]
@@ -52,6 +55,7 @@ pub async fn dkg_only(curve_type: CurveType) {
 #[test_case(CurveType::P256; "P256 Key Share Proofs")]
 #[test_case(CurveType::P384; "P384 Key Share Proofs")]
 #[test_case(CurveType::RedJubjub; "RedJubjub Key Share Proofs")]
+#[test_case(CurveType::RedPallas; "RedPallas Key Share Proofs")]
 #[test_case(CurveType::RedDecaf377; "RedDecaf377 Key Share Proofs")]
 #[test_case(CurveType::BLS12381G1; "Bls12381G1 Key Share Proofs")]
 #[tokio::test]
@@ -136,6 +140,7 @@ pub async fn dkg_and_key_share_proofs(curve_type: CurveType) {
 #[test_case(p256::ProjectivePoint::default(), CurveType::P256; "P256 Refresh")]
 #[test_case(p384::ProjectivePoint::default(), CurveType::P384; "P384 Refresh")]
 #[test_case(jubjub::SubgroupPoint::default(), CurveType::RedJubjub; "RedJubjub Refresh")]
+#[test_case(pallas::Point::default(), CurveType::RedPallas; "RedPallas Refresh")]
 #[test_case(decaf377::Element::default(), CurveType::RedDecaf377; "RedDecaf377 Refresh")]
 #[test_case(blsful::inner_types::G1Projective::default(), CurveType::BLS12381G1; "Bls12381G1 Key Generation")]
 #[tokio::test]
@@ -160,10 +165,11 @@ where
 #[test_case(blsful::inner_types::G1Projective::default(), CurveType::BLS12381G1, 3, [1, 0].to_vec(); "Bls12381G1 add node, keep threshold")]
 #[test_case(WrappedEdwards::default(), CurveType::Ed25519, 3, [1, 0].to_vec(); "Ed25519 add node, keep threshold")]
 #[test_case(WrappedRistretto::default(), CurveType::Ristretto25519, 3, [1, 0].to_vec(); "Ristretto25519 add node, keep threshold")]
-#[test_case(ed448_goldilocks::EdwardsPoint::default(), CurveType::Ed448, 3, [1, 0].to_vec(); "Ed448 add node, keep threshold")]
+#[test_case(EdwardsPoint::default(), CurveType::Ed448, 3, [1, 0].to_vec(); "Ed448 add node, keep threshold")]
 #[test_case(p256::ProjectivePoint::default(), CurveType::P256, 3, [1, 0].to_vec(); "P256 add node, keep threshold")]
 #[test_case(p384::ProjectivePoint::default(), CurveType::P384, 3, [1, 0].to_vec(); "P384 add node, keep threshold")]
 #[test_case(jubjub::SubgroupPoint::default(), CurveType::RedJubjub, 3, [1, 0].to_vec(); "RedJubjub add node, keep threshold")]
+#[test_case(pallas::Point::default(), CurveType::RedPallas, 3, [1, 0].to_vec(); "RedPallas add node, keep threshold")]
 #[test_case(decaf377::Element::default(), CurveType::RedDecaf377, 3, [1, 0].to_vec(); "RedDecaf377 add node, keep threshold")]
 // #[test_case( CurveType::K256, 4, [-2,0].to_vec() ; "ECDSA remove node, keep threshold")]
 // #[test_case( CurveType::BLS, 4, [-2,0].to_vec() ; "BLS remove node, keep threshold")]
@@ -261,11 +267,12 @@ pub async fn dkg_and_reshare<G>(
 #[test_case(blsful::inner_types::G1Projective::default(), CurveType::BLS12381G1, 3, 3; "Bls12381G1 restore 3 nodes")]
 #[test_case(WrappedEdwards::default(), CurveType::Ed25519, 5, 4; "Ed25519 restore 5 nodes")]
 #[test_case(WrappedRistretto::default(), CurveType::Ristretto25519, 5, 3; "Ristretto25519 restore 5 nodes")]
-#[test_case(ed448_goldilocks::EdwardsPoint::default(), CurveType::Ed448, 3, 3; "Ed448 restore 3 nodes")]
+#[test_case(EdwardsPoint::default(), CurveType::Ed448, 3, 3; "Ed448 restore 3 nodes")]
 #[test_case(p256::ProjectivePoint::default(), CurveType::P256, 3, 3; "P256 restore 3 nodes")]
 #[test_case(p384::ProjectivePoint::default(), CurveType::P384, 3, 3; "P384 restore 3 nodes")]
 #[test_case(jubjub::SubgroupPoint::default(), CurveType::RedJubjub, 5, 4; "RedJubjub restore 5 nodes")]
 #[test_case(decaf377::Element::default(), CurveType::RedDecaf377, 3, 3; "RedDecaf377 restore 3 nodes")]
+#[test_case(pallas::Point::default(), CurveType::RedPallas, 3, 3; "RedPallas restore 3 nodes")]
 #[tokio::test]
 pub async fn dkg_after_restore<G>(
     _g: G,
@@ -431,7 +438,7 @@ pub async fn dkg_only_all_curves() {
     let pubkeys = dkg_all_curves(&vnc, epoch, &current_peers).await;
 
     info!("Generated {} pubkeys", pubkeys.len());
-    assert_eq!(pubkeys.len(), 20);
+    assert_eq!(pubkeys.len(), 22);
 }
 
 async fn restore(
@@ -715,7 +722,7 @@ pub async fn dkg_all_curves(
             info!("change epoch result: {:?}", r);
             let _ = r.expect("error from dkg manager change epoch");
             let root_keys = dkg_engine.get_dkgs().collect::<Vec<_>>();
-            assert_eq!(root_keys.len(), 20);
+            assert_eq!(root_keys.len(), 22);
             root_keys
                 .iter()
                 .map(|r| r.result().unwrap().public_key())

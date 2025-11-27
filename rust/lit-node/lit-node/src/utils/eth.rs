@@ -3,7 +3,7 @@
 use crate::error::{Result, conversion_err};
 use ethers::prelude::H160;
 use ethers::types::Address;
-use k256::ecdsa::{SigningKey, VerifyingKey};
+use lit_rust_crypto::k256::ecdsa::{SigningKey, VerifyingKey};
 use sha3::{Keccak256, digest::Digest};
 
 pub trait EthereumAddress {

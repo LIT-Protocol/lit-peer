@@ -4,7 +4,7 @@ use serde_json::json;
 use sha2::digest::Output;
 use sha2::{Digest, Sha512};
 
-use lit_attestation::attestation::{FromSystem, TryGenerate};
+use lit_attestation::attestation::TryGenerate;
 use lit_attestation::{Attestation, AttestedRequest};
 use lit_core::config::LitConfig;
 pub use lit_os_core::guest::types::GuestCpuType;
@@ -50,16 +50,16 @@ impl IssueRelease {
     pub fn sha512(&self) -> Output<Sha512> {
         let mut hasher = Sha512::new();
         hasher.update("release_id");
-        hasher.update(&(self.release_id.len() as u64).to_be_bytes());
+        hasher.update((self.release_id.len() as u64).to_be_bytes());
         hasher.update(self.release_id.as_bytes());
 
         hasher.update("vcpu_type");
         let vcpu_type_str = self.vcpu_type.to_string();
-        hasher.update(&(vcpu_type_str.len() as u64).to_be_bytes());
+        hasher.update((vcpu_type_str.len() as u64).to_be_bytes());
         hasher.update(vcpu_type_str.as_bytes());
 
         hasher.update("vcpus");
-        hasher.update(&self.vcpus.to_le_bytes());
+        hasher.update(self.vcpus.to_le_bytes());
         hasher.finalize()
     }
 }

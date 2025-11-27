@@ -1,5 +1,5 @@
-use blsful::Bls12381G2Impl;
 use ethers::types::Address;
+use lit_rust_crypto::blsful::{Bls12381G2Impl, PublicKey, Signature};
 use rocket::time::OffsetDateTime;
 use siwe::{Message, VerificationOpts};
 use tracing::debug;
@@ -122,10 +122,10 @@ impl CapabilityAuthSigValidator for SiweValidator {
         };
         let signed_data = siwe_hash_to_bls_session_hash(siwe_hash.into());
 
-        let signature: blsful::Signature<Bls12381G2Impl> = serde_json::from_str(&auth_sig.sig)
+        let signature: Signature<Bls12381G2Impl> = serde_json::from_str(&auth_sig.sig)
             .map_err(|err| parser_err_code(err, EC::NodeSIWESigConversionError, None))?;
 
-        let bls_root_key = blsful::PublicKey::<Bls12381G2Impl>::try_from(
+        let bls_root_key = PublicKey::<Bls12381G2Impl>::try_from(
             &hex::decode(bls_root_pubkey).expect("Failed to decode root key"),
         )
         .expect("Failed to convert bls public key from bytes");
@@ -257,10 +257,10 @@ impl SessionSigAuthSigValidator for SiweValidator {
         };
         let signed_data = siwe_hash_to_bls_session_hash(siwe_hash.into());
 
-        let signature: blsful::Signature<Bls12381G2Impl> = serde_json::from_str(&auth_sig.sig)
+        let signature: Signature<Bls12381G2Impl> = serde_json::from_str(&auth_sig.sig)
             .map_err(|err| parser_err_code(err, EC::NodeSIWESigConversionError, None))?;
 
-        let bls_root_key = blsful::PublicKey::<Bls12381G2Impl>::try_from(
+        let bls_root_key = PublicKey::<Bls12381G2Impl>::try_from(
             &hex::decode(bls_root_pubkey).expect("Failed to decode root key"),
         )
         .expect("Failed to convert bls public key from bytes");

@@ -1,5 +1,5 @@
 use lit_attestation::verification::Policy;
-use log::{as_error, error, info};
+use log::{error, info};
 
 use lit_os_core::error::{Result, validation_err};
 use lit_os_core::guest::oneshot::config::ACTION_TYPE_BOOTSTRAP;
@@ -9,7 +9,7 @@ use crate::init::stage::Outcome;
 
 pub(crate) async fn run(ctx: &mut InitContext) -> Result<Outcome> {
     if let Err(e) = verify_attestation(ctx).await {
-        error!(error = as_error!(e); "Attestation failed");
+        error!(error:err = e; "Attestation failed");
 
         return Ok(Outcome::Diagnose);
     }

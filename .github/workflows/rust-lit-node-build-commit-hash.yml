@@ -48,7 +48,7 @@ jobs:
       - name: Install rust
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: '1.86' # keep in sync with rust/lit-node/rust-toolchain.toml
+          toolchain: '1.91' # keep in sync with rust/lit-node/rust-toolchain.toml
           components: rustfmt rust-src
       - name: Build node
         run: cargo build --features lit-actions,testing

@@ -1,6 +1,4 @@
-use blsful::inner_types::{G1Projective, InnerBls12381G1};
 use bulletproofs::{BulletproofCurveArithmetic as BCA, BulletproofCurveArithmetic};
-use elliptic_curve::bigint::{NonZero, U256};
 use ethers::types::H160;
 use std::marker::PhantomData;
 use verifiable_share_encryption::VerifiableEncryption;
@@ -13,10 +11,14 @@ use crate::utils::traits::SignatureCurve;
 use lit_blockchain::contracts::backup_recovery::RecoveryKey;
 use lit_core::config::LitConfig;
 use lit_node_common::config::LitNodeConfig;
-use lit_node_core::CompressedBytes;
-use lit_node_core::CurveType;
-use lit_node_core::PeerId;
+use lit_node_core::{CompressedBytes, CurveType, PeerId};
 use lit_recovery::models::EncryptedKeyShare;
+use lit_rust_crypto::{
+    blsful::inner_types::{G1Projective, InnerBls12381G1},
+    decaf377, ed448_goldilocks,
+    elliptic_curve::bigint::{NonZero, U256},
+    jubjub, k256, p256, p384, pallas, vsss_rs,
+};
 
 /// Internally kept version
 #[derive(Default)]
@@ -33,6 +35,7 @@ pub struct RecoveryParty {
     pub jubjub_encryption_key: jubjub::SubgroupPoint,
     pub decaf377_encryption_key: decaf377::Element,
     pub bls12381g1_encryption_key: <InnerBls12381G1 as BCA>::Point,
+    pub pallas_encryption_key: pallas::Point,
     pub threshold: usize,
 }
 
@@ -117,6 +120,10 @@ fn set_recovery_party_keys(
             CurveType::BLS12381G1 => {
                 trace!("Reading bls12381g1 encryption key");
                 recovery_party.bls12381g1_encryption_key = read_bls_pub_key(&recovery_key.pubkey)?;
+            }
+            CurveType::RedPallas => {
+                trace!("Reading pallas encryption key");
+                recovery_party.pallas_encryption_key = read_pallas_pub_key(&recovery_key.pubkey)?;
             }
         }
     }
@@ -217,6 +224,11 @@ fn read_decaf377_pub_key(bytes: &[u8]) -> Result<decaf377::Element> {
     helper.pk_from_bytes(bytes)
 }
 
+fn read_pallas_pub_key(bytes: &[u8]) -> Result<pallas::Point> {
+    let helper = KeyPersistence::<pallas::Point>::new(CurveType::RedPallas);
+    helper.pk_from_bytes(bytes)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -225,14 +237,13 @@ mod tests {
     use crate::tss::common::key_persistence::KeyPersistence;
     use crate::tss::common::key_share::KeyShare;
     use bulletproofs::BulletproofCurveArithmetic as BCA;
-    use elliptic_curve::Field;
-    use elliptic_curve::ff::PrimeFieldBits;
-    use lit_node_core::CompressedHex;
-    use lit_node_core::CurveType;
-    use lit_node_core::PeerId;
+    use lit_node_core::{CompressedHex, CurveType, PeerId};
+    use lit_rust_crypto::{
+        ff::{Field, PrimeFieldBits},
+        vsss_rs::{DefaultShare, IdentifierPrimeField},
+    };
     use test_case::test_case;
     use verifiable_share_encryption::{VerifiableEncryption, VerifiableEncryptionDecryptor};
-    use vsss_rs::{DefaultShare, IdentifierPrimeField};
 
     fn get_enc_dec_key_pair<C>() -> (<C as BCA>::Point, C::Scalar)
     where

@@ -3,6 +3,10 @@ name = "lit-logging-service"
 version = "0.1.0"
 edition.workspace = true
 
+[features]
+default = []
+proxy-collector = ["lit-observability/proxy-collector"]
+
 [dependencies]
 async-trait = { version = "0.1.74" }
 derive_more = { version = "0.99.17" }

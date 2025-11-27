@@ -35,17 +35,17 @@ pub fn extract_and_verify_all_capabilities(
         // i do not understand how this verifies it
         // but it's what the siwe-recap crate does
         let expected = capability.to_statement();
-        if let Some(statement) = &siwe_message.statement {
-            if !statement.ends_with(&expected) {
-                return Err(parser_err_code(
-                    format!(
-                        "Incorrect statement for capability object: expected '{}', got '{}'",
-                        expected, statement
-                    ),
-                    EC::NodeSIWECapabilityInvalid,
-                    None,
-                ));
-            }
+        if let Some(statement) = &siwe_message.statement
+            && !statement.ends_with(&expected)
+        {
+            return Err(parser_err_code(
+                format!(
+                    "Incorrect statement for capability object: expected '{}', got '{}'",
+                    expected, statement
+                ),
+                EC::NodeSIWECapabilityInvalid,
+                None,
+            ));
         }
     }
 

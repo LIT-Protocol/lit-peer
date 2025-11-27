@@ -20,10 +20,11 @@ pub enum CurveType {
     RedJubjub = 8,      // RedJubjub
     RedDecaf377 = 9,    // RedDecaf377
     BLS12381G1 = 10,    // Signatures in G2 while Public Keys in G1
+    RedPallas = 11,     // RedPallas
 }
 
 impl CurveType {
-    pub const NUM_USED_CURVES: usize = 10;
+    pub const NUM_USED_CURVES: usize = 11;
 
     pub const fn as_str(&self) -> &'static str {
         match self {
@@ -37,6 +38,7 @@ impl CurveType {
             CurveType::RedJubjub => "RedJubjub",
             CurveType::RedDecaf377 => "RedDecaf377",
             CurveType::BLS12381G1 => "BLS12381G1Sign",
+            CurveType::RedPallas => "RedPallas",
         }
     }
 
@@ -54,6 +56,7 @@ impl CurveType {
             RedJubjub,
             RedDecaf377,
             BLS12381G1,
+            RedPallas,
         ]
         .into_iter()
     }
@@ -70,6 +73,7 @@ impl CurveType {
             Self::RedJubjub => 32,
             Self::RedDecaf377 => 32,
             Self::BLS12381G1 => 32,
+            Self::RedPallas => 32,
         }
     }
 
@@ -85,6 +89,7 @@ impl CurveType {
             Self::RedJubjub => 32,
             Self::RedDecaf377 => 32,
             Self::BLS12381G1 => 48,
+            Self::RedPallas => 32,
         }
     }
 
@@ -100,6 +105,7 @@ impl CurveType {
             CurveType::RedJubjub => b"redjubjub_XMD:BLAKE2B-512_ELL2_RO_NUL_VRF",
             CurveType::RedDecaf377 => b"decaf377_XMD:BLAKE2B-512_ELL2_RO_NUL_VRF",
             CurveType::BLS12381G1 => b"BLS12381G1_XMD:SHA-256_SSWU_RO_NUL_VRF",
+            CurveType::RedPallas => b"redpallas_XMD:BLAKE2B-512_SSWU_RO_NUL_VRF",
         }
     }
 
@@ -115,6 +121,7 @@ impl CurveType {
             CurveType::RedJubjub => "jubjub",
             CurveType::RedDecaf377 => "decaf377",
             CurveType::BLS12381G1 => "bls12381g1",
+            CurveType::RedPallas => "pallas",
         }
     }
 
@@ -143,6 +150,7 @@ impl FromStr for CurveType {
             "REDJUBJUB" => Ok(CurveType::RedJubjub),
             "REDDECAF377" => Ok(CurveType::RedDecaf377),
             "BLS12381G1SIGN" => Ok(CurveType::BLS12381G1),
+            "REDPALLAS" => Ok(CurveType::RedPallas),
             _ => CurveType::invalid(),
         }
     }
@@ -164,6 +172,7 @@ impl TryFrom<ethers::types::U256> for CurveType {
             Ok(8) => Ok(CurveType::RedJubjub),
             Ok(9) => Ok(CurveType::RedDecaf377),
             Ok(10) => Ok(CurveType::BLS12381G1),
+            Ok(11) => Ok(CurveType::RedPallas),
             _ => CurveType::invalid(),
         }
     }
@@ -183,6 +192,7 @@ impl TryFrom<u8> for CurveType {
             8 => Ok(CurveType::RedJubjub),
             9 => Ok(CurveType::RedDecaf377),
             10 => Ok(CurveType::BLS12381G1),
+            11 => Ok(CurveType::RedPallas),
             _ => CurveType::invalid(),
         }
     }

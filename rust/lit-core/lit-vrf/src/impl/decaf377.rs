@@ -1,12 +1,14 @@
 use crate::*;
 use blake2::Blake2b512;
-use blake2::digest::generic_array::GenericArray;
-use blake2::digest::typenum::U64;
 use bulletproofs::Decaf377;
-use bulletproofs::group::Group;
-use decaf377::{Element, Fq, Fr};
-use elliptic_curve::group::GroupEncoding;
-use elliptic_curve::hash2curve::{ExpandMsg, ExpandMsgXmd, Expander};
+
+use lit_rust_crypto::{
+    decaf377::{Element, Fq, Fr},
+    elliptic_curve::generic_array::{GenericArray, typenum::U64},
+    group::{Group, GroupEncoding},
+    hash2curve::{ExpandMsg, ExpandMsgXmd, Expander},
+};
+
 use sha2::Digest;
 
 const DECAF377_SUITE_STRING: u8 = 0x09;
@@ -98,7 +100,7 @@ impl VrfVerifier for Decaf377 {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use elliptic_curve::{Field, Group};
+    use lit_rust_crypto::elliptic_curve::{Field, Group};
     use rand::SeedableRng;
 
     #[test]

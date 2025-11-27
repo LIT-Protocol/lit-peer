@@ -1,4 +1,4 @@
-use elliptic_curve::Group;
+use lit_rust_crypto::group::Group;
 
 use crate::Handler;
 

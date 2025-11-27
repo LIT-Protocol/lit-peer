@@ -1,5 +1,3 @@
-use elliptic_curve::group::GroupEncoding;
-use elliptic_curve::{Group, PrimeField};
 use lit_core::utils::binary::bytes_to_hex;
 use lit_node::common::key_helper::KeyCache;
 use lit_node::error::Result;
@@ -7,12 +5,17 @@ use lit_node::peers::peer_state::models::{SimplePeer, SimplePeerCollection};
 use lit_node::tss::common::key_persistence::KeyPersistence;
 use lit_node::tss::common::key_share::KeyShare;
 use lit_node::tss::common::storage::{read_key_share_from_disk, write_key_share_to_disk};
-use lit_node_core::CompressedBytes;
-use lit_node_core::CurveType;
-use lit_node_core::PeerId;
-use vsss_rs::{
-    DefaultShare, IdentifierPrimeField, ReadableShareSet, ValuePrimeField,
-    curve25519::{WrappedEdwards, WrappedRistretto, WrappedScalar},
+use lit_node_core::{CompressedBytes, CurveType, PeerId};
+use lit_rust_crypto::{
+    blsful::inner_types::{G1Projective, Scalar},
+    decaf377, ed448_goldilocks,
+    ff::PrimeField,
+    group::{Group, GroupEncoding},
+    jubjub, k256, p256, p384, pallas, vsss_rs,
+    vsss_rs::{
+        DefaultShare, IdentifierPrimeField, ReadableShareSet, ValuePrimeField,
+        curve25519::{WrappedEdwards, WrappedRistretto, WrappedScalar},
+    },
 };
 
 pub async fn get_secret_and_shares<G>(
@@ -36,7 +39,7 @@ where
 
 #[derive(Copy, Clone, Debug)]
 pub enum CurveScalar {
-    Bls(blsful::inner_types::Scalar),
+    Bls(Scalar),
     K256(k256::Scalar),
     P256(p256::Scalar),
     P384(p384::Scalar),
@@ -44,6 +47,7 @@ pub enum CurveScalar {
     Ristretto25519(WrappedScalar),
     Ed448(ed448_goldilocks::Scalar),
     Jubjub(jubjub::Scalar),
+    Pallas(pallas::Scalar),
     Decaf377(decaf377::Fr),
     Schnorrkel(WrappedScalar),
 }
@@ -63,13 +67,14 @@ impl PartialEq for CurveScalar {
             (Self::Jubjub(a), Self::Jubjub(b)) => a == b,
             (Self::Decaf377(a), Self::Decaf377(b)) => a == b,
             (Self::Schnorrkel(a), Self::Schnorrkel(b)) => a == b,
+            (Self::Pallas(a), Self::Pallas(b)) => a == b,
             _ => false,
         }
     }
 }
 
-impl From<blsful::inner_types::Scalar> for CurveScalar {
-    fn from(scalar: blsful::inner_types::Scalar) -> Self {
+impl From<Scalar> for CurveScalar {
+    fn from(scalar: Scalar) -> Self {
         Self::Bls(scalar)
     }
 }
@@ -122,6 +127,7 @@ impl CurveScalar {
             Self::Ed448(scalar) => Box::new(scalar.to_repr()),
             Self::Jubjub(scalar) => Box::new(scalar.to_repr()),
             Self::Decaf377(scalar) => Box::new(scalar.to_repr()),
+            Self::Pallas(scalar) => Box::new(scalar.to_repr()),
             Self::Schnorrkel(scalar) => Box::new(scalar.to_repr()),
         };
         (*repr).as_ref().to_vec()
@@ -139,7 +145,7 @@ pub async fn remap_secret_to_new_peer_ids(
     let realm_id = 1;
     match curve_type {
         CurveType::BLS => {
-            remap_secret_helper::<blsful::inner_types::G1Projective>(
+            remap_secret_helper::<G1Projective>(
                 curve_type,
                 old_peers,
                 new_peers,
@@ -247,7 +253,19 @@ pub async fn remap_secret_to_new_peer_ids(
             .await
         }
         CurveType::BLS12381G1 => {
-            remap_secret_helper::<blsful::inner_types::G1Projective>(
+            remap_secret_helper::<G1Projective>(
+                curve_type,
+                old_peers,
+                new_peers,
+                pubkey,
+                read_epoch,
+                write_epoch,
+                realm_id,
+            )
+            .await
+        }
+        CurveType::RedPallas => {
+            remap_secret_helper::<pallas::Point>(
                 curve_type,
                 old_peers,
                 new_peers,
@@ -336,10 +354,8 @@ pub async fn interpolate_secret(
 ) -> CurveScalar {
     match curve_type {
         CurveType::BLS => CurveScalar::Bls(
-            interpolate_secret_for_key::<blsful::inner_types::G1Projective>(
-                peers, pubkey, epoch, curve_type, realm_id,
-            )
-            .await,
+            interpolate_secret_for_key::<G1Projective>(peers, pubkey, epoch, curve_type, realm_id)
+                .await,
         ),
         CurveType::K256 => CurveScalar::K256(
             interpolate_secret_for_key::<k256::ProjectivePoint>(
@@ -390,10 +406,12 @@ pub async fn interpolate_secret(
             .await,
         ),
         CurveType::BLS12381G1 => CurveScalar::Bls(
-            interpolate_secret_for_key::<blsful::inner_types::G1Projective>(
-                peers, pubkey, epoch, curve_type, realm_id,
-            )
-            .await,
+            interpolate_secret_for_key::<G1Projective>(peers, pubkey, epoch, curve_type, realm_id)
+                .await,
+        ),
+        CurveType::RedPallas => CurveScalar::Pallas(
+            interpolate_secret_for_key::<pallas::Point>(peers, pubkey, epoch, curve_type, realm_id)
+                .await,
         ),
     }
 }
@@ -422,6 +440,7 @@ pub fn splice_secret(
         CurveScalar::Schnorrkel(s) => {
             split_secret_with_peers(s, peers, threshold, CurveScalar::Schnorrkel)
         }
+        CurveScalar::Pallas(s) => split_secret_with_peers(s, peers, threshold, CurveScalar::Pallas),
     }
 }
 

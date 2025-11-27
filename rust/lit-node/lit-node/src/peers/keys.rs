@@ -4,13 +4,13 @@ use ethers::middleware::SignerMiddleware;
 use ethers::providers::{Http, Provider};
 use ethers::signers::Wallet;
 use ethers::types::Address;
-use k256::ecdsa::SigningKey;
 use lit_blockchain::contracts::staking::Staking;
 use lit_core::config::LitConfig;
 use lit_core::utils::binary::bytes_to_hex;
 use lit_node_common::coms_keys::ComsKeys;
 use lit_node_common::config::LitNodeConfig;
 use lit_node_common::eth_wallet_keys::EthWalletKeys;
+use lit_rust_crypto::k256::ecdsa::SigningKey;
 use std::sync::Arc;
 
 pub struct PeerKeys {

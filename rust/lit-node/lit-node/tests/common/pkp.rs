@@ -7,25 +7,18 @@ use ethers::signers::Wallet;
 use lit_core::utils::binary::hex_to_bytes;
 use lit_node_core::{
     AuthSigItem, LitAbility, LitResourceAbilityRequest, LitResourceAbilityRequestResource,
-    LitResourcePrefix, NodeSet, SignableOutput, SigningScheme,
+    LitResourcePrefix, NodeSet, SigningScheme,
     request::JsonPKPSigningRequest,
     response::{GenericResponse, JsonPKPSigningResponse},
 };
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::NodeIdentityKey;
+use lit_rust_crypto::k256;
 use lit_sdk::signature::combine_and_verify_signature_shares;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tracing::{debug, info};
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-struct SignWithPKPReturn {
-    success: bool,
-    signed_data: Vec<u8>,
-    signature_share: SignableOutput,
-}
 
 // copied from lit_ecdsa_wasm_combine
 #[derive(Clone, Serialize, Deserialize, Debug)]

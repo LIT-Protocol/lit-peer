@@ -439,7 +439,7 @@ mod siwe_db_tests {
             .query_row(
                 "SELECT COUNT(*) FROM blockhash_timestamp",
                 params![],
-                |row| (row.get::<_, i64>(0)),
+                |row| row.get::<_, i64>(0),
             )
             .unwrap();
 

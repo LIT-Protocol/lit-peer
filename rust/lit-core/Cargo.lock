@@ -1802,6 +1802,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "blake2b_simd"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "06e903a20b159e944f91ec8499fe1e55651480c541ea0a584f5d967c49ad9d99"
+dependencies = [
+ "arrayref",
+ "arrayvec 0.7.6",
+ "constant_time_eq 0.3.1",
+]
+
+[[package]]
 name = "blake2s_simd"
 version = "0.5.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1962,25 +1973,15 @@ dependencies = [
 [[package]]
 name = "bulletproofs"
 version = "4.0.0"
-source = "git+https://github.com/LIT-Protocol/bulletproofs?rev=ddf11c2f593e71f24c9a3d64c56f62d82f2b5099#ddf11c2f593e71f24c9a3d64c56f62d82f2b5099"
+source = "git+https://github.com/LIT-Protocol/bulletproofs.git?branch=pallas#2ee66a6e2770c73514942936950c0ca2dbbcd023"
 dependencies = [
  "blake2",
- "bls12_381_plus",
- "blstrs_plus",
  "byteorder",
- "curve25519-dalek-ml",
  "data-encoding",
- "decaf377",
  "digest 0.10.7",
- "ed448-goldilocks-plus",
- "elliptic-curve",
  "elliptic-curve-tools",
- "group",
- "jubjub-plus",
- "k256",
+ "lit-rust-crypto 0.6.0",
  "merlin",
- "p256",
- "p384",
  "rand 0.8.5",
  "rand_core 0.6.4",
  "serde",
@@ -1988,7 +1989,6 @@ dependencies = [
  "sha3 0.10.8",
  "subtle",
  "thiserror 2.0.14",
- "vsss-rs 5.1.0",
  "zeroize",
 ]
 
@@ -2664,25 +2664,22 @@ dependencies = [
 
 [[package]]
 name = "criterion"
-version = "0.5.1"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2b12d017a929603d80db1831cd3a24082f8137ce19c69e6447f54f5fc8d692f"
+checksum = "e1c047a62b0cc3e145fa84415a3191f628e980b194c2755aa12300a4e6cbd928"
 dependencies = [
  "anes",
  "cast",
  "ciborium",
  "clap 4.5.44",
  "criterion-plot",
- "is-terminal",
- "itertools 0.10.5",
+ "itertools 0.13.0",
  "num-traits",
- "once_cell",
  "oorandom",
  "plotters",
  "rayon",
  "regex",
  "serde",
- "serde_derive",
  "serde_json",
  "tinytemplate",
  "walkdir",
@@ -2690,12 +2687,12 @@ dependencies = [
 
 [[package]]
 name = "criterion-plot"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6b50826342786a51a89e2da3a28f1c32b06e387201bc2d19791f622c673706b1"
+checksum = "9b1bcc0dc7dfae599d84ad0b1a55f80cde8af3725da8313b528da95ef783e338"
 dependencies = [
  "cast",
- "itertools 0.10.5",
+ "itertools 0.13.0",
 ]
 
 [[package]]
@@ -3030,13 +3027,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d162beedaa69905488a8da94f5ac3edb4dd4788b732fadb7bd120b2625c1976"
 dependencies = [
  "data-encoding",
- "syn 2.0.104",
+ "syn 1.0.109",
 ]
 
 [[package]]
-name = "decaf377"
+name = "decaf377_plus"
 version = "0.10.1"
-source = "git+https://github.com/LIT-Protocol/decaf377?rev=1c5755b2b90e1969d47ce89cf2d35078984a0ee5#1c5755b2b90e1969d47ce89cf2d35078984a0ee5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "209f730dfc5f9d877c7549bebc93ea0ef4fe2915b4dbf5ffebc11e8b4c17c740"
 dependencies = [
  "ark-bls12-377",
  "ark-ec",
@@ -3048,7 +3046,6 @@ dependencies = [
  "cfg-if",
  "elliptic-curve",
  "frost-dkg",
- "gennaro-dkg",
  "hashbrown 0.15.5",
  "hex",
  "num-bigint",
@@ -4183,12 +4180,13 @@ dependencies = [
 
 [[package]]
 name = "frost-dkg"
-version = "0.3.3"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8176b54a998a04796e58b0ac3a6da08e5ab05aff5a7d92159619a652a29f63e8"
+checksum = "00b59a575727037fbc977a68a2ace822b4b37f8f0647769946e307dc966ecfbb"
 dependencies = [
  "elliptic-curve",
  "elliptic-curve-tools",
+ "hex",
  "merlin",
  "postcard",
  "rand_core 0.6.4",
@@ -4459,24 +4457,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gennaro-dkg"
-version = "1.0.0-rc6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "352f32caf0eb44d8f340f3bba63ca7a0dbeeb3e169a59bbb86ef40e0da10eec6"
-dependencies = [
- "anyhow",
- "elliptic-curve",
- "elliptic-curve-tools",
- "merlin",
- "postcard",
- "rand_chacha 0.3.1",
- "rand_core 0.6.4",
- "serde",
- "thiserror 2.0.14",
- "vsss-rs 5.1.0",
-]
-
-[[package]]
 name = "getrandom"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4684,44 +4664,18 @@ dependencies = [
 
 [[package]]
 name = "hd-keys-curves-wasm"
-version = "1.0.3"
-source = "git+https://github.com/LIT-Protocol/hd-keys-curves-wasm.git?rev=5e0dcc1a6d8d08f2328d4716dca806db87f93748#5e0dcc1a6d8d08f2328d4716dca806db87f93748"
-dependencies = [
- "digest 0.10.7",
- "ecdsa",
- "elliptic-curve",
- "elliptic-curve-tools",
- "getrandom 0.2.16",
- "k256",
- "p256",
- "p384",
- "sha2 0.10.9",
- "subtle",
-]
-
-[[package]]
-name = "hd-keys-curves-wasm"
-version = "1.0.3"
-source = "git+https://github.com/LIT-Protocol/hd-keys-curves-wasm#5e0dcc1a6d8d08f2328d4716dca806db87f93748"
+version = "1.0.5"
+source = "git+https://github.com/LIT-Protocol/hd-keys-curves-wasm?branch=pallas#597a14b9cf4bafd4c778f1053ca4bbad0b3d249b"
 dependencies = [
  "blake2",
- "blsful",
- "curve25519-dalek-ml",
- "decaf377",
  "digest 0.10.7",
  "ecdsa",
- "ed448-goldilocks-plus",
- "elliptic-curve",
  "elliptic-curve-tools",
  "getrandom 0.2.16",
- "jubjub-plus",
- "k256",
- "p256",
- "p384",
+ "lit-rust-crypto 0.6.0",
  "sha2 0.10.9",
  "sha3 0.10.8",
  "subtle",
- "vsss-rs 5.1.0",
 ]
 
 [[package]]
@@ -4783,6 +4737,12 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 dependencies = [
  "serde",
 ]
+
+[[package]]
+name = "hex-literal"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
 
 [[package]]
 name = "hidapi-rusb"
@@ -5517,6 +5477,15 @@ dependencies = [
 
 [[package]]
 name = "itertools"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
@@ -5592,9 +5561,9 @@ dependencies = [
 
 [[package]]
 name = "jubjub-plus"
-version = "0.10.8"
+version = "0.10.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c2c5e88d1ac6a903e693287073860ea35299b200273d5c2bd9d7845ec39f319"
+checksum = "e8cd4e5cd65bb1390238c9e2e7dc98078a7b146c9d0d080cf3a7b1ac0d2348ac"
 dependencies = [
  "bitvec 1.0.1",
  "bls12_381_plus",
@@ -5618,6 +5587,7 @@ dependencies = [
  "cfg-if",
  "ecdsa",
  "elliptic-curve",
+ "hex-literal",
  "once_cell",
  "serdect 0.2.0",
  "sha2 0.10.9",
@@ -5687,6 +5657,9 @@ name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
+dependencies = [
+ "spin 0.9.8",
+]
 
 [[package]]
 name = "libc"
@@ -5968,14 +5941,11 @@ dependencies = [
  "criterion",
  "digest 0.10.7",
  "ecdsa",
- "elliptic-curve",
  "elliptic-curve-tools",
- "hd-keys-curves-wasm 1.0.3 (git+https://github.com/LIT-Protocol/hd-keys-curves-wasm.git?rev=5e0dcc1a6d8d08f2328d4716dca806db87f93748)",
+ "hd-keys-curves-wasm",
  "hex",
- "k256",
  "lit-poly",
- "p256",
- "p384",
+ "lit-rust-crypto 0.6.0",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "rstest",
@@ -5984,7 +5954,6 @@ dependencies = [
  "sha2 0.10.9",
  "subtle",
  "thiserror 2.0.14",
- "vsss-rs 5.1.0",
  "zeroize",
 ]
 
@@ -6011,23 +5980,15 @@ dependencies = [
 name = "lit-node-core"
 version = "2.0.1"
 dependencies = [
- "blsful",
- "curve25519-dalek-ml",
- "decaf377",
  "ed25519-dalek",
- "ed448-goldilocks-plus",
  "ethabi 16.0.0",
  "ethers",
- "hd-keys-curves-wasm 1.0.3 (git+https://github.com/LIT-Protocol/hd-keys-curves-wasm)",
+ "hd-keys-curves-wasm",
  "hex",
- "jubjub-plus",
- "k256",
- "p256",
- "p384",
+ "lit-rust-crypto 0.6.0",
  "serde",
  "serde_json",
  "thiserror 2.0.14",
- "vsss-rs 5.1.0",
 ]
 
 [[package]]
@@ -6085,32 +6046,25 @@ dependencies = [
 
 [[package]]
 name = "lit-recovery"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "arc-swap",
  "argon2",
- "blsful",
  "bulletproofs",
  "byteorder",
  "ciborium",
  "clap 4.5.44",
  "colored",
  "cryptex",
- "decaf377",
  "dirs 6.0.0",
- "ed448-goldilocks-plus",
- "elliptic-curve",
  "ethers",
  "generic-array 1.1.1",
  "glob",
  "hex",
- "jubjub-plus",
- "k256",
  "lit-blockchain",
  "lit-core",
  "lit-node-core",
- "p256",
- "p384",
+ "lit-rust-crypto 0.6.0",
  "path-clean",
  "rand 0.8.5",
  "reqwest 0.11.27",
@@ -6126,8 +6080,47 @@ dependencies = [
  "tiny-bip39",
  "tokio",
  "verifiable-share-encryption",
- "vsss-rs 5.1.0",
  "winapi",
+]
+
+[[package]]
+name = "lit-rust-crypto"
+version = "0.5.0"
+source = "git+https://github.com/LIT-Protocol/lit-rust-crypto?tag=0.5.0#0b3e4d5a9811ce151da83cab4835cf5631c9a5c3"
+dependencies = [
+ "bls12_381_plus",
+ "blsful",
+ "blstrs_plus",
+ "curve25519-dalek-ml",
+ "decaf377_plus",
+ "ed448-goldilocks-plus",
+ "elliptic-curve",
+ "jubjub-plus",
+ "k256",
+ "p256",
+ "p384",
+ "pasta_curves_plus",
+ "vsss-rs 5.1.0",
+]
+
+[[package]]
+name = "lit-rust-crypto"
+version = "0.6.0"
+source = "git+https://github.com/LIT-Protocol/lit-rust-crypto?tag=0.6.0#9548fce521473f289ea1366249b782355e96507d"
+dependencies = [
+ "bls12_381_plus",
+ "blsful",
+ "blstrs_plus",
+ "curve25519-dalek-ml",
+ "decaf377_plus",
+ "ed448-goldilocks-plus",
+ "elliptic-curve",
+ "jubjub-plus",
+ "k256",
+ "p256",
+ "p384",
+ "pasta_curves_plus",
+ "vsss-rs 5.1.0",
 ]
 
 [[package]]
@@ -6136,15 +6129,8 @@ version = "0.2.0"
 dependencies = [
  "blake2",
  "bulletproofs",
- "curve25519-dalek-ml",
- "decaf377",
- "ed448-goldilocks-plus",
- "elliptic-curve",
  "elliptic-curve-tools",
- "jubjub-plus",
- "k256",
- "p256",
- "p384",
+ "lit-rust-crypto 0.6.0",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "rfc6979",
@@ -6154,7 +6140,6 @@ dependencies = [
  "sha2 0.10.9",
  "sha3 0.10.8",
  "thiserror 2.0.14",
- "vsss-rs 5.1.0",
 ]
 
 [[package]]
@@ -6481,7 +6466,7 @@ version = "0.11.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "567122ab6492f49b59def14ecc36e13e64dca4188196dd0cd41f9f3f979f3df6"
 dependencies = [
- "blake2b_simd",
+ "blake2b_simd 0.5.11",
  "blake2s_simd",
  "digest 0.9.0",
  "sha-1",
@@ -7153,6 +7138,26 @@ checksum = "346f04948ba92c43e8469c1ee6736c7563d71012b17d40745260fe106aac2166"
 dependencies = [
  "base64ct",
  "rand_core 0.6.4",
+ "subtle",
+]
+
+[[package]]
+name = "pasta_curves_plus"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42e265b7ebdbfc61a8c0eeac79350cf3225cd390325dc91dd0edede5b6742d58"
+dependencies = [
+ "blake2",
+ "blake2b_simd 1.0.3",
+ "elliptic-curve",
+ "ff",
+ "frost-dkg",
+ "group",
+ "hex",
+ "lazy_static",
+ "rand 0.8.5",
+ "serde",
+ "static_assertions",
  "subtle",
 ]
 
@@ -8434,21 +8439,20 @@ dependencies = [
 
 [[package]]
 name = "rstest"
-version = "0.24.0"
+version = "0.26.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "03e905296805ab93e13c1ec3a03f4b6c4f35e9498a3d5fa96dc626d22c03cd89"
+checksum = "f5a3193c063baaa2a95a33f03035c8a72b83d97a54916055ba22d35ed3839d49"
 dependencies = [
  "futures-timer",
  "futures-util",
  "rstest_macros",
- "rustc_version 0.4.1",
 ]
 
 [[package]]
 name = "rstest_macros"
-version = "0.24.0"
+version = "0.26.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef0053bbffce09062bee4bcc499b0fbe7a57b879f1efe088d6d8d4c7adcdef9b"
+checksum = "9c845311f0ff7951c5506121a9ad75aec44d083c31583b2ea5a30bcb0b0abba0"
 dependencies = [
  "cfg-if",
  "glob",
@@ -10819,13 +10823,14 @@ checksum = "f1bddf1187be692e79c5ffeab891132dfb0f236ed36a43c7ed39f1165ee20191"
 
 [[package]]
 name = "verifiable-share-encryption"
-version = "0.3.0"
-source = "git+https://github.com/LIT-Protocol/verifiable-share-encryption?rev=7eddfbe736369db596d0f302c72f1d76b0fd332d#7eddfbe736369db596d0f302c72f1d76b0fd332d"
+version = "0.4.0"
+source = "git+https://github.com/LIT-Protocol/verifiable-share-encryption?branch=pallas#be0a4f548aa92897bd77d3ceca86ea2cec80fe07"
 dependencies = [
  "anyhow",
  "bulletproofs",
  "data-encoding",
  "elliptic-curve-tools",
+ "lit-rust-crypto 0.5.0",
  "rand_core 0.6.4",
  "rayon",
  "serde",

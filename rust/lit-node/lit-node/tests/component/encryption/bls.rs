@@ -1,8 +1,8 @@
 use crate::component::{dkg::dkg, utils::virtual_node_collection::VirtualNodeCollection};
 use core::panic;
 use lit_node::peers::peer_state::models::SimplePeerCollection;
-use lit_node_core::CurveType;
-use lit_node_core::SigningScheme;
+use lit_node_core::{CurveType, SigningScheme};
+use lit_rust_crypto::blsful::{Bls12381G2Impl, PublicKey, Signature};
 use tracing::info;
 
 #[tokio::test]
@@ -19,9 +19,7 @@ pub async fn sign_min_threshold() {
     let peers = SimplePeerCollection::default();
     let pubkey = dkg(&vnc, CurveType::BLS, epoch, None, &peers).await;
 
-    let pub_key =
-        blsful::PublicKey::<blsful::Bls12381G2Impl>::try_from(hex::decode(&pubkey).unwrap())
-            .unwrap();
+    let pub_key = PublicKey::<Bls12381G2Impl>::try_from(hex::decode(&pubkey).unwrap()).unwrap();
 
     let epoch = 2;
     vnc.update_cdm_epoch(epoch).await;
@@ -54,7 +52,7 @@ pub async fn sign_min_threshold() {
 
         signature_shares.push(signature_share);
     }
-    let sig = blsful::Signature::from_shares(&signature_shares);
+    let sig = Signature::from_shares(&signature_shares);
     assert!(sig.is_ok());
     let sig = sig.unwrap();
     assert!(
@@ -107,7 +105,7 @@ pub async fn sign_with_pubkey() {
 
         signature_shares.push(signature_share);
     }
-    let sig = blsful::Signature::from_shares(&signature_shares);
+    let sig = Signature::from_shares(&signature_shares);
     assert!(sig.is_ok());
 
     let _sig = sig.unwrap();

@@ -1,10 +1,10 @@
 use crate::args::Commands;
 use crate::chain_manager::ChainManager;
-use crate::config::RecoveryConfig;
+use crate::config::{ChainEnvironment, RecoveryConfig};
 use crate::consts::{
     ADMIN_CONTRACT_EMAIL, BLS12381G1, BLS12381G1_SIGN, DECAF377, ED448, ED25519, JUBJUB,
     KEYRING_DB_KEY_NAME, KEYRING_KEY_NAME, LIT_BACKUP_NAME_PATTERN, LIT_BACKUP_SUFFIX,
-    LIT_NODE_DELETE_SHARE_ENDPOINT, LIT_NODE_DOWNLOAD_SHARE_ENDPOINT, NISTP256, NISTP384,
+    LIT_NODE_DELETE_SHARE_ENDPOINT, LIT_NODE_DOWNLOAD_SHARE_ENDPOINT, NISTP256, NISTP384, PALLAS,
     RISTRETTO25519, SECP256K1,
 };
 use crate::decryption::{
@@ -20,18 +20,22 @@ use crate::shares::{
 };
 use arc_swap::ArcSwap;
 use bip39::Mnemonic;
-use blsful::inner_types::{Group, PrimeCurveAffine};
-use bulletproofs::bls12_381_plus::elliptic_curve::bigint::U512;
-use bulletproofs::bls12_381_plus::elliptic_curve::ops::Reduce;
-use bulletproofs::blstrs_plus::Bls12381G1;
-use bulletproofs::{Decaf377, Ed25519, JubJub, Ristretto25519, jubjub};
+use bulletproofs::{Decaf377, Ed25519, JubJub, Ristretto25519};
 use colored::Colorize;
 use cryptex::DynKeyRing;
-use ed448_goldilocks_plus::Ed448;
 use hex::FromHex;
-use k256::Secp256k1;
-use k256::ecdsa::VerifyingKey;
 use lit_blockchain::contracts::backup_recovery::NextStateDownloadable;
+use lit_rust_crypto::{
+    blsful::inner_types::{G1Projective, Group, PrimeCurveAffine},
+    blstrs_plus::Bls12381G1,
+    decaf377,
+    ed448_goldilocks::{self, Ed448},
+    elliptic_curve::{bigint::U512, ops::Reduce},
+    group::{GroupEncoding, cofactor::CofactorGroup},
+    jubjub,
+    k256::{self, Secp256k1, ecdsa::VerifyingKey},
+    p256, p384, pallas, vsss_rs,
+};
 use rand::{Rng, RngCore, rngs::OsRng};
 use serde::de::DeserializeOwned;
 use std::collections::{BTreeMap, HashMap};
@@ -39,7 +43,6 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::io::AsyncReadExt;
 use tokio::sync::Mutex;
-use vsss_rs::elliptic_curve::group::GroupEncoding;
 
 pub mod args;
 pub mod auth;
@@ -107,7 +110,7 @@ impl Default for LitRecovery {
                 resolver_address: None,
                 rpc_url: Some(consts::CONTRACT_CHRONICLE_RPC_URL.into()),
                 chain_id: Some(consts::CONTRACT_CHRONICLE_CHAIN_ID),
-                environment: Some(2), // production is 2
+                environment: Some(ChainEnvironment::Production),
             })),
             config_path: None,
             keyring_file: None,
@@ -287,6 +290,7 @@ impl LitRecovery {
                     (JUBJUB.to_string(), 8),
                     (DECAF377.to_string(), 9),
                     (BLS12381G1_SIGN.to_string(), 10),
+                    (PALLAS.to_string(), 11),
                 ]
                 .into_iter()
                 .collect::<HashMap<String, usize>>();
@@ -543,12 +547,18 @@ impl LitRecovery {
                         )
                         .await?
                     }
+                    PALLAS => {
+                        generate_and_send_decryption_shares_to_nodes::<pallas::Pallas>(
+                            self, ciphertext_file, encryption_key,
+                        )
+                        .await?
+                    }
                     _ => {
                         println!(
                             "Key type not supported! Please use either [{}]",
                             [
                                 BLS12381G1, SECP256K1, NISTP256, NISTP384, ED25519, RISTRETTO25519,
-                                ED448, JUBJUB, DECAF377
+                                ED448, JUBJUB, DECAF377, PALLAS,
                             ]
                             .join(", ")
                         );
@@ -577,7 +587,7 @@ impl LitRecovery {
                     resolver_address: Some(address.clone()),
                     chain_id: Some(chain_id),
                     rpc_url: Some(rpc_url.clone()),
-                    environment: Some(env),
+                    environment: Some(env.try_into().expect("a valid environment value")),
                     ..config.as_ref().clone()
                 });
 
@@ -658,12 +668,18 @@ impl LitRecovery {
                     )
                     .await?;
                 }
+                PALLAS => {
+                    write_local_decrypt_share::<pallas::Pallas>(
+                        self, ciphertext_file, encryption_key, share_file, output_share_file,
+                    )
+                    .await?;
+                }
                 _ => {
                     println!(
                         "Key type not supported! Please use either [{}]",
                         [
                             BLS12381G1, SECP256K1, NISTP256, NISTP384, ED25519, RISTRETTO25519,
-                            ED448, JUBJUB, DECAF377, BLS12381G1_SIGN,
+                            ED448, JUBJUB, DECAF377, BLS12381G1_SIGN, PALLAS,
                         ]
                         .join(", ")
                     );
@@ -720,7 +736,6 @@ impl LitRecovery {
                     )?;
                 }
                 JUBJUB => {
-                    use elliptic_curve::group::cofactor::CofactorGroup;
                     // Jubjub uses a special generator for signing. Use this here
                     pub const SPENDAUTHSIG_BASEPOINT_BYTES: [u8; 32] = [
                         48, 181, 242, 170, 173, 50, 86, 48, 188, 221, 219, 206, 77, 103, 101, 109,
@@ -748,12 +763,32 @@ impl LitRecovery {
                         ciphertext_file, blinder, decrypted_share_files, output_file, None,
                     )?;
                 }
+                PALLAS => {
+                    // Pallas uses a special generator for signing. Use this here
+                    const SPENDAUTHSIG_BASEPOINT_BYTES: [u8; 32] = [
+                        99, 201, 117, 184, 132, 114, 26, 141, 12, 161, 112, 123, 227, 12, 127, 12,
+                        95, 68, 95, 62, 124, 24, 141, 59, 6, 214, 241, 40, 179, 35, 85, 183,
+                    ];
+                    let pt: pallas::Point =
+                        pallas::Affine::from_bytes(&SPENDAUTHSIG_BASEPOINT_BYTES.into())
+                            .unwrap()
+                            .into();
+
+                    let blinder = read_blinder::<pallas::Pallas>(blinder, "pallas_blinder")?;
+                    merge_decryption_shares::<pallas::Pallas>(
+                        ciphertext_file,
+                        blinder,
+                        decrypted_share_files,
+                        output_file,
+                        Some(pt),
+                    )?;
+                }
                 _ => {
                     println!(
                         "Key type not supported! Please use either [{}]",
                         [
                             BLS12381G1, SECP256K1, NISTP256, NISTP384, ED25519, RISTRETTO25519,
-                            ED448, JUBJUB, DECAF377, BLS12381G1_SIGN,
+                            ED448, JUBJUB, DECAF377, BLS12381G1_SIGN, PALLAS,
                         ]
                         .join(", ")
                     );
@@ -847,16 +882,17 @@ impl LitRecovery {
             path.to_str().ok_or(Error::General("Failed to stringify path".into()))?;
 
         // Extract the tar files.
-        let mut bls_enc_key = blsful::inner_types::G1Projective::default();
+        let mut bls_enc_key = G1Projective::default();
         let mut secp256k1_enc_key = k256::AffinePoint::default();
         let mut nistp256_enc_key = p256::AffinePoint::default();
         let mut nistp384_enc_key = p384::AffinePoint::default();
         let mut ed25519_enc_key = vsss_rs::curve25519::WrappedEdwards::default();
         let mut ristretto25519_enc_key = vsss_rs::curve25519::WrappedRistretto::default();
-        let mut ed448_enc_key = ed448_goldilocks_plus::EdwardsPoint::default();
+        let mut ed448_enc_key = ed448_goldilocks::EdwardsPoint::default();
         let mut jubjub_enc_key = jubjub::SubgroupPoint::IDENTITY;
         let mut decaf377_enc_key = decaf377::Element::IDENTITY;
-        let mut bls12381g1_sign_enc_key = blsful::inner_types::G1Projective::default();
+        let mut bls12381g1_sign_enc_key = G1Projective::default();
+        let mut pallas_enc_key = pallas::Point::default();
 
         // extract each tar file, and check the public keys and session id
         // to ensure they match
@@ -895,7 +931,7 @@ impl LitRecovery {
                 bls_enc_key =
                     read_from_disk(destination.clone(), consts::BLS_ENCRYPTION_KEY_FN).await?;
             } else {
-                let tmp_bls_enc_key: blsful::inner_types::G1Projective =
+                let tmp_bls_enc_key: G1Projective =
                     read_from_disk(destination.clone(), consts::BLS_ENCRYPTION_KEY_FN).await?;
                 if tmp_bls_enc_key != bls_enc_key {
                     return Err(Error::General(format!(
@@ -987,7 +1023,7 @@ impl LitRecovery {
                 ed448_enc_key =
                     read_from_disk(destination.clone(), consts::ED448_ENCRYPTION_KEY_FN).await?;
             } else {
-                let tmp_ed448_enc_key: ed448_goldilocks_plus::EdwardsPoint =
+                let tmp_ed448_enc_key: ed448_goldilocks::EdwardsPoint =
                     read_from_disk(destination.clone(), consts::ED448_ENCRYPTION_KEY_FN).await?;
                 if tmp_ed448_enc_key != ed448_enc_key {
                     return Err(Error::General(format!(
@@ -1033,7 +1069,7 @@ impl LitRecovery {
                     read_from_disk(destination.clone(), consts::BLS12381G1_ENCRYPTION_KEY_FN)
                         .await?;
             } else {
-                let tmp_bls12381g1_sign_enc_key: blsful::inner_types::G1Projective =
+                let tmp_bls12381g1_sign_enc_key: G1Projective =
                     read_from_disk(destination.clone(), consts::BLS12381G1_ENCRYPTION_KEY_FN)
                         .await?;
                 if tmp_bls12381g1_sign_enc_key != bls12381g1_sign_enc_key {
@@ -1042,6 +1078,21 @@ impl LitRecovery {
                         file.display(),
                         hex::encode(bls12381g1_sign_enc_key.to_bytes()),
                         hex::encode(tmp_bls12381g1_sign_enc_key.to_bytes()),
+                    )));
+                }
+            }
+            if pallas_enc_key.is_identity().into() {
+                pallas_enc_key =
+                    read_from_disk(destination.clone(), consts::PALLAS_ENCRYPTION_KEY_FN).await?;
+            } else {
+                let tmp_pallas_enc_key: pallas::Point =
+                    read_from_disk(destination.clone(), consts::PALLAS_ENCRYPTION_KEY_FN).await?;
+                if tmp_pallas_enc_key != pallas_enc_key {
+                    return Err(Error::General(format!(
+                        "Pallas Encryption Key doesn't match the tar file {}. Expected '{}', Found in tar file '{}'",
+                        file.display(),
+                        hex::encode(tmp_pallas_enc_key.to_bytes()),
+                        hex::encode(pallas_enc_key.to_bytes()),
                     )));
                 }
             }
@@ -1060,6 +1111,7 @@ impl LitRecovery {
         println!("Total encrypted JubJub shares: {}", shares.jubjub.len());
         println!("Total encrypted Decaf377 shares: {}", shares.decaf377.len());
         println!("Total encrypted BLS12381G1_SIGN shares: {}", shares.bls12381g1_sign.len());
+        println!("Total encrypted Pallas shares: {}", shares.pallas.len());
 
         let mut upload_shares_by_staker_address = HashMap::new();
         load_upload_shares::<Bls12381G1>(
@@ -1132,6 +1184,13 @@ impl LitRecovery {
             &mut upload_shares_by_staker_address,
         )
         .await?;
+        load_upload_shares::<pallas::Pallas>(
+            self,
+            hex::encode(pallas_enc_key.to_bytes()),
+            &shares.pallas,
+            &mut upload_shares_by_staker_address,
+        )
+        .await?;
         decryption::send_decryption_shares_to_nodes(self, &upload_shares_by_staker_address).await?;
 
         Ok(())
@@ -1149,6 +1208,7 @@ struct EncryptedKeyShares {
     jubjub: Vec<PathBuf>,
     decaf377: Vec<PathBuf>,
     bls12381g1_sign: Vec<PathBuf>,
+    pallas: Vec<PathBuf>,
 }
 
 fn fetch_tar_file_names(directory: PathBuf) -> RecoveryResult<Vec<PathBuf>> {
@@ -1167,6 +1227,7 @@ fn fetch_encrypted_key_share_paths(path: PathBuf) -> RecoveryResult<EncryptedKey
     let mut jubjub_shares = vec![];
     let mut decaf377_shares = vec![];
     let mut bls12381g1_sign_shares = vec![];
+    let mut pallas_shares = vec![];
     let folders = fetch_files_by_pattern(path, LIT_BACKUP_NAME_PATTERN)?;
     for folder in folders.iter() {
         bls_shares.extend(fetch_files_by_pattern(
@@ -1209,6 +1270,10 @@ fn fetch_encrypted_key_share_paths(path: PathBuf) -> RecoveryResult<EncryptedKey
             folder.clone(),
             &format!("Key-H-{}-*.cbor", lit_node_core::CurveType::BLS12381G1 as u8),
         )?);
+        pallas_shares.extend(fetch_files_by_pattern(
+            folder.clone(),
+            &format!("Key-H-{}-*.cbor", lit_node_core::CurveType::RedPallas as u8),
+        )?);
     }
     Ok(EncryptedKeyShares {
         bls12381g1: bls_shares,
@@ -1221,6 +1286,7 @@ fn fetch_encrypted_key_share_paths(path: PathBuf) -> RecoveryResult<EncryptedKey
         jubjub: jubjub_shares,
         decaf377: decaf377_shares,
         bls12381g1_sign: bls12381g1_sign_shares,
+        pallas: pallas_shares,
     })
 }
 

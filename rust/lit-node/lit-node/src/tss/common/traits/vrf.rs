@@ -1,6 +1,6 @@
 use crate::error::Result;
 use crate::tss::common::traits::dkg::BasicDkg;
-use elliptic_curve::{Group, group::GroupEncoding};
+use lit_rust_crypto::elliptic_curve::{Group, group::GroupEncoding};
 use lit_vrf::Proof;
 
 #[allow(dead_code)]

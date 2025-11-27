@@ -416,6 +416,8 @@ mod tests {
 
     #[test]
     fn serde_tests() {
+        use lit_rust_crypto::k256;
+
         let round_data = RoundPayload::Round1(Round1Payload {
             ordinal: 1,
             id: k256::Scalar::from(2u64),
