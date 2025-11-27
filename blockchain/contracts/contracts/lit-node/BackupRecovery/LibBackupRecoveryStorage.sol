@@ -74,6 +74,12 @@ library LibBackupRecoveryStorage {
         bytes ecdsaVerificationKey;
     }
 
+    struct NextStateDownloadable {
+        address[] partyMembers;
+        RecoveryKey[] registeredRecoveryKeys;
+        bytes sessionId;
+    }
+
     struct BackupRecoveryStorage {
         bytes1 verificationVersion;
         // current state of the backup recovery
