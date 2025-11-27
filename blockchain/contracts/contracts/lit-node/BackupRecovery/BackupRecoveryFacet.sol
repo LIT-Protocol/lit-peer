@@ -489,7 +489,7 @@ contract BackupRecoveryFacet {
         );
 
         LibBackupRecoveryStorage.RecoveredPeerId[]
-            storage recovered_peer_ids = s().recovered_peer_ids;
+            storage recovered_peer_ids = s().recovered_peer_ids[0];
         for (uint256 i = 0; i < recovered_peer_ids.length; i++) {
             if (recovered_peer_ids[i].node_address == msg.sender) {
                 recovered_peer_ids[i].old_peer_id = old_peer_id;
@@ -517,7 +517,7 @@ contract BackupRecoveryFacet {
         view
         returns (LibBackupRecoveryStorage.RecoveredPeerId[] memory peer_ids)
     {
-        return s().recovered_peer_ids;
+        return s().recovered_peer_ids[0];
     }
 
     /**
