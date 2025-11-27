@@ -466,6 +466,47 @@ pub mod backup_recovery {
                     ],
                 ),
                 (
+                    ::std::borrow::ToOwned::to_owned("getNextBackupState"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("getNextBackupState"),
+                            inputs: ::std::vec![],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("nextState"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Tuple(
+                                        ::std::vec![
+                                            ::ethers::core::abi::ethabi::ParamType::Array(
+                                                ::std::boxed::Box::new(
+                                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                                ),
+                                            ),
+                                            ::ethers::core::abi::ethabi::ParamType::Array(
+                                                ::std::boxed::Box::new(
+                                                    ::ethers::core::abi::ethabi::ParamType::Tuple(
+                                                        ::std::vec![
+                                                            ::ethers::core::abi::ethabi::ParamType::Bytes,
+                                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                                        ],
+                                                    ),
+                                                ),
+                                            ),
+                                            ::ethers::core::abi::ethabi::ParamType::Bytes,
+                                        ],
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned(
+                                            "struct LibBackupRecoveryStorage.NextStateDownloadable",
+                                        ),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned("getNodeAddressesForDkg"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::Function {
@@ -2008,6 +2049,14 @@ pub mod backup_recovery {
         > {
             self.0
                 .method_hash([63, 78, 82, 207], ())
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `getNextBackupState` (0xc1cd00a1) function
+        pub fn get_next_backup_state(
+            &self,
+        ) -> ::ethers::contract::builders::ContractCall<M, NextStateDownloadable> {
+            self.0
+                .method_hash([193, 205, 0, 161], ())
                 .expect("method not found (this should never happen)")
         }
         ///Calls the contract's `getNodeAddressesForDkg` (0x96cb7019) function
@@ -3839,6 +3888,21 @@ pub mod backup_recovery {
     )]
     #[ethcall(name = "getNextBackupPartyMembers", abi = "getNextBackupPartyMembers()")]
     pub struct GetNextBackupPartyMembersCall;
+    ///Container type for all input parameters for the `getNextBackupState` function with signature `getNextBackupState()` and selector `0xc1cd00a1`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "getNextBackupState", abi = "getNextBackupState()")]
+    pub struct GetNextBackupStateCall;
     ///Container type for all input parameters for the `getNodeAddressesForDkg` function with signature `getNodeAddressesForDkg()` and selector `0x96cb7019`
     #[derive(
         Clone,
@@ -4241,6 +4305,7 @@ pub mod backup_recovery {
         GetDecryptionThreshold(GetDecryptionThresholdCall),
         GetMemberForNodeDkg(GetMemberForNodeDkgCall),
         GetNextBackupPartyMembers(GetNextBackupPartyMembersCall),
+        GetNextBackupState(GetNextBackupStateCall),
         GetNodeAddressesForDkg(GetNodeAddressesForDkgCall),
         GetNodeForBackupMember(GetNodeForBackupMemberCall),
         GetNodeRecoveryStatus(GetNodeRecoveryStatusCall),
@@ -4352,6 +4417,11 @@ pub mod backup_recovery {
                 data,
             ) {
                 return Ok(Self::GetNextBackupPartyMembers(decoded));
+            }
+            if let Ok(decoded) = <GetNextBackupStateCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::GetNextBackupState(decoded));
             }
             if let Ok(decoded) = <GetNodeAddressesForDkgCall as ::ethers::core::abi::AbiDecode>::decode(
                 data,
@@ -4511,6 +4581,9 @@ pub mod backup_recovery {
                 Self::GetNextBackupPartyMembers(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
+                Self::GetNextBackupState(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::GetNodeAddressesForDkg(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
@@ -4613,6 +4686,9 @@ pub mod backup_recovery {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::GetNextBackupPartyMembers(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::GetNextBackupState(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::GetNodeAddressesForDkg(element) => {
@@ -4750,6 +4826,11 @@ pub mod backup_recovery {
     impl ::core::convert::From<GetNextBackupPartyMembersCall> for BackupRecoveryCalls {
         fn from(value: GetNextBackupPartyMembersCall) -> Self {
             Self::GetNextBackupPartyMembers(value)
+        }
+    }
+    impl ::core::convert::From<GetNextBackupStateCall> for BackupRecoveryCalls {
+        fn from(value: GetNextBackupStateCall) -> Self {
+            Self::GetNextBackupState(value)
         }
     }
     impl ::core::convert::From<GetNodeAddressesForDkgCall> for BackupRecoveryCalls {
@@ -5074,6 +5155,22 @@ pub mod backup_recovery {
     pub struct GetNextBackupPartyMembersReturn {
         pub backup_members: ::std::vec::Vec<::ethers::core::types::Address>,
     }
+    ///Container type for all return fields from the `getNextBackupState` function with signature `getNextBackupState()` and selector `0xc1cd00a1`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct GetNextBackupStateReturn {
+        pub next_state: NextStateDownloadable,
+    }
     ///Container type for all return fields from the `getNodeAddressesForDkg` function with signature `getNodeAddressesForDkg()` and selector `0x96cb7019`
     #[derive(
         Clone,
@@ -5343,6 +5440,24 @@ pub mod backup_recovery {
         pub party_threshold: ::ethers::core::types::U256,
         pub party_members: ::std::vec::Vec<::ethers::core::types::Address>,
         pub registered_recovery_keys: ::std::vec::Vec<RecoveryKey>,
+    }
+    ///`NextStateDownloadable(address[],(bytes,uint256)[],bytes)`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct NextStateDownloadable {
+        pub party_members: ::std::vec::Vec<::ethers::core::types::Address>,
+        pub registered_recovery_keys: ::std::vec::Vec<RecoveryKey>,
+        pub session_id: ::ethers::core::types::Bytes,
     }
     ///`NodeRecoveryStatusMap(address,uint8)`
     #[derive(

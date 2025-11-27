@@ -1065,6 +1065,48 @@
     },
     {
       "inputs": [],
+      "name": "getNextBackupState",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address[]",
+              "name": "partyMembers",
+              "type": "address[]"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "bytes",
+                  "name": "pubkey",
+                  "type": "bytes"
+                },
+                {
+                  "internalType": "uint256",
+                  "name": "keyType",
+                  "type": "uint256"
+                }
+              ],
+              "internalType": "struct LibBackupRecoveryStorage.RecoveryKey[]",
+              "name": "registeredRecoveryKeys",
+              "type": "tuple[]"
+            },
+            {
+              "internalType": "bytes",
+              "name": "sessionId",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct LibBackupRecoveryStorage.NextStateDownloadable",
+          "name": "nextState",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "getNonSubmitingBackupMembersInNextState",
       "outputs": [
         {
