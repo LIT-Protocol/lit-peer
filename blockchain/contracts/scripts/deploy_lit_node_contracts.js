@@ -194,6 +194,7 @@ async function deployLitNodeContracts(deployNodeConfig) {
       'StakingAcrossRealmsFacet',
       'StakingKeySetsFacet',
       'StakingAdminFacet',
+      'StakingNFTFacet',
     ],
     false,
     deployNodeConfig.verifyContracts
