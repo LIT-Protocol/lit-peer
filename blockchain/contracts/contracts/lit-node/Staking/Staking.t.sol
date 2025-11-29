@@ -6655,7 +6655,9 @@ contract StakingTest is Test, SetupAndUtils {
 
         {
             // Delegated staker claims their rewards
-            uint256 balanceBefore = stakingFacet.balanceOf(delegatingStaker);
+            uint256 balanceBefore = stakingFacet.stakeBalanceOf(
+                delegatingStaker
+            );
 
             vm.prank(delegatingStaker);
             stakingFacet.claimStakeRewards(

@@ -30,7 +30,7 @@ contract FunctionSelectorHelper {
 
         // View functions that are either public or external. These are included here not
         // for invariant testing, but for interacting via the Handler-based invariant tests.
-        functionSignatures[14] = "balanceOf(address)";
+        functionSignatures[14] = "stakeBalanceOf(address)";
         functionSignatures[15] = "getMinimumStake()";
         functionSignatures[16] = "getMinimumSelfStake()";
         functionSignatures[17] = "getMaximumStake()";
