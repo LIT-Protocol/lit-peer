@@ -241,7 +241,7 @@ describe('Staking', function () {
       const ipAddress = ip2int(stakingAccount1IpAddress);
       for (let i = 0; i < validatorsStructs.length; i++) {
         const validator = validatorsStructs[i];
-        const balance = await stakingFacet.balanceOf(
+        const balance = await stakingFacet.stakeBalanceOf(
           validatorStakingAddresses[i]
         );
         expect(validator.nodeAddress).equal(
@@ -270,7 +270,7 @@ describe('Staking', function () {
       expect(validators.length).equal(10);
       for (let i = 0; i < validators.length; i++) {
         const validator = validators[i];
-        const balance = await stakingFacet.balanceOf(
+        const balance = await stakingFacet.stakeBalanceOf(
           validatorStakingAddresses[i]
         );
         expect(validator.nodeAddress).equal(
@@ -308,7 +308,7 @@ describe('Staking', function () {
 
   describe('validator joining', function () {
     it('can join as a validator, and cannot leave as a staker if below min validator count', async () => {
-      let initialStakeBal = await stakingFacet.balanceOf(
+      let initialStakeBal = await stakingFacet.stakeBalanceOf(
         stakingAccount1.address
       );
       let initialTokenBalance = await token.balanceOf(stakingAccount1.address);
@@ -367,7 +367,9 @@ describe('Staking', function () {
       stakingValidatorFacet = stakingValidatorFacet.connect(stakingAccount1);
       await stakingValidatorFacet.requestToJoin(realmId);
 
-      let postStakeBal = await stakingFacet.balanceOf(stakingAccount1.address);
+      let postStakeBal = await stakingFacet.stakeBalanceOf(
+        stakingAccount1.address
+      );
       let postTokenBalance = await token.balanceOf(stakingAccount1.address);
       let postValidatorEntry = await stakingViewsFacet.validators(
         stakingAccount1.address
@@ -377,7 +379,9 @@ describe('Staking', function () {
       const postNodeAddress = postValidatorEntry.nodeAddress;
       const postSenderPubKey = postValidatorEntry.senderPubKey;
       const postReceiverPubKey = postValidatorEntry.receiverPubKey;
-      let postBalance = await stakingFacet.balanceOf(stakingAccount1.address);
+      let postBalance = await stakingFacet.stakeBalanceOf(
+        stakingAccount1.address
+      );
       let postReward = postValidatorEntry.reward;
       let postNodeAddressToStakerAddress =
         await stakingViewsFacet.nodeAddressToStakerAddress(
@@ -426,12 +430,14 @@ describe('Staking', function () {
       token = token.connect(stakingAccount1);
       stakingValidatorFacet = stakingValidatorFacet.connect(stakingAccount1);
 
-      initialStakeBal = await stakingFacet.balanceOf(stakingAccount1.address);
+      initialStakeBal = await stakingFacet.stakeBalanceOf(
+        stakingAccount1.address
+      );
       initialTokenBalance = await token.balanceOf(stakingAccount1.address);
       initialValidatorEntry = await stakingViewsFacet.validators(
         stakingAccount1.address
       );
-      const initialBalance = await stakingFacet.balanceOf(
+      const initialBalance = await stakingFacet.stakeBalanceOf(
         stakingAccount1.address
       );
       initialReward = initialValidatorEntry.reward;
@@ -450,13 +456,13 @@ describe('Staking', function () {
         7n
       );
 
-      postStakeBal = await stakingFacet.balanceOf(stakingAccount1.address);
+      postStakeBal = await stakingFacet.stakeBalanceOf(stakingAccount1.address);
       postTokenBalance = await token.balanceOf(stakingAccount1.address);
       postValidatorEntry = await stakingViewsFacet.validators(
         stakingAccount1.address
       );
 
-      postBalance = await stakingFacet.balanceOf(stakingAccount1.address);
+      postBalance = await stakingFacet.stakeBalanceOf(stakingAccount1.address);
       postReward = postValidatorEntry.reward;
       postNodeAddressToStakerAddress =
         await stakingViewsFacet.nodeAddressToStakerAddress(

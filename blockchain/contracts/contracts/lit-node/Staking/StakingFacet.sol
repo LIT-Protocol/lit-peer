@@ -1273,7 +1273,9 @@ contract StakingFacet is StakingCommon, ERC2771 {
         return true;
     }
 
-    function balanceOf(address stakerAddress) external view returns (uint256) {
+    function stakeBalanceOf(
+        address stakerAddress
+    ) external view returns (uint256) {
         LibStakingStorage.StakeRecord[] memory stakeRecords = views()
             .getStakeRecordsForUser(stakerAddress, stakerAddress);
         uint256 totalStake = 0;
