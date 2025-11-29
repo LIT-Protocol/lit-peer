@@ -13,13 +13,13 @@ import { console } from "lib/forge-std/src/console.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { EnumerableSetViewFriendly } from "@lit-protocol/openzeppelin-contracts/utils/structs/EnumerableSetViewFriendly.sol";
 import { LibPubkeyRouterStorage } from "../PubkeyRouter/LibPubkeyRouterStorage.sol";
+import { LibStakingNFT } from "./LibStakingNFT.sol";
 
 contract StakingCommon is ReentrancyGuard {
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSetViewFriendly for EnumerableSetViewFriendly.AddressSet;
 
     /* ========== ERRORS ========== */
-    error NoEmptyStakingSlot();
     error CannotModifyUnfrozen();
 
     /* ========== VIEWS ========== */
@@ -77,165 +77,6 @@ contract StakingCommon is ReentrancyGuard {
             amount
         );
         emit Staked(account, amount);
-    }
-
-    struct CreateStakeRecordOpts {
-        /// @notice Whether to (forcibly) target the current reward epoch. This is sometimes necessary
-        /// for flows such as migrating stake, increasing stake record amount / timelock etc.
-        bool targetCurrentRewardEpoch;
-        /// @notice The last reward epoch claimed to set for the new stake record. If this is set to 0,
-        /// it means that the caller is relying on this function to determine the correct value to be set accordingly.
-        uint256 lastRewardEpochClaimedToSet;
-        /// @notice The start time of the unfreezing process. If this is non-zero, this means that this stake record
-        /// is created in order to resume the unfreezing process from a previously removed stake record, eg. for flows
-        /// such as migrating an already unfreezing stake record to a new validator.
-        uint256 unfreezeStartToSet;
-    }
-
-    /**
-     * @notice Create stake record in staker vault
-     * @param stakeAmount The stake amount
-     * @param timeLock The stake time lock in seconds
-     * @param userStakerAddress The staker address
-     * @param stakerAddress address of the main staker for the node
-     * @param opts The options for the new stake record
-     * @dev Reverts if there is no empty staking slot
-     */
-    function _createStakeRecord(
-        uint256 stakeAmount,
-        uint256 timeLock,
-        address stakerAddress,
-        address userStakerAddress,
-        CreateStakeRecordOpts memory opts
-    ) internal {
-        LibStakingStorage.StakerVault storage userVault = s().vaults[
-            stakerAddress
-        ][userStakerAddress];
-        uint256 freeSlotIndex = 2 ** 256 - 1; // max uint
-        for (uint256 i = 0; i < userVault.stakes.length; i++) {
-            if (!userVault.stakes[i].loaded) {
-                freeSlotIndex = i;
-                break;
-            }
-        }
-        if (freeSlotIndex == 2 ** 256 - 1) {
-            revert NoEmptyStakingSlot();
-        }
-
-        timeLock = timeLock > s().globalConfig[0].maxTimeLock
-            ? s().globalConfig[0].maxTimeLock
-            : timeLock;
-        // Round down to the nearest day
-        timeLock = (timeLock / 1 days) * 1 days;
-
-        userVault.lastStakeRecordId += 1;
-        LibStakingStorage.StakeRecord memory stakeRecord = LibStakingStorage
-            .StakeRecord({
-                id: userVault.lastStakeRecordId,
-                amount: stakeAmount,
-                unfreezeStart: opts.unfreezeStartToSet,
-                timeLock: timeLock,
-                lastUpdateTimestamp: block.timestamp,
-                lastRewardEpochClaimed: opts.lastRewardEpochClaimedToSet,
-                loaded: true,
-                frozen: opts.unfreezeStartToSet == 0,
-                // This is fine to always be set to PRECISION. The validator share price only ever decreases
-                // when a validator gets slashed, however, when a validator gets slashed, they are perma-banned
-                // from joining any realm / validator set, and pretty much the only way for that validator to
-                // re-join any realm is via admin intervention by reducing their demerit counters. When this
-                // validator proceeds to re-join a realm, their slate is "wiped clean" and they should have a
-                // validator share price reset to PRECISION initially. Hence, there is no need to set this
-                // initialSharePrice to anything else other than PRECISION always.
-                initialSharePrice: StakingUtilsLib.PRECISION,
-                attributionAddress: address(0)
-            });
-
-        // There is actually a bit of a hack we can use to calculate the stake weight to add to
-        // the validator's buffer without knowing exactly which reward epoch number will be used
-        // in the future (this is preferred for simplicity). Within StakingViewsFacet.getTimelockInEpoch,
-        // the purpose of needing the reward epoch number is to compare `RewardEpoch.epochEnd` with
-        // `StakeRecord.unfreezeStart`. However, since this is an entirely new stake record, the timelock we should
-        // be using is simply the timelock that we have here. Similarly, in StakingViewsFacet.getTokensStaked, the
-        // purpose of needing the reward epoch number is to get the `RewardEpoch.validatorSharePrice`. Since all non-slashed-and-active,
-        // joining, or yet-to-join validators will always have the initialized (not penalized) validator share price (at 1 ether), the
-        // stake amount we should be using is simply the stake amount that we have here. This means that the stake weight calculation
-        // can be done directly using `StakingViewsFacet.calculateStakeWeight`.
-        uint256 stakeWeight = views().calculateStakeWeight(
-            timeLock,
-            stakeAmount
-        );
-
-        // If validator is in current or next set, then we already know the next reward epoch which
-        // will need to be updated, so we proceed to update right away.
-        // If validator is not in current or next set, then we should update GS and RE once we know which
-        // realmId the validator is joining, which we should be able to do conveniently inside the
-        // requestToJoin (or related) functions.
-        uint256 realmId = realms().getRealmIdForStakerAddress(stakerAddress);
-        if (realmId != 0) {
-            uint256 rewardEpochNumberToUpdate;
-            if (opts.targetCurrentRewardEpoch) {
-                rewardEpochNumberToUpdate = mutableEpoch(realmId)
-                    .rewardEpochNumber;
-            } else {
-                rewardEpochNumberToUpdate = mutableEpoch(realmId)
-                    .nextRewardEpochNumber;
-            }
-
-            LibStakingStorage.RewardEpoch storage rewardEpoch = StakingUtilsLib
-                ._getRewardEpoch(stakerAddress, rewardEpochNumberToUpdate);
-
-            // If lastRewardEpochClaimedToSet is set to 0, we need to be setting the lastRewardEpochClaimed
-            // to be (rewardEpochNumberToUpdate - 1)
-            if (opts.lastRewardEpochClaimedToSet == 0) {
-                stakeRecord.lastRewardEpochClaimed =
-                    rewardEpochNumberToUpdate -
-                    1;
-            }
-
-            userVault.stakes[freeSlotIndex] = (stakeRecord);
-
-            LibStakingStorage.RewardEpochGlobalStats storage globalStats = s()
-                .rewardEpochsGlobalStats[rewardEpochNumberToUpdate];
-            globalStats.stakeWeight += stakeWeight;
-            globalStats.stakeAmount += stakeAmount;
-
-            rewardEpoch.totalStakeWeight += stakeWeight;
-            rewardEpoch.stakeAmount += stakeAmount;
-        } else {
-            // If lastRewardEpochClaimedToSet is set to 0, we need to be setting the lastRewardEpochClaimed to be the
-            // lowest reward epoch number across all realms. Why does this work? Well, if we are here, it means that the validator
-            // is not yet part of any realm, and since reward epoch numbers are monotonically increasing across all realms, setting
-            // the lastRewardEpochClaimed to the currently lowest reward epoch number across all realms will ensure that this value
-            // is high enough to prevent the validator (or any of its delegated stakes) from being able to illegally double-claim
-            // rewards for historical epochs, and be low enough to ensure that the validator will be able to earn rewards as soon as
-            // they join any realm in the future. Note that we do not have to make the reward epoch number have exactly correct semantics
-            // here (validator ultimately joins a realm at epoch X so this parameter must be set to X-1), and setting the value this way
-            // allows us to keep the logic sufficiently simple while achieving the same desired outcome.
-            // Note that this assumes that the epoch progression is not delayed and always advances as expected (or in a timely manner). If
-            // this is not the case, then there is a possibility that this parameter is not set high enough and the staker is still able to
-            // claim rewards for historical epochs more than once.
-            if (opts.lastRewardEpochClaimedToSet == 0) {
-                (, stakeRecord.lastRewardEpochClaimed) = views()
-                    .getLowestRewardEpochNumber();
-            }
-        }
-
-        // Handle delegated stakes
-        if (userStakerAddress != stakerAddress) {
-            // We need to attribute the stake amount and weight to the validator's struct.
-            stakeRecord.attributionAddress = stakerAddress;
-            s().validators[stakerAddress].delegatedStakeAmount += stakeAmount;
-            s().validators[stakerAddress].delegatedStakeWeight += stakeWeight;
-        }
-
-        userVault.stakes[freeSlotIndex] = (stakeRecord);
-
-        emit StakeRecordCreated(
-            stakerAddress,
-            stakeRecord.id,
-            stakeAmount,
-            userStakerAddress
-        );
     }
 
     /**
@@ -358,12 +199,30 @@ contract StakingCommon is ReentrancyGuard {
         }
     }
 
+    function _createStakeRecord(
+        uint256 stakeAmount,
+        uint256 timeLock,
+        address stakerAddress,
+        address userStakerAddress,
+        StakingUtilsLib.CreateStakeRecordOpts memory opts
+    ) internal returns (uint256) {
+        uint256 newStakeRecordId = StakingUtilsLib._createStakeRecord(
+            stakeAmount,
+            timeLock,
+            stakerAddress,
+            userStakerAddress,
+            opts
+        );
+
+        LibStakingNFT.updateTokenToStakeRecord(
+            opts.tokenIdToSet,
+            stakerAddress,
+            newStakeRecordId
+        );
+
+        return newStakeRecordId;
+    }
+
     // EVENTS
     event Staked(address indexed staker, uint256 amount);
-    event StakeRecordCreated(
-        address stakerAddress,
-        uint256 recordId,
-        uint256 amount,
-        address stakerAddressClient
-    );
 }
