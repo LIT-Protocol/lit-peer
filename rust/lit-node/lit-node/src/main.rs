@@ -409,6 +409,7 @@ pub fn main() {
                     })
                 }))
                 .attach(metrics_fairings)
+                .attach(crate::utils::rocket::privacy_mode::privacy_mode_fairing())
                 .manage(cfg.clone())
                 .manage(resolver)
                 .manage(tss_state.peer_state.clone())
@@ -490,6 +491,11 @@ async fn init_observability(
         )
         .await
         .map_err(|e| unexpected_err(e, Some("failed to create OTEL providers: {:?}".into())))?;
+
+    // Add privacy mode layer to disable tracing when privacy_mode is enabled
+    // The privacy mode layer checks thread-local state set by the fairing
+    use tracing_subscriber::layer::SubscriberExt;
+    let subscriber = subscriber.with(crate::utils::rocket::privacy_mode::PrivacyModeLayer);
 
     // Set globals
     global::set_text_map_propagator(TraceContextPropagator::new());
