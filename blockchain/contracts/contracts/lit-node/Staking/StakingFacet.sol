@@ -13,6 +13,8 @@ import { ERC2771 } from "../../common/ERC2771.sol";
 import { LibERC2771 } from "../../libraries/LibERC2771.sol";
 import { EnumerableSetViewFriendly } from "@lit-protocol/openzeppelin-contracts/utils/structs/EnumerableSetViewFriendly.sol";
 import { console } from "hardhat/console.sol";
+import { StakingNFTFacet } from "./StakingNFTFacet.sol";
+import { LibStakingNFT } from "./LibStakingNFT.sol";
 
 contract StakingFacet is StakingCommon, ERC2771 {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -70,15 +72,18 @@ contract StakingFacet is StakingCommon, ERC2771 {
         StakingUtilsLib.checkStakeAmountMinMax(amount, isSelfStake);
         _stake(amount, userStakerAddress);
 
+        // Logic to handle NFT aspects.
+        uint256 newTokenId = LibStakingNFT.addNewTokenTo(userStakerAddress);
         _createStakeRecord(
             amount,
             timeLock,
             operatorStakerAddress,
             userStakerAddress,
-            CreateStakeRecordOpts({
+            StakingUtilsLib.CreateStakeRecordOpts({
                 targetCurrentRewardEpoch: false,
                 lastRewardEpochClaimedToSet: 0, // setting this to zero relies in the inner function to determine what this value should be
-                unfreezeStartToSet: 0
+                unfreezeStartToSet: 0,
+                tokenIdToSet: newTokenId
             })
         );
 
@@ -545,7 +550,8 @@ contract StakingFacet is StakingCommon, ERC2771 {
             loaded: false,
             frozen: false,
             initialSharePrice: 0,
-            attributionAddress: address(0)
+            attributionAddress: address(0),
+            tokenId: 0
         });
 
         emit StakeRecordRemoved(params.stakerAddress, params.stakeRecordId);
@@ -612,10 +618,11 @@ contract StakingFacet is StakingCommon, ERC2771 {
             newTimeLock,
             stakerAddress,
             LibERC2771._msgSender(),
-            CreateStakeRecordOpts({
+            StakingUtilsLib.CreateStakeRecordOpts({
                 targetCurrentRewardEpoch: true,
                 lastRewardEpochClaimedToSet: stakeRecord.lastRewardEpochClaimed,
-                unfreezeStartToSet: 0
+                unfreezeStartToSet: 0,
+                tokenIdToSet: stakeRecord.tokenId
             })
         );
     }
@@ -674,10 +681,11 @@ contract StakingFacet is StakingCommon, ERC2771 {
             timeLock,
             stakerAddress,
             LibERC2771._msgSender(),
-            CreateStakeRecordOpts({
+            StakingUtilsLib.CreateStakeRecordOpts({
                 targetCurrentRewardEpoch: true,
                 lastRewardEpochClaimedToSet: stakeRecord.lastRewardEpochClaimed,
-                unfreezeStartToSet: 0
+                unfreezeStartToSet: 0,
+                tokenIdToSet: stakeRecord.tokenId
             })
         );
     }
@@ -979,10 +987,11 @@ contract StakingFacet is StakingCommon, ERC2771 {
             stakeRecord.timeLock,
             operatorAddressToMigrateTo,
             LibERC2771._msgSender(),
-            CreateStakeRecordOpts({
+            StakingUtilsLib.CreateStakeRecordOpts({
                 targetCurrentRewardEpoch: true,
                 lastRewardEpochClaimedToSet: stakeRecord.lastRewardEpochClaimed,
-                unfreezeStartToSet: stakeRecord.unfreezeStart
+                unfreezeStartToSet: stakeRecord.unfreezeStart,
+                tokenIdToSet: stakeRecord.tokenId
             })
         );
 
@@ -1092,7 +1101,7 @@ contract StakingFacet is StakingCommon, ERC2771 {
             }
         }
         if (!hasEmptySlot) {
-            revert NoEmptyStakingSlot();
+            revert StakingUtilsLib.NoEmptyStakingSlot();
         }
         uint256 newTimeLock = stakeRecord.timeLock;
         uint256 amountLeft = removeStakeRecord(
@@ -1117,21 +1126,27 @@ contract StakingFacet is StakingCommon, ERC2771 {
             newTimeLock,
             stakerAddress,
             LibERC2771._msgSender(),
-            CreateStakeRecordOpts({
+            StakingUtilsLib.CreateStakeRecordOpts({
                 targetCurrentRewardEpoch: true,
                 lastRewardEpochClaimedToSet: stakeRecord.lastRewardEpochClaimed,
-                unfreezeStartToSet: 0
+                unfreezeStartToSet: 0,
+                // The first split stake record will have the same tokenId as the original stake record.
+                tokenIdToSet: stakeRecord.tokenId
             })
         );
+
+        // The second split stake record will have a new tokenId.
+        uint256 newTokenId = LibStakingNFT.addNewTokenTo(stakerAddress);
         _createStakeRecord(
             secondAmountSplit,
             newTimeLock,
             stakerAddress,
             LibERC2771._msgSender(),
-            CreateStakeRecordOpts({
+            StakingUtilsLib.CreateStakeRecordOpts({
                 targetCurrentRewardEpoch: true,
                 lastRewardEpochClaimedToSet: stakeRecord.lastRewardEpochClaimed,
-                unfreezeStartToSet: 0
+                unfreezeStartToSet: 0,
+                tokenIdToSet: newTokenId
             })
         );
     }
@@ -1164,7 +1179,17 @@ contract StakingFacet is StakingCommon, ERC2771 {
             }
         }
 
+        // Get the tokenID before removing the stake record
         address userStakerAddress = LibERC2771._msgSender();
+        LibStakingStorage.StakeRecord memory stakeRecordToRemove = views()
+            .getStakeRecord(
+                operatorStakerAddress,
+                stakeRecordId,
+                userStakerAddress
+            );
+        uint256 tokenIdToRemove = stakeRecordToRemove.tokenId;
+
+        // Remove the stake record
         uint256 withdrawAmount = removeStakeRecord(
             RemoveStakeRecordParams({
                 stakerAddress: operatorStakerAddress,
@@ -1174,6 +1199,7 @@ contract StakingFacet is StakingCommon, ERC2771 {
                 migrateToStakerAddress: address(0)
             })
         );
+        LibStakingNFT._removeTokenFrom(userStakerAddress, tokenIdToRemove);
 
         SafeERC20.safeTransfer(
             IERC20(views().getTokenContractAddress()),
