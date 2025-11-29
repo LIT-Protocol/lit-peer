@@ -111,7 +111,7 @@ function getPriceFeedAddress(): string {
  * Convert wei to LITKEY tokens (18 decimals)
  */
 function weiToTokens(wei: bigint): number {
-  return Number(wei) / 1e18;
+  return parseFloat(ethers.formatUnits(wei, 18));
 }
 
 /**
@@ -138,7 +138,6 @@ async function main() {
   console.log(`PriceFeed Contract Address: ${priceFeedAddress}\n`);
 
   // Use PriceFeedDiamond which includes all facets via hardhat-diamond-abi plugin
-  // Alternatively, you can use 'PriceFeedFacet' directly
   const priceFeed = await ethers.getContractAt(
     'PriceFeedDiamond',
     priceFeedAddress
@@ -218,7 +217,7 @@ async function main() {
     const priceInTokens = weiToTokens(config.price);
     const priceInUSD = priceInTokens * litKeyPriceUSD;
     console.log(
-      `${componentName}${measurementName}: ${formatPrice(
+      `${componentName} ${measurementName}: ${formatPrice(
         priceInTokens,
         priceInUSD
       )}`
