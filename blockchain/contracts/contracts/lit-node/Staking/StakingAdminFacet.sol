@@ -11,6 +11,7 @@ import { LibStakingStorage } from "./LibStakingStorage.sol";
 import { StakingCommon } from "./StakingCommon.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { LibStakingNFT } from "./LibStakingNFT.sol";
 import "hardhat/console.sol";
 
 contract StakingAdminFacet is StakingCommon {
@@ -461,15 +462,17 @@ contract StakingAdminFacet is StakingCommon {
         StakingUtilsLib.checkStakeParameters(isSelfStake, timeLock);
         StakingUtilsLib.checkStakeAmountMinMax(amount, isSelfStake);
 
+        uint256 newTokenId = LibStakingNFT.addNewTokenTo(userStakerAddress);
         _createStakeRecord(
             amount,
             timeLock,
             operatorStakerAddress,
             userStakerAddress,
-            CreateStakeRecordOpts({
+            StakingUtilsLib.CreateStakeRecordOpts({
                 targetCurrentRewardEpoch: false,
                 lastRewardEpochClaimedToSet: 0, // setting this to zero relies in the inner function to determine what this value should be
-                unfreezeStartToSet: 0
+                unfreezeStartToSet: 0,
+                tokenIdToSet: newTokenId
             })
         );
 
