@@ -11,7 +11,7 @@ jobs:
     runs-on: warp-ubuntu-latest-x64-2x
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - uses: buildjet/cache-delete@v1
         with:
           cache_key: ${{ inputs.cache_key }}

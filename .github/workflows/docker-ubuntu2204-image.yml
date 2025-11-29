@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: LargeRunner
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - id: pre-step
         shell: bash
         run: echo "release-version=$(date +%s)" >> "$GITHUB_OUTPUT"
