@@ -1,8 +1,7 @@
 //SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.17;
 
-import { ERC2771 } from "../../common/ERC2771.sol";
-import { IERC721 } from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import { IERC721 } from "../../interfaces/IERC721.sol";
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import { LibERC2771 } from "../../libraries/LibERC2771.sol";
 import { LibDiamond } from "../../libraries/LibDiamond.sol";
@@ -12,7 +11,7 @@ import { LibStakingNFT } from "./LibStakingNFT.sol";
 import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import { EnumerableSetViewFriendly } from "@lit-protocol/openzeppelin-contracts/utils/structs/EnumerableSetViewFriendly.sol";
 
-contract StakingNFTFacet is ERC2771, IERC721 {
+contract StakingNFTFacet is IERC721 {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSetViewFriendly for EnumerableSetViewFriendly.AddressSet;
 
@@ -29,13 +28,6 @@ contract StakingNFTFacet is ERC2771, IERC721 {
 
     function views() internal view returns (StakingViewsFacet) {
         return StakingViewsFacet(address(this));
-    }
-
-    /* ========== ERC165: STANDARD FUNCTIONS ========== */
-    function supportsInterface(
-        bytes4 interfaceID
-    ) external view returns (bool) {
-        return s().supportedInterfaces[interfaceID];
     }
 
     /* ========== ERC721: STANDARD FUNCTIONS ========== */

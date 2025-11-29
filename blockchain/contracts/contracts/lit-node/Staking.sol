@@ -12,7 +12,6 @@ import { LibDiamond } from "../libraries/LibDiamond.sol";
 import { IDiamondCut } from "../interfaces/IDiamondCut.sol";
 import { IDiamondLoupe } from "../interfaces/IDiamondLoupe.sol";
 import { IERC173 } from "../interfaces/IERC173.sol";
-import { IERC165 } from "../interfaces/IERC165.sol";
 import { ContractResolver } from "../lit-core/ContractResolver.sol";
 import { LibStakingStorage } from "./Staking/LibStakingStorage.sol";
 
