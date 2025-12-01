@@ -78,6 +78,7 @@ describe('Staking', function () {
           'StakingAcrossRealmsFacet',
           'StakingKeySetsFacet',
           'StakingAdminFacet',
+          'StakingNFTFacet',
         ],
         verifyContracts: false,
         waitForDeployment: false,

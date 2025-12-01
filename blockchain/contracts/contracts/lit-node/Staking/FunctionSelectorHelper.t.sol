@@ -371,6 +371,46 @@ contract FunctionSelectorHelper {
 
         return selectors;
     }
+
+    function getSignaturesStakingNFTFacet()
+        public
+        pure
+        returns (string[] memory)
+    {
+        string[] memory functionSignatures = new string[](13);
+        functionSignatures[0] = "balanceOf(address)";
+        functionSignatures[1] = "ownerOf(uint256)";
+        functionSignatures[
+            2
+        ] = "safeTransferFrom(address,address,uint256,bytes)";
+        functionSignatures[3] = "safeTransferFrom(address,address,uint256)";
+        functionSignatures[4] = "transferFrom(address,address,uint256)";
+        functionSignatures[5] = "approve(address,uint256)";
+        functionSignatures[6] = "setApprovalForAll(address,bool)";
+        functionSignatures[7] = "tokenOfOwnerByIndex(address,uint256)";
+        functionSignatures[8] = "totalSupply()";
+        functionSignatures[9] = "getApproved(uint256)";
+        functionSignatures[10] = "isApprovedForAll(address,address)";
+        functionSignatures[11] = "ownershipChange(uint256)";
+        functionSignatures[12] = "tokenToStakeRecord(uint256)";
+
+        return functionSignatures;
+    }
+
+    function getSelectorsStakingNFTFacet()
+        public
+        pure
+        returns (bytes4[] memory)
+    {
+        string[] memory functionSignatures = getSignaturesStakingNFTFacet();
+        bytes4[] memory selectors = new bytes4[](functionSignatures.length);
+
+        for (uint256 i = 0; i < functionSignatures.length; i++) {
+            selectors[i] = bytes4(keccak256(bytes(functionSignatures[i])));
+        }
+
+        return selectors;
+    }
 }
 
 contract PriceFeedFunctionSelectorHelper {

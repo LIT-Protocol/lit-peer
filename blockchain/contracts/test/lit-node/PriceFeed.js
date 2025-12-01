@@ -59,6 +59,7 @@ describe('PriceFeed', function () {
           'StakingVersionFacet',
           'StakingAdminFacet',
           'StakingAcrossRealmsFacet',
+          'StakingNFTFacet',
         ],
         verifyContracts: false,
         waitForDeployment: false,

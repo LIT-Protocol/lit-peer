@@ -82,6 +82,7 @@ describe('BackupRecovery', function () {
           'StakingVersionFacet',
           'StakingAcrossRealmsFacet',
           'StakingKeySetsFacet',
+          'StakingNFTFacet',
         ],
         verifyContracts: false,
         waitForDeployment: false,
