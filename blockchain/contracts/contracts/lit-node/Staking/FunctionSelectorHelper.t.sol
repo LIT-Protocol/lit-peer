@@ -56,7 +56,7 @@ contract FunctionSelectorHelper {
         returns (string[] memory)
     {
         // Define the function signatures
-        string[] memory functionSignatures = new string[](71);
+        string[] memory functionSignatures = new string[](72);
 
         // View functions that are either public or external.
         functionSignatures[0] = "epoch(uint256)";
@@ -120,14 +120,14 @@ contract FunctionSelectorHelper {
         ] = "getActiveUnkickedValidatorStructsAndCounts(uint256)";
         functionSignatures[
             43
-        ] = "getTimelockInEpoch(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address),uint256)";
+        ] = "getTimelockInEpoch(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address,uint256),uint256)";
         functionSignatures[
             44
         ] = "getStakeWeightInEpoch(address,uint256,address,uint256)";
         functionSignatures[45] = "calculateStakeWeight(uint256,uint256)";
         functionSignatures[
             46
-        ] = "getTokensStaked(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address),uint256)";
+        ] = "getTokensStaked(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address,uint256),uint256)";
         functionSignatures[47] = "getRewardEpochNumber(uint256)";
         functionSignatures[48] = "pow(uint256,uint256)";
         functionSignatures[
@@ -162,6 +162,8 @@ contract FunctionSelectorHelper {
         functionSignatures[
             70
         ] = "getUnfrozenStakeCountForUser(address,address)";
+        functionSignatures[71] = "getEmptyStakeRecordSlots(address,address)";
+
         return functionSignatures;
     }
 
