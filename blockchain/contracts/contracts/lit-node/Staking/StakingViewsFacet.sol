@@ -590,6 +590,32 @@ contract StakingViewsFacet {
         revert StakingUtilsLib.StakeRecordNotFound(lastStakeRecordId);
     }
 
+    function getMostRecentStakeRecord(
+        address userStakerAddress,
+        address operatorStakerAddress
+    ) public view returns (LibStakingStorage.StakeRecord memory) {
+        LibStakingStorage.StakerVault memory vault = s().vaults[
+            operatorStakerAddress
+        ][userStakerAddress];
+
+        uint256 highestStakeRecordId = 0;
+        for (uint i = 0; i < vault.stakes.length; i++) {
+            if (
+                vault.stakes[i].loaded &&
+                vault.stakes[i].id > highestStakeRecordId
+            ) {
+                highestStakeRecordId = vault.stakes[i].id;
+            }
+        }
+
+        return
+            getStakeRecord(
+                operatorStakerAddress,
+                highestStakeRecordId,
+                userStakerAddress
+            );
+    }
+
     function getValidatorsDelegated(
         address user
     ) public view returns (uint256[] memory) {

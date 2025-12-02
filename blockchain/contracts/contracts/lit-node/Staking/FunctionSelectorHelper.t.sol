@@ -56,7 +56,7 @@ contract FunctionSelectorHelper {
         returns (string[] memory)
     {
         // Define the function signatures
-        string[] memory functionSignatures = new string[](72);
+        string[] memory functionSignatures = new string[](73);
 
         // View functions that are either public or external.
         functionSignatures[0] = "epoch(uint256)";
@@ -163,6 +163,7 @@ contract FunctionSelectorHelper {
             70
         ] = "getUnfrozenStakeCountForUser(address,address)";
         functionSignatures[71] = "getEmptyStakeRecordSlots(address,address)";
+        functionSignatures[72] = "getMostRecentStakeRecord(address,address)";
 
         return functionSignatures;
     }
