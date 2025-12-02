@@ -81,7 +81,6 @@ pub async fn test_add_second_keyset() {
     )
     .await;
     assert!(result, "Failed to sign with all nodes up.");
-
 }
 
 #[ignore]
