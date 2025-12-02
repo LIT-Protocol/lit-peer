@@ -70,7 +70,10 @@ impl DkgManager {
                     DkgType::RecoveryParty => 1,
                     DkgType::Standard => hd_root_key_count,
                 };
-                let epoch_dkg_id = format!("{}.{}.{}.{}", dkg_id, &key_set_config.identifier, curve_type, self.dkg_type);
+                let epoch_dkg_id = format!(
+                    "{}.{}.{}.{}",
+                    dkg_id, &key_set_config.identifier, curve_type, self.dkg_type
+                );
                 let existing_root_keys = key_set_config
                     .root_keys_by_curve
                     .get(&curve_type)

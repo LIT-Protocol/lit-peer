@@ -34,7 +34,6 @@ pub struct RootKeyConfig {
     pub count: usize,
 }
 
-
 #[derive(Clone, Debug)]
 pub struct Actions {
     contracts: Contracts,
@@ -1278,26 +1277,73 @@ impl Actions {
         Ok(())
     }
 
-    pub async fn add_default_keyset(&self, realm_id: U256, identifier: String, description: String) -> Result<()> {
+    pub async fn add_default_keyset(
+        &self,
+        realm_id: U256,
+        identifier: String,
+        description: String,
+    ) -> Result<()> {
         let root_key_configs = vec![
-            RootKeyConfig { curve_type: CurveType::BLS, count: 1 },
-            RootKeyConfig { curve_type: CurveType::K256, count: 2 },
-            RootKeyConfig { curve_type: CurveType::P256, count: 2 },
-            RootKeyConfig { curve_type: CurveType::P384, count: 2 },
-            RootKeyConfig { curve_type: CurveType::Ed25519, count: 2 },
-            RootKeyConfig { curve_type: CurveType::Ed448, count: 2 },
-            RootKeyConfig { curve_type: CurveType::Ristretto25519, count: 2 },
-            RootKeyConfig { curve_type: CurveType::RedJubjub, count: 2 },
-            RootKeyConfig { curve_type: CurveType::RedDecaf377, count: 2 },
-            RootKeyConfig { curve_type: CurveType::BLS12381G1, count: 2 },
+            RootKeyConfig {
+                curve_type: CurveType::BLS,
+                count: 1,
+            },
+            RootKeyConfig {
+                curve_type: CurveType::K256,
+                count: 2,
+            },
+            RootKeyConfig {
+                curve_type: CurveType::P256,
+                count: 2,
+            },
+            RootKeyConfig {
+                curve_type: CurveType::P384,
+                count: 2,
+            },
+            RootKeyConfig {
+                curve_type: CurveType::Ed25519,
+                count: 2,
+            },
+            RootKeyConfig {
+                curve_type: CurveType::Ed448,
+                count: 2,
+            },
+            RootKeyConfig {
+                curve_type: CurveType::Ristretto25519,
+                count: 2,
+            },
+            RootKeyConfig {
+                curve_type: CurveType::RedJubjub,
+                count: 2,
+            },
+            RootKeyConfig {
+                curve_type: CurveType::RedDecaf377,
+                count: 2,
+            },
+            RootKeyConfig {
+                curve_type: CurveType::BLS12381G1,
+                count: 2,
+            },
         ];
-        self.add_keyset(realm_id, identifier, description, root_key_configs).await
+        self.add_keyset(realm_id, identifier, description, root_key_configs)
+            .await
     }
 
-    pub async fn add_keyset(&self, realm_id: U256, identifier: String, description: String, root_key_configs: Vec<RootKeyConfig>) -> Result<()> {
-
-        let curves = root_key_configs.iter().map(|rkc| rkc.curve_type.into()).collect();
-        let counts = root_key_configs.iter().map(|rkc| U256::from( rkc.count ) ).collect();
+    pub async fn add_keyset(
+        &self,
+        realm_id: U256,
+        identifier: String,
+        description: String,
+        root_key_configs: Vec<RootKeyConfig>,
+    ) -> Result<()> {
+        let curves = root_key_configs
+            .iter()
+            .map(|rkc| rkc.curve_type.into())
+            .collect();
+        let counts = root_key_configs
+            .iter()
+            .map(|rkc| U256::from(rkc.count))
+            .collect();
         info!("Curves/Counts: {:?}/{:?}", curves, counts);
         let update_key_set_request = staking::KeySetConfig {
             minimum_threshold: 3,
@@ -1316,20 +1362,37 @@ impl Actions {
             .send()
             .await
             .map_err(|e| anyhow::anyhow!("Error sending tx to add second keyset! {:?}", e))?;
-        let _result = result.log_msg("add_second_keyset").await.map_err(|e| {
-            anyhow::anyhow!("Error waiting for successful add keyset tx! {:?}", e)
-        })?;
-        info!("Added keyset {} with identifier `{}` successfully", realm_id, identifier);
+        let _result = result
+            .log_msg("add_second_keyset")
+            .await
+            .map_err(|e| anyhow::anyhow!("Error waiting for successful add keyset tx! {:?}", e))?;
+        info!(
+            "Added keyset {} with identifier `{}` successfully",
+            realm_id, identifier
+        );
         Ok(())
     }
 
     pub async fn get_all_keyset_configs(&self) -> Result<Vec<staking::KeySetConfig>> {
-        let key_set_configs = self.contracts.staking.key_sets().call().await?.into_iter().map(|ks| staking::KeySetConfig::try_from(ks).unwrap()).collect();
+        let key_set_configs = self
+            .contracts
+            .staking
+            .key_sets()
+            .call()
+            .await?
+            .into_iter()
+            .map(|ks| staking::KeySetConfig::try_from(ks).unwrap())
+            .collect();
         Ok(key_set_configs)
     }
 
     pub async fn get_keyset_config(&self, identifier: String) -> Result<staking::KeySetConfig> {
-        let key_set_config = self.contracts.staking.get_key_set(identifier).call().await?;
+        let key_set_config = self
+            .contracts
+            .staking
+            .get_key_set(identifier)
+            .call()
+            .await?;
         Ok(key_set_config)
     }
 }

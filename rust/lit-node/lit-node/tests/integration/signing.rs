@@ -257,7 +257,7 @@ pub async fn test_pkp_hd_sign_and_submit_eth_txn() {
 pub async fn test_pkp_hd_sign_generic_key() {
     crate::common::setup_logging();
     info!("Starting test: test_hd_pkp_sign");
-    let (testnet, validator_collection, end_user) = TestSetupBuilder::default().build().await;
+    let (testnet, validator_collection, end_user) = TestSetupBuilder::default().num_staked_and_joined_validators(3).build().await;
     let pubkey = end_user.first_pkp().pubkey.clone();
 
     sign_with_each_curve_type(&validator_collection, &end_user, pubkey.clone()).await;

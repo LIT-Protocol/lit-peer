@@ -335,7 +335,17 @@ impl EndUser {
     }
 
     pub async fn new_pkp(&mut self) -> Result<(String, U256, H160), anyhow::Error> {
-        let pkp = Pkp::new(self).await?;
+        let pkp = Pkp::new(self, "naga-keyset1").await?;
+        let pkp_info = (pkp.pubkey.clone(), pkp.token_id, pkp.eth_address.clone());
+        self.pkps.push(pkp);
+        Ok(pkp_info)
+    }
+
+    pub async fn new_pkp_with_key_set_id(
+        &mut self,
+        key_set_id: &str,
+    ) -> Result<(String, U256, H160), anyhow::Error> {
+        let pkp = Pkp::new(self, key_set_id).await?;
         let pkp_info = (pkp.pubkey.clone(), pkp.token_id, pkp.eth_address.clone());
         self.pkps.push(pkp);
         Ok(pkp_info)
