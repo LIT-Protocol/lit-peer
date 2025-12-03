@@ -108,7 +108,6 @@ pub(crate) async fn perform_epoch_change(
         trace!("new_key_sets: {:?}", new_key_sets);
         trace!("existing_key_sets: {:?}", existing_key_sets);
 
-
         // start by processing the epoch change for the new key sets
         let mut epoch_change_res_or_update_needed_for_new_keys = None;
         if !new_key_sets.is_empty() {
@@ -243,6 +242,7 @@ pub(crate) async fn perform_epoch_change(
     None
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn process_epoch_for_key_set(
     dkg_manager: &DkgManager,
     fsm_worker_metadata: Arc<dyn FSMWorkerMetadata<LifecycleId = u64, ShadowLifecycleId = u64>>,
@@ -257,13 +257,11 @@ async fn process_epoch_for_key_set(
     existing_epoch_change_res_or_update_needed: Option<EpochChangeResOrUpdateNeeded>,
 ) -> Result<EpochChangeResOrUpdateNeeded> {
     let existing_keys = match existing_epoch_change_res_or_update_needed {
-        Some(existing_epoch_change_res_or_update_needed) => {
-            match existing_epoch_change_res_or_update_needed.epoch_change_res {
-                Some(existing_keys) => existing_keys,
-                None => None,
-            }
-        }
-        None => None,
+        Some(EpochChangeResOrUpdateNeeded {
+            epoch_change_res: Some(existing_keys),
+            update_req: None,
+        }) => existing_keys,
+        _ => None,
     };
 
     let epoch_change_res_or_update_needed = tokio::select! {
@@ -278,7 +276,7 @@ async fn process_epoch_for_key_set(
             }
         }
 
-        res = dkg_manager.change_epoch(&latest_dkg_id, current_epoch, shadow_key_opts, realm_id, &current_peers, &new_peers, &key_sets) => {
+        res = dkg_manager.change_epoch(latest_dkg_id, current_epoch, shadow_key_opts, realm_id, current_peers, new_peers, key_sets) => {
             match res {
                 Ok(res) => {
                 let epoch = match dkg_manager.dkg_type {
@@ -288,7 +286,7 @@ async fn process_epoch_for_key_set(
 
                 let lifecycle_id = fsm_worker_metadata.get_lifecycle_id(realm_id);
                 if false {
-                    match key_share_proofs_check(&dkg_manager.tss_state, &res, &new_peers, &latest_dkg_id, realm_id, epoch, lifecycle_id).await {
+                    match key_share_proofs_check(&dkg_manager.tss_state, &res, new_peers, latest_dkg_id, realm_id, epoch, lifecycle_id).await {
                         Err(e) => {
                             warn!("Key share proofs check failed in realm {}: {}", realm_id, e);
                             return Err(e);

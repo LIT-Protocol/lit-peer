@@ -28,6 +28,7 @@ impl DkgManager {
         }
     }
 
+    #[allow(clippy::too_many_arguments)]
     #[instrument(level = "debug", skip(self, current_peers, new_peers))]
     pub async fn change_epoch(
         &self,
