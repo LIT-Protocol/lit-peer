@@ -245,7 +245,7 @@ contract StakingAdminFacet is StakingCommon {
             realmStorage.validatorsInNextEpoch.add(validatorsForNextEpoch[i]);
         }
     }
-    
+
     function adminSlashValidator(
         uint256 percentage,
         address stakerAddress
