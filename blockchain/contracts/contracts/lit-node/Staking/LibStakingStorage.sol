@@ -135,6 +135,8 @@ library LibStakingStorage {
     struct PendingRejoin {
         address addr;
         uint256 timestamp;
+        // NOTE: DO NOT ADD ANYTHING TO THIS STRUCT SINCE IT IS NOT CONTAINED IN A MAPPING IN THE ROOT LEVEL STORAGE STRUCT
+        // AND MAY RESULT IN STORAGE POINTERS SHIFTING.
     }
 
     struct Epoch {
