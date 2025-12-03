@@ -35,6 +35,8 @@ library LibBackupRecoveryStorage {
     struct RecoveryKey {
         bytes pubkey;
         uint256 keyType; // see rust/lit-node/src/tss/common/curve_type.rs 1 = BLS, 2 = K256, etc.  Not doing this in an enum so we can add more keytypes in the future without redeploying.
+        // NOTE: DO NOT ADD ANYTHING TO THIS STRUCT SINCE IT IS NOT CONTAINED IN A MAPPING IN THE ROOT LEVEL STORAGE STRUCT
+        // AND MAY RESULT IN STORAGE POINTERS SHIFTING.
     }
 
     /**
