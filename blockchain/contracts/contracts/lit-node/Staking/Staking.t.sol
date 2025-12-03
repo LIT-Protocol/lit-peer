@@ -815,12 +815,24 @@ contract StakingTest is Test, SetupAndUtils {
             .getStakeRecord(operatorStakers[1], 1, delegatingStaker);
 
         // Assert that the stake record for the first validator is updated correctly
-        assertGt(newStakeRecord1.lastUpdateTimestamp, stakeRecord1.lastUpdateTimestamp);
-        assertGt(newStakeRecord1.lastRewardEpochClaimed, stakeRecord1.lastRewardEpochClaimed + 1);
+        assertGt(
+            newStakeRecord1.lastUpdateTimestamp,
+            stakeRecord1.lastUpdateTimestamp
+        );
+        assertGt(
+            newStakeRecord1.lastRewardEpochClaimed,
+            stakeRecord1.lastRewardEpochClaimed + 1
+        );
 
         // Assert that the stake record for the second validator is not affected
-        assertEq(newStakeRecord2.lastUpdateTimestamp, stakeRecord2.lastUpdateTimestamp);
-        assertEq(newStakeRecord2.lastRewardEpochClaimed, stakeRecord2.lastRewardEpochClaimed);
+        assertEq(
+            newStakeRecord2.lastUpdateTimestamp,
+            stakeRecord2.lastUpdateTimestamp
+        );
+        assertEq(
+            newStakeRecord2.lastRewardEpochClaimed,
+            stakeRecord2.lastRewardEpochClaimed
+        );
     }
 
     /// @notice This test is when a node operator / validator calls stakeAndJoin
