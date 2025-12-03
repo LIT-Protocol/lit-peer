@@ -534,6 +534,23 @@ contract StakingViewsFacet {
         return count;
     }
 
+    function getEmptyStakeRecordSlots(
+        address userStakerAddress,
+        address operatorStakerAddress
+    ) public view returns (uint256) {
+        LibStakingStorage.StakerVault memory vault = s().vaults[
+            operatorStakerAddress
+        ][userStakerAddress];
+
+        uint256 count;
+        for (uint i = 0; i < vault.stakes.length; i++) {
+            if (!vault.stakes[i].loaded) {
+                count += 1;
+            }
+        }
+        return count;
+    }
+
     function getUnfrozenStakeCountForUser(
         address userStakerAddress,
         address operatorStakerAddress
@@ -571,6 +588,32 @@ contract StakingViewsFacet {
         }
 
         revert StakingUtilsLib.StakeRecordNotFound(lastStakeRecordId);
+    }
+
+    function getMostRecentStakeRecord(
+        address userStakerAddress,
+        address operatorStakerAddress
+    ) public view returns (LibStakingStorage.StakeRecord memory) {
+        LibStakingStorage.StakerVault memory vault = s().vaults[
+            operatorStakerAddress
+        ][userStakerAddress];
+
+        uint256 highestStakeRecordId = 0;
+        for (uint i = 0; i < vault.stakes.length; i++) {
+            if (
+                vault.stakes[i].loaded &&
+                vault.stakes[i].id > highestStakeRecordId
+            ) {
+                highestStakeRecordId = vault.stakes[i].id;
+            }
+        }
+
+        return
+            getStakeRecord(
+                operatorStakerAddress,
+                highestStakeRecordId,
+                userStakerAddress
+            );
     }
 
     function getValidatorsDelegated(

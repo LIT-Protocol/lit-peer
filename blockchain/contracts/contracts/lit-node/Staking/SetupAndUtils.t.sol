@@ -9,6 +9,7 @@ import { StakingValidatorFacet } from "../Staking/StakingValidatorFacet.sol";
 import { StakingAcrossRealmsFacet } from "../Staking/StakingAcrossRealmsFacet.sol";
 import { StakingVersionFacet } from "../Staking/StakingVersionFacet.sol";
 import { StakingUtilsLib } from "../Staking/StakingUtilsLib.sol";
+import { StakingNFTFacet } from "../Staking/StakingNFTFacet.sol";
 import { ContractResolver } from "../../lit-core/ContractResolver.sol";
 import { Staking, StakingArgs } from "../Staking.sol";
 import { DiamondInit } from "../../upgradeInitializers/DiamondInit.sol";
@@ -30,6 +31,7 @@ abstract contract SetupAndUtils is Test {
     StakingValidatorFacet stakingValidatorFacet;
     StakingAcrossRealmsFacet stakingAcrossRealmsFacet;
     StakingVersionFacet stakingVersionFacet;
+    StakingNFTFacet stakingNFTFacet;
     LITToken token;
     FunctionSelectorHelper functionSelectorHelper;
 
@@ -75,6 +77,7 @@ abstract contract SetupAndUtils is Test {
         stakingValidatorFacet = new StakingValidatorFacet();
         stakingAcrossRealmsFacet = new StakingAcrossRealmsFacet();
         stakingVersionFacet = new StakingVersionFacet();
+        stakingNFTFacet = new StakingNFTFacet();
 
         priceFeedFacet = new PriceFeedFacet();
 
@@ -85,7 +88,7 @@ abstract contract SetupAndUtils is Test {
         token.mint(address(this), 1_000_000_000 ether);
 
         // Cut the staking diamond.
-        IDiamond.FacetCut[] memory facetCuts = new IDiamond.FacetCut[](6);
+        IDiamond.FacetCut[] memory facetCuts = new IDiamond.FacetCut[](7);
         facetCuts[0] = IDiamond.FacetCut({
             facetAddress: address(stakingFacet),
             action: IDiamond.FacetCutAction.Add,
@@ -121,6 +124,12 @@ abstract contract SetupAndUtils is Test {
             functionSelectors: functionSelectorHelper
                 .getSelectorsStakingVersionFacet()
         });
+        facetCuts[6] = IDiamond.FacetCut({
+            facetAddress: address(stakingNFTFacet),
+            action: IDiamond.FacetCutAction.Add,
+            functionSelectors: functionSelectorHelper
+                .getSelectorsStakingNFTFacet()
+        });
 
         StakingArgs memory stakingArgs = StakingArgs({
             owner: address(this),
@@ -137,6 +146,7 @@ abstract contract SetupAndUtils is Test {
         stakingViewsFacet = StakingViewsFacet(address(staking));
         stakingAdminFacet = StakingAdminFacet(address(staking));
         stakingVersionFacet = StakingVersionFacet(address(staking));
+        stakingNFTFacet = StakingNFTFacet(address(staking));
 
         // Cut the price feed diamond.
         IDiamond.FacetCut[] memory priceFeedFacetCuts = new IDiamond.FacetCut[](

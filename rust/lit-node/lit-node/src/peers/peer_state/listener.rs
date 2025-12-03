@@ -55,7 +55,7 @@ impl PeerState {
                                             }
                                         }
                                     }
-                                    StakingEvents::RequestToJoinFilter(request_to_join_event) => {
+                                    StakingEvents::RequestToJoin1Filter(request_to_join_event) => {
                                         // update chain data manager state
                                         match self.chain_data_config_manager.set_peer_and_epoch_data_from_chain().await {
                                             Ok(_) => {

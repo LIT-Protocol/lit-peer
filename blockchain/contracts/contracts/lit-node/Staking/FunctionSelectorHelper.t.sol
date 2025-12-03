@@ -30,7 +30,7 @@ contract FunctionSelectorHelper {
 
         // View functions that are either public or external. These are included here not
         // for invariant testing, but for interacting via the Handler-based invariant tests.
-        functionSignatures[14] = "balanceOf(address)";
+        functionSignatures[14] = "selfStakeBalanceOf(address)";
         functionSignatures[15] = "getMinimumStake()";
         functionSignatures[16] = "getMinimumSelfStake()";
         functionSignatures[17] = "getMaximumStake()";
@@ -56,7 +56,7 @@ contract FunctionSelectorHelper {
         returns (string[] memory)
     {
         // Define the function signatures
-        string[] memory functionSignatures = new string[](71);
+        string[] memory functionSignatures = new string[](73);
 
         // View functions that are either public or external.
         functionSignatures[0] = "epoch(uint256)";
@@ -120,14 +120,14 @@ contract FunctionSelectorHelper {
         ] = "getActiveUnkickedValidatorStructsAndCounts(uint256)";
         functionSignatures[
             43
-        ] = "getTimelockInEpoch(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address),uint256)";
+        ] = "getTimelockInEpoch(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address,uint256),uint256)";
         functionSignatures[
             44
         ] = "getStakeWeightInEpoch(address,uint256,address,uint256)";
         functionSignatures[45] = "calculateStakeWeight(uint256,uint256)";
         functionSignatures[
             46
-        ] = "getTokensStaked(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address),uint256)";
+        ] = "getTokensStaked(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address,uint256),uint256)";
         functionSignatures[47] = "getRewardEpochNumber(uint256)";
         functionSignatures[48] = "pow(uint256,uint256)";
         functionSignatures[
@@ -162,6 +162,9 @@ contract FunctionSelectorHelper {
         functionSignatures[
             70
         ] = "getUnfrozenStakeCountForUser(address,address)";
+        functionSignatures[71] = "getEmptyStakeRecordSlots(address,address)";
+        functionSignatures[72] = "getMostRecentStakeRecord(address,address)";
+
         return functionSignatures;
     }
 
@@ -363,6 +366,46 @@ contract FunctionSelectorHelper {
         returns (bytes4[] memory)
     {
         string[] memory functionSignatures = getSignaturesStakingVersionFacet();
+        bytes4[] memory selectors = new bytes4[](functionSignatures.length);
+
+        for (uint256 i = 0; i < functionSignatures.length; i++) {
+            selectors[i] = bytes4(keccak256(bytes(functionSignatures[i])));
+        }
+
+        return selectors;
+    }
+
+    function getSignaturesStakingNFTFacet()
+        public
+        pure
+        returns (string[] memory)
+    {
+        string[] memory functionSignatures = new string[](13);
+        functionSignatures[0] = "balanceOf(address)";
+        functionSignatures[1] = "ownerOf(uint256)";
+        functionSignatures[
+            2
+        ] = "safeTransferFrom(address,address,uint256,bytes)";
+        functionSignatures[3] = "safeTransferFrom(address,address,uint256)";
+        functionSignatures[4] = "transferFrom(address,address,uint256)";
+        functionSignatures[5] = "approve(address,uint256)";
+        functionSignatures[6] = "setApprovalForAll(address,bool)";
+        functionSignatures[7] = "tokenOfOwnerByIndex(address,uint256)";
+        functionSignatures[8] = "totalSupply()";
+        functionSignatures[9] = "getApproved(uint256)";
+        functionSignatures[10] = "isApprovedForAll(address,address)";
+        functionSignatures[11] = "ownershipChange(uint256)";
+        functionSignatures[12] = "tokenToStakeRecord(uint256)";
+
+        return functionSignatures;
+    }
+
+    function getSelectorsStakingNFTFacet()
+        public
+        pure
+        returns (bytes4[] memory)
+    {
+        string[] memory functionSignatures = getSignaturesStakingNFTFacet();
         bytes4[] memory selectors = new bytes4[](functionSignatures.length);
 
         for (uint256 i = 0; i < functionSignatures.length; i++) {
