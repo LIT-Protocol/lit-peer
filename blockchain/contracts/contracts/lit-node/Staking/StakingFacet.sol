@@ -1136,7 +1136,9 @@ contract StakingFacet is StakingCommon, ERC2771 {
         );
 
         // The second split stake record will have a new tokenId.
-        uint256 newTokenId = LibStakingNFT.addNewTokenTo(stakerAddress);
+        uint256 newTokenId = LibStakingNFT.addNewTokenTo(
+            LibERC2771._msgSender()
+        );
         _createStakeRecord(
             secondAmountSplit,
             newTimeLock,
@@ -1273,7 +1275,7 @@ contract StakingFacet is StakingCommon, ERC2771 {
         return true;
     }
 
-    function stakeBalanceOf(
+    function selfStakeBalanceOf(
         address stakerAddress
     ) external view returns (uint256) {
         LibStakingStorage.StakeRecord[] memory stakeRecords = views()

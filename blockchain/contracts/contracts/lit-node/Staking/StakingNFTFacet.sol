@@ -21,6 +21,7 @@ contract StakingNFTFacet is IERC721 {
     error NotOwner();
     error ZeroAddress();
     error SameAddress();
+    error NoEmptyStakeRecordSlots();
 
     function s() internal pure returns (LibStakingStorage.NFTStorage storage) {
         return LibStakingStorage.getNFTStorage();
@@ -167,12 +168,14 @@ contract StakingNFTFacet is IERC721 {
         LibStakingStorage.MappedStakeRecord memory mappedStakeRecord = s()
             .tokenToStakeRecord[tokenId];
         // Then, use this information to check for available stake record slots for the to address.
-        assert(
+        if (
             views().getEmptyStakeRecordSlots(
                 to,
                 mappedStakeRecord.operatorStakerAddress
-            ) > 0
-        );
+            ) == 0
+        ) {
+            revert NoEmptyStakeRecordSlots();
+        }
 
         // Clear approvals
         delete s().tokenToApprovals[tokenId];
