@@ -105,7 +105,7 @@ pub(crate) async fn perform_epoch_change(
             }
         };
 
-        trace!("New/existing key sets: {:?} / {:?}", new_key_sets.iter().map(|ks| ks.identifier.clone()).collect::<Vec<_>>(), existing_key_sets.iter().map(|ks | ks.identifier.clone()).collect::<Vec<_>>());
+        trace!("New/existing key sets: {:?} / {:?}", new_key_sets.iter().map(|ks| ks.identifier.clone()).collect::<Vec<_>>(), existing_key_sets.iter().map(|ks| ks.identifier.clone()).collect::<Vec<_>>());
 
         // start by processing the epoch change for the new key sets
         let mut epoch_change_res_or_update_needed_for_new_keys = None;
