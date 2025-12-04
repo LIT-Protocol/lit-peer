@@ -152,7 +152,17 @@ pub(crate) async fn perform_epoch_change(
             }
         };
 
-        trace!("New/existing key sets: {:?} / {:?}", new_key_sets.iter().map(|ks| ks.identifier.clone()).collect::<Vec<_>>(), existing_key_sets.iter().map(|ks| ks.identifier.clone()).collect::<Vec<_>>());
+        trace!(
+            "New/existing key sets: {:?} / {:?}",
+            new_key_sets
+                .iter()
+                .map(|ks| ks.identifier.clone())
+                .collect::<Vec<_>>(),
+            existing_key_sets
+                .iter()
+                .map(|ks| ks.identifier.clone())
+                .collect::<Vec<_>>()
+        );
 
         // start by processing the epoch change for the new key sets
         let mut epoch_change_res_or_update_needed_for_new_keys = None;
@@ -466,7 +476,10 @@ pub async fn get_existing_and_new_key_sets(
             }
             Err(e) => {
                 // this is temporary until we have a proper way to get the root keys from the chain.
-                warn!("Error in getting root keys, thus key set {} will be treated as a new key set: {}", keyset.identifier, e);
+                warn!(
+                    "Error in getting root keys, thus key set {} will be treated as a new key set: {}",
+                    keyset.identifier, e
+                );
                 new_key_sets.push(keyset.clone());
             }
         }
