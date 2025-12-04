@@ -2,6 +2,7 @@ use crate::config::chain::CachedRootKey;
 use crate::error::{Result, unexpected_err};
 use crate::models::KeySetConfig;
 use crate::peers::peer_state::models::SimplePeerCollection;
+use crate::tasks::fsm::epoch_change::ShadowOptions;
 use crate::tss::common::dkg_type::DkgType;
 use crate::tss::common::tss_state::TssState;
 use crate::tss::dkg::engine::{DkgAfterRestore, DkgEngine};
@@ -34,7 +35,7 @@ impl DkgManager {
         &self,
         dkg_id: &str,
         epoch_number: u64,
-        shadow_key_opts: (u64, u64),
+        shadow_key_opts: &ShadowOptions,
         realm_id: u64,
         current_peers: &SimplePeerCollection,
         new_peers: &SimplePeerCollection,
