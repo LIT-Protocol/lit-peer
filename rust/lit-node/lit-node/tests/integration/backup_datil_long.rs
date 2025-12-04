@@ -26,13 +26,12 @@ use tracing::info;
 
 const TARBALL_NAME: &str = "lit_backup_encrypted_keys.tar.gz";
 
-// Notes: 
+// Notes:
 // This test is designed to test the recovery of a Datil backup into a Naga network.
 // The datil based lit-recovery binary is used to recover the keyset from the datilbackup and upload the keyset to the nodes.
 // This is not the same as the lit-recovery project that exists in this repository.
-// This binary can be found athttps://github.com/LIT-Protocol/lit-recovery/pull/60 
+// This binary can be found athttps://github.com/LIT-Protocol/lit-recovery/pull/60
 // which is the branch "Introduce staker_address_to_url_map"
-
 
 #[tokio::test]
 async fn recover_datil_into_naga_test() {
@@ -81,13 +80,27 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
 
     testnet.actions().sleep_millis(5000).await;
 
-    let (realm_id, identifier, description) = (U256::from(1), "datil-keyset".to_string(), "Datil Key ".to_string());
+    let (realm_id, identifier, description) = (
+        U256::from(1),
+        "datil-keyset".to_string(),
+        "Datil Key ".to_string(),
+    );
     let keyset_id = identifier.clone();
-    let root_key_configs = vec![RootKeyConfig { curve_type: CurveType::BLS, count: 2 }, RootKeyConfig { curve_type: CurveType::K256, count: 20 }];
-    let result = validator_collection.actions().add_keyset(realm_id, identifier, description, root_key_configs).await;
+    let root_key_configs = vec![
+        RootKeyConfig {
+            curve_type: CurveType::BLS,
+            count: 2,
+        },
+        RootKeyConfig {
+            curve_type: CurveType::K256,
+            count: 20,
+        },
+    ];
+    let result = validator_collection
+        .actions()
+        .add_keyset(realm_id, identifier, description, root_key_configs)
+        .await;
     assert!(result.is_ok(), "Failed to add keyset `{}`", keyset_id);
-    
-
 
     let tx = validator_collection
         .actions()
@@ -183,7 +196,6 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
         .wait_for_recovery_status(NodeRecoveryStatus::AllKeysAreRestored as u8)
         .await;
     info!("All the nodes restored all the keys!");
-
 
     validator_collection.actions().sleep_millis(500000).await;
 }
