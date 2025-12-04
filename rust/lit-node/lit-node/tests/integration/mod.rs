@@ -5,7 +5,6 @@ pub mod signing;
 pub mod backup;
 pub mod epoch_change_long;
 pub mod integration_tests;
-pub mod keysets;
 pub mod lit_actions;
 pub mod session_sigs;
 pub mod shadow;

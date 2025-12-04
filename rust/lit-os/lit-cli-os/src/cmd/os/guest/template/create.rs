@@ -318,7 +318,7 @@ pub(crate) async fn do_os_guest_template_create(
                 network_name: None,
                 no_pinning: common_args.release_no_pinning,
                 push_only: false,
-                github_repo: "LIT-Protocol/lit-assets".to_string(),
+                github_repo: "LIT-Protocol/lit-peer".to_string(),
                 data_branch: "releases-info".to_string(),
             };
 
