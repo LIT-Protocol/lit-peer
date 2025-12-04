@@ -19,12 +19,22 @@ use tracing::instrument;
 use super::utils::get_current_and_new_peer_addresses;
 use super::utils::key_share_proofs_check;
 
+/// Options for shadow splicing operations.
+///
+/// When `is_shadow` is true, `epoch_number` and `realm_id` refer to the shadow realm,
+/// while `non_shadow_*` fields refer to the base/source realm being shadowed.
+/// When `is_shadow` is false, all epoch/realm fields should have matching values.
 #[derive(Debug, Clone)]
 pub struct ShadowOptions {
+    /// Whether this is a shadow realm operation.
     pub is_shadow: bool,
+    /// The epoch number (shadow epoch when `is_shadow` is true).
     pub epoch_number: u64,
+    /// The realm ID (shadow realm when `is_shadow` is true).
     pub realm_id: u64,
+    /// The base/source realm ID being shadowed.
     pub non_shadow_realm_id: u64,
+    /// The base/source epoch number being shadowed.
     pub non_shadow_epoch_number: u64,
 }
 
