@@ -37,6 +37,8 @@ pub struct TestSetupBuilder {
     wait_for_root_keys: bool,
     fund_wallet: bool,
     fund_ledger_for_wallet: bool,
+    custom_binary_path: Option<String>,
+    start_staked_only_validators: bool,
 }
 
 impl Default for TestSetupBuilder {
@@ -57,6 +59,8 @@ impl Default for TestSetupBuilder {
             wait_for_root_keys: true,
             fund_wallet: true,
             fund_ledger_for_wallet: true,
+            custom_binary_path: None,
+            start_staked_only_validators: true,
         }
     }
 }
@@ -77,6 +81,11 @@ impl TestSetupBuilder {
 
     pub fn num_staked_only_validators(mut self, num_staked_only_validators: usize) -> Self {
         self.num_staked_only_validators = num_staked_only_validators;
+        self
+    }
+
+    pub fn start_staked_only_validators(mut self, start_staked_only_validators: bool) -> Self {
+        self.start_staked_only_validators = start_staked_only_validators;
         self
     }
 
@@ -140,6 +149,11 @@ impl TestSetupBuilder {
         self
     }
 
+    pub fn custom_binary_path(mut self, custom_binary_path: Option<String>) -> Self {
+        self.custom_binary_path = custom_binary_path;
+        self
+    }
+
     pub async fn build(self) -> (Testnet, ValidatorCollection, EndUser) {
         let node_keys_path = Path::new("./node_keys");
         if node_keys_path.exists() {
@@ -190,8 +204,11 @@ impl TestSetupBuilder {
             }
         }
 
-        let num_staked_nodes =
-            self.num_staked_and_joined_validators + self.num_staked_only_validators;
+        let num_staked_nodes = if self.start_staked_only_validators {
+            self.num_staked_and_joined_validators + self.num_staked_only_validators
+        } else {
+            self.num_staked_and_joined_validators
+        };
 
         let node_binary_feature_flags = if self.is_fault_test {
             "lit-actions,testing,proxy_chatter".to_string()
@@ -204,6 +221,7 @@ impl TestSetupBuilder {
             .wait_initial_epoch(self.wait_initial_epoch)
             .wait_for_root_keys(self.wait_for_root_keys)
             .node_binary_feature_flags(node_binary_feature_flags)
+            .custom_binary_path(self.custom_binary_path)
             .build(&testnet)
             .await
             .expect("Failed to build validator collection");
