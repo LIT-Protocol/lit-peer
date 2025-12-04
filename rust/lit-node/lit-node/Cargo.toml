@@ -1,6 +1,6 @@
 [package]
 name = "lit_node"
-version = "2.1.3"
+version = "2.1.6"
 edition.workspace = true
 default-run = "lit_node"
 
