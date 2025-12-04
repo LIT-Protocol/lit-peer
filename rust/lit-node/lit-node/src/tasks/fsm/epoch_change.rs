@@ -43,8 +43,8 @@ impl ShadowOptions {
         is_shadow: bool,
         epoch_number: u64,
         realm_id: u64,
-        non_shadow_realm_id: u64,
         non_shadow_epoch_number: u64,
+        non_shadow_realm_id: u64,
     ) -> Self {
         Self {
             is_shadow,
@@ -407,8 +407,8 @@ async fn get_shadow_key_opts(
             true,
             shadow_epoch_number,
             shadow_realm_id,
-            non_shadow_realm_id,
             non_shadow_epoch_number,
+            non_shadow_realm_id,
         )
     } else {
         ShadowOptions::new(
