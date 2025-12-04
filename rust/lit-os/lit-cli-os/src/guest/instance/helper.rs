@@ -37,9 +37,7 @@ impl GuestInstanceHelper for GuestInstanceEnv {
     /// we perform some other checks to attempt to detect failed creations.
     fn is_valid(&self) -> bool {
         if let Ok(exists) = self.service_exists() {
-            if exists {
-                return true;
-            }
+            return exists;
         }
 
         false
@@ -300,10 +298,12 @@ impl GuestInstanceItemHelper for GuestInstanceItem {
             None,
         );
 
-        let staking_contract = resolver.staking_contract(cfg).await.expect(&format!(
-            "Failed to get staking contract from resolver with subnet {:?}",
-            resolver.subnet_id()
-        ));
+        let staking_contract = resolver.staking_contract(cfg).await.unwrap_or_else(|_| {
+            panic!(
+                "Failed to get staking contract from resolver with subnet {:?}",
+                resolver.subnet_id()
+            )
+        });
 
         let staker_address = self.staker_address()?;
 
@@ -313,18 +313,18 @@ impl GuestInstanceItemHelper for GuestInstanceItem {
             )?;
 
         let current_epoch_validators =
-            staking_contract.get_validators_in_current_epoch(realm_id).await.expect(&format!(
-                "Failed to get validators in current epoch for realm {} on staking contract {:?}",
+            staking_contract.get_validators_in_current_epoch(realm_id).await.unwrap_or_else(|_| panic!("Failed to get validators in current epoch for realm {} on staking contract {:?}",
                 realm_id,
-                staking_contract.address()
-            ));
+                staking_contract.address()));
 
         let next_epoch_validators =
-            staking_contract.get_validators_in_next_epoch(realm_id).await.expect(&format!(
-                "Failed to get validators in next epoch for realm {} on staking contract {:?}",
-                realm_id,
-                staking_contract.address()
-            ));
+            staking_contract.get_validators_in_next_epoch(realm_id).await.unwrap_or_else(|_| {
+                panic!(
+                    "Failed to get validators in next epoch for realm {} on staking contract {:?}",
+                    realm_id,
+                    staking_contract.address()
+                )
+            });
 
         let mut validators = Vec::new();
         validators.extend(current_epoch_validators);

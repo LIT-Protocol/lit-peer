@@ -1,5 +1,5 @@
 use super::{BeBytes, CompressedBytes, LeBytes};
-use blsful::inner_types::{G1Projective, G2Projective, Scalar};
+use lit_rust_crypto::blsful::inner_types::{G1Projective, G2Projective, Scalar};
 
 impl CompressedBytes for G1Projective {
     fn to_compressed(&self) -> Vec<u8> {

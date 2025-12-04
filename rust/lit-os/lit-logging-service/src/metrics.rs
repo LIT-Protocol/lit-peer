@@ -1,6 +1,6 @@
 // re export counter
-pub use lit_observability::metrics::counter;
 
+#[allow(dead_code)]
 pub mod grpc {
     //! Metrics for the gRPC service.
 
@@ -33,6 +33,7 @@ pub mod grpc {
     }
 }
 
+#[allow(dead_code)]
 pub mod device {
     //! Metrics for the serial devices.
 
@@ -64,6 +65,7 @@ pub mod device {
     }
 }
 
+#[allow(dead_code)]
 pub mod queue {
     //! Metrics for the queue.
 

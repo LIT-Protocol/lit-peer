@@ -112,21 +112,21 @@ impl DkgManager {
             "DKG {} with ID {} completed: {:?}",
             self.dkg_type, dkg_id, mode
         );
-        if let Some(m) = mode {
-            if m == Mode::Initial {
-                for dkg in dkg_engine.get_dkgs() {
-                    match dkg.result {
-                        Some(ref result) => {
-                            debug!(
-                                "DKG for epoch change complete for {} {}.",
-                                dkg.dkg_id, dkg.curve_type
-                            );
-                            root_keys.push(result.dkg_root_key());
-                        }
-                        None => {
-                            error!("DKG failed!");
-                            return Err(unexpected_err("DKG failed", None));
-                        }
+        if let Some(m) = mode
+            && m == Mode::Initial
+        {
+            for dkg in dkg_engine.get_dkgs() {
+                match dkg.result {
+                    Some(ref result) => {
+                        debug!(
+                            "DKG for epoch change complete for {} {}.",
+                            dkg.dkg_id, dkg.curve_type
+                        );
+                        root_keys.push(result.dkg_root_key());
+                    }
+                    None => {
+                        error!("DKG failed!");
+                        return Err(unexpected_err("DKG failed", None));
                     }
                 }
             }

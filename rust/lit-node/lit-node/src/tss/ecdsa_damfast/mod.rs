@@ -9,7 +9,6 @@ use crate::{
     peers::peer_state::models::SimplePeerCollection,
     tss::common::{dkg_type::DkgType, tss_state::TssState},
 };
-use elliptic_curve::{CurveArithmetic, FieldBytesSize, NonZeroScalar, PrimeCurve};
 use lit_core::error::Unexpected;
 use lit_core::utils::binary::bytes_to_hex;
 use lit_fast_ecdsa::{
@@ -23,13 +22,19 @@ use tracing::trace;
 use super::common::traits::signable::Signable;
 use crate::tasks::utils::generate_hash;
 use crate::utils::traits::SignatureCurve;
-use elliptic_curve::generic_array::ArrayLength;
-use elliptic_curve::group::{Curve, GroupEncoding};
-use hd_keys_curves::{HDDerivable, HDDeriver};
-use k256::ecdsa::hazmat::DigestPrimitive;
-use lit_node_core::PeerId;
-use lit_node_core::SigningScheme;
-use lit_node_core::{CompressedBytes, CompressedHex};
+use lit_node_core::{
+    CompressedBytes, CompressedHex, PeerId, SigningScheme,
+    hd_keys_curves_wasm::{HDDerivable, HDDeriver},
+};
+use lit_rust_crypto::{
+    elliptic_curve::{
+        CurveArithmetic, FieldBytesSize, NonZeroScalar, PrimeCurve, ScalarPrimitive,
+        generic_array::ArrayLength,
+    },
+    group::{Curve, GroupEncoding},
+    k256::{self, ecdsa::hazmat::DigestPrimitive},
+    p256, p384,
+};
 use serde::Serialize;
 use std::sync::Arc;
 use tracing::instrument;
@@ -366,13 +371,12 @@ impl DamFastState {
             ));
         }
 
-        let scalar_primitive = elliptic_curve::ScalarPrimitive::<C>::from_slice(message_bytes)
-            .map_err(|e| {
-                unexpected_err(
-                    e,
-                    Some("Could not convert message to sign into ScalarPrimitive".into()),
-                )
-            })?;
+        let scalar_primitive = ScalarPrimitive::<C>::from_slice(message_bytes).map_err(|e| {
+            unexpected_err(
+                e,
+                Some("Could not convert message to sign into ScalarPrimitive".into()),
+            )
+        })?;
         let msg_digest = C::Scalar::from(scalar_primitive);
 
         let peer_id = Option::<NonZeroScalar<C>>::from(NonZeroScalar::<C>::new(C::Scalar::from(

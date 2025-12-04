@@ -3,9 +3,8 @@ use futures::future::join_all;
 use lit_fast_ecdsa::SignatureShare;
 use lit_node::peers::peer_state::models::SimplePeerCollection;
 use lit_node::tasks::presign_manager::models::PreSignatureValue;
-use lit_node_core::CurveType;
-use lit_node_core::NodeSet;
-use lit_node_core::SigningScheme;
+use lit_node_core::{CurveType, NodeSet, SigningScheme};
+use lit_rust_crypto::{k256, p256, p384};
 use tokio::task::JoinHandle;
 
 #[tokio::test]

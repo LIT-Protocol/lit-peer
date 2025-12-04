@@ -683,11 +683,11 @@ pub fn hash_access_control_conditions(req: RequestConditions) -> Result<String> 
         // hash differently if this is v1 or v2 conditions
         let mut is_v2 = false;
         for condition_item in sol_rpc_conditions {
-            if let SolRpcConditionItem::Condition(condition) = condition_item {
-                if condition.pda_params.is_some() {
-                    is_v2 = true;
-                    break;
-                }
+            if let SolRpcConditionItem::Condition(condition) = condition_item
+                && condition.pda_params.is_some()
+            {
+                is_v2 = true;
+                break;
             }
         }
         if is_v2 {

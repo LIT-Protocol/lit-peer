@@ -1,5 +1,5 @@
 use super::{DynamicPaymentItem, SignableOutput, SignedData, default_epoch};
-use blsful::{Bls12381G2Impl, SignatureShare};
+use lit_rust_crypto::blsful::{Bls12381G2Impl, SignatureShare};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use serde_json::Value;
 use std::collections::HashMap;

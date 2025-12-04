@@ -1,13 +1,10 @@
-use bulletproofs::group::Group;
-use elliptic_curve::{
-    PrimeField,
-    bigint::U256,
-    group::GroupEncoding,
+use lit_rust_crypto::{
+    elliptic_curve::{bigint::U256, ops::Reduce, point::AffineCoordinates},
+    ff::PrimeField,
+    group::{Group, GroupEncoding},
     hash2curve::{ExpandMsgXmd, GroupDigest},
-    ops::Reduce,
-    point::AffineCoordinates,
+    k256::{ProjectivePoint, Scalar, Secp256k1},
 };
-use k256::{ProjectivePoint, Scalar, Secp256k1};
 use rfc6979::consts::U32;
 
 use crate::*;
@@ -98,7 +95,7 @@ impl VrfVerifier for Secp256k1 {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use elliptic_curve::Field;
+    use lit_rust_crypto::ff::Field;
     use rand::SeedableRng;
 
     #[test]

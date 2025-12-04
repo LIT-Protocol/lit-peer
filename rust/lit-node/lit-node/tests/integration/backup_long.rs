@@ -1,10 +1,8 @@
 use crate::common::ecdsa::simple_single_sign_with_hd_key;
 use crate::common::recovery_party::SiweSignature;
-use blsful::inner_types::{Group, GroupEncoding};
 use chrono::{Duration, Utc};
 use ethers::prelude::{H160, LocalWallet, Signer, U256};
 use ethers::types::Address;
-use k256::ecdsa::{SigningKey, VerifyingKey};
 use lit_blockchain::contracts::backup_recovery::BackupRecoveryState;
 use lit_core::config::CFG_ADMIN_OVERRIDE_NAME;
 use lit_core::utils::binary::bytes_to_hex;
@@ -23,6 +21,16 @@ use lit_node_testnet::TestSetupBuilder;
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::testnet::Testnet;
 use lit_node_testnet::validator::ValidatorCollection;
+use lit_rust_crypto::{
+    blsful, decaf377, ed448_goldilocks,
+    group::{Group, GroupEncoding},
+    jubjub,
+    k256::{
+        self,
+        ecdsa::{SigningKey, VerifyingKey},
+    },
+    p256, p384, pallas, vsss_rs,
+};
 use reqwest::Client;
 use semver::Version;
 use sha3::{Keccak256, digest::Digest};
@@ -651,6 +659,15 @@ async fn download_decryption_key_shares_to_local_lit_recovery_tools(
                     realm_id.as_u64(),
                 )
                 .await;
+            }
+            CurveType::RedPallas => {
+                check_for_lingering_keys::<pallas::Point>(
+                    curve_type,
+                    &pubkey,
+                    &peers,
+                    realm_id.as_u64(),
+                )
+                .await
             }
         }
     }

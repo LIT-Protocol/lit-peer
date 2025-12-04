@@ -46,6 +46,7 @@ pub static VALID_LABEL_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"^[a-zA-Z0-9:_-]+").expect("failed to construct regex for label validation")
 });
 
+#[allow(clippy::collapsible_if)]
 pub fn validate_host_name_part(part: &str, max_len: Option<usize>) -> Result<()> {
     if part.is_empty() {
         return Err(validation_err("invalid length for hostname part", None));

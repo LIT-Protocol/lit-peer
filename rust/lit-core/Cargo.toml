@@ -25,30 +25,23 @@ alloy = { version = "0.12.5", features = ["eip712", "sol-types"]}
 arc-swap = { version = "1.7" }
 async-std = { version = "1.13" }
 async-trait = { version = "0.1" }
+bulletproofs = { git = "https://github.com/LIT-Protocol/bulletproofs.git", branch = "pallas" }
 bytes = { version = "1.10" }
-curve25519-dalek = { package = "curve25519-dalek-ml", version="4.3.0", features = ["group", "serde", "rand_core"] }
-decaf377 = { git = "https://github.com/LIT-Protocol/decaf377", rev = "1c5755b2b90e1969d47ce89cf2d35078984a0ee5", features = ["serde"]  }
 derive_more = { version = "2", features = ["display"] }
-ed448-goldilocks-plus = { version = "0.16", features = ["serde"] }
-elliptic-curve = { version = "0.13", features = ["arithmetic", "serde"] }
 elliptic-curve-tools = { version = "0.1", features = ["std"] }
 ethers = { version = "2.0", features = ["abigen", "legacy"] }
 futures = { version = "0.3" }
+generic-array = "=1.1.1"
 hex = "0.4"
 http-body-util = { version = "0.1.2" }
 hyper = { version = "1" }
 hyper-util = { version = "0.1", features = ["client-legacy", "server", "service"] }
 hyperlocal = { version = "0.9" }
-jubjub = { package="jubjub-plus", version = "0.10", features = ["serde"] }
-k256 = { version = "0.13", features = ["arithmetic", "hash2curve", "serde"] }
-generic-array = "=1.1.1"
 once_cell = { version = "1.20" }
 opentelemetry = "0.24"
 opentelemetry-otlp = { version = "0.17", features = ["metrics"] }
 opentelemetry_sdk = { version = "0.24.1", features = ["rt-tokio", "metrics"] }
 opentelemetry-semantic-conventions = "0.15.0"
-p256 = { version = "0.13", features = ["arithmetic", "hash2curve", "serde"] }
-p384 = { version = "0.13", features = ["arithmetic", "hash2curve", "serde"] }
 rand = "0.8"
 rand_chacha = "0.3.1"
 reqwest = { version = "0.11.12", default-features = false, features = ["rustls-tls"] }
@@ -61,5 +54,19 @@ thiserror = "2.0"
 tokio = { version = "1", features = ["full"] }
 tracing = { version = "0.1" }
 tracing-opentelemetry = { version = "0.25" }
-vsss-rs = { version = "5.1", features = ["std"] }
 zeroize = { version = "1.8", features = ["derive"] }
+
+[workspace.dependencies.lit-rust-crypto]
+git = "https://github.com/LIT-Protocol/lit-rust-crypto"
+tag = "0.6.0"
+features = [
+    "arithmetic",
+    "hash2curve",
+    "serde",
+    "std",
+]
+
+[workspace.dependencies.hd-keys-curves-wasm]
+git = "https://github.com/LIT-Protocol/hd-keys-curves-wasm.git"
+branch = "pallas"
+default-features = false

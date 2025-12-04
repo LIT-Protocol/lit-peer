@@ -116,7 +116,7 @@ impl<T: fmt::Display> fmt::Display for Padded<T> {
     }
 }
 
-pub fn colored_level(style: &mut Style, level: Level) -> StyledValue<&'static str> {
+pub fn colored_level(style: &mut Style, level: Level) -> StyledValue<'_, &'static str> {
     match level {
         Level::Trace => style.set_color(Color::Magenta).value("TRACE"),
         Level::Debug => style.set_color(Color::Blue).value("DEBUG"),

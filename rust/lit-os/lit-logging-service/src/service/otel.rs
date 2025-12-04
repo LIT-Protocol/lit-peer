@@ -61,7 +61,7 @@ impl OTELService {
         }));
 
         // After starting the queue worker, update the queue size metric.
-        metrics::counter::add_value(
+        lit_observability::metrics::counter::add_value(
             metrics::queue::QueueMetrics::OtelServiceQueueSize,
             self.queue_rx.len() as u64,
             &[],
@@ -139,7 +139,7 @@ async fn queue_worker(rx: Receiver<OTELServiceValue>, quit_rx: Receiver<bool>, d
                                     if let Err(e) = writeln!(unified_dev, "{json}") {
                                         eprintln!("{INTERNAL_LOG_PREFIX}: Failed to write log entry to device (dropping) - {e:?}")
                                     }
-                                    metrics::counter::add_value(metrics::device::DeviceMetrics::WriteSize, json.len() as u64, &[KeyValue::new(
+                                    lit_observability::metrics::counter::add_value(metrics::device::DeviceMetrics::WriteSize, json.len() as u64, &[KeyValue::new(
                                         "telemetry_type",
                                         "log",
                                     )]);
@@ -158,7 +158,7 @@ async fn queue_worker(rx: Receiver<OTELServiceValue>, quit_rx: Receiver<bool>, d
                                     if let Err(e) = writeln!(unified_dev, "{json}") {
                                         eprintln!("{INTERNAL_LOG_PREFIX}: Failed to write log entry to device (dropping) - {e:?}")
                                     }
-                                    metrics::counter::add_value(metrics::device::DeviceMetrics::WriteSize, json.len() as u64, &[KeyValue::new(
+                                    lit_observability::metrics::counter::add_value(metrics::device::DeviceMetrics::WriteSize, json.len() as u64, &[KeyValue::new(
                                         "telemetry_type",
                                         "metric",
                                     )]);
@@ -177,7 +177,7 @@ async fn queue_worker(rx: Receiver<OTELServiceValue>, quit_rx: Receiver<bool>, d
                                     if let Err(e) = writeln!(unified_dev, "{json}") {
                                         eprintln!("{INTERNAL_LOG_PREFIX}: Failed to write log entry to device (dropping) - {e:?}")
                                     }
-                                    metrics::counter::add_value(metrics::device::DeviceMetrics::WriteSize, json.len() as u64, &[KeyValue::new(
+                                    lit_observability::metrics::counter::add_value(metrics::device::DeviceMetrics::WriteSize, json.len() as u64, &[KeyValue::new(
                                         "telemetry_type",
                                         "trace",
                                     )]);
@@ -193,7 +193,7 @@ async fn queue_worker(rx: Receiver<OTELServiceValue>, quit_rx: Receiver<bool>, d
                 }
 
                 // After reading the message, update the queue size metric.
-                metrics::counter::add_value(metrics::queue::QueueMetrics::OtelServiceQueueSize, rx.len() as u64, &[]);
+                lit_observability::metrics::counter::add_value(metrics::queue::QueueMetrics::OtelServiceQueueSize, rx.len() as u64, &[]);
             }
         }
     }

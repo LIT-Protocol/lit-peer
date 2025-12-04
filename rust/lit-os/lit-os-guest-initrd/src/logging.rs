@@ -63,8 +63,7 @@ impl LogFormatter {
 
         let kvs = record.key_values();
         if kvs.count() > 0 {
-            kvs.visit(&mut FieldCollectorKVVisitor(&mut fields))
-                .map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+            kvs.visit(&mut FieldCollectorKVVisitor(&mut fields)).map_err(io::Error::other)?;
 
             if !fields.is_empty() {
                 let mut fields_style = buf.style();

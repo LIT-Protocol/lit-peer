@@ -4,8 +4,8 @@ use crate::{
 };
 use ecdsa::elliptic_curve::{NonZeroScalar, rand_core::SeedableRng};
 use ecdsa::signature::Verifier;
-use hd_keys_curves_wasm::k256;
 use lit_poly::DensePrimeField;
+use lit_rust_crypto::k256;
 
 #[test]
 fn lowest_threshold_trusted_dealer() {

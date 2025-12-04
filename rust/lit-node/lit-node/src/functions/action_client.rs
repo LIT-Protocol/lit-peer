@@ -25,15 +25,10 @@ use crate::utils::tracing::inject_tracing_metadata;
 use crate::utils::web::{get_bls_root_pubkey, hash_access_control_conditions};
 use anyhow::{Context as _, Result, bail};
 use base64_light::base64_decode;
-use blsful::inner_types::GroupEncoding;
-use blsful::{Bls12381G2Impl, SignatureShare};
 use derive_builder::Builder;
 use ecdsa::SignatureSize;
-use elliptic_curve::generic_array::ArrayLength;
-use elliptic_curve::{CurveArithmetic, PrimeCurve};
 use ethers::utils::keccak256;
 use futures::{FutureExt as _, TryFutureExt};
-use hd_keys_curves::{HDDerivable, HDDeriver};
 use lit_actions_grpc::tokio_stream::StreamExt as _;
 use lit_actions_grpc::tonic::{
     Code, Extensions, Request, Status, metadata::MetadataMap, transport::Error as TransportError,
@@ -52,7 +47,16 @@ use lit_node_common::config::LitNodeConfig as _;
 use lit_node_core::{
     AccessControlConditionResource, AuthSigItem, BeHex, CompressedBytes, CurveType,
     EndpointVersion, JsonAuthSig, LitActionPriceComponent, LitResource, NodeSet, PeerId,
-    SignableOutput, SignedData, SigningScheme, UnifiedAccessControlConditionItem, response,
+    SignableOutput, SignedData, SigningScheme, UnifiedAccessControlConditionItem,
+    hd_keys_curves_wasm::{HDDerivable, HDDeriver},
+    response,
+};
+use lit_rust_crypto::{
+    blsful::{Bls12381G2Impl, PublicKey, SignatureShare, inner_types::G1Projective},
+    decaf377, ed448_goldilocks,
+    elliptic_curve::{CurveArithmetic, PrimeCurve, generic_array::ArrayLength},
+    group::GroupEncoding,
+    jubjub, k256, p256, p384, vsss_rs,
 };
 use lit_sdk::signature::{SignedDataOutput, combine_and_verify_signature_shares};
 
@@ -915,7 +919,7 @@ impl Client {
                 shares.push((PeerId::ONE, signature_share)); // lazy - it's not zero, but we don't seem to care!
 
                 let network_pubkey = get_bls_root_pubkey(&tss_state).await?;
-                let network_pubkey = blsful::PublicKey::try_from(&hex::decode(&network_pubkey)?)?;
+                let network_pubkey = PublicKey::try_from(&hex::decode(&network_pubkey)?)?;
 
                 let serialized_decryption_shares =
                     shares.iter().map(|(_, share)| *share).collect::<Vec<_>>();
@@ -1037,8 +1041,7 @@ impl Client {
                         shares.push((PeerId::ONE, signature_share)); // lazy - it's not zero, but we don't seem to care!
 
                         let network_pubkey = &get_bls_root_pubkey(&tss_state).await?;
-                        let network_pubkey =
-                            blsful::PublicKey::try_from(&hex::decode(network_pubkey)?)?;
+                        let network_pubkey = PublicKey::try_from(&hex::decode(network_pubkey)?)?;
 
                         let serialized_decryption_shares =
                             shares.iter().map(|(_, share)| *share).collect::<Vec<_>>();
@@ -1059,14 +1062,12 @@ impl Client {
                             }
                         };
 
-                        let result = match std::str::from_utf8(&decrypted) {
+                        match std::str::from_utf8(&decrypted) {
                             Ok(result) => result.to_string(),
                             Err(e) => {
                                 bail!("Failed to convert decrypted bytes to string.")
                             }
-                        };
-
-                        result
+                        }
                     }
                 };
 
@@ -1255,6 +1256,7 @@ impl Client {
                     | SigningScheme::SchnorrRistretto25519Sha512
                     | SigningScheme::SchnorrEd448Shake256
                     | SigningScheme::SchnorrRedJubjubBlake2b512
+                    | SigningScheme::SchnorrRedPallasBlake2b512
                     | SigningScheme::SchnorrRedDecaf377Blake2b512
                     | SigningScheme::SchnorrkelSubstrate => {
                         let frost_signature: lit_frost::Signature =
@@ -1362,7 +1364,7 @@ impl Client {
             }) => {
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
                 let network_pubkey = &get_bls_root_pubkey(&tss_state).await?;
-                let network_pubkey = blsful::PublicKey::try_from(&hex::decode(network_pubkey)?)?;
+                let network_pubkey = PublicKey::try_from(&hex::decode(network_pubkey)?)?;
 
                 use sha2::{Digest, Sha256};
                 let mut hasher = Sha256::new();
@@ -1876,13 +1878,9 @@ impl Client {
     ) -> Result<Vec<u8>> {
         let pubkey = match signing_scheme {
             SigningScheme::Bls12381G1ProofOfPossession => CompressedBytes::to_compressed(
-                &derive_ipfs_keys::<blsful::inner_types::G1Projective>(
-                    tss_state,
-                    action_ipfs_id,
-                    signing_scheme,
-                )
-                .await?
-                .1,
+                &derive_ipfs_keys::<G1Projective>(tss_state, action_ipfs_id, signing_scheme)
+                    .await?
+                    .1,
             ),
             SigningScheme::EcdsaK256Sha256
             | SigningScheme::SchnorrK256Sha256

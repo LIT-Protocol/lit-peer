@@ -217,37 +217,38 @@ pub async fn do_network_restore(
 
     // Wait until the network is active again
     loop {
-        if let Ok(state) = peer_state.network_state(realm_id).await {
-            if state != NetworkState::Restore && state != NetworkState::Paused {
-                let recovered_peer_ids = match restore_state
-                    .pull_recovered_peer_ids(&cfg.load_full())
-                    .await
-                {
-                    Ok(ids) => ids,
-                    Err(e) => {
-                        error!(
-                            "RestoredState: Failed to read the recovered peer ids: {}",
-                            e
-                        );
-                        // Try again
-                        continue;
-                    }
-                };
-                let data = match standard_dkg_manager.next_dkg_after_restore.take() {
-                    Some(mut data) => {
-                        data.peers = recovered_peer_ids;
-                        data
-                    }
-                    None => DkgAfterRestoreData {
-                        peers: recovered_peer_ids,
-                        ..Default::default()
-                    },
-                };
-                standard_dkg_manager.next_dkg_after_restore = DkgAfterRestore::True(data);
+        if let Ok(state) = peer_state.network_state(realm_id).await
+            && state != NetworkState::Restore
+            && state != NetworkState::Paused
+        {
+            let recovered_peer_ids = match restore_state
+                .pull_recovered_peer_ids(&cfg.load_full())
+                .await
+            {
+                Ok(ids) => ids,
+                Err(e) => {
+                    error!(
+                        "RestoredState: Failed to read the recovered peer ids: {}",
+                        e
+                    );
+                    // Try again
+                    continue;
+                }
+            };
+            let data = match standard_dkg_manager.next_dkg_after_restore.take() {
+                Some(mut data) => {
+                    data.peers = recovered_peer_ids;
+                    data
+                }
+                None => DkgAfterRestoreData {
+                    peers: recovered_peer_ids,
+                    ..Default::default()
+                },
+            };
+            standard_dkg_manager.next_dkg_after_restore = DkgAfterRestore::True(data);
 
-                info!("RestoreState: Exiting recovery code, starting the fsm loop.");
-                break;
-            }
+            info!("RestoreState: Exiting recovery code, starting the fsm loop.");
+            break;
         }
     }
 }
