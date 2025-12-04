@@ -8,3 +8,4 @@ pub mod integration_tests;
 pub mod lit_actions;
 pub mod session_sigs;
 pub mod shadow;
+pub mod tracing;
