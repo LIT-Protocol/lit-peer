@@ -11,7 +11,7 @@ use lit_observability::channels::{ChannelMsg, new_traced_bounded_channel};
 use temp_file::TempFile;
 use tokio_stream::{Stream, StreamExt as _};
 use tonic::{Request, Response, Status};
-use tracing::{Instrument, debug, debug_span, error, instrument};
+use tracing::{Instrument, debug, debug_span, error, info_span, instrument};
 
 #[derive(Default, PartialEq)]
 pub enum ServerType {
@@ -95,6 +95,19 @@ impl Action for Server {
                 Some(UnionRequest::Execute(req)) => {
                     debug!("{:?}", DebugExecutionRequest::from(&req));
 
+                    let x_request_id = req
+                        .http_headers
+                        .get("x-request-id")
+                        .cloned()
+                        .unwrap_or_else(|| String::new());
+
+                    // Create span with correlation_id only if present (avoids empty attributes in traces)
+                    let worker_span = if x_request_id.is_empty() {
+                        info_span!(parent: &span, "execute_js_worker")
+                    } else {
+                        info_span!(parent: &span, "execute_js_worker", correlation_id = %x_request_id)
+                    };
+
                     std::thread::spawn(move || {
                         create_and_run_current_thread(
                             async move {
@@ -137,7 +150,7 @@ impl Action for Server {
                                     })
                                     .await;
                             }
-                            .instrument(span),
+                            .instrument(worker_span),
                         );
                     });
                 }
