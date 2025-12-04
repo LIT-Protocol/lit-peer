@@ -9,6 +9,7 @@ use lit_core::utils::binary::bytes_to_hex;
 use lit_node::common::key_helper::KeyCache;
 use lit_node::models::KeySetConfig;
 use lit_node::peers::peer_state::models::SimplePeerCollection;
+use lit_node::tasks::fsm::epoch_change::ShadowOptions;
 use lit_node::tss::common::dkg_type::DkgType;
 use lit_node::tss::common::key_share::KeyShare;
 use lit_node::tss::common::storage::{
@@ -305,6 +306,7 @@ pub async fn dkg_after_restore<G>(
     let threshold = next_peers.threshold_for_set_testing_only();
     let mut join_set = tokio::task::JoinSet::new();
 
+    let shadow_key_opts = ShadowOptions::new(false, 1, realm_id, 1, realm_id);
     for node in vnc_before.nodes.iter() {
         tokio::time::sleep(std::time::Duration::from_millis(10)).await;
         let mut dkg_engine = DkgEngine::new(
@@ -312,7 +314,7 @@ pub async fn dkg_after_restore<G>(
             DkgType::Standard,
             1,
             threshold,
-            (1, realm_id),
+            &shadow_key_opts,
             &current_peers,
             &next_peers,
             DkgAfterRestore::False,
@@ -395,12 +397,13 @@ pub async fn dkg_after_restore<G>(
         // assume this wait is because the join set starts executing immediately on creation
         tokio::time::sleep(std::time::Duration::from_millis(10)).await;
 
+        let shadow_key_opts = ShadowOptions::new(false, 2, realm_id, 2, realm_id);
         let mut dkg_engine = DkgEngine::new(
             node.tss_state.clone(),
             DkgType::Standard,
             2,
             threshold,
-            (2, realm_id),
+            &shadow_key_opts,
             &current_peers,
             &next_peers,
             DkgAfterRestore::True(DkgAfterRestoreData {
@@ -641,13 +644,14 @@ pub async fn dkg(
     for node in vnc.nodes.iter() {
         // this is a representation of what happens - but is not exhaustive
 
+        let shadow_key_opts = ShadowOptions::new(false, epoch, realm_id, epoch, realm_id);
         tokio::time::sleep(std::time::Duration::from_millis(10)).await;
         let mut dkg_engine = DkgEngine::new(
             node.tss_state.clone(),
             DkgType::Standard,
             epoch,
             threshold,
-            (epoch, realm_id),
+            &shadow_key_opts,
             current_peers,
             &next_peers,
             DkgAfterRestore::False,
@@ -716,13 +720,14 @@ pub async fn dkg_all_curves(
     for node in vnc.nodes.iter() {
         // this is a representation of what happens - but is not exhaustive
 
+        let shadow_key_opts = ShadowOptions::new(false, epoch, realm_id, epoch, realm_id);
         tokio::time::sleep(std::time::Duration::from_millis(10)).await;
         let mut dkg_engine = DkgEngine::new(
             node.tss_state.clone(),
             DkgType::Standard,
             epoch,
             threshold,
-            (epoch, realm_id),
+            &shadow_key_opts,
             current_peers,
             &next_peers,
             DkgAfterRestore::False,

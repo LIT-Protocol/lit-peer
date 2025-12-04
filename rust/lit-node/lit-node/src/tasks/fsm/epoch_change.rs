@@ -19,6 +19,43 @@ use tracing::instrument;
 use super::utils::get_current_and_new_peer_addresses;
 use super::utils::key_share_proofs_check;
 
+#[derive(Debug, Clone)]
+pub struct ShadowOptions {
+    pub is_shadow: bool,
+    pub epoch_number: u64,
+    pub realm_id: u64,
+    pub non_shadow_realm_id: u64,
+    pub non_shadow_epoch_number: u64,
+}
+
+impl ShadowOptions {
+    pub fn new(
+        is_shadow: bool,
+        epoch_number: u64,
+        realm_id: u64,
+        non_shadow_realm_id: u64,
+        non_shadow_epoch_number: u64,
+    ) -> Self {
+        Self {
+            is_shadow,
+            epoch_number,
+            realm_id,
+            non_shadow_realm_id,
+            non_shadow_epoch_number,
+        }
+    }
+
+    pub fn new_empty(is_shadow: bool) -> Self {
+        Self {
+            is_shadow,
+            epoch_number: 0,
+            realm_id: 0,
+            non_shadow_realm_id: 0,
+            non_shadow_epoch_number: 0,
+        }
+    }
+}
+
 struct EpochChangeResOrUpdateNeeded {
     pub epoch_change_res: Option<Option<HashMap<String, Vec<CachedRootKey>>>>,
     pub update_req: Option<u64>,
@@ -64,7 +101,7 @@ pub(crate) async fn perform_epoch_change(
         // when you start with a shadow node, they are going to read the "original" key (from the src realm) ....
         let shadow_key_opts =
             get_shadow_key_opts(&peer_state, is_shadow, epoch_number, realm_id).await;
-        if shadow_key_opts.0 == 0 && is_shadow {
+        if shadow_key_opts.epoch_number == 0 && is_shadow {
             warn!(
                 "Shadow realm is not ready yet, aborting the epoch change attempt #{}.",
                 abort_and_restart_count
@@ -126,7 +163,7 @@ pub(crate) async fn perform_epoch_change(
                 &new_key_sets,
                 &latest_dkg_id,
                 current_epoch,
-                shadow_key_opts,
+                &shadow_key_opts,
                 &empty_peers,
                 &new_peers,
                 None,
@@ -152,7 +189,7 @@ pub(crate) async fn perform_epoch_change(
             &existing_key_sets,
             &latest_dkg_id,
             current_epoch,
-            shadow_key_opts,
+            &shadow_key_opts,
             &current_peers,
             &new_peers,
             epoch_change_res_or_update_needed_for_new_keys,
@@ -251,7 +288,7 @@ async fn process_epoch_for_key_set(
     key_sets: &Vec<KeySetConfig>,
     latest_dkg_id: &str,
     current_epoch: u64,
-    shadow_key_opts: (u64, u64),
+    shadow_key_opts: &ShadowOptions,
     current_peers: &SimplePeerCollection,
     new_peers: &SimplePeerCollection,
     existing_epoch_change_res_or_update_needed: Option<EpochChangeResOrUpdateNeeded>,
@@ -307,7 +344,11 @@ async fn process_epoch_for_key_set(
                 }
                 }
                 Err(e) => {
-                    error!("DKG error: {:?}", e);
+                    if is_shadow {
+                        error!("DKG error for shadow realm {} / epoch {}  : {:?}", realm_id, shadow_key_opts.epoch_number, e);
+                    } else {
+                        error!("DKG error for realm {}  {:?}", realm_id, e);
+                    }
                     return Err(e);
                 }
             }
@@ -323,25 +364,50 @@ async fn get_shadow_key_opts(
     is_shadow: bool,
     epoch_number: U256,
     realm_id: u64,
-) -> (u64, u64) {
+) -> ShadowOptions {
     if is_shadow {
-        let base_realm_id = peer_state.shadow_realm_id();
-        let base_epoch_number = peer_state.get_epoch(base_realm_id).await;
+        let shadow_realm_id = peer_state.shadow_realm_id();
+        let shadow_epoch_details = peer_state.get_epoch(shadow_realm_id).await;
 
-        let base_epoch_number = match base_epoch_number {
-            Ok(base_epoch_number) => base_epoch_number.1,
+        let non_shadow_realm_id = peer_state.realm_id();
+        let non_shadow_epoch_details = peer_state.get_epoch(non_shadow_realm_id).await;
+
+        let shadow_epoch_number = match shadow_epoch_details {
+            Ok(shadow_epoch_details) => shadow_epoch_details.1.as_u64(),
             Err(e) => {
                 warn!(
                     "get_epoch failed for base epoch when shadow node is starting: {}",
                     e
                 );
-                return (0, 0);
+                return ShadowOptions::new_empty(true);
             }
         };
-        trace!("Base epoch number: {}", base_epoch_number);
-        (base_epoch_number.as_u64(), base_realm_id)
+        let non_shadow_epoch_number = match non_shadow_epoch_details {
+            Ok(non_shadow_epoch_details) => non_shadow_epoch_details.1.as_u64(),
+            Err(e) => {
+                warn!(
+                    "get_epoch failed for non-shadow epoch when shadow node is starting: {}",
+                    e
+                );
+                return ShadowOptions::new_empty(true);
+            }
+        };
+        trace!("Shadow epoch number: {}", shadow_epoch_number);
+        ShadowOptions::new(
+            true,
+            shadow_epoch_number,
+            shadow_realm_id,
+            non_shadow_realm_id,
+            non_shadow_epoch_number,
+        )
     } else {
-        (epoch_number.as_u64(), realm_id)
+        ShadowOptions::new(
+            false,
+            epoch_number.as_u64(),
+            realm_id,
+            epoch_number.as_u64(),
+            realm_id,
+        )
     }
 }
 
