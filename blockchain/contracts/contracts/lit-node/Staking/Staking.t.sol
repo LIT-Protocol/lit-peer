@@ -762,6 +762,79 @@ contract StakingTest is Test, SetupAndUtils {
         }
     }
 
+    /// @notice This test is when a delegating staker stakes against multiple validators
+    /// and then claims reward for one of them, that the correct stake record is updated
+    /// and the other stake record is not affected.
+    function testFuzz_DelegatingStakerStakesAgainstMultipleValidators(
+        uint256 amount,
+        uint256 timeLock
+    ) public {
+        amount = bound(amount, 32 ether, 1_000_000 ether);
+        timeLock = bound(timeLock, 90 days, 365 * 2 days);
+
+        // Setup validators
+        address[] memory operatorStakers = _generateAddresses(4);
+        _setupValidators(
+            1,
+            operatorStakers,
+            amount * 10,
+            amount,
+            timeLock,
+            _generateUint256s(4)
+        );
+
+        // Setup delegating staker
+        address delegatingStaker = address(0x999);
+        _fundAddressWithTokensAndApprove(delegatingStaker, amount * 2);
+
+        // Delegating staker stakes with the first validator
+        vm.prank(delegatingStaker);
+        stakingFacet.stake(amount, timeLock, operatorStakers[0]);
+
+        // Delegating staker stakes with the second validator
+        vm.prank(delegatingStaker);
+        stakingFacet.stake(amount, timeLock, operatorStakers[1]);
+
+        // Advance to epoch 6 to earn rewards
+        _advanceEpochs(1, 5, operatorStakers, 1);
+
+        // Get a reference of the stake records
+        LibStakingStorage.StakeRecord memory stakeRecord1 = stakingViewsFacet
+            .getStakeRecord(operatorStakers[0], 1, delegatingStaker);
+        LibStakingStorage.StakeRecord memory stakeRecord2 = stakingViewsFacet
+            .getStakeRecord(operatorStakers[1], 1, delegatingStaker);
+
+        // Claim rewards from the first validator
+        vm.prank(delegatingStaker);
+        stakingFacet.claimStakeRewards(1, operatorStakers[0], 1, 0);
+
+        // Get a reference of the new stake records
+        LibStakingStorage.StakeRecord memory newStakeRecord1 = stakingViewsFacet
+            .getStakeRecord(operatorStakers[0], 1, delegatingStaker);
+        LibStakingStorage.StakeRecord memory newStakeRecord2 = stakingViewsFacet
+            .getStakeRecord(operatorStakers[1], 1, delegatingStaker);
+
+        // Assert that the stake record for the first validator is updated correctly
+        assertGt(
+            newStakeRecord1.lastUpdateTimestamp,
+            stakeRecord1.lastUpdateTimestamp
+        );
+        assertGt(
+            newStakeRecord1.lastRewardEpochClaimed,
+            stakeRecord1.lastRewardEpochClaimed + 1
+        );
+
+        // Assert that the stake record for the second validator is not affected
+        assertEq(
+            newStakeRecord2.lastUpdateTimestamp,
+            stakeRecord2.lastUpdateTimestamp
+        );
+        assertEq(
+            newStakeRecord2.lastRewardEpochClaimed,
+            stakeRecord2.lastRewardEpochClaimed
+        );
+    }
+
     /// @notice This test is when a node operator / validator calls stakeAndJoin
     /// that the reward epoch and global stats are updated correctly.
     function testFuzz_StakeAndJoin_ValidatorState(
