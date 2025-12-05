@@ -152,12 +152,22 @@ pub(crate) async fn perform_epoch_change(
             }
         };
 
-        trace!("new_key_sets: {:?}", new_key_sets);
-        trace!("existing_key_sets: {:?}", existing_key_sets);
+        trace!(
+            "New/existing key sets: {:?} / {:?}",
+            new_key_sets
+                .iter()
+                .map(|ks| ks.identifier.clone())
+                .collect::<Vec<_>>(),
+            existing_key_sets
+                .iter()
+                .map(|ks| ks.identifier.clone())
+                .collect::<Vec<_>>()
+        );
 
         // start by processing the epoch change for the new key sets
         let mut epoch_change_res_or_update_needed_for_new_keys = None;
         if !new_key_sets.is_empty() {
+            trace!("Processing epoch change for new key sets");
             if current_peers != new_peers && !current_peers.is_empty() {
                 warn!(
                     "When creating a new set of root keys, current peers should be empty or equivalent to new peers.  DKG will not be performed until the keyset is removed or the current peer set is equivalent to the new peer set."
@@ -191,6 +201,7 @@ pub(crate) async fn perform_epoch_change(
             };
         }
 
+        trace!("Processing epoch change for existing key sets");
         let epoch_change_res_or_update_needed = match process_epoch_for_key_set(
             dkg_manager,
             fsm_worker_metadata.clone(),
@@ -465,7 +476,10 @@ pub async fn get_existing_and_new_key_sets(
             }
             Err(e) => {
                 // this is temporary until we have a proper way to get the root keys from the chain.
-                warn!("Error in getting root keys: {}", e);
+                warn!(
+                    "Error in getting root keys, thus key set {} will be treated as a new key set: {}",
+                    keyset.identifier, e
+                );
                 new_key_sets.push(keyset.clone());
             }
         }
