@@ -1,4 +1,5 @@
-use super::OsMetric;
+use super::{GaugeMetric, OsMetric};
+use lit_observability::opentelemetry::KeyValue;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -88,4 +89,19 @@ impl From<&LoginHistory> for BTreeMap<String, String> {
 
 impl OsMetric for LoginHistory {
     const NAME: &'static str = "os.login_history";
+}
+
+impl GaugeMetric for LoginHistory {
+    fn gauge_value(&self) -> Option<f64> {
+        Some(1.0)
+    }
+
+    fn gauge_labels(&self) -> Vec<KeyValue> {
+        vec![
+            KeyValue::new("user", self.user.clone()),
+            KeyValue::new("tty", self.tty.clone()),
+            KeyValue::new("src", self.src.clone()),
+            KeyValue::new("utmp_type_name", self.utmp_type_name.clone()),
+        ]
+    }
 }

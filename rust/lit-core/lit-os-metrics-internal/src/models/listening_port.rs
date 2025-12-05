@@ -1,4 +1,5 @@
-use crate::models::OsMetric;
+use crate::models::{GaugeMetric, OsMetric};
+use lit_observability::opentelemetry::KeyValue;
 use serde::Serialize;
 use std::collections::BTreeMap;
 
@@ -18,6 +19,28 @@ pub struct ListeningPort {
 
 impl OsMetric for ListeningPort {
     const NAME: &'static str = "listening_ports";
+}
+
+impl GaugeMetric for ListeningPort {
+    fn gauge_value(&self) -> Option<f64> {
+        Some(1.0)
+    }
+
+    fn gauge_labels(&self) -> Vec<KeyValue> {
+        let mut labels = vec![
+            KeyValue::new("pid", self.pid.clone()),
+            KeyValue::new("port", self.port.clone()),
+            KeyValue::new("protocol", self.protocol.clone()),
+            KeyValue::new("family", self.family.clone()),
+            KeyValue::new("address", self.address.clone()),
+        ];
+
+        if let Some(process_name) = &self.process_name {
+            labels.push(KeyValue::new("process_name", process_name.clone()));
+        }
+
+        labels
+    }
 }
 
 impl TryFrom<&BTreeMap<String, String>> for ListeningPort {

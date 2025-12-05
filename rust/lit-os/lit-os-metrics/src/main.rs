@@ -121,34 +121,34 @@ fn handle_metrics(args: CmdArgs, os_query: OSQuery) -> Result<()> {
     for query in &args.query {
         match query {
             Query::RunningProcess => {
-                handle_running_process_telemetry(&os_query, running_process())?
+                add_gauge_metrics::<RunningProcess>(&os_query, running_process())?
             }
             Query::EstablishedOutbound => {
-                add_value_metrics::<EstablishedOutbound>(&os_query, established_outbound())?
+                add_gauge_metrics::<EstablishedOutbound>(&os_query, established_outbound())?
             }
-            Query::CronJob => add_value_metrics::<CronJob>(&os_query, crontab())?,
-            Query::LoginHistory => add_value_metrics::<LoginHistory>(&os_query, login_history())?,
-            Query::OsInfo => add_value_metrics::<OsInfo>(&os_query, os_info())?,
+            Query::CronJob => add_gauge_metrics::<CronJob>(&os_query, crontab())?,
+            Query::LoginHistory => add_gauge_metrics::<LoginHistory>(&os_query, login_history())?,
+            Query::OsInfo => add_gauge_metrics::<OsInfo>(&os_query, os_info())?,
             Query::InterfaceAddress => {
-                add_value_metrics::<InterfaceAddress>(&os_query, interface_addresses())?
+                add_gauge_metrics::<InterfaceAddress>(&os_query, interface_addresses())?
             }
             Query::DockerRunningContainers => {
-                handle_docker_container_telemetry(&os_query, docker_running_containers())?
+                add_gauge_metrics::<DockerRunningContainers>(&os_query, docker_running_containers())?
             }
             Query::DebianPackage => {
-                add_value_metrics::<DebianPackage>(&os_query, debian_packages())?
+                add_gauge_metrics::<DebianPackage>(&os_query, debian_packages())?
             }
-            Query::CpuInfo => add_value_metrics::<CpuInfo>(&os_query, cpu_info())?,
-            Query::DiskInfo => add_value_metrics::<DiskInfo>(&os_query, disk_info())?,
-            Query::MemoryInfo => add_value_metrics::<MemoryInfo>(&os_query, memory_info())?,
-            Query::LoadAverage => add_value_metrics::<LoadAverage>(&os_query, load_average())?,
+            Query::CpuInfo => add_gauge_metrics::<CpuInfo>(&os_query, cpu_info())?,
+            Query::DiskInfo => add_gauge_metrics::<DiskInfo>(&os_query, disk_info())?,
+            Query::MemoryInfo => add_gauge_metrics::<MemoryInfo>(&os_query, memory_info())?,
+            Query::LoadAverage => add_gauge_metrics::<LoadAverage>(&os_query, load_average())?,
             Query::ListeningPorts => {
-                add_value_metrics::<ListeningPort>(&os_query, listening_ports())?
+                add_gauge_metrics::<ListeningPort>(&os_query, listening_ports())?
             }
-            Query::KernelInfo => add_value_metrics::<KernelInfo>(&os_query, kernel_info())?,
-            Query::Uptime => add_value_metrics::<Uptime>(&os_query, uptime())?,
-            Query::Iptables => add_value_metrics::<IptablesRule>(&os_query, iptables())?,
-            Query::SystemInfo => add_value_metrics::<SystemInfo>(&os_query, system_info())?,
+            Query::KernelInfo => add_gauge_metrics::<KernelInfo>(&os_query, kernel_info())?,
+            Query::Uptime => add_gauge_metrics::<Uptime>(&os_query, uptime())?,
+            Query::Iptables => add_gauge_metrics::<IptablesRule>(&os_query, iptables())?,
+            Query::SystemInfo => add_gauge_metrics::<SystemInfo>(&os_query, system_info())?,
         }
     }
 
