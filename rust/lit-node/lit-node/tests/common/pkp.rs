@@ -194,7 +194,7 @@ pub async fn sign_with_pkp_request(
         signing_scheme,
     )
     .await;
-    debug!("endpoint_responses: {:?}", endpoint_responses);
+    info!("endpoint_responses: {:?}", endpoint_responses);
 
     assert!(endpoint_responses.len() >= expected_responses);
 

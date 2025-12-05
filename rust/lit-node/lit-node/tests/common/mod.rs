@@ -25,6 +25,7 @@ use lit_core::config::ENV_LIT_CONFIG_FILE;
 use lit_node::tss::util::DEFAULT_KEY_SET_NAME;
 use lit_node_common::config::load_cfg;
 use lit_node_core::CurveType;
+use lit_node_core::ethers::prelude::Bytes;
 use lit_observability::logging::simple_logging_subscriber;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
@@ -84,6 +85,6 @@ pub fn default_keyset_config() -> KeySetConfig {
         counts: std::iter::once(U256::from(1))
             .chain(CurveType::into_iter().skip(1).map(|_| U256::from(2)))
             .collect(),
-        recovery_party_members: Vec::new(),
+        recovery_session_id: Bytes::new(),
     }
 }

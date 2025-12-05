@@ -486,7 +486,7 @@ async fn delete_from_disk(path: PathBuf, key_cache: &KeyCache) -> Result<()> {
         .to_str()
         .expect("Could not convert path to string")
         .to_string();
-    key_cache.as_ref().remove(&key_path);
+    key_cache.as_ref().remove_async(&key_path).await;
 
     Ok(())
 }

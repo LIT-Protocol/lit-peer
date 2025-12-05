@@ -25,6 +25,7 @@ use lit_node_common::{
     client_state::ClientState,
     config::{CFG_KEY_CHAIN_POLLING_INTERVAL_MS_DEFAULT, LitNodeConfig},
 };
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::mpsc;
@@ -42,7 +43,11 @@ pub async fn node_fsm_worker(
 ) {
     let peer_state = standard_dkg_manager.tss_state.peer_state.clone();
     let cfg = standard_dkg_manager.tss_state.lit_config.clone();
-    let realm_id = fsm_realm_id(&peer_state, is_shadow).await;
+
+    let mut root_keys = HashMap::<String, Vec<CachedRootKey>>::new();
+    let mut epoch_to_signal_ready = U256::from(0);
+    let mut previous_included_epoch_number = U256::from(0); // Any initial value will work
+    let mut previous_retries = U256::from(0);
     let interval_ms = cfg
         .load_full()
         .chain_polling_interval_ms()
@@ -50,10 +55,7 @@ pub async fn node_fsm_worker(
 
     // These are the state changing variables that are used throughout the FSM loop.
     let mut interval = tokio::time::interval(Duration::from_millis(interval_ms));
-    let mut root_keys: Vec<CachedRootKey> = Vec::new();
-    let mut epoch_to_signal_ready = U256::from(0);
-    let mut previous_included_epoch_number = U256::from(0); // Any initial value will work
-    let mut previous_retries = U256::from(0);
+    let realm_id = fsm_realm_id(&peer_state, is_shadow).await;
     // initialize the node state
     let mut node_state = NodeState::new();
     node_state.next(Transition::Init);
@@ -161,7 +163,7 @@ pub async fn node_fsm_worker(
                 }
 
                 // if the epoch seems to have jumped, we need to figure out why and handle it.
-                if epoch_number > previous_included_epoch_number {
+                if epoch_number >= previous_included_epoch_number {
                     // this could be the state if we haven't checked the chain - check it and continue.
                     if network_state == NetworkState::NextValidatorSetLocked {
                         wait_on_next_validator_set_locked(
@@ -250,15 +252,9 @@ pub async fn node_fsm_worker(
 
                 // Get the root keys from the epoch change results
                 root_keys = match epoch_change_results {
-                    Ok(root_keys_result) => match root_keys_result {
-                        Some(root_keys) => root_keys,
-                        None => {
-                            debug!("root_keys_result == None for realm {}", realm_id);
-                            continue;
-                        }
-                    },
-                    Err(e) => {
-                        error!("Error in perform_epoch_change: {}", e);
+                    Some(root_keys) => root_keys,
+                    None => {
+                        debug!("root_keys_result == None for realm {}", realm_id);
                         continue;
                     }
                 };
@@ -511,13 +507,13 @@ pub async fn get_fsm_state(
 }
 
 pub async fn check_root_key_voting(
-    root_keys: &mut Vec<CachedRootKey>,
+    root_keys: &mut HashMap<String, Vec<CachedRootKey>>,
     cfg: &ReloadableLitConfig,
     peer_state: &Arc<PeerState>,
     epoch_number: U256,
 ) {
     if !root_keys.is_empty() && epoch_number >= U256::from(1) {
-        match vote_for_root_pubkeys(cfg, root_keys.clone(), peer_state).await {
+        match vote_for_root_pubkeys(cfg, root_keys, peer_state).await {
             Ok(result) => {
                 if !result {
                     info!("vote_for_root_pubkeys returned false");
@@ -535,9 +531,10 @@ pub async fn check_root_key_voting(
         }
     }
 }
+
 pub async fn vote_for_root_pubkeys(
     cfg: &ReloadableLitConfig,
-    pubkeys: Vec<CachedRootKey>,
+    pubkeys: &HashMap<String, Vec<CachedRootKey>>,
     peer_state: &Arc<PeerState>,
 ) -> Result<bool> {
     use crate::pkp::utils::vote_for_root_key;
@@ -545,19 +542,21 @@ pub async fn vote_for_root_pubkeys(
 
     info!("incoming root pubkeys: {:?}", pubkeys);
 
-    let mut root_keys: Vec<RootKey> = Vec::new();
-
-    for dkg_root_key in pubkeys {
-        let pk_bytes = hex_to_bytes(&dkg_root_key.public_key)?;
-        let rootkey = RootKey {
-            pubkey: Bytes::from(pk_bytes),
-            key_type: dkg_root_key.curve_type.into(),
-        };
-        root_keys.push(rootkey);
+    let mut res = true;
+    for (key_set_id, dkg_root_key) in pubkeys {
+        let mut root_keys: Vec<RootKey> = Vec::with_capacity(dkg_root_key.len());
+        for key in dkg_root_key {
+            let pk_bytes = hex_to_bytes(&key.public_key)?;
+            let rootkey = RootKey {
+                pubkey: Bytes::from(pk_bytes),
+                key_type: key.curve_type.into(),
+            };
+            root_keys.push(rootkey);
+        }
+        info!("Root Keys to vote for: {:?}", root_keys);
+        res &= vote_for_root_key(&cfg.load_full(), key_set_id, root_keys, peer_state).await?;
     }
-
-    info!("Root Keys to vote for: {:?}", root_keys);
-    vote_for_root_key(&cfg.load_full(), root_keys, peer_state).await
+    Ok(res)
 }
 
 pub async fn handle_not_part_of_validators_union(
@@ -670,14 +669,6 @@ async fn check_recovery_dkg_complete(
                 epoch_number,
             )
             .await;
-
-            let recovery_keys_result = match recovery_keys_result {
-                Ok(recovery_keys_result) => recovery_keys_result,
-                Err(e) => {
-                    error!("Error in perform_epoch_change: {}", e);
-                    return false;
-                }
-            };
 
             // NOTE: We can't continue until it's registered on chain as other nodes won't know that the Recovery DKG is completed so they should keep on waiting
             let recovery_keys_result = match recovery_keys_result {

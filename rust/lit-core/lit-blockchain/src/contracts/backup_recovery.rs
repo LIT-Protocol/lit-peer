@@ -970,6 +970,13 @@ pub mod backup_recovery {
                                         ::std::borrow::ToOwned::to_owned("bytes"),
                                     ),
                                 },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("keySetId"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("string"),
+                                    ),
+                                },
                             ],
                             outputs: ::std::vec![],
                             constant: ::core::option::Option::None,
@@ -2179,14 +2186,18 @@ pub mod backup_recovery {
                 .method_hash([93, 28, 27, 61], party_members)
                 .expect("method not found (this should never happen)")
         }
-        ///Calls the contract's `registerRecoveryKeys` (0x960cb990) function
+        ///Calls the contract's `registerRecoveryKeys` (0xa6fdb149) function
         pub fn register_recovery_keys(
             &self,
             recovery_keys: ::std::vec::Vec<RecoveryKey>,
             session_id: ::ethers::core::types::Bytes,
+            key_set_id: ::std::string::String,
         ) -> ::ethers::contract::builders::ContractCall<M, ()> {
             self.0
-                .method_hash([150, 12, 185, 144], (recovery_keys, session_id))
+                .method_hash(
+                    [166, 253, 177, 73],
+                    (recovery_keys, session_id, key_set_id),
+                )
                 .expect("method not found (this should never happen)")
         }
         ///Calls the contract's `setBackupPartyState` (0xb347cccc) function
@@ -4124,7 +4135,7 @@ pub mod backup_recovery {
     pub struct RegisterNewBackupPartyCall {
         pub party_members: ::std::vec::Vec<::ethers::core::types::Address>,
     }
-    ///Container type for all input parameters for the `registerRecoveryKeys` function with signature `registerRecoveryKeys((bytes,uint256)[],bytes)` and selector `0x960cb990`
+    ///Container type for all input parameters for the `registerRecoveryKeys` function with signature `registerRecoveryKeys((bytes,uint256)[],bytes,string)` and selector `0xa6fdb149`
     #[derive(
         Clone,
         ::ethers::contract::EthCall,
@@ -4139,11 +4150,12 @@ pub mod backup_recovery {
     )]
     #[ethcall(
         name = "registerRecoveryKeys",
-        abi = "registerRecoveryKeys((bytes,uint256)[],bytes)"
+        abi = "registerRecoveryKeys((bytes,uint256)[],bytes,string)"
     )]
     pub struct RegisterRecoveryKeysCall {
         pub recovery_keys: ::std::vec::Vec<RecoveryKey>,
         pub session_id: ::ethers::core::types::Bytes,
+        pub key_set_id: ::std::string::String,
     }
     ///Container type for all input parameters for the `setBackupPartyState` function with signature `setBackupPartyState(bytes[],address[])` and selector `0xb347cccc`
     #[derive(

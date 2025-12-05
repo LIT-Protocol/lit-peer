@@ -33,8 +33,6 @@ export async function askDeployNodeConfig(
   const numberOfStakedAndJoinedWallets =
     await askForNumberOfStakedAndJoinedWallets();
 
-  const keyTypes = await askForKeyTypes();
-
   const ipAddresses = (
     await askForIpAddresses(
       numberOfStakedAndJoinedWallets + numberOfStakedOnlyWallets
@@ -64,7 +62,6 @@ export async function askDeployNodeConfig(
     copyNodeConfigsToRustProject,
     ipAddresses,
     existingContracts,
-    keyTypes,
     backupRecoveryAddresses: bpAddresses,
     backupRecoveryKeys: bpKeys,
   };
@@ -73,49 +70,6 @@ export async function askDeployNodeConfig(
 }
 
 const SUPPORTED_KEY_TYPES = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
-async function askForKeyTypes(): Promise<number[]> {
-  const promptResult = await inquirer.prompt([
-    {
-      type: 'input',
-      name: 'keyTypes',
-      message: `Enter the key types you would like to use, separated by commas.\n
-      1 -  BLS-Encryption,
-      2 -  Secp256k1,
-      3 -  Ed25519
-      4 -  Ed448
-      5 -  Ristretto25519
-      6 -  NistP256
-      7 -  NistP384
-      8 -  BabyJubJub
-      9 -  Decaf377
-      10 - BLS-Signing
-      `,
-      validate: (input) => {
-        try {
-          const keyTypes = input.split(',');
-          if (keyTypes.length === 0) {
-            return `Please enter at least one key type`;
-          }
-
-          for (const keyType of keyTypes) {
-            if (!SUPPORTED_KEY_TYPES.includes(keyType)) {
-              return `Key type ${keyType} is not supported`;
-            }
-          }
-        } catch (e) {
-          return `Error parsing input: ${e}`;
-        }
-        return true;
-      },
-      default: SUPPORTED_KEY_TYPES.join(','),
-    },
-  ]);
-
-  return promptResult.keyTypes
-    .split(',')
-    .map((keyType: string) => parseInt(keyType));
-}
-
 async function askForExistingContractAddresses(): Promise<ParsedNodeContracts> {
   const existingAddresses = await inquirer.prompt([
     {

@@ -4,6 +4,7 @@ use crate::error::{Result, unexpected_err};
 use crate::metrics;
 use crate::p2p_comms::CommsManager;
 use crate::peers::peer_state::models::{SimplePeer, SimplePeerCollection};
+use crate::tasks::fsm::epoch_change::ShadowOptions;
 use crate::tss::common::dkg_type::DkgType;
 use crate::tss::common::key_persistence::{KeyPersistence, RECOVERY_DKG_EPOCH};
 use crate::tss::common::key_share::KeyShare;
@@ -15,6 +16,7 @@ use crate::tss::common::storage::{
 };
 use crate::tss::common::tss_state::TssState;
 use crate::tss::dkg::models::{DkgOutput, Mode};
+use crate::version::DataVersionReader;
 use elliptic_curve::group::GroupEncoding;
 use frost_dkg::elliptic_curve_tools::SumOfProducts;
 use frost_dkg::*;
@@ -39,7 +41,7 @@ pub struct DkgEngine {
     dkg_type: DkgType,
     epoch: u64,
     threshold: usize,
-    shadow_key_opts: (u64, u64),
+    shadow_key_opts: ShadowOptions,
     current_peers: SimplePeerCollection,
     next_peers: SimplePeerCollection,
     next_dkg_after_restore: DkgAfterRestore,
@@ -80,7 +82,7 @@ impl DkgEngine {
         dkg_type: DkgType,
         epoch: u64,
         threshold: usize,
-        shadow_key_opts: (u64, u64),
+        shadow_key_opts: &ShadowOptions,
         current_peers: &SimplePeerCollection,
         next_peers: &SimplePeerCollection,
         next_dkg_after_restore: DkgAfterRestore,
@@ -90,7 +92,7 @@ impl DkgEngine {
             dkg_type,
             epoch,
             threshold,
-            shadow_key_opts,
+            shadow_key_opts: shadow_key_opts.clone(),
             current_peers: current_peers.clone(),
             next_peers: next_peers.clone(),
             dkgs: BTreeMap::new(),
@@ -99,10 +101,17 @@ impl DkgEngine {
     }
 
     /// Add a DKG to be computed
-    pub fn add_dkg(&mut self, dkg_id: &str, curve_type: CurveType, pubkey: Option<String>) {
+    pub fn add_dkg(
+        &mut self,
+        dkg_id: &str,
+        key_set_id: &str,
+        curve_type: CurveType,
+        pubkey: Option<String>,
+    ) {
         let dkg_data = DkgData {
             dkg_id: dkg_id.to_string(),
             curve_type,
+            key_set_id: key_set_id.to_string(),
             pubkey: pubkey.clone(),
             result: None,
         };
@@ -299,7 +308,7 @@ impl DkgEngine {
             }
         }
 
-        let txn_prefix = format!("{}.{}_keyset1", root_dkg_id, self.dkg_type);
+        let txn_prefix = format!("{}.{}_keyset", root_dkg_id, self.dkg_type);
         trace!(
             "Node {} - Using DKG txn prefix: {}, realm_id: {}",
             self_peer.peer_id, txn_prefix, realm_id
@@ -670,34 +679,46 @@ impl DkgEngine {
         .await?;
 
         if delete_epoch > MIN_EPOCH_FOR_COMMITMENT_DELETION {
-            debug!(
-                "Removing old key share commitments for epochs less than {}",
-                delete_epoch
+            let shadow_realm_id = DataVersionReader::read_field_unchecked(
+                &self.tss_state.chain_data_config_manager.shadow_realm_id,
+                |realm| realm.as_u64(),
             );
-            let _ = delete_key_share_commitments_older_than_epoch(
-                args.curve_type,
-                &pubkey,
-                staker_address,
-                &args.peer_id,
-                delete_epoch,
-                args.realm_id,
-                &self.tss_state.key_cache,
-            )
-            .await;
-            debug!(
-                "Removing old key shares for epochs less than {}",
-                delete_epoch
-            );
-            let _ = delete_keyshares_older_than_epoch(
-                args.curve_type,
-                &pubkey,
-                staker_address,
-                &args.peer_id,
-                delete_epoch,
-                args.realm_id,
-                &self.tss_state.key_cache,
-            )
-            .await;
+
+            if shadow_realm_id > 0 {
+                debug!(
+                    "Holding on to key shares and commitments while processing shadow realm {} / epoch {}",
+                    args.realm_id, delete_epoch
+                );
+            } else {
+                debug!(
+                    "Removing old key share commitments for epochs less than {}",
+                    delete_epoch
+                );
+                let _ = delete_key_share_commitments_older_than_epoch(
+                    args.curve_type,
+                    &pubkey,
+                    staker_address,
+                    &args.peer_id,
+                    delete_epoch,
+                    args.realm_id,
+                    &self.tss_state.key_cache,
+                )
+                .await;
+                debug!(
+                    "Removing old key shares for epochs less than {}",
+                    delete_epoch
+                );
+                let _ = delete_keyshares_older_than_epoch(
+                    args.curve_type,
+                    &pubkey,
+                    staker_address,
+                    &args.peer_id,
+                    delete_epoch,
+                    args.realm_id,
+                    &self.tss_state.key_cache,
+                )
+                .await;
+            }
         }
 
         Ok(DkgOutput {
@@ -739,10 +760,16 @@ impl DkgEngine {
             args.realm_id,
             args.dkg_data.dkg_id,
             args.dkg_data.curve_type,
-            id.0.to_compressed_hex(),
+            format!(
+                "{}...",
+                id.0.to_compressed_hex().chars().take(6).collect::<String>()
+            ),
             new_id_scalars
                 .iter()
-                .map(|x| x.0.to_compressed_hex())
+                .map(|x| format!(
+                    "{}...",
+                    x.0.to_compressed_hex().chars().take(6).collect::<String>()
+                ))
                 .collect::<Vec<_>>()
                 .join(", "),
         );
@@ -822,52 +849,50 @@ impl DkgEngine {
                     DkgAfterRestore::False => &dummy_key_cache,
                 };
 
+                // in the initial epoch when we're shadow splicing we actually use the same key share as regular DKG...
+                // this is specific to the first nodes in the realm, and only for the first epoch.
+                let (read_epoch, read_realm_id) = if self.shadow_key_opts.is_shadow
+                    && self.shadow_key_opts.epoch_number > 1
+                {
+                    trace!("Using shadow key opts to read key share from disk.");
+                    (
+                        self.shadow_key_opts.epoch_number,
+                        self.shadow_key_opts.realm_id,
+                    )
+                } else if self.shadow_key_opts.is_shadow {
+                    trace!(
+                        "Using normal key opts to read key share from disk while in shadow realm."
+                    );
+                    (
+                        self.shadow_key_opts.non_shadow_epoch_number,
+                        self.shadow_key_opts.non_shadow_realm_id,
+                    )
+                } else {
+                    trace!("Using normal key opts to read key share from disk.");
+
+                    (self.epoch, realm_id)
+                };
+
                 let key_share = match read_key_share_from_disk::<KeyShare>(
                     key_state.curve_type,
                     pubkey,
                     staker_address,
                     &args.peer_id,
-                    self.epoch,
-                    realm_id,
+                    read_epoch,
+                    read_realm_id,
                     key_cache,
                 )
                 .await
                 {
                     Ok(share) => share,
                     Err(e) => {
-                        if self.shadow_key_opts.0 == self.epoch
-                            && self.shadow_key_opts.1 == realm_id
-                        {
-                            let err_msg =
-                                format!("Error reading key share for public key {}", pubkey);
-                            error!("{}", err_msg);
-                            return Err(unexpected_err(e, Some(err_msg)));
-                        } else {
-                            trace!(
-                                "Key share not found on disk for public key {}, using key epoch {} / realm {} to retry. Original error: {}",
-                                pubkey, self.shadow_key_opts.0, self.shadow_key_opts.1, e
-                            );
-                        }
-
-                        match read_key_share_from_disk::<KeyShare>(
-                            key_state.curve_type,
-                            pubkey,
-                            staker_address,
-                            &args.peer_id,
-                            self.shadow_key_opts.0,
-                            self.shadow_key_opts.1,
-                            key_cache,
-                        )
-                        .await
-                        {
-                            Ok(share) => share,
-                            Err(e) => {
-                                let err_msg =
-                                    format!("Error reading key share for public key {}", pubkey);
-                                error!("{}", err_msg);
-                                return Err(unexpected_err(e, Some(err_msg)));
-                            }
-                        }
+                        let err_msg = format!(
+                            "Error reading key share in realm {}, epoch {}, for public key {}",
+                            read_realm_id, read_epoch, pubkey
+                        );
+                        error!("{}", err_msg);
+                        error!("Shadow key opts: {:?}", self.shadow_key_opts);
+                        return Err(unexpected_err(e, Some(err_msg)));
                     }
                 };
 
@@ -940,28 +965,22 @@ impl DkgEngine {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct DkgData {
     pub(crate) dkg_id: String,
+    pub(crate) key_set_id: String,
     pub(crate) curve_type: CurveType,
     pub(crate) pubkey: Option<String>,
     pub(crate) result: Option<DkgResult>,
 }
 
-impl Default for DkgData {
-    fn default() -> Self {
-        Self {
-            dkg_id: "".to_string(),
-            curve_type: CurveType::BLS,
-            pubkey: None,
-            result: None,
-        }
-    }
-}
-
 impl DkgData {
     pub fn dkg_id(&self) -> &str {
         &self.dkg_id
+    }
+
+    pub fn key_set_id(&self) -> &str {
+        &self.key_set_id
     }
 
     pub fn curve_type(&self) -> CurveType {

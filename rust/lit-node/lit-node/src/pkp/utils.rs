@@ -22,6 +22,7 @@ use std::sync::Arc;
 use tracing::instrument;
 
 use super::auth::serialize_auth_context_for_checking_against_contract_data;
+use crate::models::PubKeyRoutingData;
 use ethers::{signers::Signer, types::U256};
 use lit_blockchain::contracts::load_wallet;
 use lit_node_core::NodeSet;
@@ -375,17 +376,12 @@ pub async fn sign(
         ));
     }
 
-    let tweak_preimage = get_tweak_preimage_from_pubkey(cfg, &pubkey).await;
+    let pubkey_routing_data = get_pubkey_routing_data_from_pubkey(cfg, &pubkey).await;
     let tss_state = tss_state.expect_or_err("tss_state not set in RustJsComms")?;
 
-    // if this is a HD key, we need to get the root pubkeys, otherwise check the fs for the key share
-    let (tweak_preimage, root_pubkeys) = match tweak_preimage {
-        Ok(_) => {
-            let tweak_preimage = tweak_preimage.expect_or_err("hd_key_id is None")?;
-            let temp_signable = tss_state.get_dkg_state(signing_scheme.curve_type())?;
-            let root_pub_keys = temp_signable.root_keys().await;
-            (Some(tweak_preimage.to_vec()), Some(root_pub_keys))
-        }
+    // if this is an HD key, we need to get the root pubkeys, otherwise check the fs for the key share
+    let pubkey_routing_data = match pubkey_routing_data {
+        Ok(p) => p,
         Err(_) => {
             let staker_address = &tss_state.peer_state.hex_staker_address();
 
@@ -409,6 +405,11 @@ pub async fn sign(
                                 "Pubkey share not found on this node PKP: {}",
                                 pubkey
                             )),
+                        ));
+                    } else {
+                        return Err(unexpected_err(
+                            "No pubkey routing data exists".to_string(),
+                            None,
                         ));
                     }
                 }
@@ -434,15 +435,13 @@ pub async fn sign(
                         None,
                     ));
                 }
-            };
-
-            (None, None)
+            }
         }
     };
 
     trace!(
-        "sign() pubkey: {}, hd_key_id: {:?}, root_pubkeys: {:?}",
-        pubkey, tweak_preimage, root_pubkeys
+        "sign() pubkey: {}, routing data: {:?}",
+        pubkey, pubkey_routing_data
     );
 
     let mut signing_state = tss_state.get_signing_state(signing_scheme)?;
@@ -457,9 +456,9 @@ pub async fn sign(
         .sign_with_pubkey(
             to_sign,
             public_key,
-            root_pubkeys,
-            tweak_preimage,
+            Some(pubkey_routing_data.tweak_preimage.to_vec()),
             request_id.clone(),
+            Some(&pubkey_routing_data.key_set_identifier),
             epoch,
             node_set,
         )
@@ -471,8 +470,11 @@ pub async fn sign(
     Ok(sign_result)
 }
 
-#[instrument(level = "debug", skip(cfg))]
-pub async fn get_tweak_preimage_from_pubkey(cfg: &LitConfig, pubkey: &str) -> Result<[u8; 32]> {
+#[instrument(skip(cfg), level = "debug")]
+pub async fn get_pubkey_routing_data_from_pubkey(
+    cfg: &LitConfig,
+    pubkey: &str,
+) -> Result<PubKeyRoutingData> {
     let resolver = ContractResolver::try_from(cfg)
         .map_err(|e| unexpected_err_code(e, EC::NodeContractResolverConversionFailed, None))?;
     let contract = resolver.pub_key_router_contract(cfg).await?;
@@ -489,11 +491,12 @@ pub async fn get_tweak_preimage_from_pubkey(cfg: &LitConfig, pubkey: &str) -> Re
             Some("Could not find token id in pubkey routing contract.".to_string()),
         )
     })?;
-    Ok(pubkey_routing_data.derived_key_id)
+    pubkey_routing_data.try_into()
 }
 
 pub async fn vote_for_root_key(
     cfg: &LitConfig,
+    key_set_id: &str,
     root_keys: Vec<RootKey>,
     peer_state: &Arc<PeerState>,
 ) -> Result<bool> {
@@ -506,11 +509,8 @@ pub async fn vote_for_root_key(
     let contract = resolver
         .pub_key_router_contract_with_gas_relay(cfg, peer_state.wallet_keys.signing_key().clone())
         .await?;
-    let func = contract.vote_for_root_keys(
-        staking_contract_address,
-        crate::tss::util::DEFAULT_KEY_SET_NAME.to_string(),
-        root_keys,
-    );
+    let func =
+        contract.vote_for_root_keys(staking_contract_address, key_set_id.to_string(), root_keys);
 
     let gas_estimate = match func.estimate_gas().await {
         Ok(gas_estimate) => gas_estimate,
