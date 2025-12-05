@@ -1,4 +1,5 @@
-use super::OsMetric;
+use super::{GaugeMetric, OsMetric};
+use lit_observability::opentelemetry::KeyValue;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -146,6 +147,21 @@ impl From<&DockerRunningContainers> for BTreeMap<String, String> {
 
 impl OsMetric for DockerRunningContainers {
     const NAME: &'static str = "os.running_containers";
+}
+
+impl GaugeMetric for DockerRunningContainers {
+    fn gauge_value(&self) -> Option<f64> {
+        Some(1.0)
+    }
+
+    fn gauge_labels(&self) -> Vec<KeyValue> {
+        vec![
+            KeyValue::new("container_name", self.container_name.clone()),
+            KeyValue::new("image_name", self.image_name.clone()),
+            KeyValue::new("status", self.status.clone()),
+            KeyValue::new("container_state", self.container_state.clone()),
+        ]
+    }
 }
 
 /// The structure of a docker container label

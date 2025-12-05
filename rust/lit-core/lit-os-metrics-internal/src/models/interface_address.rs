@@ -1,4 +1,5 @@
-use super::OsMetric;
+use super::{GaugeMetric, OsMetric};
+use lit_observability::opentelemetry::KeyValue;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -16,6 +17,24 @@ pub struct InterfaceAddress {
     pub mac: String,
     /// The query time
     pub query_time: Option<usize>,
+}
+
+impl OsMetric for InterfaceAddress {
+    const NAME: &'static str = "os.interface_addresses";
+}
+
+impl GaugeMetric for InterfaceAddress {
+    fn gauge_value(&self) -> Option<f64> {
+        Some(1.0)
+    }
+
+    fn gauge_labels(&self) -> Vec<KeyValue> {
+        vec![
+            KeyValue::new("address", self.address.clone()),
+            KeyValue::new("interface", self.interface.clone()),
+            KeyValue::new("mac", self.mac.clone()),
+        ]
+    }
 }
 
 impl TryFrom<&BTreeMap<String, String>> for InterfaceAddress {
@@ -54,8 +73,4 @@ impl From<&InterfaceAddress> for BTreeMap<String, String> {
         );
         map
     }
-}
-
-impl OsMetric for InterfaceAddress {
-    const NAME: &'static str = "os.interface_addresses";
 }

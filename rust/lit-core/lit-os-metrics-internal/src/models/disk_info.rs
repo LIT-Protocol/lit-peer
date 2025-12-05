@@ -1,4 +1,5 @@
-use crate::OsMetric;
+use crate::{GaugeMetric, OsMetric};
+use lit_observability::opentelemetry::KeyValue;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -84,4 +85,22 @@ impl From<&DiskInfo> for BTreeMap<String, String> {
 
 impl OsMetric for DiskInfo {
     const NAME: &'static str = "os.disk_info";
+}
+
+impl GaugeMetric for DiskInfo {
+    fn gauge_value(&self) -> Option<f64> {
+        self.free_percent
+    }
+
+    fn gauge_labels(&self) -> Vec<KeyValue> {
+        vec![
+            KeyValue::new("device", self.device.clone()),
+            KeyValue::new("path", self.path.clone()),
+            KeyValue::new("encrypted", self.encrypted.clone()),
+            KeyValue::new("encryption_status", self.encryption_status.clone()),
+            KeyValue::new("free_gb", self.free_gb.map(|v| v.to_string()).unwrap_or_default()),
+            KeyValue::new("disk_gb_read", self.disk_gb_read.map(|v| v.to_string()).unwrap_or_default()),
+            KeyValue::new("disk_gb_written", self.disk_gb_written.map(|v| v.to_string()).unwrap_or_default()),
+        ]
+    }
 }

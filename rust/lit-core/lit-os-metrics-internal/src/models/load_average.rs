@@ -1,4 +1,5 @@
-use crate::models::OsMetric;
+use crate::models::{GaugeMetric, OsMetric};
+use lit_observability::opentelemetry::KeyValue;
 use serde::Serialize;
 use std::collections::BTreeMap;
 
@@ -11,6 +12,16 @@ pub struct LoadAverage {
 
 impl OsMetric for LoadAverage {
     const NAME: &'static str = "load_average";
+}
+
+impl GaugeMetric for LoadAverage {
+    fn gauge_value(&self) -> Option<f64> {
+        self.average.parse::<f64>().ok()
+    }
+
+    fn gauge_labels(&self) -> Vec<KeyValue> {
+        vec![KeyValue::new("period", self.period.clone())]
+    }
 }
 
 impl TryFrom<&BTreeMap<String, String>> for LoadAverage {

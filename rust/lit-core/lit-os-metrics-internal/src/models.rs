@@ -1,5 +1,20 @@
+use lit_observability::opentelemetry::KeyValue;
+
 pub trait OsMetric {
     const NAME: &'static str;
+}
+
+/// Trait for metrics that have meaningful numeric values.
+/// Implementing this trait allows the metric to be emitted as a gauge with a proper numeric value,
+/// rather than a counter with an enumeration value.
+pub trait GaugeMetric: OsMetric {
+    /// Returns the primary gauge value for this metric.
+    /// This should be the most important numeric value that represents the metric.
+    fn gauge_value(&self) -> Option<f64>;
+
+    /// Returns labels (key-value pairs) for this metric.
+    /// These provide dimensional breakdown of the metric.
+    fn gauge_labels(&self) -> Vec<KeyValue>;
 }
 
 mod cpu_info;

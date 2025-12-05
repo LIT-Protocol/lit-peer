@@ -1,4 +1,5 @@
-use super::OsMetric;
+use super::{GaugeMetric, OsMetric};
+use lit_observability::opentelemetry::KeyValue;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -162,4 +163,29 @@ impl From<&EstablishedOutbound> for BTreeMap<String, String> {
 
 impl OsMetric for EstablishedOutbound {
     const NAME: &'static str = "os.established_outbound";
+}
+
+impl GaugeMetric for EstablishedOutbound {
+    fn gauge_value(&self) -> Option<f64> {
+        Some(1.0)
+    }
+
+    fn gauge_labels(&self) -> Vec<KeyValue> {
+        vec![
+            KeyValue::new("dest_connection_ip", self.dest_connection_ip.clone()),
+            KeyValue::new(
+                "dest_connection_port",
+                self.dest_connection_port.map(|v| v.to_string()).unwrap_or_default(),
+            ),
+            KeyValue::new("src_connection_ip", self.src_connection_ip.clone()),
+            KeyValue::new(
+                "src_connection_port",
+                self.src_connection_port.map(|v| v.to_string()).unwrap_or_default(),
+            ),
+            KeyValue::new("transport", self.transport.clone()),
+            KeyValue::new("family", self.family.clone()),
+            KeyValue::new("username", self.username.clone()),
+            KeyValue::new("name", self.name.clone()),
+        ]
+    }
 }

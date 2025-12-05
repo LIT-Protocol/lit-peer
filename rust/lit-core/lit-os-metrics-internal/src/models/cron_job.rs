@@ -1,4 +1,5 @@
-use super::OsMetric;
+use super::{GaugeMetric, OsMetric};
+use lit_observability::opentelemetry::KeyValue;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -26,6 +27,29 @@ pub struct CronJob {
     pub month: String,
     /// The query time
     pub query_time: Option<usize>,
+}
+
+impl OsMetric for CronJob {
+    const NAME: &'static str = "os.cron_jobs";
+}
+
+impl GaugeMetric for CronJob {
+    fn gauge_value(&self) -> Option<f64> {
+        Some(1.0)
+    }
+
+    fn gauge_labels(&self) -> Vec<KeyValue> {
+        vec![
+            KeyValue::new("command", self.command.clone()),
+            KeyValue::new("cron_file", self.cron_file.clone()),
+            KeyValue::new("day_of_month", self.day_of_month.clone()),
+            KeyValue::new("day_of_week", self.day_of_week.clone()),
+            KeyValue::new("event", self.event.clone()),
+            KeyValue::new("hour", self.hour.clone()),
+            KeyValue::new("minute", self.minute.clone()),
+            KeyValue::new("month", self.month.clone()),
+        ]
+    }
 }
 
 impl TryFrom<&BTreeMap<String, String>> for CronJob {
@@ -74,8 +98,4 @@ impl From<&CronJob> for BTreeMap<String, String> {
         );
         map
     }
-}
-
-impl OsMetric for CronJob {
-    const NAME: &'static str = "os.cron_jobs";
 }

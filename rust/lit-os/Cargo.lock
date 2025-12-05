@@ -10768,6 +10768,7 @@ dependencies = [
  "derive_more 2.0.1",
  "lit-core",
  "lit-core-derive",
+ "lit-observability",
  "osquery-rs",
  "serde",
  "serde_json",

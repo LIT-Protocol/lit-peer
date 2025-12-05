@@ -1,4 +1,5 @@
-use super::OsMetric;
+use super::{GaugeMetric, OsMetric};
+use lit_observability::opentelemetry::KeyValue;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -192,4 +193,31 @@ impl From<&RunningProcess> for BTreeMap<String, String> {
 
 impl OsMetric for RunningProcess {
     const NAME: &'static str = "os.running_process";
+}
+
+impl GaugeMetric for RunningProcess {
+    fn gauge_value(&self) -> Option<f64> {
+        Some(1.0)
+    }
+
+    fn gauge_labels(&self) -> Vec<KeyValue> {
+        vec![
+            KeyValue::new("process", self.process.clone()),
+            KeyValue::new(
+                "process_id",
+                self.process_id.map(|v| v.to_string()).unwrap_or_default(),
+            ),
+            KeyValue::new("user", self.user.clone()),
+            KeyValue::new("parent_name", self.parent_name.clone()),
+            KeyValue::new(
+                "parent_pid",
+                self.parent.map(|v| v.to_string()).unwrap_or_default(),
+            ),
+            KeyValue::new("effective_username", self.effective_username.clone()),
+            KeyValue::new(
+                "mem_used",
+                self.mem_used.map(|v| v.to_string()).unwrap_or_default(),
+            ),
+        ]
+    }
 }

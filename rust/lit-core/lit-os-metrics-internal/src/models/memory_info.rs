@@ -1,4 +1,5 @@
-use crate::models::OsMetric;
+use crate::models::{GaugeMetric, OsMetric};
+use lit_observability::opentelemetry::KeyValue;
 use serde::Serialize;
 use std::collections::BTreeMap;
 
@@ -15,6 +16,23 @@ pub struct MemoryInfo {
 
 impl OsMetric for MemoryInfo {
     const NAME: &'static str = "memory_info";
+}
+
+impl GaugeMetric for MemoryInfo {
+    fn gauge_value(&self) -> Option<f64> {
+        // memory_free is in bytes, convert to meaningful value
+        self.memory_free.parse::<f64>().ok()
+    }
+
+    fn gauge_labels(&self) -> Vec<KeyValue> {
+        vec![
+            KeyValue::new("memory_total", self.memory_total.clone()),
+            KeyValue::new("buffers", self.buffers.clone()),
+            KeyValue::new("cached", self.cached.clone()),
+            KeyValue::new("swap_total", self.swap_total.clone()),
+            KeyValue::new("swap_free", self.swap_free.clone()),
+        ]
+    }
 }
 
 impl TryFrom<&BTreeMap<String, String>> for MemoryInfo {
