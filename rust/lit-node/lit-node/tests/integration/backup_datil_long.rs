@@ -89,11 +89,11 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
     let root_key_configs = vec![
         RootKeyConfig {
             curve_type: CurveType::BLS,
-            count: 2,
+            count: 1,
         },
         RootKeyConfig {
             curve_type: CurveType::K256,
-            count: 20,
+            count: 10,
         },
     ];
     let result = validator_collection
@@ -197,7 +197,20 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
         .await;
     info!("All the nodes restored all the keys!");
 
-    validator_collection.actions().sleep_millis(500000).await;
+
+    // sleep 1000 ms to allow the key shares to be written to disk
+    validator_collection.actions().sleep_millis(1000).await;    
+    
+    let state = actions.get_state(realm_id.as_u64()).await;
+    info!("State: {:?}", state);
+    let r=  actions.set_epoch_state(realm_id, NetworkState::Active as u8).await;
+    assert!(r.is_ok(), "Failed to set epoch state to Active");
+    // Fast forward the network by 300 seconds, and wait for the new node to be active - effectively waiting for the next epoch.
+    let current_epoch = validator_collection.actions().get_current_epoch(realm_id).await;
+    validator_collection.actions().increase_blockchain_timestamp(300).await;   
+    validator_collection.actions().wait_for_epoch(realm_id, current_epoch + 1).await;
+    info!("Key shares should now be written to disk!");
+    
 }
 
 fn datil_root_keys() -> Vec<RootKey> {

@@ -137,7 +137,7 @@ pub(crate) async fn perform_epoch_change(
         //     }
         // };
 
-        let (existing_key_sets, new_key_sets) = match get_existing_and_new_key_sets(
+        let (mut existing_key_sets, new_key_sets) = match get_existing_and_new_key_sets(
             peer_state.clone(),
         )
         .await
@@ -152,9 +152,27 @@ pub(crate) async fn perform_epoch_change(
             }
         };
 
+        
+        let restore_key_sets = if let Some(restore_key_set) = existing_key_sets.clone().iter().find( |ks| ks.identifier.contains("datil" ) ) {
+            let pos = existing_key_sets.clone().iter().position(|ks| ks.identifier == restore_key_set.identifier);
+            if let Some(pos) = pos {
+                existing_key_sets.remove(pos);
+                vec![restore_key_set.clone()]
+            } else {
+                Vec::new()
+            }
+        } else {
+            Vec::new()
+        };
+
+
         trace!(
-            "New/existing key sets: {:?} / {:?}",
+            "New/restore/existing key sets: {:?} / {:?} / {:?}",
             new_key_sets
+                .iter()
+                .map(|ks| ks.identifier.clone())
+                .collect::<Vec<_>>(),
+            restore_key_sets
                 .iter()
                 .map(|ks| ks.identifier.clone())
                 .collect::<Vec<_>>(),
@@ -166,6 +184,37 @@ pub(crate) async fn perform_epoch_change(
 
         // start by processing the epoch change for the new key sets
         let mut epoch_change_res_or_update_needed_for_new_keys = None;
+
+        if !restore_key_sets.is_empty() {
+            trace!("Processing epoch change for new key sets");
+            let epoch_change_res_or_update_needed_for_restore_keys = match process_epoch_for_key_set(
+                dkg_manager,
+                fsm_worker_metadata.clone(),
+                realm_id,
+                is_shadow,
+                &restore_key_sets,
+                &latest_dkg_id,
+                current_epoch,
+                &shadow_key_opts,
+                &current_peers,
+                &new_peers,
+                None,
+            )
+            .await
+            {
+                Ok(result) => result,
+                Err(e) => {
+                    warn!(
+                        "Unable to process epoch change for existing key sets when performing epoch change in realm {}: {}",
+                        realm_id, e
+                    );
+                    return None;
+                }
+            };
+            // dkg_manager.next_dkg_after_restore = DkgAfterRestore::False;
+            
+        };
+
         if !new_key_sets.is_empty() {
             trace!("Processing epoch change for new key sets");
             if current_peers != new_peers && !current_peers.is_empty() {
