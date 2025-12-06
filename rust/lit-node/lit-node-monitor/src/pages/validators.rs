@@ -1,3 +1,6 @@
+use crate::components::bottom_modal::BottomModal;
+use crate::components::validator_details::ValidatorDetails;
+use crate::components::validator_handshake::ValidatorHandshake;
 use crate::utils::table_classes::BootstrapClassesPreset;
 use crate::{
     components::network_status::NetworkStatus,
@@ -6,7 +9,6 @@ use crate::{
     utils::{
         context::{WebCallBackContext, get_web_callback_context},
         contract_helper::get_staking,
-        sdk_models::{JsonSDKHandshakeResponse, ResponseWrapper},
     },
 };
 use ethers::types::{H160, U256};
@@ -18,7 +20,7 @@ use lit_blockchain_lite::contracts::staking::Staking;
 // use lit_sdk::models::response::JsonSDKHandshakeResponse;
 use serde::{Deserialize, Serialize};
 use std::net::Ipv4Addr;
-#[derive(TableRow, Clone, Serialize, Deserialize)]
+#[derive(TableRow, Clone, Serialize, Deserialize, Debug)]
 #[table(impl_vec_data_provider)]
 #[table(classes_provider = "BootstrapClassesPreset")]
 pub struct Validator {
@@ -33,9 +35,16 @@ pub struct Validator {
     pub wallet_address: String,
     #[table(renderer = "WalletAddressRenderer")]
     pub staker_address: String,
+    #[table(renderer = "ValidatorStatusRenderer")]
     pub ver: String,
     #[table(skip)]
-    pub hs_status: RwSignal<Option<JsonSDKHandshakeResponse>>,
+    pub commit_hash: String,
+    #[table(skip)]
+    pub network_public_key: String,
+    #[table(skip)]
+    pub node_identity_key: String,
+    #[table(skip)]
+    pub epoch: u64,
 }
 
 #[derive(Clone)]
@@ -61,13 +70,21 @@ fn WalletAddressRenderer(
     }
 }
 
-impl Validator {
-    pub fn status2(&self) -> String {
-        let status = self.hs_status.get_untracked();
-        match status {
-            Some(status) => status.node_version,
-            None => "?".to_string(),
-        }
+#[component]
+fn ValidatorStatusRenderer(
+    class: String,
+    #[allow(unused_variables)]
+    #[prop(into)]
+    value: Signal<String>,
+    #[allow(unused_variables)] // onchange & index need to be part of the signature for now
+    row: RwSignal<Validator>,
+    #[allow(unused_variables)] // onchange & index need to be part of the signature for now
+    index: usize,
+) -> impl IntoView {
+    view! {
+        <td class=class>
+            <ValidatorHandshake row />
+        </td>
     }
 }
 
@@ -77,12 +94,16 @@ pub fn Validators() -> impl IntoView {
     let handshake_state = RwSignal::new("Loading... Please wait...".to_string());
     let realms = LocalResource::new(move || {
         let ctx = get_web_callback_context();
-        async move { get_validators_for_all_realms(&ctx, handshake_state.clone()).await }
+        async move { get_validators_for_all_realms(&ctx).await }
     });
     let floaters = LocalResource::new(move || {
         let ctx = get_web_callback_context();
-        async move { get_floaters(&ctx, handshake_state.clone()).await }
+        async move { get_floaters(&ctx).await }
     });
+    let selected_index = RwSignal::new(None);
+    let (get_selected_row, set_selected_row) = signal(None::<Validator>);
+    let open_buttom = RwSignal::new(false);
+    let pop_up_title = RwSignal::new("".to_string());
 
     view! {
         <Title text="Validators (by realm)"/>
@@ -102,7 +123,14 @@ pub fn Validators() -> impl IntoView {
                                     </div>
                                     <div class="card-body">
                                         <table class="table">
-                                            <TableContent rows = realm.current_validators.clone() scroll_container="html"  />
+                                            <TableContent
+                                                selection=Selection::Single(selected_index)
+                                                    on_selection_change={move |evt: SelectionChangeEvent<Validator>| {
+                                                        log::info!("evt: {:?}", evt);
+                                                        set_selected_row.write().replace(evt.row.get_untracked());
+                                                        open_buttom.set(true);
+                                                    }}
+                                                rows = realm.current_validators.clone() scroll_container="html" />
                                         </table>
                                     </div>
                                 </div>
@@ -114,7 +142,14 @@ pub fn Validators() -> impl IntoView {
                                     </div>
                                     <div class="card-body">
                                         <table class="table">
-                                            <TableContent rows = realm.next_validators.clone() scroll_container="html"  />
+                                            <TableContent
+                                                selection=Selection::Single(selected_index)
+                                                    on_selection_change={move |evt: SelectionChangeEvent<Validator>| {
+                                                        log::info!("evt: {:?}", evt);
+                                                        set_selected_row.write().replace(evt.row.get_untracked());
+                                                        open_buttom.set(true);
+                                                    }}
+                                                rows = realm.next_validators.clone() scroll_container="html" />
                                         </table>
                                     </div>
                                 </div>
@@ -136,7 +171,14 @@ pub fn Validators() -> impl IntoView {
                 None => view! { <p>"Loading..."</p> }.into_any(),
                 Some(rows) => view! {
                     <table class="table">
-                        <TableContent rows = rows.clone() scroll_container="html"  />
+                        <TableContent
+                            selection=Selection::Single(selected_index)
+                                on_selection_change={move |evt: SelectionChangeEvent<Validator>| {
+                                    log::info!("evt: {:?}", evt);
+                                    set_selected_row.write().replace(evt.row.get_untracked());
+                                    open_buttom.set(true);
+                                }}
+                            rows = rows.clone() scroll_container="html" />
                     </table>
                 }.into_any()
             }}
@@ -146,21 +188,28 @@ pub fn Validators() -> impl IntoView {
         <br />
 
 
+          { move || get_selected_row.get().map(|selected_row| {
+                let title = format!("Validator Details {}", selected_row.host_name);
+                pop_up_title.set(title);
+                view! {
+                    <BottomModal open=open_buttom title=pop_up_title.clone() >
+                            <ValidatorDetails validator=selected_row />
+                    </BottomModal>
+                }
+            }) }
+
     }
 }
 
-pub async fn get_validators_for_all_realms(
-    ctx: &WebCallBackContext,
-    handshake_state: RwSignal<String>,
-) -> Vec<Realm> {
+pub async fn get_validators_for_all_realms(ctx: &WebCallBackContext) -> Vec<Realm> {
     let staking = get_staking(ctx).await;
     let num_realms = U256::from(1); //  staking.num_realms().call().await.unwrap();
     let num_realms = num_realms.as_u64() as u8;
 
     let mut realms = Vec::new();
     for i in 1..=num_realms {
-        let current_validators = get_validators(&staking, true, i, handshake_state, true).await;
-        let next_validators = get_validators(&staking, false, i, handshake_state, true).await;
+        let current_validators = get_validators(&staking, true, i).await;
+        let next_validators = get_validators(&staking, false, i).await;
         realms.push(Realm {
             id: i,
             current_validators,
@@ -171,20 +220,15 @@ pub async fn get_validators_for_all_realms(
     realms
 }
 
-pub async fn get_floaters(
-    ctx: &WebCallBackContext,
-    handshake_state: RwSignal<String>,
-) -> Vec<Validator> {
+pub async fn get_floaters(ctx: &WebCallBackContext) -> Vec<Validator> {
     let staking = get_staking(ctx).await;
-    get_validators(&staking, true, 0, handshake_state, true).await
+    get_validators(&staking, true, 0).await
 }
 
 pub async fn get_validators(
     staking: &Staking<Provider<Http>>,
     is_current: bool,
     realm_id: u8,
-    handshake_state: RwSignal<String>,
-    do_handshake_node: bool,
 ) -> Vec<Validator> {
     let gs = use_context::<GlobalState>().expect("Global State Failed to Load");
 
@@ -279,7 +323,11 @@ pub async fn get_validators(
         };
 
         let socket_address = format!("{}:{}", ip_address, v.port);
-        let guest_ip = socket_address.split(":").nth(0).unwrap().to_string();
+        let guest_ip = match socket_address.contains("127.0.0.1") {
+            true => socket_address.clone(),
+            false => socket_address.split(":").nth(0).unwrap().to_string(),
+        };
+        // log::info!("Guest IP: {:?} / {:?}", guest_ip, gs.staker_names.get());
         let info = gs
             .staker_names
             .get()
@@ -292,7 +340,6 @@ pub async fn get_validators(
             .find(|m| m.node_address == v.node_address)
             .unwrap()
             .staker_address;
-        let hs_status = RwSignal::new(None);
 
         rows.push(Validator {
             id: count,
@@ -305,120 +352,19 @@ pub async fn get_validators(
             staker_address: format!("0x{}", hex::encode(staker_address.as_bytes())),
             ver: "?".to_string(),
             host_name: info,
-            hs_status: hs_status.clone(),
+            commit_hash: "".to_string(),
+            network_public_key: "".to_string(),
+            node_identity_key: "".to_string(),
+            epoch: 0,
         });
-
-        // if do_handshake_node {
-
-        //         leptos::task::spawn_local(async move {
-
-        //         log::info!("inside task"    );
-        //         let handshake_result = handshake_node(socket_address).await;
-
-        //         hs_status.set(Some(handshake_result));
-        //         // log::info!("Handshake result: {:?}", handshake_result);
-        //     });
-        // }
-
-        // hs_signals.push(hs_status);
     }
+
     rows.sort_by(|a, b| a.staker_address.cmp(&b.staker_address));
-    // let do_handshake_node = false;
 
-    if do_handshake_node {
-        for row in &mut rows {
-            row.id = count;
-            count += 1;
-
-            log::info!("Handshaking node: {:?}", row.socket_address);
-            handshake_state.set(format!("Handshaking node {}...", row.host_name));
-            let socket_address = row.socket_address.clone();
-            let handshake_result = handshake_node(socket_address).await;
-
-            log::info!("Handshake result: {:?}", handshake_result);
-            row.ver = handshake_result.node_version;
-            if row.status.is_empty() && !handshake_result.network_public_key.is_empty() {
-                row.status = "Up".to_string();
-            }
-            // if shadow_ids.contains(&row.staker_address) {
-            //     row.status += " (S";
-            //     if non_shadow_ids.contains(&row.staker_address) {
-            //         row.status += " /NS";
-            //     }
-            //     row.status += ")";
-            // }
-        }
+    for row in &mut rows {
+        row.id = count;
+        count += 1;
     }
 
     rows
-}
-
-async fn handshake_node(socket_address: String) -> JsonSDKHandshakeResponse {
-    let socket_address = format!("https://{}", socket_address);
-    log::info!("Handshaking node: {:?}", socket_address);
-    if socket_address.contains("0.0.0.0") {
-        return JsonSDKHandshakeResponse::default();
-    }
-
-    let json_body = r#"{"clientPublicKey":"blah","challenge":"0x1234123412341234123412341234123412341234123412341234123412341234"}"#.to_string();
-    let cmd = "/web/handshake";
-    let request_id = &uuid::Uuid::new_v4().to_string();
-    let client = reqwest::Client::new();
-    let resp_string = client
-        .post(format!("{}/{}", socket_address, cmd))
-        .header("Content-Type", "application/json")
-        .header("X-Request-Id", request_id)
-        .body(json_body.clone())
-        .send()
-        .await;
-
-    if resp_string.is_err() {
-        log::error!("Error getting node info: {:?}", resp_string.err());
-        return JsonSDKHandshakeResponse::default();
-    }
-
-    let resp = resp_string.unwrap();
-
-    let resp_string = match resp.text().await {
-        Ok(text) => text,
-        Err(e) => {
-            log::error!("Error getting handshake body: {:?}", e);
-            return JsonSDKHandshakeResponse::default();
-        }
-    };
-
-    let response_wrapper: ResponseWrapper = match serde_json::from_str(&resp_string) {
-        Ok(response_wrapper) => response_wrapper,
-        Err(e) => {
-            log::error!("Error parsing response wrapper: {:?}", e);
-            return JsonSDKHandshakeResponse::default();
-        }
-    };
-
-    let handshake_result: JsonSDKHandshakeResponse = match response_wrapper.ok {
-        true => match serde_json::from_value(response_wrapper.data) {
-            Ok(handshake_result) => handshake_result,
-            Err(e) => {
-                log::error!("Error parsing handshake response: {:?}", e);
-                return JsonSDKHandshakeResponse::default();
-            }
-        },
-        false => {
-            if let Some(error_object) = response_wrapper.error_object {
-                let error_handshake_result: JsonSDKHandshakeResponse =
-                    match serde_json::from_str(&error_object) {
-                        Ok(error_handshake_result) => error_handshake_result,
-                        Err(e) => {
-                            log::error!("Error parsing error handshake response: {:?}", e);
-                            JsonSDKHandshakeResponse::default()
-                        }
-                    };
-                error_handshake_result
-            } else {
-                JsonSDKHandshakeResponse::default()
-            }
-        }
-    };
-
-    handshake_result
 }

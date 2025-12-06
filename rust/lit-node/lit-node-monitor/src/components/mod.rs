@@ -5,4 +5,7 @@ pub mod nav_menu;
 pub mod network_status;
 pub mod network_status_at_block;
 pub mod quick_functions;
+pub mod right_drawer;
 pub mod toast;
+pub mod validator_details;
+pub mod validator_handshake;

@@ -1,3 +1,5 @@
+use chrono::{DateTime, NaiveDateTime, Utc};
+
 use crate::models::chain::{SimpleTx, blockscout, otter};
 use std::error::Error;
 
@@ -7,6 +9,8 @@ pub async fn get_tx_list_async(
     address: &str,
     block_start: u64,
     block_end: u64,
+    start_date: Option<NaiveDateTime>,
+    end_date: Option<NaiveDateTime>,
     include_internal_transactions: bool,
     page: u64,
     page_size: u64,
@@ -18,6 +22,8 @@ pub async fn get_tx_list_async(
                 address,
                 block_start,
                 block_end,
+                start_date,
+                end_date,
                 page,
                 page_size,
                 false,
@@ -25,28 +31,9 @@ pub async fn get_tx_list_async(
             .await
             .expect("Error getting tx list");
 
-            let bs_internal_txs = match include_internal_transactions {
-                true => blockscout::RpcCalls::get_tx_list_async(
-                    chain_api_url,
-                    address,
-                    block_start,
-                    block_end,
-                    page,
-                    page_size,
-                    true,
-                )
-                .await
-                .expect("Error getting internal tx list"),
-                false => blockscout::BlockScoutResponse {
-                    result: vec![],
-                    status: "".to_string(),
-                    message: "".to_string(),
-                },
-            };
-
-            let all_txs = bs_txs.result.iter().chain(bs_internal_txs.result.iter());
-
-            let mut results: Vec<SimpleTx> = all_txs
+            let mut results: Vec<SimpleTx> = bs_txs
+                .result
+                .iter()
                 .map(|tx| SimpleTx {
                     block_hash: tx.blockHash.clone(),
                     block_number: tx.blockNumber.clone(),
@@ -62,12 +49,61 @@ pub async fn get_tx_list_async(
                     transaction_index: tx.transactionIndex.clone(),
                 })
                 .collect();
+
+            if include_internal_transactions {
+                let min_block_number = results
+                    .iter()
+                    .map(|tx| tx.block_number.parse::<u64>().unwrap())
+                    .min()
+                    .unwrap();
+                let max_block_number = results
+                    .iter()
+                    .map(|tx| tx.block_number.parse::<u64>().unwrap())
+                    .max()
+                    .unwrap();
+
+                log::info!("min_block_number: {:?}", min_block_number);
+                log::info!("max_block_number: {:?}", max_block_number);
+                log::info!("start_date: {:?}", start_date);
+                log::info!("end_date: {:?}", end_date);
+
+                let bs_internal_txs = blockscout::RpcCalls::get_tx_list_async(
+                    chain_api_url,
+                    address,
+                    min_block_number,
+                    max_block_number,
+                    None,
+                    None,
+                    1,
+                    1000,
+                    true,
+                )
+                .await
+                .expect("Error getting internal tx list");
+
+                results.extend(bs_internal_txs.result.iter().map(|tx| SimpleTx {
+                    block_hash: tx.blockHash.clone(),
+                    block_number: tx.blockNumber.clone(),
+                    from: tx.from.clone(),
+                    to: tx.to.clone(),
+                    gas: tx.gas.clone(),
+                    gas_price: tx.gasPrice.clone(),
+                    hash: tx.hash.clone(),
+                    input: tx.input.clone(),
+                    is_error: tx.isError.clone(),
+                    nonce: tx.nonce.clone(),
+                    time_stamp: tx.timeStamp.clone(),
+                    transaction_index: tx.transactionIndex.clone(),
+                }));
+            };
+
             results.sort_by(|f, s| {
                 s.time_stamp
                     .parse::<u128>()
                     .unwrap()
                     .cmp(&f.time_stamp.parse::<u128>().unwrap())
             });
+
             // results.sort_by_key(|tx| tx.time_stamp.parse::<u128>().unwrap());
             results
         }
@@ -111,4 +147,45 @@ pub async fn get_tx_list_async(
     };
 
     Ok(txs)
+}
+
+pub async fn get_block_number(
+    rpc_api_type: u32,
+    chain_api_url: &str,
+    block_timestamp: String,
+) -> Result<u64, Box<dyn Error>> {
+    if rpc_api_type != 1 {
+        return Err("Invalid RPC API Type".into());
+    }
+
+    let block_number =
+        blockscout::RpcCalls::get_block_number(chain_api_url, block_timestamp).await?;
+    Ok(block_number.result.blockNumber.parse::<u64>().unwrap())
+}
+
+pub async fn get_datetime_from_block_number(
+    rpc_api_type: u32,
+    chain_api_url: &str,
+    block_number: u64,
+) -> Result<DateTime<Utc>, Box<dyn Error>> {
+    if rpc_api_type != 1 {
+        return Err("Invalid RPC API Type".into());
+    }
+
+    let block_reward =
+        blockscout::RpcCalls::get_rewards_by_block_number(chain_api_url, block_number).await?;
+
+    Ok(DateTime::<Utc>::from_timestamp(block_reward.result.timeStamp as i64, 0).unwrap())
+}
+
+pub async fn get_lastest_block_number(
+    rpc_api_type: u32,
+    chain_api_url: &str,
+) -> Result<u128, Box<dyn Error>> {
+    if rpc_api_type != 1 {
+        return Err("Invalid RPC API Type".into());
+    }
+
+    let block_number = blockscout::RpcCalls::get_lastest_block_number(chain_api_url).await?;
+    Ok(block_number.result)
 }

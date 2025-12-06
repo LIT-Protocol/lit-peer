@@ -70,8 +70,7 @@ pub async fn get_wallet_balances(ctx: &WebCallBackContext) -> Vec<WalletBalance>
     let staking = get_staking(ctx).await;
     let lit_token = get_lit_token(ctx).await;
 
-    let handshake_state = RwSignal::new("Loading... Please wait...".to_string());
-    let validators = get_validators(&staking, true, 1, handshake_state, false).await;
+    let validators = get_validators(&staking, true, 1).await;
     let mut rows: Vec<WalletBalance> = Vec::new();
 
     let provider = Provider::<Http>::try_from(ctx.active_network.chain_url.clone())
