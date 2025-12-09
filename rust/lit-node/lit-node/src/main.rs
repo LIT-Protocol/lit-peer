@@ -51,7 +51,8 @@ use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use tokio::sync::{RwLock, mpsc::channel};
-use tracing::error;
+use tracing::{error, info_span};
+use tracing_opentelemetry::OpenTelemetrySpanExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
 use crate::peers::grpc_client_pool::GrpcClientPool;
@@ -400,6 +401,41 @@ pub fn main() {
                 // include the v2 routes
                 .mount("/", endpoints::versions::v2::routes())
                 .attach(cors)
+                .attach(AdHoc::on_request("Request ID Span", |req, _| {
+                    Box::pin(async move {
+                        let request_id = req
+                            .headers()
+                            .get_one(HEADER_KEY_X_REQUEST_ID)
+                            .unwrap_or("unknown")
+                            .to_string();
+
+                        // Store the request_id in local_cache for access in handlers if needed
+                        req.local_cache(|| request_id.clone());
+
+                        // Get the current span or create a new one
+                        let span = tracing::Span::current();
+                        let span = if span.is_none() {
+                            // No current span, create one with the request_id as a field
+                            info_span!("request", request_id = %request_id)
+                        } else {
+                            span
+                        };
+
+                        // Set the request_id as an attribute on the OpenTelemetry span
+                        // This will ensure it appears in all logs exported to GCP
+                        // The attribute is set on the OpenTelemetry span, which persists
+                        // even if the tracing span guard is dropped
+                        span.set_attribute("request_id", request_id.clone());
+                        // Also record it as a tracing field for local logging
+                        span.record("request_id", tracing::field::display(&request_id));
+
+                        // Enter the span to make it active for the request
+                        // The guard will be dropped when the fairing completes, but the
+                        // OpenTelemetry attribute is already set on the span, so it will
+                        // be included in all logs that are created within the request context
+                        let _guard = span.entered();
+                    })
+                }))
                 .attach(AdHoc::on_response("Version Header", |_, resp| {
                     Box::pin(async move {
                         resp.set_header(Header::new(
