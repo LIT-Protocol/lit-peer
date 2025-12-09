@@ -43,7 +43,7 @@ contract StakingParticipationFacet {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-     /// @notice This will be called using the node operator wallet (unattested).
+    /// @notice This will be called using the node operator wallet (unattested).
     function registerAttestedWallet(
         address stakerAddress,
         address attestedAddress,

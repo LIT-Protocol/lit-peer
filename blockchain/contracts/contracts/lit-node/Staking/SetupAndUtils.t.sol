@@ -78,7 +78,7 @@ abstract contract SetupAndUtils is Test {
         stakingAcrossRealmsFacet = new StakingAcrossRealmsFacet();
         stakingVersionFacet = new StakingVersionFacet();
         stakingParticipationFacet = new StakingParticipationFacet();
-        
+
         priceFeedFacet = new PriceFeedFacet();
 
         functionSelectorHelper = new FunctionSelectorHelper();

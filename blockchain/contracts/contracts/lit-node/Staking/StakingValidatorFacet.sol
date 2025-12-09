@@ -943,7 +943,7 @@ contract StakingValidatorFacet {
         checkActiveOrUnlockedOrPausedState(
             StakingUtilsLib.realm(realmId).state
         );
-        
+
         StakingUtilsLib.removeValidatorFromNextEpoch(realmId, stakerAddress);
 
         // ensure this won't drop us below the minimum validator count.
