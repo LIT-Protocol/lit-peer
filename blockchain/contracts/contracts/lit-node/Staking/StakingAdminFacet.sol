@@ -250,7 +250,7 @@ contract StakingAdminFacet is StakingCommon {
         address stakerAddress
     ) external {
         onlyOwner();
-        
+
         StakingUtilsLib.slashValidator(percentage, stakerAddress);
     }
 
@@ -546,7 +546,7 @@ contract StakingAdminFacet is StakingCommon {
             revert("Not enough new validators to replace all shadow nodes");
         }
 
-         StakingUtilsLib.checkValidatorCountAgainstKeySetsInRealm(
+        StakingUtilsLib.checkValidatorCountAgainstKeySetsInRealm(
             target_realmId,
             threshold,
             1
