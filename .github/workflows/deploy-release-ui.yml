@@ -46,7 +46,7 @@ jobs:
           ref: ${{ github.event.inputs.source_branch || 'master' }}
 
       - name: Checkout Release Data from lit-peer
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: 'LIT-Protocol/lit-peer'
           ref: 'releases-info'
