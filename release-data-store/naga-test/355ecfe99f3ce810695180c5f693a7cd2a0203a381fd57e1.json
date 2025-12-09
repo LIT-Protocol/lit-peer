@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "1.0.0",
+  "releaseId": "355ecfe99f3ce810695180c5f693a7cd2a0203a381fd57e1",
+  "version": "2.1.7",
+  "networkName": "naga-test",
+  "releaseDate": "2025-12-09T23:36:09.206193720Z",
+  "status": "active",
+  "source": {
+    "litOs": {
+      "branch": "develop",
+      "commit": "22fa44ff55bdd38b07c10accb30762fd0055815e"
+    },
+    "litAssets": {
+      "branch": "develop",
+      "commit": "f91050d85a2c139285abc7e6665a6a06cb99a619"
+    }
+  },
+  "artifacts": {
+    "manifestCid": "QmXp3CmKn4o6XynCC4TPGAFTr1mQCFYTHZqdrk6HYofGJ5",
+    "dockerImage": "No docker image for this release"
+  },
+  "verification": {
+    "signedGitTag": "v2.1.7-naga-test",
+    "gpgKeyFingerprint": "78FE8F97E37F4505"
+  }
+}
