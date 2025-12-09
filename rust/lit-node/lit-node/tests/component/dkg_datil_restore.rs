@@ -1,7 +1,7 @@
 use super::utils::virtual_node_collection::VirtualNodeCollection;
 use crate::common::interpolation::CurveScalar;
-use crate::common::interpolation::interpolate_secret_from_shares;
 use crate::common::interpolation::interpolate_secret;
+use crate::common::interpolation::interpolate_secret_from_shares;
 use async_std::path::PathBuf;
 use elliptic_curve::{Group, group::GroupEncoding};
 use ethers::types::{H160, U256};
@@ -14,9 +14,9 @@ use lit_node::tss::common::key_share::KeyShare;
 use lit_node::tss::common::storage::write_key_share_to_cache_only;
 use lit_node::tss::dkg::engine::{DkgAfterRestore, DkgAfterRestoreData, DkgEngine};
 use lit_node::tss::util::DEFAULT_KEY_SET_NAME;
-use lit_node_core::{CompressedBytes, CompressedHex};
 use lit_node_core::CurveType;
 use lit_node_core::PeerId;
+use lit_node_core::{CompressedBytes, CompressedHex};
 use serde::{Deserialize, Serialize};
 use test_case::test_case;
 use tracing::info;
@@ -72,7 +72,10 @@ where
         let identity_id = datil_key_share.index + 1;
         let share = DefaultShare {
             identifier: IdentifierPrimeField(k256::Scalar::from(identity_id as u64)),
-            value: IdentifierPrimeField(k256::Scalar::from_uncompressed_hex(&datil_key_share.hex_private_share.clone()).unwrap()),
+            value: IdentifierPrimeField(
+                k256::Scalar::from_uncompressed_hex(&datil_key_share.hex_private_share.clone())
+                    .unwrap(),
+            ),
         };
         initial_shares.push(share);
 
@@ -161,23 +164,36 @@ where
 
     let epoch = epoch + 1;
     for (_i, pubkey) in root_keys.iter().enumerate() {
-        let naga_secret = interpolate_secret(curve_type, &next_peers, pubkey, epoch, realm_id).await;
-        let datil_secret = interpolate_secret_from_shares::<k256::ProjectivePoint>(threshold, &initial_shares);
+        let naga_secret =
+            interpolate_secret(curve_type, &next_peers, pubkey, epoch, realm_id).await;
+        let datil_secret =
+            interpolate_secret_from_shares::<k256::ProjectivePoint>(threshold, &initial_shares);
         info!("Naga Secret: {:?}", naga_secret);
         info!("Datil Secret: {:?}", datil_secret);
-        assert_eq!(naga_secret, CurveScalar::K256(datil_secret), "secrets do not match after restore");
+        assert_eq!(
+            naga_secret,
+            CurveScalar::K256(datil_secret),
+            "secrets do not match after restore"
+        );
     }
 }
-
 
 #[ignore]
 #[test]
 fn test_interpolate_secrets() {
-    
     let threshold = 3;
-    let share1 = k256::Scalar::from_uncompressed_hex("8c803a0d76e20437e4b5ba37cc896cf3dceca20ce8e426c8b6ea98e45d6a7d9b").unwrap();
-    let share2 = k256::Scalar::from_uncompressed_hex("49ebd62ce07f46a63e05ce91fb3edd463b1ba579a83cfa88d89e2ab8ee2f7861").unwrap();
-    let share3 = k256::Scalar::from_uncompressed_hex("8182c7a788c704dc544ccbbdc18451ee3b8430ca394c0f7ea1090a1b98429546").unwrap();
+    let share1 = k256::Scalar::from_uncompressed_hex(
+        "8c803a0d76e20437e4b5ba37cc896cf3dceca20ce8e426c8b6ea98e45d6a7d9b",
+    )
+    .unwrap();
+    let share2 = k256::Scalar::from_uncompressed_hex(
+        "49ebd62ce07f46a63e05ce91fb3edd463b1ba579a83cfa88d89e2ab8ee2f7861",
+    )
+    .unwrap();
+    let share3 = k256::Scalar::from_uncompressed_hex(
+        "8182c7a788c704dc544ccbbdc18451ee3b8430ca394c0f7ea1090a1b98429546",
+    )
+    .unwrap();
     let shares = vec![
         DefaultShare {
             identifier: IdentifierPrimeField(k256::Scalar::from(2 as u64)),
