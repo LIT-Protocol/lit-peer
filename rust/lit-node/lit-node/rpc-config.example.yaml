@@ -172,7 +172,9 @@ chains:
   storyOdyssey:
     - url: https://rpc.odyssey.storyrpc.io
   campTestnet:
-    - url: https://rpc.camp-network-testnet.gelato.digital
+    - url: https://rpc.basecamp.t.raas.gelato.cloud
+  campMainnet:
+    - url: https://rpc.camp.raas.gelato.cloud
   hushedNorthstar:
     - url: https://rpc.buildbear.io/yielddev
   matchain:
