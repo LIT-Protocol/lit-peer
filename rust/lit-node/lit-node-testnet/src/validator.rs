@@ -857,6 +857,15 @@ impl ValidatorCollection {
             })
             .collect()
     }
+    pub async fn active_node_set(&self) -> Result<Vec<NodeSet>> {
+        Ok(self.get_active_validators().await?
+            .iter()
+            .map(|v| NodeSet {
+                socket_address: v.public_address(),
+                value: 1,
+            })
+            .collect::<Vec<_>>())
+    }
 }
 
 impl Drop for ValidatorCollection {
