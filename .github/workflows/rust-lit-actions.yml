@@ -36,7 +36,7 @@ jobs:
           rm -rf ../../lit-assets
           mkdir -p ${{ github.workspace }}
       - name: Checkout lit-assets
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Install rust
         uses: dtolnay/rust-toolchain@master
         with:

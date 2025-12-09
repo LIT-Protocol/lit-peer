@@ -770,8 +770,6 @@ contract StakingFacet is StakingCommon, ERC2771 {
         stakeRecord.lastUpdateTimestamp = block.timestamp;
         stakeRecord.lastRewardEpochClaimed = lastRewardEpochClaimed;
 
-        updateStakeRecord(LibERC2771._msgSender(), stakeRecord.id, stakeRecord);
-
         SafeERC20.safeTransfer(
             IERC20(views().getTokenContractAddress()),
             LibERC2771._msgSender(),
@@ -921,32 +919,6 @@ contract StakingFacet is StakingCommon, ERC2771 {
             startEpochCheckpoint,
             lastRewardEpochClaimed
         );
-    }
-
-    /**
-     * @notice Updates the stake record in the staker's vault
-     * @param userAddress The address of the staker
-     * @param stakeId The ID of the stake record
-     * @param newState The new state of the stake record
-     */
-    function updateStakeRecord(
-        address userAddress,
-        uint256 stakeId,
-        LibStakingStorage.StakeRecord memory newState
-    ) internal {
-        address stakerAddress = s().userStakerAddressToStakerAddress[
-            userAddress
-        ];
-        LibStakingStorage.StakeRecord[30] storage userStakes = s()
-        .vaults[stakerAddress][userAddress].stakes;
-        for (uint256 i = 0; i < userStakes.length; i++) {
-            if (userStakes[i].id == stakeId) {
-                userStakes[i] = newState;
-                break;
-            }
-        }
-
-        emit StakeRecordUpdated(stakerAddress, stakeId);
     }
 
     /**

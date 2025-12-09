@@ -34,7 +34,7 @@ jobs:
         uses: tj-actions/branch-names@v9
 
       - name: Make sure we checked out develop, so we can get it's sha
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: ${{ steps.branch-name.outputs.base_ref_branch }}
 
@@ -58,7 +58,7 @@ jobs:
       blockchain_changed: ${{ steps.changed-files-yaml.outputs.blockchain_any_modified }}
     steps:
       - name: Checkout lit-assets
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Print base sha
         run: |
