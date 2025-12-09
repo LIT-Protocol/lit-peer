@@ -149,7 +149,11 @@ pub(crate) async fn encryption_sign(
 
     let before = std::time::Instant::now();
     // Validate auth sig item
-    let bls_root_pubkey = match get_bls_root_pubkey(session, None) {
+    let key_set_id_str = encryption_sign_request
+        .key_set_identifier
+        .as_ref()
+        .map(|id| id.to_string());
+    let bls_root_pubkey = match get_bls_root_pubkey(session, key_set_id_str.as_deref()) {
         Ok(bls_root_pubkey) => bls_root_pubkey,
         Err(e) => {
             return client_session.json_encrypt_err_custom_response("no bls root key", e.handle());
@@ -316,14 +320,16 @@ pub(crate) async fn encryption_sign(
 
     let before = std::time::Instant::now();
     // Sign the identity parameter using the blsful secret key share.
-    let (signature_share, share_peer_id) =
-        match cipher_state.sign(&identity_parameter, None, epoch).await {
-            Ok(signature_share) => signature_share,
-            Err(e) => {
-                return client_session
-                    .json_encrypt_err_custom_response("unable to BLS sign", e.handle());
-            }
-        };
+    let (signature_share, share_peer_id) = match cipher_state
+        .sign(&identity_parameter, key_set_id_str.as_deref(), epoch)
+        .await
+    {
+        Ok(signature_share) => signature_share,
+        Err(e) => {
+            return client_session
+                .json_encrypt_err_custom_response("unable to BLS sign", e.handle());
+        }
+    };
     timing.insert("sign identity parameter".to_string(), before.elapsed());
 
     timing.insert("total".to_string(), request_start.elapsed());

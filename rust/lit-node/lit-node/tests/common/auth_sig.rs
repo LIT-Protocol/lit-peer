@@ -271,7 +271,7 @@ pub fn get_session_sigs_for_auth(
     let verifying_key = signing_key.verifying_key();
     let session_pub_key = encoding::bytes_to_hex(verifying_key.to_bytes());
 
-    // Sign SIWE first.
+    // Sign SIWE first using the local wallet.
     let auth_sig = get_auth_sig_for_session_sig(
         session_pub_key.clone(),
         auth_sig_wallet,
