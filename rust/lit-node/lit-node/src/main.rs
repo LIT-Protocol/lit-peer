@@ -406,7 +406,7 @@ pub fn main() {
                         let request_id = req
                             .headers()
                             .get_one(HEADER_KEY_X_REQUEST_ID)
-                            .unwrap_or("unknown")
+                            .unwrap_or("unknown_req_id")
                             .to_string();
 
                         // Store the request_id in local_cache for access in handlers if needed
