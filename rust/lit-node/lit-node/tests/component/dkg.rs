@@ -409,6 +409,7 @@ pub async fn dkg_after_restore<G>(
             DkgAfterRestore::True(DkgAfterRestoreData {
                 peers: recovered_peer_ids.clone(),
                 key_cache: recovery_key_cache.clone(),
+                is_datil_restore: false,
             }),
         );
         for (i, pubkey) in root_keys.iter().enumerate() {

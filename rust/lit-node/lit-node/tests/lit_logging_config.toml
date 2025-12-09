@@ -30,3 +30,6 @@ port = "7470"
 
 [subnet]
 id = "c05Ba3C06E45849066852579f6069c072e78C37d"
+
+[logging]
+level = "debug"

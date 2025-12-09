@@ -176,6 +176,7 @@ pub async fn do_network_restore(
                 DkgAfterRestore::True(DkgAfterRestoreData {
                     peers: vec![],
                     key_cache,
+                    is_datil_restore: false,
                 });
 
             report_progress(&cfg, NodeRecoveryStatus::AllKeysAreRestored).await;

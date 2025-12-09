@@ -72,6 +72,7 @@ impl DkgAfterRestore {
 pub struct DkgAfterRestoreData {
     pub peers: Vec<RecoveredPeerId>,
     pub key_cache: KeyCache,
+    pub is_datil_restore: bool,
 }
 
 impl DkgEngine {
@@ -917,7 +918,7 @@ impl DkgEngine {
                     );
                 };
                 let private_share = key_state.secret_from_hex(&key_share.hex_private_share)?;
-                let old_share = DefaultShare {
+                let mut old_share = DefaultShare {
                     identifier: IdentifierPrimeField(G::Scalar::from(key_share.peer_id)),
                     value: IdentifierPrimeField(private_share),
                 };
@@ -930,10 +931,26 @@ impl DkgEngine {
                         for pair in data.peers.iter() {
                             let new_peer_id = PeerId::try_from(pair.new_peer_id)
                                 .map_err(|e| unexpected_err(e, None))?;
-                            let old_peer_id = PeerId::try_from(pair.old_peer_id)
-                                .map_err(|e| unexpected_err(e, None))?;
                             if args.next_ids.contains(&new_peer_id) {
-                                old_ids.push(IdentifierPrimeField(G::Scalar::from(old_peer_id)));
+                                if data.is_datil_restore {
+                                    let old_peer_id = pair.old_peer_id.as_u64();
+                                    old_ids
+                                        .push(IdentifierPrimeField(G::Scalar::from(old_peer_id)));
+
+                                    if new_peer_id == args.peer_id {
+                                        old_share = DefaultShare {
+                                            identifier: IdentifierPrimeField(G::Scalar::from(
+                                                old_peer_id,
+                                            )),
+                                            value: IdentifierPrimeField(private_share),
+                                        };
+                                    }
+                                } else {
+                                    let old_peer_id = PeerId::try_from(pair.old_peer_id)
+                                        .map_err(|e| unexpected_err(e, None))?;
+                                    old_ids
+                                        .push(IdentifierPrimeField(G::Scalar::from(old_peer_id)));
+                                };
                             }
                         }
                         old_ids
@@ -951,6 +968,10 @@ impl DkgEngine {
                             .collect::<Vec<_>>()
                     }
                 };
+
+                info!("Old share: {:?}", old_share);
+                info!("Old ids: {:?}", old_ids);
+                info!("Parameters: {:?}", parameters);
                 Ok(Box::new(
                     SecretParticipant::<G>::with_secret(id, &old_share, &parameters, &old_ids)
                         .map_err(|e| {
