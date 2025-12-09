@@ -313,6 +313,7 @@ const config: HardhatUserConfig = {
         'StakingAdminFacet',
         'StakingAcrossRealmsFacet',
         'StakingKeySetsFacet',
+        'StakingParticipationFacet',
         'DiamondCutFacet',
         'DiamondLoupeFacet',
       ],

@@ -17,7 +17,6 @@ contract StakingAdminFacet is StakingCommon {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     /* ========== Modifier Equivalents ========== */
-    /* ========== Modifier Equivalents ========== */
 
     function onlyOwner() internal view {
         if (msg.sender != LibDiamond.contractOwner()) {
@@ -251,6 +250,7 @@ contract StakingAdminFacet is StakingCommon {
         address stakerAddress
     ) external {
         onlyOwner();
+        
         StakingUtilsLib.slashValidator(percentage, stakerAddress);
     }
 
@@ -545,6 +545,12 @@ contract StakingAdminFacet is StakingCommon {
         if (threshold > target_validators.length) {
             revert("Not enough new validators to replace all shadow nodes");
         }
+
+         StakingUtilsLib.checkValidatorCountAgainstKeySetsInRealm(
+            target_realmId,
+            threshold,
+            1
+        );
 
         // add the source validators to the target realm as shadow nodes
         for (uint256 i = 0; i < threshold; i++) {

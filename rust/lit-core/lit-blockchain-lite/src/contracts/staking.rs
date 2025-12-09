@@ -7417,6 +7417,25 @@ abi_errors.append(&mut __abi_errors_2());
                     ],
                 ),
                 (
+                    ::std::borrow::ToOwned::to_owned("CannotKickBelowKeySetThreshold"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "CannotKickBelowKeySetThreshold",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("keySetId"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("string"),
+                                    ),
+                                },
+                            ],
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned("CannotMigrateFromValidator"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::AbiError {
@@ -8228,8 +8247,19 @@ abi_errors.append(&mut __abi_errors_2());
                             ],
                         },
                     ],
-                ),
-                (
+                )
+        ]
+        )
+        }
+        
+        
+        
+#[allow(deprecated)]
+        fn __abi_errors_2() -> std::collections::BTreeMap<String, Vec<::ethers::core::abi::ethabi::AbiError>> {
+        
+        std::collections::BTreeMap::from(
+        [
+        (
                     ::std::borrow::ToOwned::to_owned("NotEnoughValidatorsInNextEpoch"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::AbiError {
@@ -8260,19 +8290,8 @@ abi_errors.append(&mut __abi_errors_2());
                             ],
                         },
                     ],
-                )
-        ]
-        )
-        }
-        
-        
-        
-#[allow(deprecated)]
-        fn __abi_errors_2() -> std::collections::BTreeMap<String, Vec<::ethers::core::abi::ethabi::AbiError>> {
-        
-        std::collections::BTreeMap::from(
-        [
-        (
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned(
                         "NotEnoughValidatorsReadyForNextEpoch",
                     ),
@@ -11198,6 +11217,26 @@ abi_errors.append(&mut __abi_errors_2());
         abi = "CannotKickBelowCurrentValidatorThreshold()"
     )]
     pub struct CannotKickBelowCurrentValidatorThreshold;
+    ///Custom Error type `CannotKickBelowKeySetThreshold` with signature `CannotKickBelowKeySetThreshold(string)` and selector `0x167353a3`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "CannotKickBelowKeySetThreshold",
+        abi = "CannotKickBelowKeySetThreshold(string)"
+    )]
+    pub struct CannotKickBelowKeySetThreshold {
+        pub key_set_id: ::std::string::String,
+    }
     ///Custom Error type `CannotMigrateFromValidator` with signature `CannotMigrateFromValidator()` and selector `0x4ffa7973`
     #[derive(
         Clone,
@@ -12420,6 +12459,7 @@ abi_errors.append(&mut __abi_errors_2());
         CannotKickBelowCurrentValidatorThreshold(
             CannotKickBelowCurrentValidatorThreshold,
         ),
+        CannotKickBelowKeySetThreshold(CannotKickBelowKeySetThreshold),
         CannotMigrateFromValidator(CannotMigrateFromValidator),
         CannotModifyUnfrozen(CannotModifyUnfrozen),
         CannotMoveToLockedValidatorStateBeforeEpochEnds(
@@ -12544,6 +12584,11 @@ abi_errors.append(&mut __abi_errors_2());
                 data,
             ) {
                 return Ok(Self::CannotKickBelowCurrentValidatorThreshold(decoded));
+            }
+            if let Ok(decoded) = <CannotKickBelowKeySetThreshold as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::CannotKickBelowKeySetThreshold(decoded));
             }
             if let Ok(decoded) = <CannotMigrateFromValidator as ::ethers::core::abi::AbiDecode>::decode(
                 data,
@@ -12904,6 +12949,9 @@ abi_errors.append(&mut __abi_errors_2());
                 Self::CannotKickBelowCurrentValidatorThreshold(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
+                Self::CannotKickBelowKeySetThreshold(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::CannotMigrateFromValidator(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
@@ -13130,6 +13178,10 @@ abi_errors.append(&mut __abi_errors_2());
                 }
                 _ if selector
                     == <CannotKickBelowCurrentValidatorThreshold as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
+                    == <CannotKickBelowKeySetThreshold as ::ethers::contract::EthError>::selector() => {
                     true
                 }
                 _ if selector
@@ -13410,6 +13462,9 @@ abi_errors.append(&mut __abi_errors_2());
                 Self::CannotKickBelowCurrentValidatorThreshold(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
+                Self::CannotKickBelowKeySetThreshold(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
                 Self::CannotMigrateFromValidator(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
@@ -13626,6 +13681,11 @@ abi_errors.append(&mut __abi_errors_2());
     for StakingErrors {
         fn from(value: CannotKickBelowCurrentValidatorThreshold) -> Self {
             Self::CannotKickBelowCurrentValidatorThreshold(value)
+        }
+    }
+    impl ::core::convert::From<CannotKickBelowKeySetThreshold> for StakingErrors {
+        fn from(value: CannotKickBelowKeySetThreshold) -> Self {
+            Self::CannotKickBelowKeySetThreshold(value)
         }
     }
     impl ::core::convert::From<CannotMigrateFromValidator> for StakingErrors {

@@ -54,7 +54,6 @@ contract StakingValidatorFacet {
     );
     error ValueMustBeNonzero(string valueName);
     error CannotWithdrawZero();
-    error CannotReuseCommsKeys(uint256 senderPubKey, uint256 receiverPubKey);
     error ValidatorNotPermitted(address validatorAddress, uint256 realmId);
     error SignaledReadyForWrongEpochNumber(
         uint256 currentEpochNumber,
@@ -67,7 +66,7 @@ contract StakingValidatorFacet {
         address stakerAddress
     );
     error InvalidAttestedAddress();
-    error ValidatorRegisterAttestedWalletDisabled();
+    error CannotKickBelowKeySetThreshold(string keySetId);
 
     /* ========== VIEWS ========== */
 
@@ -607,93 +606,6 @@ contract StakingValidatorFacet {
         emit RequestToJoin(stakerAddress);
     }
 
-    /// @notice This will be called using the node operator wallet (unattested).
-    function registerAttestedWallet(
-        address stakerAddress,
-        address attestedAddress,
-        bytes calldata attestedPubKey,
-        uint256 senderPubKey,
-        uint256 receiverPubKey
-    ) external {
-        require(attestedPubKey.length == 65, "Invalid uncompressed key length");
-        uint8 prefix = uint8(attestedPubKey[0]);
-        require(prefix == 0x04, "Invalid uncompressed key prefix");
-
-        // Check that the staker address is correct.
-        address resolvedAddress = StakingUtilsLib
-            .views()
-            .operatorAddressToStakerAddress(msg.sender);
-        if (resolvedAddress != stakerAddress) {
-            revert StakerAddressMismatch(
-                msg.sender,
-                resolvedAddress,
-                stakerAddress
-            );
-        } else if (
-            StakingUtilsLib.views().nodeAddressToStakerAddress(
-                attestedAddress
-            ) !=
-            address(0) &&
-            attestedAddress != msg.sender
-        ) {
-            revert InvalidAttestedAddress();
-        }
-
-        if (senderPubKey == 0) {
-            revert ValueMustBeNonzero("senderPubKey");
-        }
-        if (receiverPubKey == 0) {
-            revert ValueMustBeNonzero("receiverPubKey");
-        }
-
-        LibStakingStorage.Validator storage validator = s().validators[
-            stakerAddress
-        ];
-
-        if (validator.registerAttestedWalletDisabled) {
-            revert ValidatorRegisterAttestedWalletDisabled();
-        }
-        if (validator.lastRealmId != 0) {
-            // Skip check if the keys are the same
-            if (
-                !(senderPubKey == validator.senderPubKey &&
-                    receiverPubKey == validator.receiverPubKey)
-            ) {
-                LibStakingStorage.RealmStorage
-                    storage realmStorage = StakingUtilsLib.realm(
-                        validator.lastRealmId
-                    );
-                bytes32 commsKeysHash = keccak256(
-                    abi.encodePacked(senderPubKey, receiverPubKey)
-                );
-                if (realmStorage.usedCommsKeys[commsKeysHash]) {
-                    revert CannotReuseCommsKeys(senderPubKey, receiverPubKey);
-                }
-                realmStorage.usedCommsKeys[commsKeysHash] = true;
-            }
-        }
-
-        uint256 x;
-        uint256 y;
-        assembly {
-            x := calldataload(add(attestedPubKey.offset, 1))
-            y := calldataload(add(attestedPubKey.offset, 33))
-        }
-
-        validator.senderPubKey = senderPubKey;
-        validator.receiverPubKey = receiverPubKey;
-        validator.nodeAddress = attestedAddress;
-        s().stakerAddressToNodeAddress[stakerAddress] = attestedAddress;
-        s().nodeAddressToStakerAddress[attestedAddress] = stakerAddress;
-        s().attestedAddressToPubKey[attestedAddress] = LibStakingStorage
-            .UncompressedK256Key(x, y);
-        emit AttestedWalletRegistered(
-            stakerAddress,
-            attestedAddress,
-            LibStakingStorage.UncompressedK256Key(x, y)
-        );
-    }
-
     /// Exit staking and get any outstanding rewards
     function exit() external pure {
         //    "Not implemented - check the docs to validate a proper withdrawl process."
@@ -746,19 +658,32 @@ contract StakingValidatorFacet {
         bool isValidatorInCurrentSet = realmStorage
             .validatorsInCurrentEpoch
             .contains(validatorToKickStakerAddress);
+
         if (
             StakingUtilsLib.views().epoch(realmId).number > 1 &&
-            realmStorage.currentValidatorsKickedFromNextEpoch.length() >=
-            (StakingUtilsLib
+            StakingUtilsLib
                 .views()
                 .getValidatorsInCurrentEpoch(realmId)
-                .length -
+                .length >=
+            (realmStorage.currentValidatorsKickedFromNextEpoch.length() +
                 StakingUtilsLib.views().currentValidatorCountForConsensus(
                     realmId
                 ))
         ) {
             revert CannotKickBelowCurrentValidatorThreshold();
         }
+
+        uint256 nextValidatorCnt = StakingUtilsLib
+            .views()
+            .getValidatorsInCurrentEpoch(realmId)
+            .length -
+            realmStorage.currentValidatorsKickedFromNextEpoch.length();
+
+        StakingUtilsLib.checkValidatorCountAgainstKeySetsInRealm(
+            realmId,
+            nextValidatorCnt,
+            3
+        );
 
         LibStakingStorage.Epoch memory currentEpoch = mutableEpoch(realmId);
         // Vote to kick
@@ -1018,16 +943,7 @@ contract StakingValidatorFacet {
         checkActiveOrUnlockedOrPausedState(
             StakingUtilsLib.realm(realmId).state
         );
-
-        if (
-            StakingUtilsLib.realm(realmId).validatorsInNextEpoch.length() - 1 <
-            s().globalConfig[0].minimumValidatorCount
-        ) {
-            revert StakingUtilsLib.NotEnoughValidatorsInNextEpoch(
-                StakingUtilsLib.realm(realmId).validatorsInNextEpoch.length(),
-                s().globalConfig[0].minimumValidatorCount
-            );
-        }
+        
         StakingUtilsLib.removeValidatorFromNextEpoch(realmId, stakerAddress);
 
         // ensure this won't drop us below the minimum validator count.

@@ -7,6 +7,7 @@ import { StakingViewsFacet } from "../Staking/StakingViewsFacet.sol";
 import { StakingAdminFacet } from "../Staking/StakingAdminFacet.sol";
 import { StakingValidatorFacet } from "../Staking/StakingValidatorFacet.sol";
 import { StakingAcrossRealmsFacet } from "../Staking/StakingAcrossRealmsFacet.sol";
+import { StakingParticipationFacet } from "../Staking/StakingParticipationFacet.sol";
 import { StakingVersionFacet } from "../Staking/StakingVersionFacet.sol";
 import { StakingUtilsLib } from "../Staking/StakingUtilsLib.sol";
 import { ContractResolver } from "../../lit-core/ContractResolver.sol";
@@ -28,6 +29,7 @@ abstract contract SetupAndUtils is Test {
     StakingViewsFacet stakingViewsFacet;
     StakingAdminFacet stakingAdminFacet;
     StakingValidatorFacet stakingValidatorFacet;
+    StakingParticipationFacet stakingParticipationFacet;
     StakingAcrossRealmsFacet stakingAcrossRealmsFacet;
     StakingVersionFacet stakingVersionFacet;
     LITToken token;
@@ -75,7 +77,8 @@ abstract contract SetupAndUtils is Test {
         stakingValidatorFacet = new StakingValidatorFacet();
         stakingAcrossRealmsFacet = new StakingAcrossRealmsFacet();
         stakingVersionFacet = new StakingVersionFacet();
-
+        stakingParticipationFacet = new StakingParticipationFacet();
+        
         priceFeedFacet = new PriceFeedFacet();
 
         functionSelectorHelper = new FunctionSelectorHelper();

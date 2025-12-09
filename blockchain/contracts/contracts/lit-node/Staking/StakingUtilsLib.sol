@@ -6,6 +6,7 @@ import { LibStakingStorage } from "./LibStakingStorage.sol";
 import { StakingViewsFacet } from "./StakingViewsFacet.sol";
 import { StakingFacet } from "./StakingFacet.sol";
 import { StakingAcrossRealmsFacet } from "./StakingAcrossRealmsFacet.sol";
+import { StakingValidatorFacet } from "./StakingValidatorFacet.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { console } from "hardhat/console.sol";
 
@@ -146,15 +147,48 @@ library StakingUtilsLib {
     }
 
     function checkNextSetAboveThreshold(uint256 realmId) internal view {
+        uint256 validatorsCnt = realm(realmId).validatorsInNextEpoch.length();
+        checkValidatorCountAgainstKeySetsInRealm(realmId, validatorsCnt, 2);
+
         // never let the network go below 3
-        if (
-            realm(realmId).validatorsInNextEpoch.length() <
-            s().globalConfig[0].minimumValidatorCount
-        ) {
+        if (validatorsCnt < s().globalConfig[0].minimumValidatorCount) {
             revert NotEnoughValidatorsInNextEpoch(
-                realm(realmId).validatorsInNextEpoch.length(),
+                validatorsCnt,
                 s().globalConfig[0].minimumValidatorCount
             );
+        }
+    }
+
+    function checkValidatorCountAgainstKeySetsInRealm(
+        uint256 realmId,
+        uint256 validatorCnt,
+        uint256 reason
+    ) internal view {
+        bytes32[] memory keySetIds = s().keySetIds;
+        for (uint256 i = 0; i < keySetIds.length; i++) {
+            LibStakingStorage.KeySetConfig memory config = s().keySetsConfigs[
+                keySetIds[i]
+            ];
+            for (uint256 j = 0; j < config.realms.length; j++) {
+                if (config.realms[i] == realmId) {
+                    if (validatorCnt < config.minimumThreshold) {
+                        if (reason == 1) {
+                            revert("Not enough validators for key set");
+                        } else if (reason == 2) {
+                            revert NotEnoughValidatorsInNextEpoch(
+                                validatorCnt,
+                                config.minimumThreshold
+                            );
+                        } else if (reason == 3) {
+                            revert StakingValidatorFacet
+                                .CannotKickBelowKeySetThreshold(
+                                    config.identifier
+                                );
+                        }
+                    }
+                    break;
+                }
+            }
         }
     }
 
