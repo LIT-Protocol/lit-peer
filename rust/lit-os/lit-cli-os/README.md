@@ -45,7 +45,7 @@ lit os guest template release abc12345 \
 - **Staging:** `naga-staging`
 - **Test:** `datil-test`, `naga-test`
 - **Development:** `datil-dev`, `naga-dev`, `internal-dev`
-- **Proto:** `datil-proto`
+- **Proto:** `datil-proto`, `naga-proto`
 
 ---
 
@@ -107,6 +107,8 @@ and ensure the gpg-agent is running.
 
 The release command needs a GitHub Personal Access Token (PAT) to create releases.
 
+**⚠️ Important:** We **must** use a Personal Access Token (PAT), not the default `GITHUB_TOKEN` from GitHub Actions. Releases created with the default `GITHUB_TOKEN` will **not** trigger workflows automatically due to GitHub's security restrictions. Therefore, until we migrate to Github Apps, pelase trigger the workflow manually to update the github page. 
+
 #### Create Personal Access Token
 
 1. Go to: **GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)**
@@ -131,6 +133,8 @@ curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/user
 ```
 
 **Security note:** Keep your token secure! Never commit it to Git or share it publicly.
+
+**Why a PAT is required:** GitHub prevents workflows from triggering other workflows when using the default `GITHUB_TOKEN` to avoid infinite loops. Using a PAT allows the release creation to trigger the deployment workflow automatically.
 
 ---
 
