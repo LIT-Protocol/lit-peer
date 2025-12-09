@@ -219,6 +219,7 @@ async fn shadow_splicing_sign_encrypt() {
         test_encryption_parameters.clone(),
         &session_sigs_realm_1,
         epoch,
+        None,
     )
     .await;
 
@@ -231,6 +232,7 @@ async fn shadow_splicing_sign_encrypt() {
         test_encryption_parameters.clone(),
         &session_sigs_realm_2,
         epoch,
+        None,
     )
     .await;
     assert_decrypted(

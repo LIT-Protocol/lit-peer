@@ -1,4 +1,9 @@
+use crate::common::auth_sig::get_session_sigs_for_auth;
 use crate::common::recovery_party::SiweSignature;
+use crate::common::web_user_tests::{
+    assert_decrypted, prepare_test_encryption_parameters,
+    retrieve_decryption_key_session_sigs_with_version,
+};
 use chrono::{Duration, Utc};
 use ethers::prelude::{H160, U256};
 use ethers::types::Address;
@@ -11,10 +16,16 @@ use lit_node::endpoints::auth_sig::LITNODE_ADMIN_RES;
 use lit_node::peers::peer_state::models::NetworkState;
 use lit_node::tss::common::restore::NodeRecoveryStatus;
 
-use lit_node_core::{CurveType, JsonAuthSig};
+use lit_node_core::request::KeySetIdentifier;
+use lit_node_core::{
+    CurveType, JsonAuthSig, LitAbility, LitResourceAbilityRequest,
+    LitResourceAbilityRequestResource,
+};
 use lit_node_testnet::TestSetupBuilder;
+use lit_node_testnet::end_user::EndUser;
+use lit_node_testnet::node_collection::get_identity_pubkeys_from_node_set;
 use lit_node_testnet::testnet::Testnet;
-use lit_node_testnet::testnet::actions::RootKeyConfig;
+use lit_node_testnet::testnet::actions::{Actions, RootKeyConfig};
 use lit_node_testnet::validator::ValidatorCollection;
 use reqwest::Client;
 use rocket::serde::Serialize;
@@ -66,8 +77,10 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
 
     crate::common::setup_logging();
 
-    let (testnet, mut validator_collection, _end_user) = TestSetupBuilder::default()
+    let epoch_length = 300 as usize;
+    let (testnet, mut validator_collection, end_user) = TestSetupBuilder::default()
         .num_staked_and_joined_validators(number_of_nodes)
+        .epoch_length(epoch_length)
         .build()
         .await;
 
@@ -80,11 +93,8 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
 
     testnet.actions().sleep_millis(5000).await;
 
-    let (realm_id, identifier, description) = (
-        U256::from(1),
-        "datil-keyset".to_string(),
-        "Datil Key ".to_string(),
-    );
+    let (realm_id, identifier, description) =
+        (U256::from(1), "datil".to_string(), "Datil Key ".to_string());
     let keyset_id = identifier.clone();
     let root_key_configs = vec![
         RootKeyConfig {
@@ -199,17 +209,44 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
         .await;
     info!("All the nodes restored all the keys!");
 
-    actions
-        .set_epoch_state(realm_id, NetworkState::Active as u8)
-        .await
-        .unwrap();
-
-    let seconds_to_increase = 300;
-    let epoch = actions.get_current_epoch(realm_id).await;
-    actions
-        .increase_blockchain_timestamp(seconds_to_increase)
+    // Get and log root keys for both keysets
+    let datil_root_keys = validator_collection
+        .actions()
+        .get_all_root_keys(Some("datil".to_string()))
         .await;
-    actions.wait_for_epoch(realm_id, epoch + 1).await;
+    let naga_keyset1_root_keys = validator_collection
+        .actions()
+        .get_all_root_keys(Some("naga-keyset1".to_string()))
+        .await;
+    info!("Datil root keys: {:?}", datil_root_keys);
+    info!("Naga keyset1 root keys: {:?}", naga_keyset1_root_keys);
+
+    // Advance one more DKG to write key shares to disk for the restored keyset. Note that
+    // restored key shares are NOT written to disk until the next DKG.
+
+    // TODO: Uncomment when restore is fixed
+    // // Fast forward time to allow nodes to start a DKG to advance to the next epoch.
+    // validator_collection
+    //     .actions()
+    //     .increase_blockchain_timestamp(epoch_length)
+    //     .await;
+    // // Admin set epoch state to active to pull nodes out of the restore mode
+    // validator_collection
+    //     .actions()
+    //     .set_epoch_state(realm_id, NetworkState::NextValidatorSetLocked as u8)
+    //     .await
+    //     .expect("Failed to set epoch state to active");
+
+    // validator_collection
+    //     .actions()
+    //     .wait_for_epoch(realm_id, U256::from(3))
+    //     .await;
+
+    // validator_collection.actions().sleep_millis(500000).await;
+
+    // info!("Getting BLS pubkey for datil keyset");
+    // get_bls_pubkey(&validator_collection.actions(), KeySetIdentifier::Datil).await;
+    test_datil_encrypt_naga_decrypt(&validator_collection, &end_user).await;
 }
 
 fn datil_root_keys() -> Vec<RootKey> {
@@ -563,4 +600,86 @@ fn keccak256(bytes: &[u8]) -> [u8; 32] {
     let mut hasher = Keccak256::default();
     hasher.update(bytes);
     hasher.finalize().into()
+}
+
+// Assertion helpers
+async fn get_bls_pubkey(actions: &Actions, key_set_identifier: KeySetIdentifier) -> String {
+    let bls_pubkey = actions
+        .get_root_keys(1, Some(key_set_identifier.to_string()))
+        .await
+        .expect("Failed to get root keys");
+    assert!(!bls_pubkey.is_empty());
+    bls_pubkey[0].clone()
+}
+
+async fn test_datil_encrypt_naga_decrypt(
+    validator_collection: &ValidatorCollection,
+    end_user: &EndUser,
+) {
+    // Encrypt using datil BLS pubkey
+    let test_encryption_parameters = prepare_test_encryption_parameters();
+    // TODO: change back to datil
+    let datil_bls_pubkey = get_bls_pubkey(
+        validator_collection.actions(),
+        KeySetIdentifier::NagaKeyset1,
+    )
+    .await;
+
+    let datil_bls_pubkey =
+        blsful::PublicKey::try_from(hex::decode(&datil_bls_pubkey).unwrap()).unwrap();
+    let message_bytes = test_encryption_parameters.to_encrypt.as_bytes();
+    let ciphertext = lit_sdk::encryption::encrypt_time_lock(
+        &datil_bls_pubkey,
+        message_bytes,
+        &test_encryption_parameters.identity_param,
+    )
+    .expect("Unable to encrypt");
+    debug!(
+        "encrypting with pubkey {} -> ciphertext: {:?}",
+        datil_bls_pubkey, ciphertext
+    );
+
+    // Decrypt by specifying the datil keyset ID against the nodes
+    let epoch = validator_collection
+        .actions()
+        .get_current_epoch(U256::from(1))
+        .await;
+    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
+    let signer = end_user.signing_provider().clone();
+    let session_sigs = get_session_sigs_for_auth(
+        &node_set,
+        vec![LitResourceAbilityRequest {
+            resource: LitResourceAbilityRequestResource {
+                resource: format!(
+                    "{}/{}",
+                    test_encryption_parameters.hashed_access_control_conditions,
+                    test_encryption_parameters.data_to_encrypt_hash
+                ),
+                resource_prefix: "lit-accesscontrolcondition".to_string(),
+            },
+            ability: LitAbility::AccessControlConditionDecryption.to_string(),
+        }],
+        Some(signer.signer().clone()),
+        None,
+        Some(U256::MAX), // max_price
+    );
+    let decryption_resp = retrieve_decryption_key_session_sigs_with_version(
+        test_encryption_parameters.clone(),
+        &session_sigs,
+        epoch.as_u64(),
+        // TODO: change back to datil
+        Some(KeySetIdentifier::NagaKeyset1),
+    )
+    .await;
+
+    assert_decrypted(
+        &datil_bls_pubkey,
+        test_encryption_parameters.identity_param.clone(),
+        &test_encryption_parameters.to_encrypt,
+        &ciphertext,
+        decryption_resp,
+    );
+
+    info!("Decryption checks passed");
 }
