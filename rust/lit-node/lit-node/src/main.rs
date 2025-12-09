@@ -52,6 +52,7 @@ use std::sync::Arc;
 use tokio::sync::broadcast;
 use tokio::sync::{RwLock, mpsc::channel};
 use tracing::error;
+use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
 use crate::peers::grpc_client_pool::GrpcClientPool;
@@ -494,7 +495,6 @@ async fn init_observability(
 
     // Add privacy mode layer to disable tracing when privacy_mode is enabled
     // The privacy mode layer checks thread-local state set by the fairing
-    use tracing_subscriber::layer::SubscriberExt;
     let subscriber = subscriber.with(crate::utils::rocket::privacy_mode::PrivacyModeLayer);
 
     // Set globals
