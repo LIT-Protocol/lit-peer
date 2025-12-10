@@ -3,7 +3,7 @@ use crate::models;
 use crate::payment::delegated_usage::DelegatedUsageDB;
 use crate::payment::payment_tracker::PaymentTracker;
 use crate::tss::common::tss_state::TssState;
-use crate::utils::rocket::guards::RequestHeaders;
+use crate::utils::rocket::guards::{RequestHeaders, set_request_id_on_span};
 use lit_api_core::context::{Tracer, Tracing};
 use lit_core::config::ReloadableLitConfig;
 use lit_node_common::client_state::ClientState;

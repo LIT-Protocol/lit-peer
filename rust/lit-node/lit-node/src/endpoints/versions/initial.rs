@@ -339,7 +339,9 @@ pub(crate) async fn pkp_claim(
     json_pkp_claim_request: Json<EncryptedPayload<JsonPKPClaimKeyRequest>>,
     tracing: Tracing,
     http_client: &State<reqwest::Client>,
+    request_headers: RequestHeaders<'_>,
 ) -> status::Custom<Value> {
+    set_request_id_on_span(&request_headers);
     let (pkp_claim_request, client_session) =
         match client_state.json_decrypt_to_session(&json_pkp_claim_request.0) {
             Ok(data) => data,
