@@ -4,7 +4,10 @@ use crate::endpoints::{admin, pkp, web_client};
 use crate::functions::ActionStore;
 use crate::models;
 use crate::payment::delegated_usage::DelegatedUsageDB;
-use crate::payment::{payed_endpoint::PayedEndpoint, payment_tracker::PaymentTracker};
+use crate::payment::{
+    payed_endpoint::PayedEndpoint,
+    payment_tracker::{PaymentTracker, PaymentUsageGuard},
+};
 use crate::peers::grpc_client_pool::GrpcClientPool;
 use crate::tss::common::{restore::restore_state::RestoreState, tss_state::TssState};
 use crate::utils::rocket::guards::RequestHeaders;
@@ -62,7 +65,10 @@ pub(crate) async fn sign_session_key(
     tracing: Tracing,
     request_headers: RequestHeaders<'_>,
 ) -> status::Custom<Value> {
-    payment_tracker.register_usage(&PayedEndpoint::SignSessionKey);
+    let _usage_guard = PaymentUsageGuard::new(
+        payment_tracker.inner().clone(),
+        PayedEndpoint::SignSessionKey,
+    );
 
     let (json_sign_session_key_request, client_session) =
         match client_state.json_decrypt_to_session(&json_sign_session_key_request) {
@@ -106,8 +112,6 @@ pub(crate) async fn sign_session_key(
     )
     .await;
 
-    payment_tracker.deregister_usage(&PayedEndpoint::SignSessionKey);
-
     call_result
 }
 
@@ -147,7 +151,10 @@ pub(crate) async fn encryption_sign(
     //     Err(e) => return e.handle(),
     // };
 
-    payment_tracker.register_usage(&PayedEndpoint::EncryptionSign);
+    let _usage_guard = PaymentUsageGuard::new(
+        payment_tracker.inner().clone(),
+        PayedEndpoint::EncryptionSign,
+    );
 
     let (encryption_sign_request, client_session) =
         match client_state.json_decrypt_to_session(&encryption_sign_request) {
@@ -184,8 +191,6 @@ pub(crate) async fn encryption_sign(
     )
     .await;
 
-    payment_tracker.deregister_usage(&PayedEndpoint::EncryptionSign);
-
     call_result
 }
 
@@ -210,7 +215,8 @@ pub(crate) async fn execute_function(
     request_headers: RequestHeaders<'_>,
     action_store: &State<ActionStore>,
 ) -> status::Custom<Value> {
-    payment_tracker.register_usage(&PayedEndpoint::LitAction);
+    let _usage_guard =
+        PaymentUsageGuard::new(payment_tracker.inner().clone(), PayedEndpoint::LitAction);
 
     let (json_execution_request, client_session) =
         match client_state.json_decrypt_to_session(&json_execution_request) {
@@ -258,8 +264,6 @@ pub(crate) async fn execute_function(
         },
     )
     .await;
-
-    payment_tracker.deregister_usage(&PayedEndpoint::LitAction);
 
     call_result
 }
@@ -329,7 +333,8 @@ pub(crate) async fn pkp_sign(
     tracing: Tracing,
     http_client: &State<reqwest::Client>,
 ) -> status::Custom<Value> {
-    payment_tracker.register_usage(&PayedEndpoint::PkpSign);
+    let _usage_guard =
+        PaymentUsageGuard::new(payment_tracker.inner().clone(), PayedEndpoint::PkpSign);
 
     let (json_pkp_signing_request, client_session) =
         match client_state.json_decrypt_to_session(&json_pkp_signing_request) {
@@ -366,8 +371,6 @@ pub(crate) async fn pkp_sign(
         },
     )
     .await;
-
-    payment_tracker.deregister_usage(&PayedEndpoint::PkpSign);
 
     call_result
 }
