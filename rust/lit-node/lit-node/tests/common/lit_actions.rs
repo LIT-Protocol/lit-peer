@@ -118,7 +118,7 @@ pub async fn sign_using_child_lit_action(
 
     let lit_action_code = CALL_CHILD_LIT_ACTION_CODE.to_string();
 
-    let (pubkey, _token_id, _eth_address) = end_user.first_pkp().info();
+    let (pubkey, _token_id, _eth_address, _key_set_id) = end_user.first_pkp().info();
 
     let (lit_action_code, ipfs_id, js_params, auth_methods) =
         lit_action_params(lit_action_code, pubkey).await?;
@@ -282,7 +282,7 @@ pub async fn prepare_sign_from_file_parameters(
     info!("Attempting to run lit action from file: {}", file_name);
     let lit_action_code = std::fs::read_to_string(file_name)?;
 
-    let (pubkey, _token_id, _eth_address) = end_user.first_pkp().info();
+    let (pubkey, _token_id, _eth_address, _key_set_id) = end_user.first_pkp().info();
 
     Ok(lit_action_params(lit_action_code, pubkey).await?)
 }
@@ -422,7 +422,7 @@ pub async fn generate_pkp_check_get_permitted_pkp_action(
     let cfg = lit_node_common::config::load_cfg().expect("failed to load LitConfig");
     let loaded_config = &cfg.load_full();
 
-    let (pkp_pubkey, token_id, _) = end_user.first_pkp().info();
+    let (pkp_pubkey, token_id, _, _) = end_user.first_pkp().info();
 
     let pkp = end_user.pkp_by_pubkey(pkp_pubkey.clone());
     let res = pkp
@@ -457,7 +457,7 @@ pub async fn generate_pkp_check_is_permitted_pkp_action(
     let cfg = lit_node_common::config::load_cfg().expect("failed to load LitConfig");
     let loaded_config = &cfg.load_full();
 
-    let (pkp_pubkey, token_id, _) = end_user.first_pkp().info();
+    let (pkp_pubkey, token_id, _, _) = end_user.first_pkp().info();
 
     let pkp = end_user.pkp_by_pubkey(pkp_pubkey);
     let res = pkp

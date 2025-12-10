@@ -586,7 +586,7 @@ pub async fn check_pkp_auth(
         );
     }
 
-    return Err(validation_err_code(
+    Err(validation_err_code(
         Error::new(
             ErrorKind::Other,
             format!(
@@ -596,7 +596,7 @@ pub async fn check_pkp_auth(
         ),
         EC::NodeAuthSigScopeTooLimited,
         None,
-    ));
+    ))
 }
 
 // We need this due to an issue in the SDK which allows user to permit the following 3 formats:

@@ -391,6 +391,11 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "CallerNotOwner",
+    "type": "error"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -582,6 +587,71 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "realmId",
+        "type": "uint256"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "maxConcurrentRequests",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxPresignCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "minPresignCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "peerCheckingIntervalSecs",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "maxPresignConcurrency",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "rpcHealthcheckEnabled",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint256",
+            "name": "minEpochForRewards",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "permittedValidatorsOn",
+            "type": "bool"
+          },
+          {
+            "internalType": "string",
+            "name": "defaultKeySet",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct LibStakingStorage.RealmConfig",
+        "name": "newConfig",
+        "type": "tuple"
+      }
+    ],
+    "name": "setRealmConfig",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "stakerAddress",
         "type": "address"
@@ -689,11 +759,6 @@
     ],
     "stateMutability": "view",
     "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "CallerNotOwner",
-    "type": "error"
   },
   {
     "inputs": [],
@@ -1329,11 +1394,6 @@
             "type": "uint256"
           },
           {
-            "internalType": "uint256[]",
-            "name": "keyTypes",
-            "type": "uint256[]"
-          },
-          {
             "internalType": "uint256",
             "name": "minimumValidatorCount",
             "type": "uint256"
@@ -1680,66 +1740,6 @@
       }
     ],
     "name": "setPermittedValidatorsOn",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "realmId",
-        "type": "uint256"
-      },
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "maxConcurrentRequests",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "maxPresignCount",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "minPresignCount",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "peerCheckingIntervalSecs",
-            "type": "uint256"
-          },
-          {
-            "internalType": "uint256",
-            "name": "maxPresignConcurrency",
-            "type": "uint256"
-          },
-          {
-            "internalType": "bool",
-            "name": "rpcHealthcheckEnabled",
-            "type": "bool"
-          },
-          {
-            "internalType": "uint256",
-            "name": "minEpochForRewards",
-            "type": "uint256"
-          },
-          {
-            "internalType": "bool",
-            "name": "permittedValidatorsOn",
-            "type": "bool"
-          }
-        ],
-        "internalType": "struct LibStakingStorage.RealmConfig",
-        "name": "newConfig",
-        "type": "tuple"
-      }
-    ],
-    "name": "setRealmConfig",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -2685,9 +2685,9 @@
             "type": "uint256[]"
           },
           {
-            "internalType": "address[]",
-            "name": "recoveryPartyMembers",
-            "type": "address[]"
+            "internalType": "bytes",
+            "name": "recoverySessionId",
+            "type": "bytes"
           }
         ],
         "internalType": "struct LibStakingStorage.KeySetConfig",
@@ -2745,9 +2745,9 @@
             "type": "uint256[]"
           },
           {
-            "internalType": "address[]",
-            "name": "recoveryPartyMembers",
-            "type": "address[]"
+            "internalType": "bytes",
+            "name": "recoverySessionId",
+            "type": "bytes"
           }
         ],
         "internalType": "struct LibStakingStorage.KeySetConfig[]",
@@ -2803,9 +2803,9 @@
             "type": "uint256[]"
           },
           {
-            "internalType": "address[]",
-            "name": "recoveryPartyMembers",
-            "type": "address[]"
+            "internalType": "bytes",
+            "name": "recoverySessionId",
+            "type": "bytes"
           }
         ],
         "internalType": "struct LibStakingStorage.KeySetConfig",
@@ -3297,67 +3297,6 @@
       }
     ],
     "name": "ComplaintConfigSet",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newTokenRewardPerTokenPerEpoch",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256[]",
-        "name": "newKeyTypes",
-        "type": "uint256[]"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newMinimumValidatorCount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newMaxConcurrentRequests",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newMaxPresignCount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newMinPresignCount",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newPeerCheckingIntervalSecs",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "newMaxPresignConcurrency",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "newRpcHealthcheckEnabled",
-        "type": "bool"
-      }
-    ],
-    "name": "ConfigSet",
     "type": "event"
   },
   {
@@ -4680,19 +4619,6 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "getKeyTypes",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "",
-        "type": "uint256[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -5987,11 +5913,6 @@
             "type": "uint256"
           },
           {
-            "internalType": "uint256[]",
-            "name": "keyTypes",
-            "type": "uint256[]"
-          },
-          {
             "internalType": "uint256",
             "name": "minimumValidatorCount",
             "type": "uint256"
@@ -6641,6 +6562,11 @@
             "internalType": "bool",
             "name": "permittedValidatorsOn",
             "type": "bool"
+          },
+          {
+            "internalType": "string",
+            "name": "defaultKeySet",
+            "type": "string"
           }
         ],
         "internalType": "struct LibStakingStorage.RealmConfig",

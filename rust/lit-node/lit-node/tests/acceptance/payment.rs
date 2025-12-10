@@ -290,7 +290,7 @@ async fn test_all_payment_methods_for_user() {
 
     let auth_sig = generate_authsig_item(&self_pay_user.wallet).await.unwrap();
 
-    let (network_pubkey, _token_id, eth_address) = self_pay_user.first_pkp().info();
+    let (network_pubkey, _token_id, eth_address, _key_set_id) = self_pay_user.first_pkp().info();
 
     let signing_key = ed25519_dalek::SigningKey::generate(&mut OsRng);
     let verifying_key = signing_key.verifying_key();
@@ -793,7 +793,7 @@ async fn test_all_payment_methods_for_pkp() {
     pkp_owner.new_pkp().await.expect("Failed to mint PKP");
 
     // add the PKP itself as a permitted address, so that our session sig from the PKP will be able to sign with it
-    let (pubkey, _token_id, eth_address) = pkp_owner.first_pkp().info();
+    let (pubkey, _token_id, eth_address, _key_set_id) = pkp_owner.first_pkp().info();
     let pkp = pkp_owner.pkp_by_pubkey(pubkey.clone());
     pkp.add_permitted_address_to_pkp(eth_address, &[U256::from(1)])
         .await

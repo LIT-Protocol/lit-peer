@@ -146,7 +146,7 @@ pub mod litactions {
             )
             .await;
 
-        let (pubkey, _token_id, _eth_address) = end_user.first_pkp().info();
+        let (pubkey, _token_id, _eth_address, _key_set_id) = end_user.first_pkp().info();
 
         let lit_action_code = data_encoding::BASE64.encode(lit_action_code.as_bytes());
         // per above, there are more params than needed for some actions, but they are ignored
@@ -815,7 +815,7 @@ pub mod litactions {
         let auth_sig = generate_authsig(&end_user.wallet)
             .await
             .expect("Couldn't generate auth sig");
-        let (pubkey, _token_id, _eth_address) = end_user.first_pkp().info();
+        let (pubkey, _token_id, _eth_address, _key_set_id) = end_user.first_pkp().info();
         let lit_action_code = data_encoding::BASE64.encode(lit_action_code.as_bytes());
 
         let mut js_params = serde_json::Map::new();

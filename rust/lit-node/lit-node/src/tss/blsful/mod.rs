@@ -1,10 +1,12 @@
 pub mod models;
 use crate::error::{Result, unexpected_err};
 use crate::tss::blsful::models::BlsState;
+use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::hd_keys::get_derived_keyshare;
 use crate::tss::common::key_share::KeyShare;
 use crate::tss::common::traits::signable::Signable;
 use crate::tss::common::{storage::read_key_share_from_disk, traits::cipherable::Cipherable};
+use crate::utils::web::get_bls_root_pubkey;
 use blsful::{Pairing, SecretKeyShare, SignatureShare, vsss_rs::Share};
 use elliptic_curve::Group;
 use hd_keys_curves::HDDeriver;
@@ -21,18 +23,11 @@ impl Cipherable for BlsState {
     async fn sign(
         &self,
         message_bytes: &[u8],
+        key_set_id: Option<&str>,
         epoch: Option<u64>,
     ) -> Result<(SignatureShare<blsful::Bls12381G2Impl>, PeerId)> {
-        let dkg_state = self.state.get_dkg_state(CurveType::BLS)?;
-        let root_keys = dkg_state.root_keys().await;
-        if root_keys.is_empty() {
-            return Err(unexpected_err(
-                "No primary BLS key found!".to_string(),
-                None,
-            ));
-        }
-
-        self.sign_with_pubkey(message_bytes, &root_keys[0], epoch)
+        let bls_root_pubkey = get_bls_root_pubkey(&self.state, key_set_id)?;
+        self.sign_with_pubkey(message_bytes, &bls_root_pubkey, key_set_id, epoch)
             .await
     }
 
@@ -41,6 +36,7 @@ impl Cipherable for BlsState {
         &self,
         message_bytes: &[u8],
         pub_key: &str,
+        key_set_id: Option<&str>,
         epoch: Option<u64>,
     ) -> Result<(SignatureShare<blsful::Bls12381G2Impl>, PeerId)> {
         trace!(
@@ -62,9 +58,9 @@ impl Signable for BlsState {
         &mut self,
         message_bytes: &[u8],
         public_key: Vec<u8>,
-        root_pubkeys: Option<Vec<String>>,
         tweak_preimage: Option<Vec<u8>>,
         request_id: Vec<u8>,
+        key_set_id: Option<&str>,
         epoch: Option<u64>,
         nodeset: &[NodeSet],
     ) -> Result<SignableOutput> {
@@ -102,13 +98,14 @@ impl Signable for BlsState {
         let key_id = tweak_preimage.expect_or_err("No hd_key_id provided!")?;
         let realm_id = self.state.peer_state.realm_id();
 
-        let dkg_state = self.state.get_dkg_state(CurveType::BLS12381G1)?;
-        let root_keys = dkg_state.root_keys().await;
-        if root_keys.is_empty() {
-            return Err(unexpected_err(
-                "No primary BLS key found!".to_string(),
-                None,
-            ));
+        let curve_state = CurveState::new(
+            self.state.peer_state.clone(),
+            CurveType::BLS12381G1,
+            key_set_id.map(String::from),
+        );
+        let root_keys = curve_state.root_keys()?;
+        if root_keys.len() < 2 {
+            return Err(unexpected_err("No BLS root keys found!".to_string(), None));
         }
         let staker_address = &bytes_to_hex(self_peer.staker_address.as_bytes());
         let deriver = <blsful::inner_types::Scalar as HDDeriver>::create(

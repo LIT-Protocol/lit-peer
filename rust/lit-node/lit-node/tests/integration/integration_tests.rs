@@ -572,13 +572,11 @@ async fn node_restarts_without_key_material() {
     // set epoch length to 30 mins so it never elapses unless we advance the clock
     let (testnet, mut validator_collection, end_user) = TestSetupBuilder::default()
         .num_staked_and_joined_validators(num_nodes)
+        .epoch_length(epoch_length)
         .build()
         .await;
 
     let actions = testnet.actions();
-    let _r = actions
-        .set_epoch_length(realm_id, U256::from(epoch_length))
-        .await;
 
     // Lower the configured interval for complaints to reduce possibility of any kicks.
     info!("Lowering the complaint interval to 15s for all complaints");
@@ -663,6 +661,7 @@ async fn node_restarts_without_key_material() {
         .await;
     assert!(voting_status.is_ok());
 
+    info!("Fast forwarding time to allow nodes to start a DKG to advance to the next epoch.");
     // Fast forward time to allow nodes to start a DKG to advance to the next epoch.
     actions.increase_blockchain_timestamp(epoch_length).await;
 

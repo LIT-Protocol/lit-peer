@@ -28,7 +28,7 @@ impl NetworkIntegrityChecker {
         let initial_bls_pubkey = get_network_pubkey(&actions).await;
 
         // Use the first PKP for the network integrity check.
-        let (pubkey, token_id, _) = end_user.first_pkp().info();
+        let (pubkey, token_id, _, _) = end_user.first_pkp().info();
         info!(
             "PKP for network integrity check: {:?} / token_id: {:?}",
             pubkey, token_id

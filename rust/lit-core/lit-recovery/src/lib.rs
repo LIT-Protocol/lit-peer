@@ -571,14 +571,11 @@ impl LitRecovery {
                 self.config.store(new_config);
             }
             Commands::SetConfig { address, chain_id, rpc_url, env } => {
-                let config = self.config.load();
-
                 let new_config = Arc::new(RecoveryConfig {
                     resolver_address: Some(address.clone()),
                     chain_id: Some(chain_id),
                     rpc_url: Some(rpc_url.clone()),
                     environment: Some(env),
-                    ..config.as_ref().clone()
                 });
 
                 new_config.save(self.config_path.clone())?;

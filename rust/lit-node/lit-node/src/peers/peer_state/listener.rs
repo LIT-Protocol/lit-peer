@@ -113,15 +113,6 @@ impl PeerState {
                                             }
                                         }
                                     }
-                                    StakingEvents::ConfigSetFilter(
-                                        global_config_set_event,
-                                    ) => {
-                                        debug!("Global Config event");
-                                        // update CDM state
-                                        if let Err(e) = self.chain_data_config_manager.set_all_config_from_chain().await {
-                                            error!("Failed to update chain data manager state: {:?}", e);
-                                        }
-                                    }
 
                                     StakingEvents::CountOfflinePhaseDataFilter(data_type) => {
                                         debug!("CountOfflinePhaseData event: {:?}", data_type);

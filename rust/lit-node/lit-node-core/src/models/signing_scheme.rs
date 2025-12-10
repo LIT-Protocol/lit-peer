@@ -3,23 +3,33 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
-#[derive(Clone, Copy, Debug, Hash, Eq, PartialEq, Serialize, Deserialize)]
+/// Cryptographic signing algorithm types supported by the system.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub enum SigningAlgorithm {
+    /// Pairing-based cryptography (e.g., BLS signatures).
     Pairing,
+    /// Elliptic Curve Digital Signature Algorithm.
     Ecdsa,
+    /// Schnorr signature scheme.
     Schnorr,
 }
 
-#[derive(Clone, Copy, Debug, Hash, Eq, PartialEq, Serialize, Deserialize)]
+/// Preference for public key encoding format.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub enum KeyFormatPreference {
+    /// Full uncompressed point representation.
     Uncompressed,
+    /// Compressed point representation (x-coordinate with sign bit).
     Compressed,
 }
 
-#[derive(Clone, Copy, Debug, Default, Hash, Eq, PartialEq)]
+/// Comprehensive signing schemes combining curve type, signature algorithm, and hash function.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Hash)]
 pub enum SigningScheme {
+    /// BLS12-381 pairing-based signatures (default).
     #[default]
     Bls12381,
+    /// ECDSA on secp256k1 with SHA-256.
     EcdsaK256Sha256,
     EcdsaP256Sha256,
     EcdsaP384Sha384,

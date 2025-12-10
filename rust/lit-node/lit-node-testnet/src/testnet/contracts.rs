@@ -81,6 +81,7 @@ pub struct StakingContractRealmConfigBuilder {
     peer_checking_interval_secs: Option<U256>,
     max_presign_concurrency: Option<U256>,
     complaint_reason_to_config: Option<HashMap<U256, ComplaintConfig>>,
+    default_key_set: Option<String>,
 }
 
 impl StakingContractRealmConfigBuilder {
@@ -138,6 +139,11 @@ impl StakingContractRealmConfigBuilder {
         self
     }
 
+    pub fn default_key_set(mut self, value: Option<String>) -> Self {
+        self.default_key_set = value;
+        self
+    }
+
     pub fn build(self) -> StakingContractRealmConfig {
         StakingContractRealmConfig {
             realm_id: self.realm_id.unwrap_or(U256::from(1)),
@@ -148,6 +154,7 @@ impl StakingContractRealmConfigBuilder {
             peer_checking_interval_secs: self.peer_checking_interval_secs,
             max_presign_concurrency: self.max_presign_concurrency,
             complaint_reason_to_config: self.complaint_reason_to_config,
+            default_key_set: self.default_key_set,
         }
     }
 }
@@ -228,6 +235,7 @@ pub struct StakingContractRealmConfig {
     peer_checking_interval_secs: Option<U256>,
     max_presign_concurrency: Option<U256>,
     complaint_reason_to_config: Option<HashMap<U256, ComplaintConfig>>,
+    default_key_set: Option<String>,
 }
 
 #[derive(Default)]
@@ -732,14 +740,8 @@ impl Contracts {
             .await
             .map_err(|e| anyhow::anyhow!("unable to get staking config: {:?}", e))?;
 
-        let key_types = staking
-            .get_key_types()
-            .call()
-            .await
-            .map_err(|e| anyhow::anyhow!("unable to get key types: {:?}", e))?;
         let cc = staking.set_config(GlobalConfig {
             token_reward_per_token_per_epoch: global_config.token_reward_per_token_per_epoch,
-            key_types: key_types,
             reward_epoch_duration: U256::from(86400), // 1 day
             max_time_lock: U256::from(31536000),      // 1 year
             min_time_lock: U256::from(86400 * 100),   // 100 days

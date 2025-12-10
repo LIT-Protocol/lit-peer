@@ -36,7 +36,7 @@ use tracing::error;
 use tracing::trace;
 use tracing::{debug, info, warn};
 
-use lit_node_core::response::JsonSDKHandshakeResponse;
+use lit_node_core::response::SDKHandshakeResponseV0;
 
 use super::testnet::NodeAccount;
 use super::testnet::Testnet;
@@ -858,7 +858,9 @@ impl ValidatorCollection {
             .collect()
     }
     pub async fn active_node_set(&self) -> Result<Vec<NodeSet>> {
-        Ok(self.get_active_validators().await?
+        Ok(self
+            .get_active_validators()
+            .await?
             .iter()
             .map(|v| NodeSet {
                 socket_address: v.public_address(),
@@ -1407,7 +1409,7 @@ impl Node {
         let response = Self::handshake(port).await?;
         let response_text = response.text().await?;
 
-        let handshake_json = serde_json::from_str::<JsonSDKHandshakeResponse>(&response_text)?;
+        let handshake_json = serde_json::from_str::<SDKHandshakeResponseV0>(&response_text)?;
 
         Ok(handshake_json.epoch)
     }
@@ -1667,6 +1669,6 @@ pub fn default_keyset_config() -> KeySetConfig {
         counts: std::iter::once(U256::from(1))
             .chain(CurveType::into_iter().skip(1).map(|_| U256::from(2)))
             .collect(),
-        recovery_party_members: Vec::new(),
+        recovery_session_id: Bytes::from_static(&[]),
     }
 }
