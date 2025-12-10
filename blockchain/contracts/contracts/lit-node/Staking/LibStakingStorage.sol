@@ -135,6 +135,8 @@ library LibStakingStorage {
     struct PendingRejoin {
         address addr;
         uint256 timestamp;
+        // NOTE: DO NOT ADD ANYTHING TO THIS STRUCT SINCE IT IS NOT CONTAINED IN A MAPPING IN THE ROOT LEVEL STORAGE STRUCT
+        // AND MAY RESULT IN STORAGE POINTERS SHIFTING.
     }
 
     struct Epoch {
@@ -297,8 +299,8 @@ library LibStakingStorage {
         mapping(address => address) nodeAddressToStakerAddress;
         mapping(address => address) stakerAddressToNodeAddress;
         mapping(address => address) operatorAddressToStakerAddress;
-        // this mapping lets you go from the userStakerAddress to the stakerAddress.
-        mapping(address => address) userStakerAddressToStakerAddress;
+        // NOTE: Deprecated field, do not use. Remove when deploying prod for the next network after Naga.
+        mapping(address => address) DEPRECATED_userStakerAddressToStakerAddress;
         // Mapping of the complaint reason code to the config for that reason
         mapping(uint256 => ComplaintConfig) complaintReasonToConfig;
         // Thunderhead - Staking Vaults & rewards
