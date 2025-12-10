@@ -62,6 +62,7 @@ pub(crate) struct InnerState {
     pub bls12381g1_recovery_data: Option<CurveRecoveryData<InnerBls12381G1>>,
     pub threshold: usize,
     pub restored_key_cache: KeyCache,
+    pub use_raw_peer_ids: bool,
 }
 
 impl RestoreState {
@@ -196,6 +197,7 @@ impl RestoreState {
                         helper.pk_to_hex(&point)
                     });
                     let decryption_share = DecryptionShare::from(datil_decryption_share);
+                    inner.use_raw_peer_ids = true;
                     return Self::do_add_decryption_share(
                         &mut inner.bls_recovery_data,
                         rpm_id,
@@ -221,6 +223,7 @@ impl RestoreState {
                         helper.pk_to_hex(&point)
                     });
                     let decryption_share = DecryptionShare::from(datil_decryption_share);
+                    inner.use_raw_peer_ids = true;
                     return Self::do_add_decryption_share(
                         &mut inner.k256_recovery_data,
                         rpm_id,
@@ -550,11 +553,21 @@ impl RestoreState {
     pub async fn pull_recovered_key_cache(&self) -> Result<KeyCache> {
         self.assert_actively_restoring()?;
 
-        let Some(inner) = &mut *self.state.write().await else {
+        let Some(ref inner) = *self.state.read().await else {
             return Err(Self::ciphertexts_not_set());
         };
 
         Ok(inner.restored_key_cache.clone())
+    }
+
+    pub async fn pull_use_raw_peer_ids(&self) -> Result<bool> {
+        self.assert_actively_restoring()?;
+
+        let Some(ref inner) = *self.state.read().await else {
+            return Err(Self::ciphertexts_not_set());
+        };
+
+        Ok(inner.use_raw_peer_ids)
     }
 
     pub async fn report_recovered_peer_id(

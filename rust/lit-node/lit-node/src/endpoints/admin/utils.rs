@@ -545,6 +545,7 @@ pub(crate) async fn untar_keys_stream<R: AsyncRead + Unpin>(
         bls12381g1_recovery_data,
         threshold,
         restored_key_cache: KeyCache::default(),
+        use_raw_peer_ids: false,
     };
 
     restore_state.load_backup(inner_state).await?;

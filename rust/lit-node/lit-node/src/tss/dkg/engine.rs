@@ -72,6 +72,7 @@ impl DkgAfterRestore {
 pub struct DkgAfterRestoreData {
     pub peers: Vec<RecoveredPeerId>,
     pub key_cache: KeyCache,
+    pub use_raw_peer_ids: bool,
 }
 
 impl DkgEngine {
@@ -917,7 +918,7 @@ impl DkgEngine {
                     );
                 };
                 let private_share = key_state.secret_from_hex(&key_share.hex_private_share)?;
-                let old_share = DefaultShare {
+                let mut old_share = DefaultShare {
                     identifier: IdentifierPrimeField(G::Scalar::from(key_share.peer_id)),
                     value: IdentifierPrimeField(private_share),
                 };
@@ -926,6 +927,10 @@ impl DkgEngine {
                 // share is no longer used, the corresponding peer id should be dropped as well.
                 let old_ids = match &self.next_dkg_after_restore {
                     DkgAfterRestore::True(data) => {
+                        if data.use_raw_peer_ids {
+                            old_share.identifier.0 =
+                                G::Scalar::from(key_share.peer_id.0.as_words()[0]);
+                        }
                         let mut old_ids = vec![];
                         for pair in data.peers.iter() {
                             let new_peer_id = PeerId::try_from(pair.new_peer_id)
@@ -933,7 +938,14 @@ impl DkgEngine {
                             let old_peer_id = PeerId::try_from(pair.old_peer_id)
                                 .map_err(|e| unexpected_err(e, None))?;
                             if args.next_ids.contains(&new_peer_id) {
-                                old_ids.push(IdentifierPrimeField(G::Scalar::from(old_peer_id)));
+                                if data.use_raw_peer_ids {
+                                    old_ids.push(IdentifierPrimeField(G::Scalar::from(
+                                        pair.old_peer_id.as_u64(),
+                                    )))
+                                } else {
+                                    old_ids
+                                        .push(IdentifierPrimeField(G::Scalar::from(old_peer_id)));
+                                }
                             }
                         }
                         old_ids

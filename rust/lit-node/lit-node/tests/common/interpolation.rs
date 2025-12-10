@@ -58,7 +58,9 @@ impl PartialEq for CurveScalar {
             (Self::P256(a), Self::P256(b)) => a == b,
             (Self::P384(a), Self::P384(b)) => a == b,
             (Self::Ed25519(a), Self::Ed25519(b)) => a == b,
+            (Self::Ed25519(a), Self::Ristretto25519(b)) => a == b,
             (Self::Ristretto25519(a), Self::Ristretto25519(b)) => a == b,
+            (Self::Ristretto25519(a), Self::Ed25519(b)) => a == b,
             (Self::Ed448(a), Self::Ed448(b)) => a == b,
             (Self::Jubjub(a), Self::Jubjub(b)) => a == b,
             (Self::Decaf377(a), Self::Decaf377(b)) => a == b,
@@ -107,6 +109,12 @@ impl From<ed448_goldilocks::Scalar> for CurveScalar {
 impl From<jubjub::Scalar> for CurveScalar {
     fn from(scalar: jubjub::Scalar) -> Self {
         Self::Jubjub(scalar)
+    }
+}
+
+impl From<decaf377::Fr> for CurveScalar {
+    fn from(scalar: decaf377::Fr) -> Self {
+        Self::Decaf377(scalar)
     }
 }
 
