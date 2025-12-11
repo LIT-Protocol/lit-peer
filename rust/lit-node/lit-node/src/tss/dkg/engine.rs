@@ -963,6 +963,7 @@ impl DkgEngine {
                             .collect::<Vec<_>>()
                     }
                 };
+
                 Ok(Box::new(
                     SecretParticipant::<G>::with_secret(id, &old_share, &parameters, &old_ids)
                         .map_err(|e| {

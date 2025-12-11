@@ -43,7 +43,7 @@ pub async fn do_network_restore(
         .unwrap_or(NetworkState::Unknown);
 
     info!(
-        "Starting: FSM polling (will try every {}s).  Shadow State: {}. Realm ID: {}, Current Network State: {:?}",
+        "Starting: FSM Restore polling (will try every {}s).  Shadow State: {}. Realm ID: {}, Current Network State: {:?}",
         interval.period().as_secs(),
         is_shadow,
         realm_id,

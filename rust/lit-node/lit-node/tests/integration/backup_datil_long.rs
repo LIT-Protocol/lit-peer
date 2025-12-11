@@ -89,11 +89,11 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
     let root_key_configs = vec![
         RootKeyConfig {
             curve_type: CurveType::BLS,
-            count: 2,
+            count: 1,
         },
         RootKeyConfig {
             curve_type: CurveType::K256,
-            count: 20,
+            count: 10,
         },
     ];
     let result = validator_collection
@@ -148,6 +148,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
 
     // nodes start in restore mode and reuse the same testnet
     info!("Restarting the nodes");
+
     let validator_collection2 = ValidatorCollection::builder()
         .num_staked_nodes(number_of_nodes)
         .pause_network_while_building(false)
@@ -155,6 +156,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
         .await
         .expect("Failed to build validator collection");
 
+    let actions = validator_collection2.actions();
     actions.sleep_millis(5000).await;
 
     // Use the admin endpoint to upload the backup and blinders
@@ -197,7 +199,17 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
         .await;
     info!("All the nodes restored all the keys!");
 
-    validator_collection.actions().sleep_millis(500000).await;
+    actions
+        .set_epoch_state(realm_id, NetworkState::Active as u8)
+        .await
+        .unwrap();
+
+    let seconds_to_increase = 300;
+    let epoch = actions.get_current_epoch(realm_id).await;
+    actions
+        .increase_blockchain_timestamp(seconds_to_increase)
+        .await;
+    actions.wait_for_epoch(realm_id, epoch + 1).await;
 }
 
 fn datil_root_keys() -> Vec<RootKey> {

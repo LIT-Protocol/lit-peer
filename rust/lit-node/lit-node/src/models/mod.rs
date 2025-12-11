@@ -349,7 +349,7 @@ pub struct EthBlock {
     pub block_number: usize,
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct KeySetConfig {
     pub identifier: String,
     pub description: String,

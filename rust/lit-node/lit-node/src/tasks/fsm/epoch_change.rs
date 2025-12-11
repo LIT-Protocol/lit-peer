@@ -7,6 +7,7 @@ use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::dkg_type::DkgType;
 use crate::tss::common::key_persistence::RECOVERY_DKG_EPOCH;
 use crate::tss::common::traits::fsm_worker_metadata::FSMWorkerMetadata;
+use crate::tss::dkg::engine::DkgAfterRestore;
 use crate::tss::dkg::manager::DkgManager;
 use crate::version::DataVersionReader;
 use ethers::types::U256;
@@ -74,7 +75,7 @@ struct EpochChangeResOrUpdateNeeded {
 // only log the epoch number field
 #[instrument(level = "debug", skip(dkg_manager, fsm_worker_metadata))]
 pub(crate) async fn perform_epoch_change(
-    dkg_manager: &DkgManager,
+    dkg_manager: &mut DkgManager,
     fsm_worker_metadata: Arc<dyn FSMWorkerMetadata<LifecycleId = u64, ShadowLifecycleId = u64>>,
     realm_id: u64,
     is_shadow: bool,
@@ -85,6 +86,7 @@ pub(crate) async fn perform_epoch_change(
     let mut latest_dkg_id = "".to_string();
     // We keep looping until we get a result from a completed epoch change operation.
     let mut abort_and_restart_count = 0;
+    let mut next_dkg_after_restore_data = None;
 
     // We currently set the limit of aborts and restarts to be a high number to avoid infinite loops. This should never happen,
     // in theory, but we want to be safe. This will be removed as soon as we have implemented an improved strategy to synchronize
@@ -137,7 +139,7 @@ pub(crate) async fn perform_epoch_change(
         //     }
         // };
 
-        let (existing_key_sets, new_key_sets) = match get_existing_and_new_key_sets(
+        let (mut existing_key_sets, new_key_sets) = match get_existing_and_new_key_sets(
             peer_state.clone(),
         )
         .await
@@ -152,8 +154,23 @@ pub(crate) async fn perform_epoch_change(
             }
         };
 
+        let restore_key_sets = if dkg_manager.next_dkg_after_restore.value() {
+            let mut restore_key_sets: Vec<KeySetConfig> = existing_key_sets.clone();
+            restore_key_sets.retain(|ks| ks.identifier.to_lowercase().contains("datil")); // this will need to be updated to use the actual keyset identifier.
+            if !restore_key_sets.is_empty() {
+                existing_key_sets.retain(|ks| !restore_key_sets.contains(ks));
+            }
+            restore_key_sets
+        } else {
+            Vec::new()
+        };
+
         trace!(
-            "New/existing key sets: {:?} / {:?}",
+            "Restore/new/existing key sets: {:?} / {:?} / {:?}",
+            restore_key_sets
+                .iter()
+                .map(|ks| ks.identifier.clone())
+                .collect::<Vec<_>>(),
             new_key_sets
                 .iter()
                 .map(|ks| ks.identifier.clone())
@@ -164,6 +181,53 @@ pub(crate) async fn perform_epoch_change(
                 .collect::<Vec<_>>()
         );
 
+        if !restore_key_sets.is_empty() {
+            if !dkg_manager.next_dkg_after_restore.value() {
+                match next_dkg_after_restore_data {
+                    Some(next_dkg_after_restore) => {
+                        dkg_manager.next_dkg_after_restore =
+                            DkgAfterRestore::True(next_dkg_after_restore);
+                    }
+                    None => {
+                        warn!(
+                            "Next DKG after restore is not set, yet we have a restore keyset. Existing."
+                        );
+                        return None;
+                    }
+                };
+            };
+
+            let epoch_change_res_or_update_needed_for_restore_keys = None;
+            let epoch_change_res_or_update_needed_for_restore_keys =
+                match process_epoch_for_key_set(
+                    dkg_manager,
+                    fsm_worker_metadata.clone(),
+                    realm_id,
+                    is_shadow,
+                    &restore_key_sets,
+                    &latest_dkg_id,
+                    current_epoch,
+                    &shadow_key_opts,
+                    &current_peers,
+                    &new_peers,
+                    epoch_change_res_or_update_needed_for_restore_keys,
+                )
+                .await
+                {
+                    Ok(result) => {
+                        next_dkg_after_restore_data = dkg_manager.next_dkg_after_restore.take();
+                        // if we restart, we need to set this back to the DKG manager.
+                        result
+                    }
+                    Err(e) => {
+                        warn!(
+                            "Unable to process epoch change for existing key sets when performing epoch change in realm {}: {}",
+                            realm_id, e
+                        );
+                        return None;
+                    }
+                };
+        }
         // start by processing the epoch change for the new key sets
         let mut epoch_change_res_or_update_needed_for_new_keys = None;
         if !new_key_sets.is_empty() {
@@ -485,20 +549,6 @@ pub async fn get_existing_and_new_key_sets(
         }
     }
 
-    trace!(
-        "Full key sets: {:?}",
-        existing_key_sets
-            .iter()
-            .map(|ks| ks.identifier.clone())
-            .collect::<Vec<_>>()
-    );
-    trace!(
-        "Empty key sets: {:?}",
-        new_key_sets
-            .iter()
-            .map(|ks| ks.identifier.clone())
-            .collect::<Vec<_>>()
-    );
     Ok((existing_key_sets, new_key_sets))
 }
 
