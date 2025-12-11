@@ -224,28 +224,24 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
     // Advance one more DKG to write key shares to disk for the restored keyset. Note that
     // restored key shares are NOT written to disk until the next DKG.
 
-    // TODO: Uncomment when restore is fixed
-    // // Fast forward time to allow nodes to start a DKG to advance to the next epoch.
-    // validator_collection
-    //     .actions()
-    //     .increase_blockchain_timestamp(epoch_length)
-    //     .await;
-    // // Admin set epoch state to active to pull nodes out of the restore mode
-    // validator_collection
-    //     .actions()
-    //     .set_epoch_state(realm_id, NetworkState::NextValidatorSetLocked as u8)
-    //     .await
-    //     .expect("Failed to set epoch state to active");
+    // Fast forward time to allow nodes to start a DKG to advance to the next epoch.
+    validator_collection
+        .actions()
+        .increase_blockchain_timestamp(epoch_length)
+        .await;
+    // Admin set epoch state to active to pull nodes out of the restore mode
+    validator_collection
+        .actions()
+        .set_epoch_state(realm_id, NetworkState::NextValidatorSetLocked as u8)
+        .await
+        .expect("Failed to set epoch state to active");
 
-    // validator_collection
-    //     .actions()
-    //     .wait_for_epoch(realm_id, U256::from(3))
-    //     .await;
+    validator_collection
+        .actions()
+        .wait_for_epoch(realm_id, U256::from(3))
+        .await;
 
-    // validator_collection.actions().sleep_millis(500000).await;
-
-    // info!("Getting BLS pubkey for datil keyset");
-    // get_bls_pubkey(&validator_collection.actions(), KeySetIdentifier::Datil).await;
+    info!("Getting BLS pubkey for datil keyset");
     test_datil_encrypt_naga_decrypt(&validator_collection, &end_user).await;
 }
 
@@ -618,10 +614,9 @@ async fn test_datil_encrypt_naga_decrypt(
 ) {
     // Encrypt using datil BLS pubkey
     let test_encryption_parameters = prepare_test_encryption_parameters();
-    // TODO: change back to datil
     let datil_bls_pubkey = get_bls_pubkey(
         validator_collection.actions(),
-        KeySetIdentifier::NagaKeyset1,
+        KeySetIdentifier::Datil,
     )
     .await;
 
@@ -668,8 +663,7 @@ async fn test_datil_encrypt_naga_decrypt(
         test_encryption_parameters.clone(),
         &session_sigs,
         epoch.as_u64(),
-        // TODO: change back to datil
-        Some(KeySetIdentifier::NagaKeyset1),
+        Some(KeySetIdentifier::Datil),
     )
     .await;
 
