@@ -17,15 +17,23 @@ use tracing::{debug, info};
 
 pub struct Anvil {
     num_nodes: usize,
+    port: Option<u16>,
+    state_cache_path: Option<String>,
     // num_staked: usize,
 }
 
 impl Anvil {
     // pub fn new(num_nodes: usize, num_staked: usize) -> impl ChainTrait {
-    pub fn new(num_nodes: usize) -> impl ChainTrait {
+    pub fn new(
+        num_nodes: usize,
+        port: Option<u16>,
+        state_cache_path: Option<String>,
+    ) -> impl ChainTrait {
         Anvil {
             num_nodes,
             // num_staked,
+            port,
+            state_cache_path,
         }
     }
 }
@@ -44,7 +52,7 @@ impl ChainTrait for Anvil {
     }
 
     fn rpc_url(&self) -> String {
-        "127.0.0.1:8545".to_string()
+        format!("127.0.0.1:{}", self.port.unwrap_or(8545))
     }
 
     fn chain_name(&self) -> &'static str {
@@ -134,7 +142,15 @@ impl ChainTrait for Anvil {
         }
         debug!("found path for anvil: {}", &command_path);
 
-        let rv = Command::new(command_path)
+        let mut command = Command::new(command_path);
+        if let Some(port) = self.port {
+            command.arg("--port").arg(port.to_string());
+        }
+        if let Some(state_cache_path) = &self.state_cache_path {
+            command.arg("--load-state").arg(state_cache_path.clone());
+        }
+
+        let rv = command
             // .env("RUST_LOG", "trace") // if you need to debug anvil you can uncomment this.
             // .env("RUST_LOG", "info") // if you just need to see console.log from the contract uncomment this instead
             .env("ETHERNAL_API_TOKEN", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaXJlYmFzZVVzZXJJZCI6IlQ5Sk1xZjgwMUVoUk9XSTNaTVRTM2dQRTRrdjIiLCJhcGlLZXkiOiJBRFlSRUVOLVhSRE1DVEgtSjNXTUdIWC1IQ1haSE0yXHUwMDAxIiwiaWF0IjoxNjkxMDk0NDczfQ.Rpc_oExqnwCl-iRKLQbQCN7P7nUIuucJtoiE46xVn3g") // localhost

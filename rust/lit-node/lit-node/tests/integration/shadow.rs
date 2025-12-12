@@ -359,6 +359,7 @@ async fn signature_from_realm(
         pubkey.clone(),
         epoch,
         scheme,
+        None,
     )
     .await;
     assert!(endpoint_responses.len() >= expected_responses);

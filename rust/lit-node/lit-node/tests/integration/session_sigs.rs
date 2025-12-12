@@ -1370,6 +1370,7 @@ pub async fn session_sig_only_mbg_pkp() {
         auth_pubkey.clone(),
         epoch,
         SigningScheme::EcdsaK256Sha256,
+        None,
     )
     .await;
 

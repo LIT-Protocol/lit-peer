@@ -79,6 +79,7 @@ pub struct JsonPKPSigningRequest {
     #[serde(default = "default_epoch")]
     pub epoch: u64,
     pub node_set: Vec<NodeSet>,
+    pub key_set_identifier: Option<KeySetIdentifier>,
 }
 
 #[derive(Clone, Default, Serialize, Deserialize)]
