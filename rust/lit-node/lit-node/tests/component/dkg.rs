@@ -23,7 +23,7 @@ use lit_node::version::DataVersionWriter;
 use lit_node_core::CurveType;
 use lit_node_core::PeerId;
 use lit_node_core::{CompressedBytes, CompressedHex, LeBytes};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use test_case::test_case;
 use tokio::task::JoinHandle;
 use tracing::{error, info};
@@ -560,7 +560,7 @@ pub async fn dkg_after_restore_datil<G>(
             DkgType::Standard,
             2,
             threshold,
-            (2, realm_id),
+            &ShadowOptions::new(false, 2, realm_id, 2, realm_id),
             &current_peers,
             &next_peers,
             DkgAfterRestore::True(DkgAfterRestoreData {
@@ -571,7 +571,7 @@ pub async fn dkg_after_restore_datil<G>(
         );
         for (i, pubkey) in root_keys.iter().enumerate() {
             let dkg_id = format!("{}{}_key_{}", dkg_id, curve_type, i + 1);
-            dkg_engine.add_dkg(&dkg_id, curve_type, Some(pubkey.clone()));
+            dkg_engine.add_dkg(&dkg_id, DEFAULT_KEY_SET_NAME, curve_type, Some(pubkey.clone()));
         }
         join_set.spawn(async move {
             let r = dkg_engine.execute(dkg_id, realm_id).await;
