@@ -95,7 +95,6 @@ impl Action for Server {
                 Some(UnionRequest::Execute(req)) => {
                     debug!("{:?}", DebugExecutionRequest::from(&req));
 
-
                     std::thread::spawn(move || {
                         create_and_run_current_thread(
                             async move {
