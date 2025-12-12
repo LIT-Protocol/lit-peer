@@ -571,7 +571,12 @@ pub async fn dkg_after_restore_datil<G>(
         );
         for (i, pubkey) in root_keys.iter().enumerate() {
             let dkg_id = format!("{}{}_key_{}", dkg_id, curve_type, i + 1);
-            dkg_engine.add_dkg(&dkg_id, DEFAULT_KEY_SET_NAME, curve_type, Some(pubkey.clone()));
+            dkg_engine.add_dkg(
+                &dkg_id,
+                DEFAULT_KEY_SET_NAME,
+                curve_type,
+                Some(pubkey.clone()),
+            );
         }
         join_set.spawn(async move {
             let r = dkg_engine.execute(dkg_id, realm_id).await;
