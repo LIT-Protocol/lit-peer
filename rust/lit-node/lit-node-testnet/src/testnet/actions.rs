@@ -18,6 +18,7 @@ use lit_blockchain::contracts::{
 use lit_core::utils::binary::bytes_to_hex;
 use lit_node_common::models::NodeStakingStatus;
 use lit_node_core::CurveType;
+use lit_node_core::CurveType;
 // use lit_node::peers::peer_reviewer::MAX_COMPLAINT_REASON_VALUE;
 pub const MAX_COMPLAINT_REASON_VALUE: u8 = 4;
 use super::PeerItem;
