@@ -176,12 +176,28 @@ pub mod grpc {
                 propagator.extract(&HttpMetadataMap(req.headers_mut()))
             });
 
-            // Initialize a new span with the extracted tracing context as the parent.
-            let info_span = info_span!(
-                "handle_grpc_request",
-                method = %req.method(),
-                path = %req.uri().path(),
-            );
+            // Extract x-request-id header for correlation tracking.
+            let correlation_id = req
+                .headers()
+                .get("x-request-id")
+                .and_then(|h| h.to_str().ok())
+                .filter(|s| !s.is_empty());
+
+            // Initialize a new span with the propagated context as the parent.
+            let info_span = match correlation_id {
+                Some(id) => info_span!(
+                    "handle_grpc_request",
+                    method = %req.method(),
+                    path = %req.uri().path(),
+                    correlation_id = %id,
+                ),
+                None => info_span!(
+                    "handle_grpc_request",
+                    method = %req.method(),
+                    path = %req.uri().path(),
+                ),
+            };
+
             info_span.set_parent(parent_cx);
 
             service.call(req).instrument(info_span).await
