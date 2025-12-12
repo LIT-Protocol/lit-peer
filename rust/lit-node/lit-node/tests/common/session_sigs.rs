@@ -162,6 +162,7 @@ pub async fn get_pkp_sign(
                             signing_scheme: SigningScheme::EcdsaK256Sha256,
                             epoch: 2, // Hardcoded as at other places in the tests
                             node_set: nodes.clone(),
+                            key_set_identifier: None,
                         };
 
                         // json_body_vec.push(json_body);
@@ -199,6 +200,7 @@ pub async fn get_pkp_sign(
             signing_scheme: SigningScheme::EcdsaK256Sha256,
             epoch: 2, // Hardcoded as at other places in the tests
             node_set: nodes.clone(),
+            key_set_identifier: None,
         };
         let my_secret_key = rand::rngs::OsRng.r#gen();
         let responses = lit_sdk::PKPSigningRequest::new()

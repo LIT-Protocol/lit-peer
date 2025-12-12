@@ -643,6 +643,7 @@ impl PresignManager {
                 &peers,
                 signing_scheme.curve_type(),
                 None,
+                None,
             )
             .await
         {

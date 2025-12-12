@@ -149,6 +149,7 @@ pub async fn test_pkp_hd_sign_and_submit_eth_txn() {
         pubkey.clone(),
         epoch,
         SigningScheme::EcdsaK256Sha256,
+        None,
     )
     .await
     .unwrap();
@@ -233,6 +234,7 @@ pub async fn test_pkp_hd_sign_and_submit_eth_txn() {
         pubkey,
         epoch,
         SigningScheme::EcdsaK256Sha256,
+        None,
     )
     .await;
 
@@ -635,6 +637,7 @@ pub async fn eoa_session_sig_with_mgb_pkp_signing() {
         pubkey.clone(),
         epoch,
         SigningScheme::EcdsaK256Sha256,
+        None,
     )
     .await;
 
@@ -653,6 +656,7 @@ pub async fn eoa_session_sig_with_mgb_pkp_signing() {
         pubkey.clone(),
         epoch,
         SigningScheme::EcdsaK256Sha256,
+        None,
     )
     .await
     .unwrap();

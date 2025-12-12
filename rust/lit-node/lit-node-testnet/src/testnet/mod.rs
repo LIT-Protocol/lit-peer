@@ -2,6 +2,7 @@ pub mod actions;
 pub mod chain;
 pub mod contracts;
 pub mod contracts_repo;
+pub mod datil;
 pub mod listener;
 pub mod node_config;
 pub mod payment_delegation;
@@ -185,8 +186,11 @@ impl TestnetBuilder {
                 Box::new(chain::hardhat::Hardhat::new(self.total_num_validators()))
                     as Box<dyn ChainTrait>
             }
-            WhichTestnet::Anvil => Box::new(chain::anvil::Anvil::new(self.total_num_validators()))
-                as Box<dyn ChainTrait>,
+            WhichTestnet::Anvil => Box::new(chain::anvil::Anvil::new(
+                self.total_num_validators(),
+                None,
+                None,
+            )) as Box<dyn ChainTrait>,
             WhichTestnet::NoChain => {
                 Box::new(chain::no_chain::NoChain::new(self.total_num_validators()))
                     as Box<dyn ChainTrait>
@@ -375,7 +379,7 @@ impl Testnet {
     ) -> anyhow::Result<TestnetContracts> {
         let ca = match testnet.existing_config_path.clone() {
             Some(_path) => {
-                Contracts::contract_addresses_from_resolver(
+                Contracts::contract_addresses_from_resolver_cfg(
                     _path,
                     testnet.deploy_account.signing_provider.clone(),
                 )
@@ -479,5 +483,128 @@ impl SimpleTomlValue for SimpleToml {
         let bytes = hex_to_bytes(value).expect("Could not parse hex");
 
         Some(bytes)
+    }
+}
+
+#[derive(Debug)]
+pub struct ImportedDatilTestnetBuilder {
+    state_cache_path: String,
+    port: u16,
+    contract_resolver_address: Address,
+}
+
+impl Default for ImportedDatilTestnetBuilder {
+    fn default() -> Self {
+        Self {
+            state_cache_path: "datil-anvil-state.json".to_string(),
+            port: 8549, // By default we try not to collide with 8545
+            contract_resolver_address: Address::zero(),
+        }
+    }
+}
+
+impl ImportedDatilTestnetBuilder {
+    pub fn state_cache_path(self, state_cache_path: String) -> Self {
+        Self {
+            state_cache_path,
+            ..self
+        }
+    }
+
+    pub fn port(self, port: u16) -> Self {
+        Self { port, ..self }
+    }
+
+    pub fn contract_resolver_address(self, contract_resolver_address: Address) -> Self {
+        Self {
+            contract_resolver_address,
+            ..self
+        }
+    }
+
+    pub async fn build(self) -> ImportedDatilTestnet {
+        let chain =
+            chain::anvil::Anvil::new(0, Some(self.port), Some(self.state_cache_path.clone()));
+        let net_process = chain.start_chain().await;
+        let deploy_account = chain.deployer();
+
+        let ca = self::datil::contracts::Contracts::contract_addresses_from_resolver(
+            self.contract_resolver_address,
+            deploy_account.signing_provider.clone(),
+        )
+        .await;
+
+        let contracts = self::datil::contracts::Contracts::new_contracts(
+            &ca,
+            deploy_account.signing_provider.clone(),
+        )
+        .await;
+
+        ImportedDatilTestnet {
+            process: net_process,
+            deploy_account,
+            contract_resolver_address: self.contract_resolver_address,
+            contracts,
+            chain_id: chain.chain_id(),
+        }
+    }
+}
+
+/// An imported testnet is a testnet that is imported from a state cache.
+pub struct ImportedDatilTestnet {
+    process: GroupChild,
+    deploy_account: NodeAccount,
+    contract_resolver_address: Address,
+    contracts: self::datil::contracts::Contracts,
+    chain_id: u64,
+}
+
+impl ImportedDatilTestnet {
+    pub fn builder() -> ImportedDatilTestnetBuilder {
+        ImportedDatilTestnetBuilder::default()
+    }
+
+    pub fn contract_resolver_address(&self) -> Address {
+        self.contract_resolver_address
+    }
+
+    pub fn deploy_account(&self) -> &NodeAccount {
+        &self.deploy_account
+    }
+
+    pub fn contracts(&self) -> &self::datil::contracts::Contracts {
+        &self.contracts
+    }
+
+    pub fn chain_id(&self) -> u64 {
+        self.chain_id
+    }
+
+    pub fn actions(&self) -> self::datil::actions::Actions {
+        self::datil::actions::Actions::new(
+            self.contracts.clone(),
+            self.deploy_account.signing_provider.clone(),
+            WhichTestnet::Anvil,
+            self.deploy_account.signing_provider.address(),
+        )
+    }
+
+    // stop testnet and clean up
+    fn stop(&mut self) {
+        self.process.kill().unwrap_or_else(|e| {
+            panic!(
+                "ImportedDatilTestnet process {:?} couldn't be killed: {}",
+                self.process, e
+            )
+        });
+
+        self.process.wait().unwrap();
+    }
+}
+
+impl Drop for ImportedDatilTestnet {
+    fn drop(&mut self) {
+        info!("Attempting to stop ImportedDatilTestnet");
+        self.stop();
     }
 }

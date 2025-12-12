@@ -8,8 +8,8 @@ pub mod validator;
 use self::testnet::Testnet;
 use self::testnet::node_config::CustomNodeRuntimeConfig;
 use self::validator::ValidatorCollection;
-use crate::end_user::EndUser;
 use crate::testnet::contracts::StakingContractRealmConfig;
+use crate::{end_user::EndUser, testnet::ImportedDatilTestnet};
 use ethers::types::U256;
 use lit_core::config::{ENV_LIT_CONFIG_FILE, LitConfigBuilder, ReloadableLitConfig};
 
@@ -39,6 +39,7 @@ pub struct TestSetupBuilder {
     fund_ledger_for_wallet: bool,
     custom_binary_path: Option<String>,
     start_staked_only_validators: bool,
+    imported_testnet_state_cache_path: Option<String>,
 }
 
 impl Default for TestSetupBuilder {
@@ -61,6 +62,7 @@ impl Default for TestSetupBuilder {
             fund_ledger_for_wallet: true,
             custom_binary_path: None,
             start_staked_only_validators: true,
+            imported_testnet_state_cache_path: None,
         }
     }
 }
@@ -154,6 +156,57 @@ impl TestSetupBuilder {
         self
     }
 
+    pub fn imported_testnet_state_cache_path(
+        mut self,
+        imported_testnet_state_cache_path: Option<String>,
+    ) -> Self {
+        self.imported_testnet_state_cache_path = imported_testnet_state_cache_path;
+        self
+    }
+
+    pub async fn build_with_datil(
+        self,
+    ) -> (
+        Testnet,
+        ValidatorCollection,
+        EndUser,
+        ImportedDatilTestnet,
+        crate::end_user::datil::EndUser,
+    ) {
+        let imported_testnet_state_cache_path = self
+            .imported_testnet_state_cache_path
+            .clone()
+            .expect("imported_testnet_state_cache_path is required");
+
+        // Spin up another instance of anvil on a different port (default) for testing cross-chain
+        // compatibility with datil.
+        let datil_testnet = ImportedDatilTestnet::builder()
+            .state_cache_path(imported_testnet_state_cache_path)
+            .build()
+            .await;
+
+        let mut datil_end_user = crate::end_user::datil::EndUser::new(&datil_testnet);
+        if self.fund_wallet {
+            datil_end_user.fund_wallet_default_amount().await;
+        }
+        let r = datil_end_user.new_pkp().await;
+        if let Err(e) = r {
+            panic!("Error minting PKP: {:?}", e);
+        }
+
+        // Build the naga generation items.
+        let (testnet, validator_collection, end_user) = self.build().await;
+
+        (
+            testnet,
+            validator_collection,
+            end_user,
+            datil_testnet,
+            datil_end_user,
+        )
+    }
+
+    #[deprecated(note = "Use build_with_datil instead")]
     pub async fn build(self) -> (Testnet, ValidatorCollection, EndUser) {
         let node_keys_path = Path::new("./node_keys");
         if node_keys_path.exists() {
