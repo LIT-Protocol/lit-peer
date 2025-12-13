@@ -10,7 +10,7 @@ use self::testnet::node_config::CustomNodeRuntimeConfig;
 use self::validator::ValidatorCollection;
 use crate::testnet::contracts::StakingContractRealmConfig;
 use crate::{end_user::EndUser, testnet::ImportedDatilTestnet};
-use ethers::types::U256;
+use ethers::types::{Address, U256};
 use lit_core::config::{ENV_LIT_CONFIG_FILE, LitConfigBuilder, ReloadableLitConfig};
 
 use lit_observability::logging::simple_logging_subscriber;
@@ -40,6 +40,7 @@ pub struct TestSetupBuilder {
     custom_binary_path: Option<String>,
     start_staked_only_validators: bool,
     imported_testnet_state_cache_path: Option<String>,
+    imported_testnet_contract_resolver_address: Option<Address>,
 }
 
 impl Default for TestSetupBuilder {
@@ -63,6 +64,7 @@ impl Default for TestSetupBuilder {
             custom_binary_path: None,
             start_staked_only_validators: true,
             imported_testnet_state_cache_path: None,
+            imported_testnet_contract_resolver_address: None,
         }
     }
 }
@@ -164,6 +166,15 @@ impl TestSetupBuilder {
         self
     }
 
+    pub fn imported_testnet_contract_resolver_address(
+        mut self,
+        imported_testnet_contract_resolver_address: Option<Address>,
+    ) -> Self {
+        self.imported_testnet_contract_resolver_address =
+            imported_testnet_contract_resolver_address;
+        self
+    }
+
     pub async fn build_with_datil(
         self,
     ) -> (
@@ -177,11 +188,16 @@ impl TestSetupBuilder {
             .imported_testnet_state_cache_path
             .clone()
             .expect("imported_testnet_state_cache_path is required");
+        let imported_testnet_contract_resolver_address = self
+            .imported_testnet_contract_resolver_address
+            .clone()
+            .expect("imported_testnet_contract_resolver_address is required");
 
         // Spin up another instance of anvil on a different port (default) for testing cross-chain
         // compatibility with datil.
         let datil_testnet = ImportedDatilTestnet::builder()
             .state_cache_path(imported_testnet_state_cache_path)
+            .contract_resolver_address(imported_testnet_contract_resolver_address)
             .build()
             .await;
 
