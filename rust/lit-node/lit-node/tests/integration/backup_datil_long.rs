@@ -7,7 +7,7 @@ use crate::common::web_user_tests::{
 };
 use chrono::{Duration, Utc};
 use ethers::prelude::{H160, U256};
-use ethers::types::Address;
+use ethers::types::{Address, TransactionRequest};
 use hex::FromHex;
 use k256::ecdsa::{SigningKey, VerifyingKey};
 use lit_blockchain::contracts::pubkey_router::RootKey;
@@ -79,13 +79,17 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
     crate::common::setup_logging();
 
     let epoch_length = 300 as usize;
-    let (testnet, mut validator_collection, mut end_user, mut datil_testnet) =
+    let (testnet, mut validator_collection, mut end_user, datil_testnet, mut datil_end_user) =
         TestSetupBuilder::default()
             .num_staked_and_joined_validators(number_of_nodes)
             .epoch_length(epoch_length)
             .imported_testnet_state_cache_path(Some(
                 "tests/test_data/datil-anvil-state.json".to_string(),
             ))
+            .imported_testnet_contract_resolver_address(Some(Address::from_slice(
+                &hex::decode("5fbdb2315678afecb367f032d93f642f64180aa3")
+                    .expect("Failed to decode contract resolver address"),
+            )))
             .build_with_datil()
             .await;
 
@@ -252,6 +256,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
     info!("Testing PKP signing with datil keyset");
     test_datil_keyset_pkp_signing(
         &datil_testnet.actions(),
+        &testnet,
         &validator_collection,
         &mut end_user,
         &mut datil_end_user,
@@ -689,12 +694,46 @@ async fn test_datil_encrypt_naga_decrypt(
     info!("Decryption checks passed");
 }
 
+// TODO: Need to actually set up permissions for the datil PKP before sending in the signing request.
 async fn test_datil_keyset_pkp_signing(
-    datil_actions: &Actions,
+    datil_actions: &lit_node_testnet::testnet::datil::actions::Actions,
+    testnet: &Testnet,
     validator_collection: &ValidatorCollection,
     end_user: &mut EndUser,
     datil_end_user: &mut lit_node_testnet::end_user::datil::EndUser,
 ) {
+    // Let's use the mint-grant-burn pattern to properly test authing against permissions registered on the datil chain.
+    // First add a non-owner wallet as a permitted address of the PKP on datil chain.
+    let non_owner_end_user = EndUser::new(testnet);
+    non_owner_end_user.fund_wallet_default_amount().await;
+    non_owner_end_user.deposit_to_wallet_ledger_default().await;
+    let non_owner_wallet = non_owner_end_user.wallet;
+
+    let datil_pkp = datil_end_user.first_pkp();
+    datil_pkp
+        .add_permitted_address_to_pkp(non_owner_wallet.address(), &[U256::from(1)])
+        .await
+        .expect("Could not add permitted address to pkp");
+
+    // Burn the PKP
+    datil_pkp.burn_pkp().await;
+
+    // Now try signing with the permitted non-owner wallet.
+    let value_to_send = 10;
+    let tx = TransactionRequest::new()
+        .to("0x0000000000000000000000000000000000000000"
+            .parse::<Address>()
+            .unwrap())
+        .value(value_to_send)
+        .from(pkp_address)
+        .gas(21000)
+        .gas_price(1000000000_u64)
+        .chain_id(31337)
+        .nonce(0)
+        .data(vec![]);
+    let to_sign_as_sighash = tx.sighash();
+    let to_sign = to_sign_as_sighash.0.to_vec();
+
     let node_set = validator_collection
         .partially_random_threshold_nodeset(&vec![])
         .await;

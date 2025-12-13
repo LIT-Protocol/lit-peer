@@ -56,7 +56,11 @@ impl ChainTrait for Anvil {
     }
 
     fn chain_name(&self) -> &'static str {
-        "anvil"
+        if self.port.unwrap_or(8545) == 8549 {
+            "anvilDatil"
+        } else {
+            "anvil"
+        }
     }
 
     async fn start_chain(&self) -> GroupChild {

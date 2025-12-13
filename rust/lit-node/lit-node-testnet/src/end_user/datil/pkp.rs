@@ -282,6 +282,19 @@ impl Pkp {
         Ok(true)
     }
 
+    pub async fn burn_pkp(&self) {
+        let pkpnft_address = self.actions.contracts().pkpnft.address();
+        let pkpnft = PKPNFT::new(pkpnft_address, self.signing_provider.clone());
+
+        let burn_tx = pkpnft.burn(self.token_id);
+        let _receipt = burn_tx
+            .send()
+            .await
+            .expect("Failed to send burn PKP transaction")
+            .await
+            .expect("Failed while waiting for burn PKP confirmation");
+    }
+
     pub async fn mint_grant_and_burn_next_pkp(
         end_user: &EndUser,
         ipfs_cid: &str,
