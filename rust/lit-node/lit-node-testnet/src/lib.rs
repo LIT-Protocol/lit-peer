@@ -8,8 +8,8 @@ pub mod validator;
 use self::testnet::Testnet;
 use self::testnet::node_config::CustomNodeRuntimeConfig;
 use self::validator::ValidatorCollection;
+use crate::end_user::EndUser;
 use crate::testnet::contracts::StakingContractRealmConfig;
-use crate::{end_user::EndUser, testnet::ImportedDatilTestnet};
 use ethers::types::{Address, U256};
 use lit_core::config::{ENV_LIT_CONFIG_FILE, LitConfigBuilder, ReloadableLitConfig};
 
@@ -39,8 +39,8 @@ pub struct TestSetupBuilder {
     fund_ledger_for_wallet: bool,
     custom_binary_path: Option<String>,
     start_staked_only_validators: bool,
-    imported_testnet_state_cache_path: Option<String>,
-    imported_testnet_contract_resolver_address: Option<Address>,
+    datil_testnet_state_cache_path: Option<String>,
+    datil_testnet_contract_resolver_address: Option<Address>,
 }
 
 impl Default for TestSetupBuilder {
@@ -63,8 +63,8 @@ impl Default for TestSetupBuilder {
             fund_ledger_for_wallet: true,
             custom_binary_path: None,
             start_staked_only_validators: true,
-            imported_testnet_state_cache_path: None,
-            imported_testnet_contract_resolver_address: None,
+            datil_testnet_state_cache_path: None,
+            datil_testnet_contract_resolver_address: None,
         }
     }
 }
@@ -158,71 +158,33 @@ impl TestSetupBuilder {
         self
     }
 
-    pub fn imported_testnet_state_cache_path(
-        mut self,
-        imported_testnet_state_cache_path: Option<String>,
-    ) -> Self {
-        self.imported_testnet_state_cache_path = imported_testnet_state_cache_path;
+    // this should probably be made into the default.
+    pub fn include_datil_testnet(mut self) -> Self {
+        self.datil_testnet_state_cache_path =
+            Some("tests/test_data/datil-anvil-state.json".to_string());
+        self.datil_testnet_contract_resolver_address = Some(Address::from_slice(
+            &hex::decode("5fbdb2315678afecb367f032d93f642f64180aa3")
+                .expect("Failed to decode contract resolver address"),
+        ));
         self
     }
 
-    pub fn imported_testnet_contract_resolver_address(
+    pub fn datil_testnet_state_cache_path(
         mut self,
-        imported_testnet_contract_resolver_address: Option<Address>,
+        datil_testnet_state_cache_path: Option<String>,
     ) -> Self {
-        self.imported_testnet_contract_resolver_address =
-            imported_testnet_contract_resolver_address;
+        self.datil_testnet_state_cache_path = datil_testnet_state_cache_path;
         self
     }
 
-    pub async fn build_with_datil(
-        self,
-    ) -> (
-        Testnet,
-        ValidatorCollection,
-        EndUser,
-        ImportedDatilTestnet,
-        crate::end_user::datil::EndUser,
-    ) {
-        let imported_testnet_state_cache_path = self
-            .imported_testnet_state_cache_path
-            .clone()
-            .expect("imported_testnet_state_cache_path is required");
-        let imported_testnet_contract_resolver_address = self
-            .imported_testnet_contract_resolver_address
-            .clone()
-            .expect("imported_testnet_contract_resolver_address is required");
-
-        // Spin up another instance of anvil on a different port (default) for testing cross-chain
-        // compatibility with datil.
-        let datil_testnet = ImportedDatilTestnet::builder()
-            .state_cache_path(imported_testnet_state_cache_path)
-            .contract_resolver_address(imported_testnet_contract_resolver_address)
-            .build()
-            .await;
-
-        let mut datil_end_user = crate::end_user::datil::EndUser::new(&datil_testnet);
-        if self.fund_wallet {
-            datil_end_user.fund_wallet_default_amount().await;
-        }
-        let r = datil_end_user.new_pkp().await;
-        if let Err(e) = r {
-            panic!("Error minting PKP: {:?}", e);
-        }
-
-        // Build the naga generation items.
-        let (testnet, validator_collection, end_user) = self.build().await;
-
-        (
-            testnet,
-            validator_collection,
-            end_user,
-            datil_testnet,
-            datil_end_user,
-        )
+    pub fn datil_testnet_contract_resolver_address(
+        mut self,
+        datil_testnet_contract_resolver_address: Option<Address>,
+    ) -> Self {
+        self.datil_testnet_contract_resolver_address = datil_testnet_contract_resolver_address;
+        self
     }
 
-    #[deprecated(note = "Use build_with_datil instead")]
     pub async fn build(self) -> (Testnet, ValidatorCollection, EndUser) {
         let node_keys_path = Path::new("./node_keys");
         if node_keys_path.exists() {

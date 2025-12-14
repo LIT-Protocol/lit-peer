@@ -2790,12 +2790,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "castaway"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2698f953def977c68f935bb0dfa959375ad4638570e969e2f1e9f433cbf1af6"
-
-[[package]]
 name = "cbc"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3284,25 +3278,6 @@ dependencies = [
 
 [[package]]
 name = "config"
-version = "0.13.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23738e11972c7643e4ec947840fc463b6a571afcd3e735bdfce7d03c7a784aca"
-dependencies = [
- "async-trait",
- "json5",
- "lazy_static",
- "nom 7.1.3",
- "pathdiff",
- "ron 0.7.1",
- "rust-ini 0.18.0",
- "serde",
- "serde_json",
- "toml 0.5.11",
- "yaml-rust",
-]
-
-[[package]]
-name = "config"
 version = "0.15.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0faa974509d38b33ff89282db9c3295707ccf031727c0de9772038ec526852ba"
@@ -3311,8 +3286,8 @@ dependencies = [
  "convert_case 0.6.0",
  "json5",
  "pathdiff",
- "ron 0.8.1",
- "rust-ini 0.21.3",
+ "ron",
+ "rust-ini",
  "serde",
  "serde-untagged",
  "serde_json",
@@ -3432,12 +3407,6 @@ name = "const-str"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2f421161cb492475f1661ddc9815a745a1c894592070661180fdec3d4872e9c3"
-
-[[package]]
-name = "const-str"
-version = "0.5.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3618cccc083bb987a415d85c02ca6c9994ea5b44731ec28b9ecf09658655fba9"
 
 [[package]]
 name = "const-str"
@@ -3894,37 +3863,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0369ee1ad671834580515889b80f2ea915f23b8be8d0daa4bbaf2ac5c7590835"
 dependencies = [
  "cipher 0.4.4",
-]
-
-[[package]]
-name = "curl"
-version = "0.4.49"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79fc3b6dd0b87ba36e565715bf9a2ced221311db47bd18011676f24a6066edbc"
-dependencies = [
- "curl-sys",
- "libc",
- "openssl-probe",
- "openssl-sys",
- "schannel",
- "socket2 0.6.1",
- "windows-sys 0.59.0",
-]
-
-[[package]]
-name = "curl-sys"
-version = "0.4.84+curl-8.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "abc4294dc41b882eaff37973c2ec3ae203d0091341ee68fbadd1d06e0c18a73b"
-dependencies = [
- "cc",
- "libc",
- "libnghttp2-sys",
- "libz-sys",
- "openssl-sys",
- "pkg-config",
- "vcpkg",
- "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -5883,12 +5821,6 @@ dependencies = [
  "quote 0.6.13",
  "syn 0.15.44",
 ]
-
-[[package]]
-name = "dlv-list"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0688c2a7f92e427f44895cd63841bff7b29f8d7a1648b9e7e07a4a365b2e1257"
 
 [[package]]
 name = "dlv-list"
@@ -7947,9 +7879,6 @@ name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
-dependencies = [
- "ahash 0.7.8",
-]
 
 [[package]]
 name = "hashbrown"
@@ -9134,33 +9063,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a6cb138bb79a146c1bd460005623e142ef0181e3d0219cb493e02f7d08a35695"
 
 [[package]]
-name = "isahc"
-version = "1.7.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "334e04b4d781f436dc315cb1e7515bd96826426345d498149e4bde36b67f8ee9"
-dependencies = [
- "async-channel 1.9.0",
- "castaway",
- "crossbeam-utils",
- "curl",
- "curl-sys",
- "encoding_rs",
- "event-listener 2.5.3",
- "futures-lite 1.13.0",
- "http 0.2.12",
- "log",
- "mime",
- "once_cell",
- "polling 2.8.0",
- "slab",
- "sluice",
- "tracing",
- "tracing-futures",
- "url",
- "waker-fn",
-]
-
-[[package]]
 name = "itertools"
 version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9602,16 +9504,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f9fbbcab51052fe104eb5e5d351cf728d30a5be1fe14d9be8a3b097481fb97de"
 
 [[package]]
-name = "libnghttp2-sys"
-version = "0.1.11+1.64.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b6c24e48a7167cffa7119da39d577fa482e66c688a4aac016bee862e1a713c4"
-dependencies = [
- "cc",
- "libc",
-]
-
-[[package]]
 name = "libredox"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9759,7 +9651,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "15d118bbf3771060e7311cc7bb0545b01d08a8b4a7de949198dec1fa0ca1c0f7"
 dependencies = [
  "cc",
- "libc",
  "pkg-config",
  "vcpkg",
 ]
@@ -9870,8 +9761,8 @@ dependencies = [
  "hyper-util",
  "hyperlocal",
  "ip_rfc",
- "lit-core 0.1.0",
- "lit-core-derive 0.1.0",
+ "lit-core",
+ "lit-core-derive",
  "lit-observability",
  "num_cpus",
  "once_cell",
@@ -9912,9 +9803,9 @@ dependencies = [
  "hyperlocal",
  "libsecp256k1 0.7.1",
  "lit-api-core",
- "lit-blockchain 0.1.0",
- "lit-core 0.1.0",
- "lit-core-derive 0.1.0",
+ "lit-blockchain",
+ "lit-core",
+ "lit-core-derive",
  "lit-node-core",
  "moka 0.11.3",
  "once_cell",
@@ -9938,7 +9829,7 @@ dependencies = [
  "ethers",
  "futures",
  "im",
- "lit-core 0.1.0",
+ "lit-core",
  "moka 0.12.11",
  "once_cell",
  "reqwest 0.11.27",
@@ -9952,29 +9843,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "lit-blockchain"
+name = "lit-blockchain-lite"
 version = "0.1.0"
-source = "git+https://github.com/LIT-Protocol/lit-assets.git?branch=release-datil-prod-2025-10-09#513571a879a9ce512837f4e8d08ab654045c75c8"
+source = "git+https://github.com/LIT-Protocol/datil-lit-blockchain-lite.git#5c34787379d0a10e8133b17a8248740293d9c8dc"
 dependencies = [
- "arc-swap",
- "bs58 0.4.0",
- "const-str 0.5.7",
  "ethers",
- "futures",
- "generic-array 0.14.7",
- "hex",
- "im",
- "isahc",
- "lit-core 0.1.0 (git+https://github.com/LIT-Protocol/lit-assets.git?branch=release-datil-prod-2025-10-09)",
- "log",
- "moka 0.12.11",
- "once_cell",
- "reqwest 0.11.27",
  "serde",
- "serde_json",
- "serde_yaml 0.9.34+deprecated",
- "tracing",
- "url",
 ]
 
 [[package]]
@@ -9988,7 +9862,7 @@ dependencies = [
  "bytes",
  "chrono",
  "clap 4.5.53",
- "config 0.15.15",
+ "config",
  "derive_more 2.1.0",
  "env_logger 0.10.0 (git+https://github.com/LIT-Protocol/env_logger.git)",
  "flate2",
@@ -9998,7 +9872,7 @@ dependencies = [
  "ipfs-hasher",
  "ipfs-unixfs",
  "libc",
- "lit-core-derive 0.1.0",
+ "lit-core-derive",
  "log",
  "once_cell",
  "regex",
@@ -10011,41 +9885,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "lit-core"
-version = "0.1.0"
-source = "git+https://github.com/LIT-Protocol/lit-assets.git?branch=release-datil-prod-2025-10-09#513571a879a9ce512837f4e8d08ab654045c75c8"
-dependencies = [
- "arc-swap",
- "async-std",
- "base64 0.20.0",
- "clap 4.5.53",
- "config 0.13.4",
- "derive_more 0.99.20",
- "hex",
- "lit-core-derive 0.1.0 (git+https://github.com/LIT-Protocol/lit-assets.git?branch=release-datil-prod-2025-10-09)",
- "log",
- "once_cell",
- "regex",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "toml 0.5.11",
-]
-
-[[package]]
 name = "lit-core-derive"
 version = "0.1.0"
-dependencies = [
- "proc-macro-error",
- "proc-macro2 1.0.103",
- "quote 1.0.42",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "lit-core-derive"
-version = "0.1.0"
-source = "git+https://github.com/LIT-Protocol/lit-assets.git?branch=release-datil-prod-2025-10-09#513571a879a9ce512837f4e8d08ab654045c75c8"
 dependencies = [
  "proc-macro-error",
  "proc-macro2 1.0.103",
@@ -10147,8 +9988,8 @@ dependencies = [
  "env_logger 0.10.0 (git+https://github.com/LIT-Protocol/env_logger.git)",
  "hyper 1.8.1",
  "hyperlocal",
- "lit-core 0.1.0",
- "lit-core-derive 0.1.0",
+ "lit-core",
+ "lit-core-derive",
  "log",
  "serde",
  "serde_json",
@@ -10171,9 +10012,9 @@ dependencies = [
  "lit-actions-server",
  "lit-api-core",
  "lit-attestation",
- "lit-blockchain 0.1.0",
- "lit-core 0.1.0",
- "lit-core-derive 0.1.0",
+ "lit-blockchain",
+ "lit-core",
+ "lit-core-derive",
  "lit-logging",
  "lit-observability",
  "lit-sdk",
@@ -10234,9 +10075,9 @@ dependencies = [
  "hex-literal",
  "k256 0.13.4",
  "lit-attestation",
- "lit-blockchain 0.1.0",
- "lit-blockchain 0.1.0 (git+https://github.com/LIT-Protocol/lit-assets.git?branch=release-datil-prod-2025-10-09)",
- "lit-core 0.1.0",
+ "lit-blockchain",
+ "lit-blockchain-lite",
+ "lit-core",
  "lit-logging",
  "lit-node-common",
  "lit-node-core",
@@ -10269,8 +10110,8 @@ dependencies = [
  "derive_more 2.1.0",
  "flume",
  "hyper-util",
- "lit-core 0.1.0",
- "lit-core-derive 0.1.0",
+ "lit-core",
+ "lit-core-derive",
  "lit-logging",
  "nu-ansi-term",
  "opentelemetry 0.24.0",
@@ -10326,8 +10167,8 @@ dependencies = [
  "hex",
  "jubjub-plus",
  "k256 0.13.4",
- "lit-blockchain 0.1.0",
- "lit-core 0.1.0",
+ "lit-blockchain",
+ "lit-core",
  "lit-node-core",
  "p256",
  "p384 0.13.1",
@@ -10454,9 +10295,9 @@ dependencies = [
  "lit-actions-server",
  "lit-api-core",
  "lit-attestation",
- "lit-blockchain 0.1.0",
- "lit-core 0.1.0",
- "lit-core-derive 0.1.0",
+ "lit-blockchain",
+ "lit-core",
+ "lit-core-derive",
  "lit-ecdsa-wasm-combine",
  "lit-fast-ecdsa",
  "lit-frost",
@@ -11866,21 +11707,11 @@ dependencies = [
 
 [[package]]
 name = "ordered-multimap"
-version = "0.4.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ccd746e37177e1711c20dd619a1620f34f5c8b569c53590a72dedd5344d8924a"
-dependencies = [
- "dlv-list 0.3.0",
- "hashbrown 0.12.3",
-]
-
-[[package]]
-name = "ordered-multimap"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "49203cdcae0030493bad186b28da2fa25645fa276a51b6fec8010d281e02ef79"
 dependencies = [
- "dlv-list 0.5.2",
+ "dlv-list",
  "hashbrown 0.14.5",
 ]
 
@@ -13681,17 +13512,6 @@ dependencies = [
 
 [[package]]
 name = "ron"
-version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88073939a61e5b7680558e6be56b419e208420c2adb92be54921fa6b72283f1a"
-dependencies = [
- "base64 0.13.1",
- "bitflags 1.3.2",
- "serde",
-]
-
-[[package]]
-name = "ron"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b91f7eff05f748767f183df4320a63d6936e9c6107d97c9e6bdd9784f4289c94"
@@ -13860,22 +13680,12 @@ dependencies = [
 
 [[package]]
 name = "rust-ini"
-version = "0.18.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f6d5f2436026b4f6e79dc829837d467cc7e9a55ee40e750d716713540715a2df"
-dependencies = [
- "cfg-if 1.0.4",
- "ordered-multimap 0.4.3",
-]
-
-[[package]]
-name = "rust-ini"
 version = "0.21.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "796e8d2b6696392a43bea58116b667fb4c29727dc5abd27d6acf338bb4f688c7"
 dependencies = [
  "cfg-if 1.0.4",
- "ordered-multimap 0.7.3",
+ "ordered-multimap",
 ]
 
 [[package]]
@@ -15223,17 +15033,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bdd58c3c93c3d278ca835519292445cb4b0d4dc59ccfdf7ceadaab3f8aeb4038"
 dependencies = [
  "version_check",
-]
-
-[[package]]
-name = "sluice"
-version = "0.5.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d7400c0eff44aa2fcb5e31a5f24ba9716ed90138769e4977a2ba6014ae63eb5"
-dependencies = [
- "async-channel 1.9.0",
- "futures-core",
- "futures-io",
 ]
 
 [[package]]
@@ -18955,7 +18754,7 @@ dependencies = [
  "parking_lot 0.12.5",
  "profiling",
  "raw-window-handle",
- "ron 0.8.1",
+ "ron",
  "rustc-hash 1.1.0",
  "serde",
  "smallvec",

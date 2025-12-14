@@ -51,7 +51,7 @@ url = { version = "2", features = ["serde"] }
 lit-core = { path = "../../lit-core/lit-core", features = ["ipfs", "chrono"] }
 lit-logging = { path = "../../lit-core/lit-logging", features = ["service"] }
 lit-blockchain = { path = "../../lit-core/lit-blockchain" }
-lit-blockchain-datil = { package = "lit-blockchain", git = "https://github.com/LIT-Protocol/lit-assets.git", branch = "release-datil-prod-2025-10-09" }
+lit-blockchain-lite = { git="https://github.com/LIT-Protocol/datil-lit-blockchain-lite.git" }
 lit-attestation = { path = "../../lit-core/lit-attestation", features = ["generate-via-service", "kdf"] }
 lit-node-common ={ path = "../lit-node-common" }
 lit-node-core = { path = "../lit-node-core" }

@@ -7,6 +7,7 @@ use crate::common::web_user_tests::{
 };
 use chrono::{Duration, Utc};
 use ethers::prelude::{H160, U256};
+use ethers::signers::Signer;
 use ethers::types::{Address, TransactionRequest};
 use hex::FromHex;
 use k256::ecdsa::{SigningKey, VerifyingKey};
@@ -79,31 +80,22 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
     crate::common::setup_logging();
 
     let epoch_length = 300 as usize;
-    let (testnet, mut validator_collection, mut end_user, datil_testnet, mut datil_end_user) =
-        TestSetupBuilder::default()
-            .num_staked_and_joined_validators(number_of_nodes)
-            .epoch_length(epoch_length)
-            .imported_testnet_state_cache_path(Some(
-                "tests/test_data/datil-anvil-state.json".to_string(),
-            ))
-            .imported_testnet_contract_resolver_address(Some(Address::from_slice(
-                &hex::decode("5fbdb2315678afecb367f032d93f642f64180aa3")
-                    .expect("Failed to decode contract resolver address"),
-            )))
-            .build_with_datil()
-            .await;
-
-    let backup_directory = create_recovery_directory();
-
-    validator_collection
-        .actions()
-        .wait_for_epoch(realm_id, U256::from(2))
+    let (testnet, mut validator_collection, mut end_user) = TestSetupBuilder::default()
+        .num_staked_and_joined_validators(number_of_nodes)
+        .epoch_length(epoch_length)
+        .include_datil_testnet()
+        .build()
         .await;
 
-    testnet.actions().sleep_millis(5000).await;
+    let backup_directory = create_recovery_directory();
+    let actions = validator_collection.actions().clone();
+    actions.wait_for_epoch(realm_id, U256::from(2)).await;
 
-    let (realm_id, identifier, description) =
-        (U256::from(1), "datil".to_string(), "Datil Key ".to_string());
+    let (realm_id, identifier, description) = (
+        U256::from(1),
+        "datil".to_string(),
+        "Datil Key Set".to_string(),
+    );
     let keyset_id = identifier.clone();
     let root_key_configs = vec![
         RootKeyConfig {
@@ -115,37 +107,22 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
             count: 10,
         },
     ];
-    let result = validator_collection
-        .actions()
+    let result = actions
         .add_keyset(realm_id, identifier, description, root_key_configs)
         .await;
     assert!(result.is_ok(), "Failed to add keyset `{}`", keyset_id);
 
-    let tx = validator_collection
-        .actions()
-        .contracts()
-        .pubkey_router
-        .admin_reset_root_keys(
-            testnet.actions().contracts().staking.address(),
-            keyset_id.clone(),
-        );
-    tx.send().await.unwrap();
-    let tx = validator_collection
-        .actions()
-        .contracts()
-        .pubkey_router
-        .admin_set_root_keys(
-            testnet.actions().contracts().staking.address(),
-            keyset_id.clone(),
-            datil_root_keys(),
-        );
+    let tx = actions.contracts().pubkey_router.admin_set_root_keys(
+        testnet.actions().contracts().staking.address(),
+        keyset_id.clone(),
+        datil_root_keys(),
+    );
     tx.send().await.unwrap();
 
     // stop old nodes but leave the test net up. Setting the network to restore state
     // should stop all the nodes
     info!("Setting network state to Restore");
-    validator_collection
-        .actions()
+    actions
         .set_epoch_state(realm_id, NetworkState::Restore as u8)
         .await
         .unwrap();
@@ -158,7 +135,6 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
 
     // Since we're using the exact same contract state as before the nodes got shut down, we need to
     // allow the nodes to register their attested wallets on their next boot.
-    let actions = validator_collection.actions();
     let current_validators = actions.get_current_validators(realm_id).await;
     actions
         .admin_set_register_attested_wallet_disabled_for_validators(current_validators, false)
@@ -212,8 +188,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
     info!("Decryption shares uploaded");
 
     // Wait until all keys are restored
-    validator_collection
-        .actions()
+        actions
         .wait_for_recovery_status(NodeRecoveryStatus::AllKeysAreRestored as u8)
         .await;
     info!("All the nodes restored all the keys!");
@@ -255,11 +230,9 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
 
     info!("Testing PKP signing with datil keyset");
     test_datil_keyset_pkp_signing(
-        &datil_testnet.actions(),
         &testnet,
         &validator_collection,
         &mut end_user,
-        &mut datil_end_user,
     )
     .await;
 }
@@ -696,27 +669,27 @@ async fn test_datil_encrypt_naga_decrypt(
 
 // TODO: Need to actually set up permissions for the datil PKP before sending in the signing request.
 async fn test_datil_keyset_pkp_signing(
-    datil_actions: &lit_node_testnet::testnet::datil::actions::Actions,
     testnet: &Testnet,
     validator_collection: &ValidatorCollection,
     end_user: &mut EndUser,
-    datil_end_user: &mut lit_node_testnet::end_user::datil::EndUser,
 ) {
     // Let's use the mint-grant-burn pattern to properly test authing against permissions registered on the datil chain.
     // First add a non-owner wallet as a permitted address of the PKP on datil chain.
     let non_owner_end_user = EndUser::new(testnet);
     non_owner_end_user.fund_wallet_default_amount().await;
     non_owner_end_user.deposit_to_wallet_ledger_default().await;
-    let non_owner_wallet = non_owner_end_user.wallet;
 
-    let datil_pkp = datil_end_user.first_pkp();
+    let datil_pkp = end_user.first_pkp();
     datil_pkp
-        .add_permitted_address_to_pkp(non_owner_wallet.address(), &[U256::from(1)])
+        .add_permitted_address_to_pkp(non_owner_end_user.wallet.address(), &[U256::from(1)])
         .await
         .expect("Could not add permitted address to pkp");
 
     // Burn the PKP
-    datil_pkp.burn_pkp().await;
+    let burned = datil_pkp.burn_pkp().await;
+    assert!(burned.is_ok());
+
+    let pkp_address = datil_pkp.eth_address;
 
     // Now try signing with the permitted non-owner wallet.
     let value_to_send = 10;
