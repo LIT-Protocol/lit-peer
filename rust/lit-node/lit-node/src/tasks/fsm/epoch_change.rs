@@ -190,7 +190,7 @@ pub(crate) async fn perform_epoch_change(
                     }
                     None => {
                         warn!(
-                            "Next DKG after restore is not set, yet we have a restore keyset. Existing."
+                            "Next DKG after restore is not set, yet we have a restore keyset. Exiting."
                         );
                         return None;
                     }
