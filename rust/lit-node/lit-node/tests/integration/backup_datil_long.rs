@@ -37,7 +37,7 @@ use std::path::PathBuf;
 use tokio::task::JoinSet;
 use tracing::info;
 
-const TARBALL_NAME: &str = "lit_backup_encrypted_keys.tar.gz";
+const BACKUP_ENCRYPTED_KEYS: &str = "lit_backup_encrypted_keys.tar.gz";
 
 // Notes:
 // This test is designed to test the recovery of a Datil backup into a Naga network.
@@ -83,7 +83,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
     let (testnet, mut validator_collection, mut end_user) = TestSetupBuilder::default()
         .num_staked_and_joined_validators(number_of_nodes)
         .epoch_length(epoch_length)
-        .include_datil_testnet()
+        .include_datil_testnet(true)
         .build()
         .await;
 
@@ -188,7 +188,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
     info!("Decryption shares uploaded");
 
     // Wait until all keys are restored
-        actions
+    actions
         .wait_for_recovery_status(NodeRecoveryStatus::AllKeysAreRestored as u8)
         .await;
     info!("All the nodes restored all the keys!");
@@ -229,12 +229,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
     test_datil_encrypt_naga_decrypt(&validator_collection, &end_user).await;
 
     info!("Testing PKP signing with datil keyset");
-    test_datil_keyset_pkp_signing(
-        &testnet,
-        &validator_collection,
-        &mut end_user,
-    )
-    .await;
+    test_datil_keyset_pkp_signing(&testnet, &validator_collection, &mut end_user).await;
 }
 
 fn datil_root_keys() -> Vec<RootKey> {
@@ -349,7 +344,8 @@ async fn upload_key_backups_to_nodes(
                 generate_admin_auth_sig(&admin_signing_key, chain_id, &url, &public_address);
             let json_body = serde_json::to_string(&auth_sig.auth_sig).unwrap();
 
-            let tar_file = backup_directory.join(format!("{}{}", public_address, TARBALL_NAME));
+            let tar_file =
+                backup_directory.join(format!("{}{}", public_address, BACKUP_ENCRYPTED_KEYS));
             let file = tokio::fs::File::open(tar_file).await.unwrap();
 
             info!("Uploading backup for validator {}", public_address);
@@ -704,8 +700,8 @@ async fn test_datil_keyset_pkp_signing(
         .chain_id(31337)
         .nonce(0)
         .data(vec![]);
-    let to_sign_as_sighash = tx.sighash();
-    let to_sign = to_sign_as_sighash.0.to_vec();
+    // let to_sign_as_sighash = tx.sighash();
+    // let to_sign = to_sign_as_sighash.0.to_vec();
 
     let node_set = validator_collection
         .partially_random_threshold_nodeset(&vec![])

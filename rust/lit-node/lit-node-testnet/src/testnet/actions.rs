@@ -889,10 +889,17 @@ impl Actions {
 
     #[doc = "Fast forward by a number of blocks"]
     pub async fn increase_blockchain_timestamp(&self, seconds_to_increase: usize) {
+        let deployer_provider = self.deployer_provider().clone();
+        Self::do_increase_blockchain_timestamp(deployer_provider, seconds_to_increase).await;
+    }
+
+    pub async fn do_increase_blockchain_timestamp(
+        deployer_provider: Arc<Provider<Http>>,
+        seconds_to_increase: usize,
+    ) {
         // get most recent block timestamp
-        let block = self
-            .deployer_provider()
-            .get_block(self.deployer_provider().get_block_number().await.unwrap())
+        let block = deployer_provider
+            .get_block(deployer_provider.get_block_number().await.unwrap())
             .await
             .unwrap()
             .expect("Error getting block");
@@ -903,8 +910,7 @@ impl Actions {
             + Duration::from_secs(seconds_to_increase.try_into().unwrap());
         debug!("timestamp- {}", timestamp.as_secs());
 
-        let res: Result<(), ProviderError> = self
-            .deployer_provider()
+        let res: Result<(), ProviderError> = deployer_provider
             .request("evm_setNextBlockTimestamp", [timestamp.as_secs()])
             .await;
 
@@ -920,8 +926,7 @@ impl Actions {
         }
 
         // mine a block
-        let mine_block_res: Result<(), ProviderError> = self
-            .deployer_provider()
+        let mine_block_res: Result<(), ProviderError> = deployer_provider
             .request("anvil_mine", [utils::serialize(&1), utils::serialize(&0)])
             .await;
         match mine_block_res {
@@ -932,9 +937,8 @@ impl Actions {
             }
         }
 
-        let block = self
-            .deployer_provider()
-            .get_block(self.deployer_provider().get_block_number().await.unwrap())
+        let block = deployer_provider
+            .get_block(deployer_provider.get_block_number().await.unwrap())
             .await
             .unwrap()
             .expect("Error getting block");
@@ -1345,7 +1349,7 @@ impl Actions {
             .map(|rkc| U256::from(rkc.count))
             .collect();
         info!("Curves/Counts: {:?}/{:?}", curves, counts);
-        let update_key_set_request = staking::KeySetConfig {
+        let key_set_config = staking::KeySetConfig {
             minimum_threshold: 3,
             monetary_value: 0,
             complete_isolation: false,
@@ -1356,8 +1360,13 @@ impl Actions {
             counts: counts,
             recovery_session_id: Bytes::from_static(&[]),
         };
+        self.add_keyset_config(key_set_config).await
+    }
 
-        let cc = self.contracts.staking.set_key_set(update_key_set_request);
+    pub async fn add_keyset_config(&self, key_set_config: staking::KeySetConfig) -> Result<()> {
+        let realm_id = key_set_config.realms[0];
+        let identifier = key_set_config.identifier.clone();
+        let cc = self.contracts.staking.set_key_set(key_set_config);
         let result = cc
             .send()
             .await

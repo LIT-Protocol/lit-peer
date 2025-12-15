@@ -288,6 +288,10 @@ impl ValidatorCollectionBuilder {
         }
 
         // wait for the root keys to be registered
+        info!(
+            "Waiting for root keys to be registered: {:?}",
+            self.keyset_configs
+        );
         if self.wait_for_root_keys {
             for keyset_config in &self.keyset_configs {
                 actions
@@ -1654,9 +1658,6 @@ fn choose_random_nums_in_range(random_nums: usize, min: usize, max: usize) -> Ve
     random_nums_in_range
 }
 
-pub fn get_default_keyset_configs() -> Vec<KeySetConfig> {
-    vec![default_keyset_config()]
-}
 pub fn default_keyset_config() -> KeySetConfig {
     KeySetConfig {
         identifier: DEFAULT_KEY_SET_NAME.to_string(),
@@ -1669,6 +1670,19 @@ pub fn default_keyset_config() -> KeySetConfig {
         counts: std::iter::once(U256::from(1))
             .chain(CurveType::into_iter().skip(1).map(|_| U256::from(2)))
             .collect(),
+        recovery_session_id: Bytes::from_static(&[]),
+    }
+}
+pub fn default_datil_keyset_config() -> KeySetConfig {
+    KeySetConfig {
+        identifier: "datil-keyset".to_string(),
+        description: "Datil Key Set".to_string(),
+        minimum_threshold: 3,
+        monetary_value: 0,
+        complete_isolation: false,
+        realms: vec![U256::from(1)],
+        curves: vec![CurveType::BLS.into(), CurveType::K256.into()],
+        counts: vec![U256::from(1), U256::from(2)],
         recovery_session_id: Bytes::from_static(&[]),
     }
 }

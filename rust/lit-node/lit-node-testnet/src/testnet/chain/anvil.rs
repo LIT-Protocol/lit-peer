@@ -17,7 +17,8 @@ use tracing::{debug, info};
 
 pub struct Anvil {
     num_nodes: usize,
-    port: Option<u16>,
+    port: u16,
+    is_datil_testnet: bool,
     state_cache_path: Option<String>,
     // num_staked: usize,
 }
@@ -26,14 +27,21 @@ impl Anvil {
     // pub fn new(num_nodes: usize, num_staked: usize) -> impl ChainTrait {
     pub fn new(
         num_nodes: usize,
-        port: Option<u16>,
+        is_datil_testnet: bool,
         state_cache_path: Option<String>,
     ) -> impl ChainTrait {
+        if is_datil_testnet && state_cache_path.is_none() {
+            panic!("A state_cache_path is required to load a datil testnet.");
+        }
+
+        let port = if is_datil_testnet { 8549 } else { 8545 };
+
         Anvil {
             num_nodes,
             // num_staked,
             port,
             state_cache_path,
+            is_datil_testnet,
         }
     }
 }
@@ -52,11 +60,11 @@ impl ChainTrait for Anvil {
     }
 
     fn rpc_url(&self) -> String {
-        format!("127.0.0.1:{}", self.port.unwrap_or(8545))
+        format!("127.0.0.1:{}", self.port)
     }
 
     fn chain_name(&self) -> &'static str {
-        if self.port.unwrap_or(8545) == 8549 {
+        if self.is_datil_testnet {
             "anvilDatil"
         } else {
             "anvil"
@@ -76,40 +84,6 @@ impl ChainTrait for Anvil {
                     "anvil is not running in CI.  It should have been loaded by the docker container."
                 );
             }
-            // let in_container = std::env::var("IN_CONTAINER").unwrap_or("0".to_string());
-            // if in_container == "1" {
-            //     info!("Skipping docker restart in container env")
-            // } else {
-            //     // restart docker to reset chain since anvil_reset isn't working for non-forked chains right now https://github.com/foundry-rs/foundry/issues/6018
-            //     let docker_ps = Command::new("docker")
-            //         .args(["ps"])
-            //         .output()
-            //         .expect("failed to get docker ps");
-            //     let output = String::from_utf8_lossy(&docker_ps.stdout);
-            //     info!("Docker ps output: {}", output);
-            //     let lines: Vec<&str> = output.split('\n').collect();
-            //     let mut container_id = String::new();
-            //     for line in lines {
-            //         if line.contains("litptcl/anvil-lit:latest") {
-            //             let parts: Vec<&str> = line.split_whitespace().collect();
-            //             container_id = parts[0].to_string();
-            //             break;
-            //         }
-            //     }
-            //     if container_id.is_empty() {
-            //         panic!("Failed to find container id for litptcl/anvil-lit:latest");
-            //     }
-
-            //     let restart_result = Command::new("docker")
-            //         .args(["restart", &container_id])
-            //         .output()
-            //         .expect("failed to restart anvil docker container");
-            //     let output = String::from_utf8_lossy(&restart_result.stdout);
-            //     info!("Docker restart output: {}", output);
-
-            //     // give docker a few secs to come up
-            //     tokio::time::sleep(Duration::from_secs(5)).await;
-            // }
 
             return Command::new("/bin/bash")
                 .args(["-c", "echo '*** anvil is already running in CI ***'"])
@@ -147,9 +121,8 @@ impl ChainTrait for Anvil {
         debug!("found path for anvil: {}", &command_path);
 
         let mut command = Command::new(command_path);
-        if let Some(port) = self.port {
-            command.arg("--port").arg(port.to_string());
-        }
+        command.arg("--port").arg(self.port.to_string());
+
         if let Some(state_cache_path) = &self.state_cache_path {
             command.arg("--load-state").arg(state_cache_path.clone());
         }

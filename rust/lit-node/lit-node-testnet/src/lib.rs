@@ -8,9 +8,9 @@ pub mod validator;
 use self::testnet::Testnet;
 use self::testnet::node_config::CustomNodeRuntimeConfig;
 use self::validator::ValidatorCollection;
-use crate::end_user::EndUser;
 use crate::testnet::contracts::StakingContractRealmConfig;
-use ethers::types::{Address, U256};
+use crate::{end_user::EndUser, validator::default_datil_keyset_config};
+use ethers::types::U256;
 use lit_core::config::{ENV_LIT_CONFIG_FILE, LitConfigBuilder, ReloadableLitConfig};
 
 use lit_observability::logging::simple_logging_subscriber;
@@ -39,8 +39,7 @@ pub struct TestSetupBuilder {
     fund_ledger_for_wallet: bool,
     custom_binary_path: Option<String>,
     start_staked_only_validators: bool,
-    datil_testnet_state_cache_path: Option<String>,
-    datil_testnet_contract_resolver_address: Option<Address>,
+    include_datil_testnet: bool,
 }
 
 impl Default for TestSetupBuilder {
@@ -63,8 +62,7 @@ impl Default for TestSetupBuilder {
             fund_ledger_for_wallet: true,
             custom_binary_path: None,
             start_staked_only_validators: true,
-            datil_testnet_state_cache_path: None,
-            datil_testnet_contract_resolver_address: None,
+            include_datil_testnet: false,
         }
     }
 }
@@ -158,30 +156,8 @@ impl TestSetupBuilder {
         self
     }
 
-    // this should probably be made into the default.
-    pub fn include_datil_testnet(mut self) -> Self {
-        self.datil_testnet_state_cache_path =
-            Some("tests/test_data/datil-anvil-state.json".to_string());
-        self.datil_testnet_contract_resolver_address = Some(Address::from_slice(
-            &hex::decode("5fbdb2315678afecb367f032d93f642f64180aa3")
-                .expect("Failed to decode contract resolver address"),
-        ));
-        self
-    }
-
-    pub fn datil_testnet_state_cache_path(
-        mut self,
-        datil_testnet_state_cache_path: Option<String>,
-    ) -> Self {
-        self.datil_testnet_state_cache_path = datil_testnet_state_cache_path;
-        self
-    }
-
-    pub fn datil_testnet_contract_resolver_address(
-        mut self,
-        datil_testnet_contract_resolver_address: Option<Address>,
-    ) -> Self {
-        self.datil_testnet_contract_resolver_address = datil_testnet_contract_resolver_address;
+    pub fn include_datil_testnet(mut self, include_datil_testnet: bool) -> Self {
+        self.include_datil_testnet = include_datil_testnet;
         self
     }
 
@@ -205,6 +181,7 @@ impl TestSetupBuilder {
             .is_fault_test(self.is_fault_test)
             .custom_node_runtime_config(custom_node_runtime_config)
             .force_deploy(self.force_deploy)
+            .include_datil_testnet(self.include_datil_testnet)
             .build()
             .await;
 
@@ -233,6 +210,31 @@ impl TestSetupBuilder {
             {
                 error!("Error extending epoch end time: {:?}", e);
             }
+        } else {
+            if self.include_datil_testnet {
+                let key_set_config = default_datil_keyset_config();
+                testnet
+                    .actions()
+                    .add_keyset_config(key_set_config)
+                    .await
+                    .expect("Failed to add keyset config");
+            }
+        }
+
+        if self.include_datil_testnet {
+            let keyset_id = "datil-keyset".to_string();
+            let datil_root_keys = testnet
+                .actions()
+                .get_all_root_keys(Some(keyset_id))
+                .await
+                .unwrap();
+
+            testnet
+                .datil_testnet
+                .as_ref()
+                .unwrap()
+                .set_root_keys(datil_root_keys)
+                .await;
         }
 
         let num_staked_nodes = if self.start_staked_only_validators {

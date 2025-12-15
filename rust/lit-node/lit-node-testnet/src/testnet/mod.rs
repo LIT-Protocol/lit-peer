@@ -2,6 +2,7 @@ pub mod actions;
 pub mod chain;
 pub mod contracts;
 pub mod contracts_repo;
+pub mod datil;
 pub mod listener;
 pub mod node_config;
 pub mod payment_delegation;
@@ -9,6 +10,7 @@ pub mod payment_delegation;
 use crate::testnet::contracts_repo::{
     contract_addresses_from_deployment, remote_deployment_and_config_creation,
 };
+use crate::testnet::datil::DatilTestnet;
 
 use self::chain::ChainTrait;
 use self::contracts::{ContractAddresses, Contracts, StakingContractGlobalConfig};
@@ -89,6 +91,9 @@ pub struct TestnetBuilder {
     custom_node_runtime_config: Option<CustomNodeRuntimeConfig>,
     is_fault_test: bool,
     register_inactive_validators: bool,
+    include_datil_testnet: bool,
+    datil_testnet_state_cache_path: Option<String>,
+    datil_testnet_contract_resolver_address: Option<Address>,
 }
 
 impl Default for TestnetBuilder {
@@ -104,6 +109,9 @@ impl Default for TestnetBuilder {
             custom_node_runtime_config: None,
             is_fault_test: false,
             register_inactive_validators: false,
+            include_datil_testnet: false,
+            datil_testnet_state_cache_path: None,
+            datil_testnet_contract_resolver_address: None,
         }
     }
 }
@@ -179,6 +187,20 @@ impl TestnetBuilder {
         }
     }
 
+    pub fn include_datil_testnet(self, include_datil_testnet: bool) -> Self {
+        Self {
+            include_datil_testnet,
+            datil_testnet_state_cache_path: Some(
+                "tests/test_data/datil_cache/datil-anvil-state.json".to_string(),
+            ),
+            datil_testnet_contract_resolver_address: Some(Address::from_slice(
+                &hex::decode("5fbdb2315678afecb367f032d93f642f64180aa3")
+                    .expect("Failed to decode contract resolver address"),
+            )),
+            ..self
+        }
+    }
+
     pub async fn build(self) -> Testnet {
         let chain = match self.which {
             WhichTestnet::Hardhat => {
@@ -187,7 +209,7 @@ impl TestnetBuilder {
             }
             WhichTestnet::Anvil => Box::new(chain::anvil::Anvil::new(
                 self.total_num_validators(),
-                None,
+                false,
                 None,
             )) as Box<dyn ChainTrait>,
             WhichTestnet::NoChain => {
@@ -207,6 +229,19 @@ impl TestnetBuilder {
         let provider_mut = Arc::make_mut(&mut provider);
 
         let provider = Arc::new(provider_mut.set_interval(Duration::from_millis(10)).clone());
+
+        let datil_testnet = if self.include_datil_testnet {
+            let datil_testnet = DatilTestnet::new(
+                self.total_num_validators(),
+                self.datil_testnet_state_cache_path.unwrap(),
+                self.datil_testnet_contract_resolver_address.unwrap(),
+            )
+            .await;
+            Some(datil_testnet)
+        } else {
+            None
+        };
+
         let mut is_from_cache = false;
 
         // deploy the contracts via script first, so that we can read them when the testnet configuration is loaded.
@@ -280,6 +315,7 @@ impl TestnetBuilder {
             register_inactive_validators: self.register_inactive_validators,
             contracts: None,
             is_from_cache,
+            datil_testnet,
         }
     }
 }
@@ -301,6 +337,7 @@ impl TestnetContracts {
 
 pub struct Testnet {
     process: GroupChild,
+    pub datil_testnet: Option<DatilTestnet>,
     pub rpcurl: String, //http://localhost:8545
     pub chain_name: String,
     pub chain_id: u64,
@@ -352,6 +389,10 @@ impl Testnet {
                     self.process, e
                 )
             });
+        }
+
+        if let Some(datil_testnet) = &mut self.datil_testnet {
+            datil_testnet.shutdown();
         }
 
         //ps x -o  "%p %r %y %x %c "
