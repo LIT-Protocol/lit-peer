@@ -498,7 +498,7 @@ async fn test_all_payment_methods_for_user() {
         resource_ability_requests.clone(),
         Some(delegation_user.wallet.clone()),
         Some(vec![delegation_auth_sig.clone()]),
-        Some(first_node_price / DIVISION_FACTOR_TO_FAIL),
+        Some(firhigh_price),
     );
 
     let decryption_resp = retrieve_decryption_key_session_sigs(
@@ -1455,16 +1455,17 @@ async fn test_payment_tracker_usage_after_exceptions() {
     let mut exception_handles = Vec::new();
 
     // Make requests with max_price too low - these will fail early after registering usage
+    let mut invalid_params = test_encryption_parameters.clone();
+    invalid_params.chain = Some("invalid_chain".to_string());
     for i in 0..3 {
         let invalid_session_sigs = get_session_sigs_for_auth(
             &node_set,
             resource_ability_requests.clone(),
             Some(self_pay_user.wallet.clone()),
             None,
-            Some(initial_price / DIVISION_FACTOR_TO_FAIL), // Too low, will fail early
+            Some(high_price),
         );
 
-        let invalid_params = test_encryption_parameters.clone();
         let epoch = actions.get_current_epoch(realm_id).await.as_u64();
 
         let handle = tokio::spawn(async move {
@@ -1472,9 +1473,12 @@ async fn test_payment_tracker_usage_after_exceptions() {
             tokio::time::sleep(tokio::time::Duration::from_millis(i * 10)).await;
             // This will fail early due to max_price being too low, but usage should still be registered
             // and then properly deregistered by the guard
-            let result =
-                retrieve_decryption_key_session_sigs(invalid_params, &invalid_session_sigs, epoch)
-                    .await;
+            let result = retrieve_decryption_key_session_sigs(
+                invalid_params.clone(),
+                &invalid_session_sigs,
+                epoch,
+            )
+            .await;
             // We expect these to fail, but the important part is that usage is tracked correctly
             result
         });
