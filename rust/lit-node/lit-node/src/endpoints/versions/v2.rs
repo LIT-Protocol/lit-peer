@@ -86,7 +86,7 @@ pub(crate) async fn sign_session_key(
         };
     let client_session = Arc::new(client_session);
 
-    let call_result = with_timeout(
+    with_timeout(
         &cfg.load_full(),
         None,
         Some(client_session.clone()),
@@ -110,9 +110,7 @@ pub(crate) async fn sign_session_key(
             .await
         },
     )
-    .await;
-
-    call_result
+    .await
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -167,7 +165,7 @@ pub(crate) async fn encryption_sign(
         };
     let client_session = Arc::new(client_session);
 
-    let call_result = with_timeout(
+    with_timeout(
         &cfg.load_full(),
         None,
         Some(client_session.clone()),
@@ -189,9 +187,7 @@ pub(crate) async fn encryption_sign(
             .await
         },
     )
-    .await;
-
-    call_result
+    .await
 }
 
 #[cfg(feature = "lit-actions")]
@@ -236,7 +232,7 @@ pub(crate) async fn execute_function(
 
     let actions_config = tss_state.chain_data_config_manager.get_actions_config();
 
-    let call_result = with_timeout(
+    with_timeout(
         &cfg.load_full(),
         Some(actions_config.timeout_ms),
         Some(client_session.clone()),
@@ -263,9 +259,7 @@ pub(crate) async fn execute_function(
             .await
         },
     )
-    .await;
-
-    call_result
+    .await
 }
 
 #[cfg(feature = "lit-actions")]
@@ -347,7 +341,7 @@ pub(crate) async fn pkp_sign(
         };
     let client_session = Arc::new(client_session);
 
-    let call_result = with_timeout(
+    with_timeout(
         &cfg.load_full(),
         None,
         Some(client_session.clone()),
@@ -370,9 +364,7 @@ pub(crate) async fn pkp_sign(
             .await
         },
     )
-    .await;
-
-    call_result
+    .await
 }
 
 #[post("/web/admin/get_blinders/v2", format = "json", data = "<auth>")]
