@@ -176,10 +176,12 @@ pub mod grpc {
                 propagator.extract(&HttpMetadataMap(req.headers_mut()))
             });
 
-            // Extract x-request-id header for correlation tracking.
+            // Extract correlation ID header (matches lit-api-core's extract_correlation_id implementation).
+            // Priority: x-correlation-id > x-request-id
             let correlation_id = req
                 .headers()
-                .get("x-request-id")
+                .get("x-correlation-id")
+                .or_else(|| req.headers().get("x-request-id"))
                 .and_then(|h| h.to_str().ok())
                 .filter(|s| !s.is_empty());
 
