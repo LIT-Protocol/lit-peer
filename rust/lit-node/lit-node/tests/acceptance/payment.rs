@@ -1362,7 +1362,9 @@ async fn test_payment_tracker_usage_after_exceptions() {
         .await;
 
     // Get initial price at 0% usage
-    let initial_price = self_pay_user.first_node_price_from_feed(0).await;
+    // 3 is the SignSessionKey product ID
+    let product_id = 1;
+    let initial_price = self_pay_user.first_node_price_from_feed(product_id).await;
     info!("Initial price at 0% usage: {}", initial_price);
 
     // Prepare valid encryption parameters for successful requests
@@ -1426,7 +1428,7 @@ async fn test_payment_tracker_usage_after_exceptions() {
     tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
 
     // Check that price has increased due to concurrency
-    let price_with_concurrency = self_pay_user.first_node_price_from_feed(0).await;
+    let price_with_concurrency = self_pay_user.first_node_price_from_feed(product_id).await;
     info!(
         "Price with {} concurrent requests: {}",
         num_concurrent_requests, price_with_concurrency
@@ -1483,7 +1485,7 @@ async fn test_payment_tracker_usage_after_exceptions() {
     tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
 
     // Check price is still elevated (or at least not decreased yet)
-    let price_during_exceptions = self_pay_user.first_node_price_from_feed(0).await;
+    let price_during_exceptions = self_pay_user.first_node_price_from_feed(product_id).await;
     info!(
         "Price during exception requests: {}",
         price_during_exceptions
@@ -1512,7 +1514,7 @@ async fn test_payment_tracker_usage_after_exceptions() {
 
     // Check that price has returned to initial (or close to it)
     // Note: There might be some delay in price feed updates, so we check multiple times
-    let mut final_price = self_pay_user.first_node_price_from_feed(0).await;
+    let mut final_price = self_pay_user.first_node_price_from_feed(product_id).await;
     let mut attempts = 0;
     const MAX_ATTEMPTS: u32 = 10;
 
