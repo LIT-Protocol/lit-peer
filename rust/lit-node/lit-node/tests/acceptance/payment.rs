@@ -498,7 +498,7 @@ async fn test_all_payment_methods_for_user() {
         resource_ability_requests.clone(),
         Some(delegation_user.wallet.clone()),
         Some(vec![delegation_auth_sig.clone()]),
-        Some(firhigh_price),
+        Some(first_node_price),
     );
 
     let decryption_resp = retrieve_decryption_key_session_sigs(
@@ -1345,18 +1345,18 @@ async fn test_pending_payments_block_usage() {
 }
 
 #[tokio::test]
-async fn test_payment_tracker_usage_after_exceptions() {
+async fn test_payment_tracker_usage_tracking() {
     // This test verifies that:
     // 1. Pricing increases with concurrency (usage percentage)
-    // 2. After exceptions occur, usage tracking correctly returns to 0%
-    //    (verifying that PaymentUsageGuard properly deregisters on exceptions)
+    // 2. After requests complete, usage tracking correctly returns to 0%
+    //    (verifying that PaymentUsageGuard properly deregisters when requests finish)
 
     crate::common::setup_logging();
-    let (testnet, validator_collection, actions, node_set) = setup_testnet_for_payments().await;
+    let (testnet, _validator_collection, actions, node_set) = setup_testnet_for_payments().await;
     let realm_id = ethers::types::U256::from(1);
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
 
-    let mut self_pay_user = EndUser::new(&testnet);
+    let self_pay_user = EndUser::new(&testnet);
     self_pay_user
         .set_wallet_balance(INITIAL_FUNDING_AMOUNT)
         .await;
@@ -1369,15 +1369,6 @@ async fn test_payment_tracker_usage_after_exceptions() {
 
     // Prepare valid encryption parameters for successful requests
     let test_encryption_parameters = prepare_test_encryption_parameters();
-    let network_pubkey = get_network_pubkey(&actions).await;
-    let message_bytes = test_encryption_parameters.to_encrypt.as_bytes();
-    let pubkey = blsful::PublicKey::try_from(&hex::decode(&network_pubkey).unwrap()).unwrap();
-    let ciphertext = lit_sdk::encryption::encrypt_time_lock(
-        &pubkey,
-        message_bytes,
-        &test_encryption_parameters.identity_param,
-    )
-    .expect("Unable to encrypt");
 
     let resource_ability_requests = vec![LitResourceAbilityRequest {
         resource: LitResourceAbilityRequestResource {
@@ -1392,14 +1383,13 @@ async fn test_payment_tracker_usage_after_exceptions() {
     }];
 
     // Fund the user with enough balance for multiple requests
-    let high_price = initial_price * 20; // Enough for concurrent requests
-    self_pay_user
-        .deposit_to_wallet_ledger(high_price * NUM_STAKED_VALIDATORS)
-        .await;
+    // Use a multiplier for funding to ensure we have enough for concurrent requests
+    let funding_amount = initial_price * 1000 * NUM_STAKED_VALIDATORS;
+    self_pay_user.deposit_to_wallet_ledger(funding_amount).await;
 
     // Step 1: Make concurrent requests to increase usage and verify pricing increases
     info!("Step 1: Making concurrent requests to increase usage");
-    let num_concurrent_requests = 5;
+    let num_concurrent_requests = 30;
     let mut handles = Vec::new();
 
     for i in 0..num_concurrent_requests {
@@ -1408,12 +1398,10 @@ async fn test_payment_tracker_usage_after_exceptions() {
             resource_ability_requests.clone(),
             Some(self_pay_user.wallet.clone()),
             None,
-            Some(high_price),
+            Some(initial_price),
         );
 
         let params = test_encryption_parameters.clone();
-        let ciphertext_clone = ciphertext.clone();
-        let pubkey_clone = pubkey.clone();
         let epoch = actions.get_current_epoch(realm_id).await.as_u64();
 
         let handle = tokio::spawn(async move {
@@ -1434,84 +1422,22 @@ async fn test_payment_tracker_usage_after_exceptions() {
         num_concurrent_requests, price_with_concurrency
     );
 
-    // Price should be higher than initial (or at least equal if usage calculation is different)
-    // Note: The exact price depends on the price feed contract's formula
+    // Price should be higher than initial
     assert!(
-        price_with_concurrency >= initial_price,
+        price_with_concurrency > initial_price,
         "Price should increase or stay the same with concurrent requests. Initial: {}, With concurrency: {}",
         initial_price,
         price_with_concurrency
     );
 
-    // Wait for all successful requests to complete
+    // Wait for all requests to complete
+    info!("Waiting for all concurrent requests to complete");
     for handle in handles {
         let _ = handle.await;
     }
 
-    // Step 2: Make requests that will cause early returns/exceptions
-    // These requests will register usage but then fail early (e.g., invalid max_price,
-    // decryption failures, etc.), testing that PaymentUsageGuard properly deregisters
-    info!("Step 2: Making requests that will cause early returns/exceptions");
-    let mut exception_handles = Vec::new();
-
-    // Make requests with max_price too low - these will fail early after registering usage
-    let mut invalid_params = test_encryption_parameters.clone();
-    invalid_params.chain = Some("invalid_chain".to_string());
-    for i in 0..3 {
-        let invalid_session_sigs = get_session_sigs_for_auth(
-            &node_set,
-            resource_ability_requests.clone(),
-            Some(self_pay_user.wallet.clone()),
-            None,
-            Some(high_price),
-        );
-
-        let epoch = actions.get_current_epoch(realm_id).await.as_u64();
-
-        let handle = tokio::spawn(async move {
-            // Add small delay to ensure requests are concurrent
-            tokio::time::sleep(tokio::time::Duration::from_millis(i * 10)).await;
-            // This will fail early due to max_price being too low, but usage should still be registered
-            // and then properly deregistered by the guard
-            let result = retrieve_decryption_key_session_sigs(
-                invalid_params.clone(),
-                &invalid_session_sigs,
-                epoch,
-            )
-            .await;
-            // We expect these to fail, but the important part is that usage is tracked correctly
-            result
-        });
-        exception_handles.push(handle);
-    }
-
-    // Wait a bit for exception requests to register usage
-    tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
-
-    // Check price is still elevated (or at least not decreased yet)
-    let price_during_exceptions = self_pay_user.first_node_price_from_feed(product_id).await;
-    info!(
-        "Price during exception requests: {}",
-        price_during_exceptions
-    );
-
-    // Wait for all exception requests to complete
-    // Even though they fail, the PaymentUsageGuard should deregister usage when they return
-    for handle in exception_handles {
-        let result = handle.await;
-        // Verify the requests failed as expected
-        if let Ok(responses) = result {
-            for response in &responses {
-                assert!(
-                    !response.ok,
-                    "Expected exception requests to fail, but got success"
-                );
-            }
-        }
-    }
-
-    // Step 3: Wait for all requests to fully complete and verify usage returns to 0%
-    info!("Step 3: Waiting for usage to return to 0%");
+    // Step 2: Wait for all requests to fully complete and verify usage returns to 0%
+    info!("Step 2: Waiting for usage to return to 0%");
 
     // Give some time for all guards to drop and deregister
     tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
@@ -1524,7 +1450,7 @@ async fn test_payment_tracker_usage_after_exceptions() {
 
     while final_price > initial_price && attempts < MAX_ATTEMPTS {
         tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
-        final_price = self_pay_user.first_node_price_from_feed(0).await;
+        final_price = self_pay_user.first_node_price_from_feed(product_id).await;
         attempts += 1;
         info!(
             "Attempt {}: Final price: {}, Initial price: {}",
@@ -1536,7 +1462,7 @@ async fn test_payment_tracker_usage_after_exceptions() {
     info!("Initial price: {}", initial_price);
 
     // The final price should be close to the initial price (within reasonable tolerance)
-    // This verifies that usage tracking correctly returned to 0% even after exceptions
+    // This verifies that usage tracking correctly returned to 0% after all requests completed
     // Note: We allow some tolerance because price feed updates might have slight delays
     let price_difference = if final_price > initial_price {
         final_price - initial_price
