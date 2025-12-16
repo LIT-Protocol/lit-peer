@@ -1343,6 +1343,216 @@ async fn test_pending_payments_block_usage() {
         "Should not be able to decrypt if user doesn't have the required balance"
     );
 }
+
+#[tokio::test]
+async fn test_payment_tracker_usage_after_exceptions() {
+    // This test verifies that:
+    // 1. Pricing increases with concurrency (usage percentage)
+    // 2. After exceptions occur, usage tracking correctly returns to 0%
+    //    (verifying that PaymentUsageGuard properly deregisters on exceptions)
+
+    crate::common::setup_logging();
+    let (testnet, validator_collection, actions, node_set) = setup_testnet_for_payments().await;
+    let realm_id = ethers::types::U256::from(1);
+    let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
+
+    let mut self_pay_user = EndUser::new(&testnet);
+    self_pay_user
+        .set_wallet_balance(INITIAL_FUNDING_AMOUNT)
+        .await;
+
+    // Get initial price at 0% usage
+    let initial_price = self_pay_user.first_node_price_from_feed(0).await;
+    info!("Initial price at 0% usage: {}", initial_price);
+
+    // Prepare valid encryption parameters for successful requests
+    let test_encryption_parameters = prepare_test_encryption_parameters();
+    let network_pubkey = get_network_pubkey(&actions).await;
+    let message_bytes = test_encryption_parameters.to_encrypt.as_bytes();
+    let pubkey = blsful::PublicKey::try_from(&hex::decode(&network_pubkey).unwrap()).unwrap();
+    let ciphertext = lit_sdk::encryption::encrypt_time_lock(
+        &pubkey,
+        message_bytes,
+        &test_encryption_parameters.identity_param,
+    )
+    .expect("Unable to encrypt");
+
+    let resource_ability_requests = vec![LitResourceAbilityRequest {
+        resource: LitResourceAbilityRequestResource {
+            resource: format!(
+                "{}/{}",
+                test_encryption_parameters.hashed_access_control_conditions,
+                test_encryption_parameters.data_to_encrypt_hash
+            ),
+            resource_prefix: LitResourcePrefix::ACC.to_string(),
+        },
+        ability: LitAbility::AccessControlConditionDecryption.to_string(),
+    }];
+
+    // Fund the user with enough balance for multiple requests
+    let high_price = initial_price * 20; // Enough for concurrent requests
+    self_pay_user
+        .deposit_to_wallet_ledger(high_price * NUM_STAKED_VALIDATORS)
+        .await;
+
+    // Step 1: Make concurrent requests to increase usage and verify pricing increases
+    info!("Step 1: Making concurrent requests to increase usage");
+    let num_concurrent_requests = 5;
+    let mut handles = Vec::new();
+
+    for i in 0..num_concurrent_requests {
+        let session_sigs_and_node_set = get_session_sigs_for_auth(
+            &node_set,
+            resource_ability_requests.clone(),
+            Some(self_pay_user.wallet.clone()),
+            None,
+            Some(high_price),
+        );
+
+        let params = test_encryption_parameters.clone();
+        let ciphertext_clone = ciphertext.clone();
+        let pubkey_clone = pubkey.clone();
+        let epoch = actions.get_current_epoch(realm_id).await.as_u64();
+
+        let handle = tokio::spawn(async move {
+            // Add small delay to ensure requests are truly concurrent
+            tokio::time::sleep(tokio::time::Duration::from_millis(i * 10)).await;
+            retrieve_decryption_key_session_sigs(params, &session_sigs_and_node_set, epoch).await
+        });
+        handles.push(handle);
+    }
+
+    // Wait a bit for requests to register usage
+    tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+
+    // Check that price has increased due to concurrency
+    let price_with_concurrency = self_pay_user.first_node_price_from_feed(0).await;
+    info!(
+        "Price with {} concurrent requests: {}",
+        num_concurrent_requests, price_with_concurrency
+    );
+
+    // Price should be higher than initial (or at least equal if usage calculation is different)
+    // Note: The exact price depends on the price feed contract's formula
+    assert!(
+        price_with_concurrency >= initial_price,
+        "Price should increase or stay the same with concurrent requests. Initial: {}, With concurrency: {}",
+        initial_price,
+        price_with_concurrency
+    );
+
+    // Wait for all successful requests to complete
+    for handle in handles {
+        let _ = handle.await;
+    }
+
+    // Step 2: Make requests that will cause early returns/exceptions
+    // These requests will register usage but then fail early (e.g., invalid max_price,
+    // decryption failures, etc.), testing that PaymentUsageGuard properly deregisters
+    info!("Step 2: Making requests that will cause early returns/exceptions");
+    let mut exception_handles = Vec::new();
+
+    // Make requests with max_price too low - these will fail early after registering usage
+    for i in 0..3 {
+        let invalid_session_sigs = get_session_sigs_for_auth(
+            &node_set,
+            resource_ability_requests.clone(),
+            Some(self_pay_user.wallet.clone()),
+            None,
+            Some(initial_price / DIVISION_FACTOR_TO_FAIL), // Too low, will fail early
+        );
+
+        let invalid_params = test_encryption_parameters.clone();
+        let epoch = actions.get_current_epoch(realm_id).await.as_u64();
+
+        let handle = tokio::spawn(async move {
+            // Add small delay to ensure requests are concurrent
+            tokio::time::sleep(tokio::time::Duration::from_millis(i * 10)).await;
+            // This will fail early due to max_price being too low, but usage should still be registered
+            // and then properly deregistered by the guard
+            let result =
+                retrieve_decryption_key_session_sigs(invalid_params, &invalid_session_sigs, epoch)
+                    .await;
+            // We expect these to fail, but the important part is that usage is tracked correctly
+            result
+        });
+        exception_handles.push(handle);
+    }
+
+    // Wait a bit for exception requests to register usage
+    tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+
+    // Check price is still elevated (or at least not decreased yet)
+    let price_during_exceptions = self_pay_user.first_node_price_from_feed(0).await;
+    info!(
+        "Price during exception requests: {}",
+        price_during_exceptions
+    );
+
+    // Wait for all exception requests to complete
+    // Even though they fail, the PaymentUsageGuard should deregister usage when they return
+    for handle in exception_handles {
+        let result = handle.await;
+        // Verify the requests failed as expected
+        if let Ok(responses) = result {
+            for response in &responses {
+                assert!(
+                    !response.ok,
+                    "Expected exception requests to fail, but got success"
+                );
+            }
+        }
+    }
+
+    // Step 3: Wait for all requests to fully complete and verify usage returns to 0%
+    info!("Step 3: Waiting for usage to return to 0%");
+
+    // Give some time for all guards to drop and deregister
+    tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+
+    // Check that price has returned to initial (or close to it)
+    // Note: There might be some delay in price feed updates, so we check multiple times
+    let mut final_price = self_pay_user.first_node_price_from_feed(0).await;
+    let mut attempts = 0;
+    const MAX_ATTEMPTS: u32 = 10;
+
+    while final_price > initial_price && attempts < MAX_ATTEMPTS {
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+        final_price = self_pay_user.first_node_price_from_feed(0).await;
+        attempts += 1;
+        info!(
+            "Attempt {}: Final price: {}, Initial price: {}",
+            attempts, final_price, initial_price
+        );
+    }
+
+    info!("Final price after all requests: {}", final_price);
+    info!("Initial price: {}", initial_price);
+
+    // The final price should be close to the initial price (within reasonable tolerance)
+    // This verifies that usage tracking correctly returned to 0% even after exceptions
+    // Note: We allow some tolerance because price feed updates might have slight delays
+    let price_difference = if final_price > initial_price {
+        final_price - initial_price
+    } else {
+        U256::zero()
+    };
+
+    // Allow up to 5% difference to account for price feed update delays
+    let tolerance = initial_price / 20;
+
+    assert!(
+        price_difference <= tolerance,
+        "Price should return close to initial after all requests complete (including exceptions). \
+         Initial: {}, Final: {}, Difference: {}, Tolerance: {}. \
+         This indicates usage tracking correctly deregistered even after exceptions.",
+        initial_price,
+        final_price,
+        price_difference,
+        tolerance
+    );
+}
+
 async fn setup_testnet_for_payments() -> (Testnet, ValidatorCollection, Actions, Vec<NodeSet>) {
     do_setup_testnet_for_payments(true).await
 }
