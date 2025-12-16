@@ -1,5 +1,4 @@
-//!
-//!
+//! OsQuery metrics library for emitting system metrics as OpenTelemetry gauges.
 
 #![deny(unsafe_code)]
 #![warn(
