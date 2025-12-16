@@ -525,8 +525,7 @@ pub async fn get_existing_and_new_key_sets(
     let mut existing_key_sets = Vec::new();
     for keyset in &keysets {
         let curve_type = CurveType::K256; // should inspect the keyset and determine the curve type
-        let key_set_identifier = Some(keyset.identifier.clone());
-        let curve_state = CurveState::new(peer_state.clone(), curve_type, key_set_identifier);
+        let curve_state = CurveState::new(peer_state.clone(), curve_type, &keyset.identifier);
         let root_keys = curve_state.root_keys();
 
         // we assume that if some keys are present, then all keys are present.

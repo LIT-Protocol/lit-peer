@@ -11,6 +11,7 @@ pub mod litactions {
     use base64_light::base64_encode_bytes;
     use lit_core::utils::binary::bytes_to_hex;
     use lit_node::models::RequestConditions;
+    use lit_node::tss::util::DEFAULT_KEY_SET_NAME;
     use lit_node_core::{
         ControlConditionItem, EVMContractCondition, JsonAccessControlCondition, JsonAuthSig,
         JsonReturnValueTest, JsonReturnValueTestV2, LitAbility, LitActionPriceComponent,
@@ -689,7 +690,7 @@ pub mod litactions {
             .as_u64();
 
         let mgb_pkp = end_user
-            .mint_grant_and_burn_next_pkp(ipfs_cid)
+            .mint_grant_and_burn_next_pkp(ipfs_cid, DEFAULT_KEY_SET_NAME)
             .await
             .unwrap();
 
@@ -883,7 +884,10 @@ pub mod litactions {
             let root_keys;
             let curve_type = signing_scheme.curve_type();
             loop {
-                if let Some(rk) = actions.get_root_keys(curve_type as u8, None).await {
+                if let Some(rk) = actions
+                    .get_root_keys(curve_type as u8, DEFAULT_KEY_SET_NAME)
+                    .await
+                {
                     root_keys = rk;
                     break;
                 }

@@ -105,6 +105,12 @@ impl NetworkIntegrityChecker {
         let latest_bls_pubkey = get_network_pubkey(validator_collection.actions()).await;
         assert_eq!(self.initial_bls_pubkey, latest_bls_pubkey);
 
+        let key_set_id = validator_collection
+            .actions()
+            .get_key_set_id_from_pubkey(&latest_bls_pubkey)
+            .await
+            .unwrap();
+
         // Decryption check.
         info!("Running decryption checks");
         let node_set = &validator_collection.random_threshold_nodeset().await;
@@ -115,7 +121,7 @@ impl NetworkIntegrityChecker {
             .await
             .as_u64();
         let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
-        test_encryption_decryption_auth_sig(&node_set, epoch).await;
+        test_encryption_decryption_auth_sig(&node_set, epoch, &key_set_id).await;
 
         // Signing check.
         info!("Running signing checks");

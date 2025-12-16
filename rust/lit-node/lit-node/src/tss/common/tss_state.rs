@@ -191,17 +191,13 @@ impl TssState {
         peers: &SimplePeerCollection,
         curve_type: CurveType,
         epoch: Option<u64>,
-        key_set_identifier: Option<String>,
+        key_set_id: &str,
     ) -> Result<usize> {
         let self_peer = peers.peer_at_address(&self.addr)?;
 
         // Shouldn't matter which key set is used, all the keys on this
         // node should have the same threshold
-        let curve_state = CurveState::new(
-            self.peer_state.clone(),
-            curve_type,
-            key_set_identifier.clone(),
-        );
+        let curve_state = CurveState::new(self.peer_state.clone(), curve_type, key_set_id);
         let root_keys = curve_state.root_keys()?;
 
         if root_keys.is_empty() {
@@ -291,12 +287,23 @@ impl TssState {
 
         let curve_type = CurveType::K256;
         let epoch = self.get_keyshare_epoch().await;
+        let cdm = &self.chain_data_config_manager;
+        let keysets = DataVersionReader::read_field_unchecked(&cdm.key_sets, |key_sets| {
+            key_sets.values().cloned().collect::<Vec<_>>()
+        });
+        let key_set_id = match keysets.first() {
+            Some(keyset) => keyset.identifier.clone(),
+            None => {
+                warn!("No default keyset found. Returning 0 threshold.");
+                return 0;
+            }
+        };
         let rt = match self
             .get_threshold_using_current_epoch_realm_peers_for_curve(
                 &peers,
                 curve_type,
                 Some(epoch),
-                None,
+                &key_set_id,
             )
             .await
         {

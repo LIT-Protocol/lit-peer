@@ -407,7 +407,7 @@ impl Signable for DamFastState {
         public_key: Vec<u8>,
         tweak_preimage: Option<Vec<u8>>,
         request_id: Vec<u8>,
-        key_set_id: Option<&str>,
+        key_set_id: &str,
         epoch: Option<u64>,
         nodeset: &[NodeSet],
     ) -> Result<SignableOutput> {
@@ -415,7 +415,7 @@ impl Signable for DamFastState {
         let curve_state = CurveState::new(
             self.state.peer_state.clone(),
             self.signing_scheme.curve_type(),
-            key_set_id.map(String::from),
+            key_set_id,
         );
         let root_pubkeys = curve_state.root_keys()?;
 

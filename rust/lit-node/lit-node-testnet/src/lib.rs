@@ -222,10 +222,10 @@ impl TestSetupBuilder {
         }
 
         if self.include_datil_testnet {
-            let keyset_id = "datil-keyset".to_string();
+            let keyset_id = "datil-keyset";
             let datil_root_keys = testnet
                 .actions()
-                .get_all_root_keys(Some(keyset_id))
+                .get_all_root_keys(keyset_id)
                 .await
                 .unwrap();
 

@@ -13,7 +13,7 @@ use lit_core::utils::binary::bytes_to_hex;
 use std::{sync::Arc, time::Duration};
 use tracing::{error, info, trace};
 
-use super::actions::Actions;
+use super::Actions;
 
 impl Actions {
     pub async fn fund_wallet(&self, wallet: &Wallet<SigningKey>, amount: &str) {

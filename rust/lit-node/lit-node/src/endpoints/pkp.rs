@@ -69,15 +69,12 @@ pub(crate) async fn pkp_sign(
     let resource_ability = resource.signing_ability();
 
     // Validate auth sig item
-    let key_set_id = json_pkp_signing_request
-        .key_set_identifier
-        .clone()
-        .map(|id| id.to_string());
-    let bls_root_pubkey = match get_bls_root_pubkey(tss_state, key_set_id.as_deref()) {
+    let key_set_id = json_pkp_signing_request.key_set_id.clone();
+    let bls_root_pubkey = match get_bls_root_pubkey(tss_state, &key_set_id) {
         Ok(bls_root_pubkey) => bls_root_pubkey,
         Err(e) => {
             return client_session
-                .json_encrypt_err_custom_response("No bls root key exists", e.handle());
+                .json_encrypt_err_custom_response("No bls root key exists to validate the auth sig.", e.handle());
         }
     };
 
@@ -160,7 +157,7 @@ pub(crate) async fn pkp_sign(
                 &peers,
                 curve_type,
                 Some(json_pkp_signing_request.epoch),
-                key_set_id.clone(),
+                &key_set_id,
             )
             .await
         {
@@ -326,6 +323,7 @@ pub(crate) async fn pkp_sign(
         &bls_root_pubkey,
         &json_pkp_signing_request.node_set,
         json_pkp_signing_request.signing_scheme,
+        &json_pkp_signing_request.key_set_id,
     )
     .await
     .map_err(|e| unexpected_err(e, Some("Error signing with the PKP".to_string())));

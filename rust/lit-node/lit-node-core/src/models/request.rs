@@ -47,7 +47,7 @@ pub struct EncryptionSignRequest {
     pub auth_sig: AuthSigItem,
     #[serde(default = "default_epoch")]
     pub epoch: u64,
-    pub key_set_identifier: Option<KeySetIdentifier>,
+    pub key_set_id: String,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -66,6 +66,7 @@ pub struct JsonSignSessionKeyRequestV2 {
     pub epoch: u64,
     pub node_set: Vec<NodeSet>,
     pub max_price: U256,
+    pub pkp_key_set_id: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -79,7 +80,7 @@ pub struct JsonPKPSigningRequest {
     #[serde(default = "default_epoch")]
     pub epoch: u64,
     pub node_set: Vec<NodeSet>,
-    pub key_set_identifier: Option<KeySetIdentifier>,
+    pub key_set_id: String,
 }
 
 #[derive(Clone, Default, Serialize, Deserialize)]

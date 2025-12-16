@@ -12,6 +12,7 @@ use crate::common::web_user_tests::{
 use ethers::signers::Signer;
 use ethers::types::{I256, U256};
 use lit_node::payment::payed_endpoint::PayedEndpoint;
+use lit_node::tss::util::DEFAULT_KEY_SET_NAME;
 use lit_node::utils::encoding;
 use lit_node::utils::encoding::bytes_to_hex;
 use lit_node_core::{
@@ -91,6 +92,7 @@ async fn test_all_payment_methods_for_user() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
     assert!(
@@ -120,6 +122,7 @@ async fn test_all_payment_methods_for_user() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -165,6 +168,7 @@ async fn test_all_payment_methods_for_user() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -221,6 +225,7 @@ async fn test_all_payment_methods_for_user() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -469,6 +474,7 @@ async fn test_all_payment_methods_for_user() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
     assert!(
@@ -505,6 +511,7 @@ async fn test_all_payment_methods_for_user() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -535,6 +542,7 @@ async fn test_all_payment_methods_for_user() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -564,6 +572,7 @@ async fn test_all_payment_methods_for_user() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -634,6 +643,7 @@ async fn test_all_payment_methods_for_user() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
     assert!(
@@ -681,6 +691,7 @@ async fn test_all_payment_methods_for_user() {
             test_encryption_parameters.clone(),
             &session_sigs_and_node_set,
             actions.get_current_epoch(realm_id).await.as_u64(),
+            DEFAULT_KEY_SET_NAME,
         )
         .await;
 
@@ -737,6 +748,7 @@ async fn test_all_payment_methods_for_user() {
             test_encryption_parameters.clone(),
             &session_sigs_and_node_set,
             actions.get_current_epoch(realm_id).await.as_u64(),
+            DEFAULT_KEY_SET_NAME,
         )
         .await;
 
@@ -864,6 +876,7 @@ async fn test_all_payment_methods_for_pkp() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -941,6 +954,7 @@ async fn test_all_payment_methods_for_pkp() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(U256::from(1)).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -1019,6 +1033,7 @@ async fn test_all_payment_methods_for_pkp() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -1105,6 +1120,7 @@ async fn test_all_payment_methods_for_pkp() {
             test_encryption_parameters.clone(),
             &session_sigs_and_node_set,
             actions.get_current_epoch(realm_id).await.as_u64(),
+            DEFAULT_KEY_SET_NAME,
         )
         .await;
 
@@ -1159,6 +1175,7 @@ async fn test_all_payment_methods_for_pkp() {
             test_encryption_parameters.clone(),
             &session_sigs_and_node_set,
             actions.get_current_epoch(realm_id).await.as_u64(),
+            DEFAULT_KEY_SET_NAME,
         )
         .await;
 
@@ -1262,6 +1279,7 @@ async fn test_pending_payments_block_usage() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -1300,6 +1318,7 @@ async fn test_pending_payments_block_usage() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -1324,6 +1343,7 @@ async fn test_pending_payments_block_usage() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 

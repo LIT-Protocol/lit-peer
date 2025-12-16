@@ -25,8 +25,8 @@ use crate::utils::attestation::create_attestation;
 use crate::utils::encoding;
 use crate::utils::rocket::guards::RequestHeaders;
 use crate::utils::web::{
-    check_condition_count, get_auth_context, get_bls_root_pubkey, get_ipfs_file,
-    hash_access_control_conditions,
+    check_condition_count, get_auth_context, get_bls_root_pubkey, get_default_bls_root_pubkey,
+    get_ipfs_file, hash_access_control_conditions,
 };
 use crate::utils::web::{get_auth_context_from_session_sigs, get_signed_message};
 use crate::version::DataVersionReader;
@@ -149,11 +149,8 @@ pub(crate) async fn encryption_sign(
 
     let before = std::time::Instant::now();
     // Validate auth sig item
-    let key_set_id_str = encryption_sign_request
-        .key_set_identifier
-        .as_ref()
-        .map(|id| id.to_string());
-    let bls_root_pubkey = match get_bls_root_pubkey(session, key_set_id_str.as_deref()) {
+    let key_set_id = encryption_sign_request.key_set_id.clone();
+    let bls_root_pubkey = match get_bls_root_pubkey(session, &key_set_id) {
         Ok(bls_root_pubkey) => bls_root_pubkey,
         Err(e) => {
             return client_session.json_encrypt_err_custom_response("no bls root key", e.handle());
@@ -321,7 +318,7 @@ pub(crate) async fn encryption_sign(
     let before = std::time::Instant::now();
     // Sign the identity parameter using the blsful secret key share.
     let (signature_share, share_peer_id) = match cipher_state
-        .sign(&identity_parameter, key_set_id_str.as_deref(), epoch)
+        .sign(&identity_parameter, &key_set_id, epoch)
         .await
     {
         Ok(signature_share) => signature_share,
@@ -366,23 +363,7 @@ pub async fn handshake(
     // Validate that the challenge exists in the request.
     let challenge = match &handshake_request.challenge {
         Some(challenge) => challenge,
-        None => {
-            return status::Custom(
-                Status::BadRequest,
-                json!(GenericResponse::err_and_data_json(
-                    "".to_string(),
-                    SDKHandshakeResponseV1 {
-                        client_sdk_version: version.to_string(),
-                        attestation: None,
-                        latest_blockhash: "".to_string(),
-                        node_version: crate::version::get_version().to_string(),
-                        node_identity_key: "".to_string(),
-                        git_commit_hash: "".to_string(),
-                        key_sets: Default::default(),
-                    }
-                )),
-            );
-        }
+        None => return handshake_bad_request_response_v1(&version.to_string()),
     };
 
     let cfg = cfg.load_full();
@@ -408,21 +389,7 @@ pub async fn handshake(
         Ok(attestation) => Some(attestation),
         Err(e) => {
             error!("unable to convert the attestation to a json object");
-            return status::Custom(
-                Status::BadRequest,
-                json!(GenericResponse::err_and_data_json(
-                    "".to_string(),
-                    SDKHandshakeResponseV1 {
-                        client_sdk_version: version.to_string(),
-                        attestation: None,
-                        latest_blockhash: "".to_string(),
-                        node_version: crate::version::get_version().to_string(),
-                        node_identity_key: "".to_string(),
-                        git_commit_hash: "".to_string(),
-                        key_sets: Default::default(),
-                    }
-                )),
-            );
+            return handshake_bad_request_response_v1(&version.to_string());
         }
     };
 
@@ -466,6 +433,47 @@ pub async fn handshake(
     )
 }
 
+fn handshake_bad_request_response_v0(version: &str) -> status::Custom<Value> {
+    status::Custom(
+        Status::BadRequest,
+        json!(GenericResponse::err_and_data_json(
+            "".to_string(),
+            SDKHandshakeResponseV0 {
+                server_public_key: "ERR".to_string(),
+                subnet_public_key: "ERR".to_string(),
+                network_public_key: "ERR".to_string(),
+                network_public_key_set: "ERR".to_string(),
+                client_sdk_version: version.to_string(),
+                hd_root_pubkeys: vec![],
+                attestation: None,
+                latest_blockhash: "".to_string(),
+                node_version: crate::version::get_version().to_string(),
+                node_identity_key: "".to_string(),
+                epoch: 0,
+                git_commit_hash: crate::git_info::GIT_COMMIT_HASH.to_string(),
+            }
+        )),
+    )
+}
+
+fn handshake_bad_request_response_v1(version: &str) -> status::Custom<Value> {
+    status::Custom(
+        Status::BadRequest,
+        json!(GenericResponse::err_and_data_json(
+            "".to_string(),
+            SDKHandshakeResponseV1 {
+                client_sdk_version: version.to_string(),
+                attestation: None,
+                latest_blockhash: "".to_string(),
+                node_version: crate::version::get_version().to_string(),
+                node_identity_key: "".to_string(),
+                git_commit_hash: "".to_string(),
+                key_sets: Default::default(),
+            }
+        )),
+    )
+}
+
 /*
 curl --header "Content-Type: application/json" \
   --request POST \
@@ -494,37 +502,25 @@ pub async fn handshake_v0(
         json_handshake_request, client_state,
     );
 
+    let cdm = &session.chain_data_config_manager;
+    let keysets = DataVersionReader::read_field_unchecked(&cdm.key_sets, |key_sets| {
+        key_sets.values().cloned().collect::<Vec<_>>()
+    });
+    let default_keyset = match keysets.first() {
+        Some(keyset) => keyset.identifier.clone(),
+        None => return handshake_bad_request_response_v0(&version.to_string()),
+    };
+
     // Validate that the challenge exists in the request.
     let challenge = match &json_handshake_request.challenge {
         Some(challenge) => challenge,
-        None => {
-            return status::Custom(
-                Status::BadRequest,
-                json!(GenericResponse::err_and_data_json(
-                    "".to_string(),
-                    SDKHandshakeResponseV0 {
-                        server_public_key: "ERR".to_string(),
-                        subnet_public_key: "ERR".to_string(),
-                        network_public_key: "ERR".to_string(),
-                        network_public_key_set: "ERR".to_string(),
-                        client_sdk_version: version.to_string(),
-                        hd_root_pubkeys: vec![],
-                        attestation: None,
-                        latest_blockhash: "".to_string(),
-                        node_version: crate::version::get_version().to_string(),
-                        node_identity_key: "".to_string(),
-                        epoch: 0,
-                        git_commit_hash: crate::git_info::GIT_COMMIT_HASH.to_string(),
-                    }
-                )),
-            );
-        }
+        None => return handshake_bad_request_response_v0(&version.to_string()),
     };
 
     let cfg = cfg.load_full();
 
     let before = std::time::Instant::now();
-    let curve_state = CurveState::new(session.peer_state.clone(), CurveType::K256, None);
+    let curve_state = CurveState::new(session.peer_state.clone(), CurveType::K256, &default_keyset);
     let ecdsa_root_keys = curve_state.root_keys().unwrap_or_else(|_| {
         warn!("Failed to get root keys");
         vec![]
@@ -532,8 +528,8 @@ pub async fn handshake_v0(
     timing.insert("get ecdsa root keys".to_string(), before.elapsed());
 
     let before = std::time::Instant::now();
-    let curve_state = CurveState::new(session.peer_state.clone(), CurveType::BLS, None);
-    let bls_root_key = get_bls_root_pubkey(session, None).unwrap_or_else(|_| {
+    let curve_state = CurveState::new(session.peer_state.clone(), CurveType::BLS, &default_keyset);
+    let bls_root_key = get_default_bls_root_pubkey(session).unwrap_or_else(|_| {
         warn!("Failed to get root keys");
         String::new()
     });
@@ -649,7 +645,7 @@ pub(crate) async fn get_job_status(
     cfg: &State<ReloadableLitConfig>,
     client_state: &Arc<ClientState>,
 ) -> status::Custom<Value> {
-    let bls_root_pubkey = match get_bls_root_pubkey(tss_state, None) {
+    let bls_root_pubkey = match get_default_bls_root_pubkey(tss_state) {
         Ok(key) => key,
         Err(e) => {
             return client_session
@@ -839,7 +835,7 @@ pub(crate) async fn execute_function(
 
     let before = std::time::Instant::now();
     // Validate auth sig item
-    let bls_root_pubkey = match get_bls_root_pubkey(tss_state, None) {
+    let bls_root_pubkey = match get_default_bls_root_pubkey(tss_state) {
         Ok(bls_root_pubkey) => bls_root_pubkey,
         Err(e) => {
             return client_session.json_encrypt_err_custom_response("no bls root key", e.handle());
@@ -1456,7 +1452,7 @@ pub(crate) async fn sign_session_key(
     let before = std::time::Instant::now();
     // convert the auth methods into an auth context by resolving the oauth ids
     // from the oauth endpoints
-    let bls_root_pubkey = match get_bls_root_pubkey(tss_state, None) {
+    let bls_root_pubkey = match get_default_bls_root_pubkey(tss_state) {
         Ok(bls_root_pubkey) => bls_root_pubkey,
         Err(e) => {
             return client_session.json_encrypt_err_custom_response("no bls root key", e.handle());
@@ -2131,11 +2127,11 @@ pub(crate) async fn sign_session_key(
     );
 
     let before = std::time::Instant::now();
-    let bls_root_pubkey = match get_bls_root_pubkey(tss_state, None) {
+    let bls_root_pubkey = match get_default_bls_root_pubkey(tss_state) {
         Ok(bls_root_pubkey) => bls_root_pubkey,
         Err(e) => {
             return client_session
-                .json_encrypt_err_custom_response("No bls root key exists", e.handle());
+                .json_encrypt_err_custom_response("No default bls root key exists to sign the session key.", e.handle());
         }
     };
     timing.insert("get bls root pubkey".to_string(), before.elapsed());
@@ -2150,6 +2146,7 @@ pub(crate) async fn sign_session_key(
         &cfg,
         &[2],
         &bls_root_pubkey,
+        &json_sign_session_key_request.pkp_key_set_id.unwrap_or_default(),
     )
     .await
     {
@@ -2193,15 +2190,31 @@ pub(crate) async fn sign_session_key(
         bls_root_pubkey, to_sign
     );
     let before = std::time::Instant::now();
-    let (signature_share, share_peer_id) = match cipher_state.sign(&to_sign, None, epoch).await {
-        Ok(signature_share) => signature_share,
-        Err(e) => {
+    let cdm = &tss_state.chain_data_config_manager;
+    let keysets = DataVersionReader::read_field_unchecked(&cdm.key_sets, |key_sets| {
+        key_sets.values().cloned().collect::<Vec<_>>()
+    });
+    let keyset_id = match keysets.first() {
+        Some(keyset) => keyset.identifier.clone(),
+        None => {
             return client_session.json_encrypt_err_custom_response(
-                "unable to create signature share",
-                e.add_detail("Error signing with BLS key").handle(),
+                "no keyset id found",
+                validation_err_code("No keyset id found", EC::NodeNoKeysetIdFound, None)
+                    .add_msg_to_details()
+                    .handle(),
             );
         }
     };
+    let (signature_share, share_peer_id) =
+        match cipher_state.sign(&to_sign, &keyset_id, epoch).await {
+            Ok(signature_share) => signature_share,
+            Err(e) => {
+                return client_session.json_encrypt_err_custom_response(
+                    "unable to create signature share",
+                    e.add_detail("Error signing with BLS key").handle(),
+                );
+            }
+        };
     timing.insert("signing".to_string(), before.elapsed());
     timing.insert("total".to_string(), request_start.elapsed());
     debug!("POST /web/sign_session_key timing: {:?}", timing);

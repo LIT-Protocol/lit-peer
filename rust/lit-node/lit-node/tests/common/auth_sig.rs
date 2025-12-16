@@ -597,6 +597,7 @@ pub async fn get_auth_sig_for_session_sig_from_nodes(
         epoch,
         node_set: nodes,
         max_price: U256::MAX,
+        pkp_key_set_id: None,
     };
 
     let mut secret_key = [0u8; 32];

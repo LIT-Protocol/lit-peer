@@ -11,7 +11,7 @@ pub trait Signable: Debug + Send + Sync {
         public_key: Vec<u8>,
         tweak_preimage: Option<Vec<u8>>,
         request_id: Vec<u8>,
-        key_set_id: Option<&str>,
+        key_set_id: &str,
         epoch: Option<u64>,
         nodeset: &[NodeSet],
     ) -> Result<SignableOutput>;

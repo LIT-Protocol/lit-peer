@@ -9,6 +9,7 @@ use crate::common::web_user_tests::{
 };
 use ethers::prelude::U256;
 use lit_node::models::RequestConditions;
+use lit_node::tss::util::DEFAULT_KEY_SET_NAME;
 use lit_node::utils::web::hash_access_control_conditions;
 use lit_node_core::{
     AccessControlConditionResource, LitAbility, LitResource, LitResourceAbilityRequest,
@@ -219,7 +220,7 @@ async fn shadow_splicing_sign_encrypt() {
         test_encryption_parameters.clone(),
         &session_sigs_realm_1,
         epoch,
-        None,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -232,7 +233,7 @@ async fn shadow_splicing_sign_encrypt() {
         test_encryption_parameters.clone(),
         &session_sigs_realm_2,
         epoch,
-        None,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
     assert_decrypted(
@@ -351,6 +352,11 @@ async fn signature_from_realm(
     let realm_node_set = get_identity_pubkeys_from_node_set(&realm_nodes).await;
 
     let expected_responses = realm_node_set.len();
+    let key_set_id = validator_collection
+        .actions()
+        .get_key_set_id_from_pubkey(&pubkey)
+        .await
+        .expect("Couldn't get key set id from pubkey");
 
     let endpoint_responses = generate_session_sigs_and_send_signing_requests(
         &realm_node_set,
@@ -359,7 +365,7 @@ async fn signature_from_realm(
         pubkey.clone(),
         epoch,
         scheme,
-        None,
+        &key_set_id,
     )
     .await;
     assert!(endpoint_responses.len() >= expected_responses);

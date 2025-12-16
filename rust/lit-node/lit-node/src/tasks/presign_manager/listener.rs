@@ -626,6 +626,19 @@ impl PresignManager {
         signing_scheme: SigningScheme,
     ) {
         let signing_state = DamFastState::new(self.tss_state.clone(), signing_scheme);
+
+        let cdm = &self.tss_state.chain_data_config_manager;
+        let keysets = DataVersionReader::read_field_unchecked(&cdm.key_sets, |key_sets| {
+            key_sets.values().cloned().collect::<Vec<_>>()
+        });
+        let default_keyset = match keysets.first() {
+            Some(keyset) => keyset.identifier.clone(),
+            None => {
+                warn!("No default keyset found. Returning blank presign.");
+                return;
+            }
+        };
+
         let txn_prefix =
             TxnPrefix::RealTimePresign(presign_hash, signing_scheme.curve_type()).as_str();
         trace!(
@@ -643,7 +656,7 @@ impl PresignManager {
                 &peers,
                 signing_scheme.curve_type(),
                 None,
-                None,
+                &default_keyset,
             )
             .await
         {

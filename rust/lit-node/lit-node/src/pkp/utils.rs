@@ -351,6 +351,7 @@ pub async fn sign(
     bls_root_pubkey: &String,
     node_set: &Vec<NodeSet>,
     signing_scheme: SigningScheme,
+    key_set_id: &str,
 ) -> Result<SignableOutput> {
     trace!("sign() enter - signing_scheme: {}", signing_scheme);
     // auth check
@@ -362,6 +363,7 @@ pub async fn sign(
         cfg,
         required_scopes,
         bls_root_pubkey,
+        key_set_id,
     )
     .await?;
 
@@ -458,7 +460,7 @@ pub async fn sign(
             public_key,
             Some(pubkey_routing_data.tweak_preimage.to_vec()),
             request_id.clone(),
-            Some(&pubkey_routing_data.key_set_identifier),
+            &pubkey_routing_data.key_set_identifier,
             epoch,
             node_set,
         )

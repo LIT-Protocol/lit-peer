@@ -10,6 +10,7 @@ use crate::models::auth::SessionKeySignedMessageV2;
 use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::tss_state::TssState;
 use crate::utils::encoding;
+use crate::version::DataVersionReader;
 use ethers::utils::keccak256;
 use ipfs_hasher::IpfsHasher;
 use iri_string::spec::UriSpec;
@@ -801,12 +802,26 @@ pub fn pubkey_to_token_id(pubkey: &str) -> Result<String> {
     Ok(token_id)
 }
 
-pub fn get_bls_root_pubkey(tss_state: &Arc<TssState>, key_set_id: Option<&str>) -> Result<String> {
-    let curve_state = CurveState::new(
-        tss_state.peer_state.clone(),
-        CurveType::BLS,
-        key_set_id.map(|k| k.to_string()),
-    );
+pub fn get_default_bls_root_pubkey(tss_state: &Arc<TssState>) -> Result<String> {
+    let cdm = &tss_state.chain_data_config_manager;
+    let keysets = DataVersionReader::read_field_unchecked(&cdm.key_sets, |key_sets| {
+        key_sets.values().cloned().collect::<Vec<_>>()
+    });
+    let default_keyset = match keysets.first() {
+        Some(keyset) => keyset.identifier.clone(),
+        None => {
+            return Err(unexpected_err_code(
+                "No default keyset found",
+                EC::NodeBLSRootKeyNotFound,
+                None,
+            ));
+        }
+    };
+    get_bls_root_pubkey(tss_state, &default_keyset)
+}
+
+pub fn get_bls_root_pubkey(tss_state: &Arc<TssState>, key_set_id: &str) -> Result<String> {
+    let curve_state = CurveState::new(tss_state.peer_state.clone(), CurveType::BLS, key_set_id);
     match curve_state.root_keys()?.first() {
         Some(bls_root_key) => Ok(bls_root_key.clone()),
         None => Err(unexpected_err_code(

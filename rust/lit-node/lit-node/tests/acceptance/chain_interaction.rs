@@ -147,6 +147,11 @@ async fn test_encryption_decryption_eip1271(
     .get_resource_key()
     .into_bytes();
     let pubkey = blsful::PublicKey::try_from(&hex::decode(&network_pubkey).unwrap()).unwrap();
+    let key_set_id = testnet
+        .actions()
+        .get_key_set_id_from_pubkey(&network_pubkey)
+        .await
+        .unwrap();
     let ciphertext =
         lit_sdk::encryption::encrypt_time_lock(&pubkey, message_bytes, &identity_param)
             .expect("Unable to encrypt");
@@ -203,8 +208,14 @@ async fn test_encryption_decryption_eip1271(
         identity_param,
     };
 
-    let decryption_resp =
-        retrieve_decryption_key(&node_set, test_encryption_params.clone(), &auth_sig, epoch).await;
+    let decryption_resp = retrieve_decryption_key(
+        &node_set,
+        test_encryption_params.clone(),
+        &auth_sig,
+        epoch,
+        &key_set_id,
+    )
+    .await;
 
     for response in &decryption_resp {
         debug!("response- {:?}", response);
@@ -252,8 +263,14 @@ async fn test_encryption_decryption_eip1271(
     );
 
     info!("2.2. Non-permitted SIWE auth_sig: {:?}", auth_sig);
-    let decryption_resp =
-        retrieve_decryption_key(&node_set, test_encryption_params.clone(), &auth_sig, epoch).await;
+    let decryption_resp = retrieve_decryption_key(
+        &node_set,
+        test_encryption_params.clone(),
+        &auth_sig,
+        epoch,
+        &key_set_id,
+    )
+    .await;
 
     for response in &decryption_resp {
         debug!("response- {:?}", response);
@@ -296,8 +313,14 @@ async fn test_encryption_decryption_eip1271(
     );
 
     info!("3.2. Valid SIWE auth_sig: {:?}", auth_sig);
-    let decryption_resp =
-        retrieve_decryption_key(&node_set, test_encryption_params.clone(), &auth_sig, epoch).await;
+    let decryption_resp = retrieve_decryption_key(
+        &node_set,
+        test_encryption_params.clone(),
+        &auth_sig,
+        epoch,
+        &key_set_id,
+    )
+    .await;
     debug!("decryption_resp: {:?}", decryption_resp);
 
     assert_decrypted(

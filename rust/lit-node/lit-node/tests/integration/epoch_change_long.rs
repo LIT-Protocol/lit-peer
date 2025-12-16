@@ -9,11 +9,11 @@ use crate::common::{assertions::NetworkIntegrityChecker, setup_logging};
 
 use ethers::types::U256;
 use lit_core::utils::binary::bytes_to_hex;
-use lit_node::common::key_helper::KeyCache;
 use lit_node::peers::peer_state::models::{SimplePeer, SimplePeerCollection};
 use lit_node::tss::common::key_persistence::KeyPersistence;
 use lit_node::tss::common::key_share_commitment::KeyShareCommitments;
 use lit_node::tss::common::storage::read_key_share_commitments_from_disk;
+use lit_node::{common::key_helper::KeyCache, tss::util::DEFAULT_KEY_SET_NAME};
 use lit_node_core::{CompressedBytes, CurveType, PeerId};
 use network_state::{NetworkState, get_next_random_network_state};
 use semver::Version;
@@ -204,7 +204,10 @@ async fn test_many_epochs() {
         });
     }
     for curve_type in CurveType::into_iter() {
-        let root_keys = actions.get_root_keys(curve_type as u8, None).await.unwrap();
+        let root_keys = actions
+            .get_root_keys(curve_type as u8, DEFAULT_KEY_SET_NAME)
+            .await
+            .unwrap();
         for pub_key in &root_keys {
             match curve_type {
                 CurveType::BLS | CurveType::BLS12381G1 => {

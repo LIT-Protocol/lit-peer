@@ -2,7 +2,6 @@ use crate::common::auth_sig::{get_session_sigs_and_node_set_for_pkp, get_session
 use crate::common::lit_actions::HELLO_WORLD_LIT_ACTION_CODE;
 use crate::common::lit_actions::execute_lit_action_session_sigs;
 use crate::common::lit_actions::{assert_signed_action, lit_action_params};
-use lit_node_core::request::KeySetIdentifier;
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::{NodeIdentityKey, get_identity_pubkeys_from_node_set};
 use lit_node_testnet::node_collection::{get_network_pubkey, get_network_pubkey_from_node_set};
@@ -161,6 +160,7 @@ pub fn prepare_test_encryption_parameters_with_wallet_address(
 pub async fn test_encryption_decryption_auth_sig(
     node_set: &HashMap<NodeSet, NodeIdentityKey>,
     epoch: u64,
+    key_set_id: &str,
 ) {
     // prepare
     let test_encryption_parameters = prepare_test_encryption_parameters();
@@ -193,6 +193,7 @@ pub async fn test_encryption_decryption_auth_sig(
         test_encryption_parameters.clone(),
         &auth_sig,
         epoch,
+        key_set_id,
     )
     .await;
 
@@ -271,6 +272,11 @@ pub async fn test_encryption_decryption_session_sigs(
     .into_bytes();
 
     let pubkey = blsful::PublicKey::try_from(hex::decode(&network_pubkey).unwrap()).unwrap();
+    let key_set_id = validator_collection
+        .actions()
+        .get_key_set_id_from_pubkey(&network_pubkey)
+        .await
+        .expect("Could not get keyset Id key from public key.");
     let ciphertext =
         lit_sdk::encryption::encrypt_time_lock(&pubkey, message_bytes, &identity_param)
             .expect("Unable to encrypt");
@@ -284,7 +290,7 @@ pub async fn test_encryption_decryption_session_sigs(
         test_encryption_parameters.clone(),
         &session_sigs,
         epoch.as_u64(),
-        None,
+        &key_set_id,
     )
     .await;
 
@@ -304,6 +310,7 @@ pub async fn retrieve_decryption_key(
     test_encryption_parameters: TestEncryptionParameters,
     auth_sig: &JsonAuthSig,
     epoch: u64,
+    key_set_id: &str,
 ) -> Vec<GenericResponse<EncryptionSignResponse>> {
     let payload = EncryptionSignRequest {
         access_control_conditions: test_encryption_parameters.access_control_conditions.clone(),
@@ -316,7 +323,7 @@ pub async fn retrieve_decryption_key(
         data_to_encrypt_hash: test_encryption_parameters.data_to_encrypt_hash.clone(),
         auth_sig: AuthSigItem::Single(auth_sig.to_owned()),
         epoch,
-        key_set_identifier: None,
+        key_set_id: key_set_id.to_string(),
     };
     info!("Sending payload {:?}", payload);
     let my_secret_key = rand::rngs::OsRng.r#gen();
@@ -347,12 +354,13 @@ pub async fn retrieve_decryption_key_session_sigs(
     test_encryption_parameters: TestEncryptionParameters,
     session_sigs_and_node_set: &Vec<SessionSigAndNodeSet>,
     epoch: u64,
+    key_set_id: &str,
 ) -> Vec<GenericResponse<EncryptionSignResponse>> {
     retrieve_decryption_key_session_sigs_with_version(
         test_encryption_parameters,
         session_sigs_and_node_set,
         epoch,
-        None,
+        key_set_id,
     )
     .await
 }
@@ -361,7 +369,7 @@ pub async fn retrieve_decryption_key_session_sigs_with_version(
     test_encryption_parameters: TestEncryptionParameters,
     session_sigs_and_node_set: &Vec<SessionSigAndNodeSet>,
     epoch: u64,
-    key_set_identifier: Option<KeySetIdentifier>,
+    key_set_id: &str,
 ) -> Vec<GenericResponse<EncryptionSignResponse>> {
     let mut endpoint_requests = Vec::new();
 
@@ -378,7 +386,7 @@ pub async fn retrieve_decryption_key_session_sigs_with_version(
             data_to_encrypt_hash: test_encryption_parameters.data_to_encrypt_hash.clone(),
             auth_sig: AuthSigItem::Single(session_sig_and_nodeset.session_sig.clone()),
             epoch,
-            key_set_identifier: key_set_identifier.clone(),
+            key_set_id: key_set_id.to_string(),
         };
 
         endpoint_requests.push(lit_sdk::EndpointRequest {

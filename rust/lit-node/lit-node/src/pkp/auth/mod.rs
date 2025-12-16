@@ -28,6 +28,7 @@ mod google;
 pub mod stytch;
 pub mod wallet;
 pub mod webauthn;
+mod datil;
 
 use self::constants::{
     APPLE_JWT_AUTH_METHOD_TYPE_ID, DISCORD_AUTH_METHOD_TYPE_ID, GOOGLE_AUTH_METHOD_TYPE_ID,
@@ -339,7 +340,13 @@ pub async fn check_pkp_auth(
     cfg: &LitConfig,
     required_scopes: &[usize],
     bls_root_pubkey: &str,
+    key_set_id: &str,
 ) -> Result<bool, Error> {
+
+    if key_set_id.contains("datil") {
+        return datil::datil_check_pkp_auth(ipfs_id_option, auth_sig, pkp_pubkey, auth_context, cfg, required_scopes, bls_root_pubkey, key_set_id).await;
+    }
+
     use std::io::{Error, ErrorKind};
 
     debug!("auth_context- {:?}", auth_context);

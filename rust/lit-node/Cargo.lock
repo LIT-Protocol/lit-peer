@@ -10296,6 +10296,7 @@ dependencies = [
  "lit-api-core",
  "lit-attestation",
  "lit-blockchain",
+ "lit-blockchain-lite",
  "lit-core",
  "lit-core-derive",
  "lit-ecdsa-wasm-combine",

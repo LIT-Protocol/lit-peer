@@ -5,7 +5,6 @@ pub mod contracts_repo;
 pub mod datil;
 pub mod listener;
 pub mod node_config;
-pub mod payment_delegation;
 
 use crate::testnet::contracts_repo::{
     contract_addresses_from_deployment, remote_deployment_and_config_creation,
@@ -403,9 +402,14 @@ impl Testnet {
 
     pub fn actions(&self) -> Actions {
         let contracts = self.contracts.as_ref().unwrap();
+        let datil_contracts = match &self.datil_testnet {
+            Some(datil_testnet) => Some(datil_testnet.contracts.clone()),
+            None => None,
+        };
 
         Actions::new(
             contracts.clone(),
+            datil_contracts,
             self.deploy_account.signing_provider.clone(),
             self.which.clone(),
             self.deploy_address,

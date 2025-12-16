@@ -198,6 +198,9 @@ features = ["rocket-helper", "client-reqwest", "server"]
 [dependencies.lit-blockchain]
 path = "../../lit-core/lit-blockchain"
 
+[dependencies.lit-blockchain-lite]
+git = "https://github.com/LIT-Protocol/datil-lit-blockchain-lite.git"
+
 [dependencies.lit-recovery]
 path = "../../lit-core/lit-recovery"
 

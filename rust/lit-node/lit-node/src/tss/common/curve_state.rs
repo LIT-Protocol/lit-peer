@@ -9,56 +9,54 @@ use std::sync::Arc;
 pub struct CurveState {
     pub peer_state: Arc<PeerState>,
     pub curve_type: CurveType,
-    pub key_set_identifier: Option<String>,
+    pub key_set_id: String,
 }
 
 impl CurveState {
-    pub fn new(
-        peer_state: Arc<PeerState>,
-        curve_type: CurveType,
-        key_set_identifier: Option<String>,
-    ) -> Self {
+    pub fn new(peer_state: Arc<PeerState>, curve_type: CurveType, key_set_id: &str) -> Self {
         Self {
             peer_state,
             curve_type,
-            key_set_identifier,
+            key_set_id: key_set_id.to_string(),
         }
     }
 
     pub fn root_keys(&self) -> lit_core::error::Result<Vec<String>> {
-        Ok(match &self.key_set_identifier {
-            None => {
-                let default_key_set = DataVersionReader::read_field_unchecked(
-                    &self.peer_state.chain_data_config_manager.generic_config,
-                    |generic_config| generic_config.default_key_set.clone(),
-                );
-                match &default_key_set {
-                    Some(key_set_id) => self.get_root_keys_by_key_set_id(key_set_id)?,
-                    None => DataVersionReader::read_field_unchecked(
-                        &self.peer_state.chain_data_config_manager.key_sets,
-                        |key_sets| {
-                            Ok::<Vec<String>, lit_core::error::Error>(
-                                key_sets
-                                    .values()
-                                    .find(|&config| valid_key_set(config, self.curve_type))
-                                    .ok_or_else(|| {
-                                        blockchain_err(
-                                            format!(
-                                                "No key set with curve type {} exists",
-                                                self.curve_type
-                                            ),
-                                            None,
-                                        )
-                                    })?
-                                    .root_keys_by_curve[&self.curve_type]
-                                    .clone(),
-                            )
-                        },
-                    )?,
-                }
-            }
-            Some(key_set_id) => self.get_root_keys_by_key_set_id(key_set_id)?,
-        })
+        // Ok(match &self.key_set_identifier {
+        //     None => {
+        //         let default_key_set = DataVersionReader::read_field_unchecked(
+        //             &self.peer_state.chain_data_config_manager.generic_config,
+        //             |generic_config| generic_config.default_key_set.clone(),
+        //         );
+        //         match &default_key_set {
+        //             Some(key_set_id) => self.get_root_keys_by_key_set_id(key_set_id)?,
+        //             None => DataVersionReader::read_field_unchecked(
+        //                 &self.peer_state.chain_data_config_manager.key_sets,
+        //                 |key_sets| {
+        //                     Ok::<Vec<String>, lit_core::error::Error>(
+        //                         key_sets
+        //                             .values()
+        //                             .find(|&config| valid_key_set(config, self.curve_type))
+        //                             .ok_or_else(|| {
+        //                                 blockchain_err(
+        //                                     format!(
+        //                                         "No key set with curve type {} exists",
+        //                                         self.curve_type
+        //                                     ),
+        //                                     None,
+        //                                 )
+        //                             })?
+        //                             .root_keys_by_curve[&self.curve_type]
+        //                             .clone(),
+        //                     )
+        //                 },
+        //             )?,
+        //         }
+        //     }
+        //     Some(key_set_id) => self.get_root_keys_by_key_set_id(key_set_id)?,
+        // })
+
+        self.get_root_keys_by_key_set_id(&self.key_set_id)
     }
 
     fn get_root_keys_by_key_set_id(

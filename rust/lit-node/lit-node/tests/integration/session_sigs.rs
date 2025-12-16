@@ -30,6 +30,7 @@ use ipfs_hasher::IpfsHasher;
 use lit_node::models::RequestConditions;
 use lit_node::pkp::auth::AuthMethodScope;
 use lit_node::pkp::auth::get_user_wallet_auth_method_from_address;
+use lit_node::tss::util::DEFAULT_KEY_SET_NAME;
 use lit_node::utils::encoding;
 use lit_node::utils::web::hash_access_control_conditions;
 use lit_node_core::SigningScheme;
@@ -317,6 +318,7 @@ async fn sign_pkp_with_lit_action_session_sigs() {
         false,
         "Hello Lit".to_string(),
         pubkey,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -515,6 +517,7 @@ async fn only_permitted_can_sign_with_lit_action_session_sig() {
         false,
         "Hello Lit".to_string(),
         pubkey,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -685,6 +688,7 @@ async fn sign_pkp_with_no_auth_method_lit_action_session_sig() {
         false,
         "Hello Lit".to_string(),
         pubkey,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -832,6 +836,7 @@ async fn sign_pkp_with_eoa_session_sigs() {
         false,
         "Hello Lit".to_string(),
         pubkey,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -993,6 +998,7 @@ async fn decrypt_with_lit_action_session_sig() {
         test_encryption_params.clone(),
         &session_sigs_and_node_set,
         epoch,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -1054,6 +1060,7 @@ async fn test_v1_endpoints_api_constraints() {
         false,
         "Hello Lit".to_string(),
         pubkey.clone(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await
     .expect("Could not get PKP sign");
@@ -1075,6 +1082,7 @@ async fn test_v1_endpoints_api_constraints() {
         true,
         "Hello Lit".to_string(),
         pubkey.clone(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await
     .expect("Could not get PKP sign");
@@ -1306,7 +1314,7 @@ pub async fn session_sig_only_mbg_pkp() {
     let ipfs_cid = "QmUvLFoQggpYsVaPs8Wig6CyTb8GtTwHfHhDsrvNBjFVLP"; // MGB_PKP_SESSION_SIG_LIT_ACTION_CODE
 
     let mgb_pkp = end_user
-        .mint_grant_and_burn_next_pkp(ipfs_cid)
+        .mint_grant_and_burn_next_pkp(ipfs_cid, DEFAULT_KEY_SET_NAME)
         .await
         .unwrap();
 
@@ -1315,6 +1323,7 @@ pub async fn session_sig_only_mbg_pkp() {
     end_user.deposit_to_pkp_ledger(&mgb_pkp, fund_balance).await;
 
     let auth_pubkey = mgb_pkp.pubkey;
+    let key_set_id = mgb_pkp.key_set_id;
     let auth_eth_address = mgb_pkp.eth_address;
 
     info!(
@@ -1370,7 +1379,7 @@ pub async fn session_sig_only_mbg_pkp() {
         auth_pubkey.clone(),
         epoch,
         SigningScheme::EcdsaK256Sha256,
-        None,
+        &key_set_id,
     )
     .await;
 
@@ -1384,7 +1393,7 @@ pub async fn session_sig_only_mbg_pkp() {
     info!("MGB PKP for signing");
     let ipfs_cid = "QmRwN9GKHvCn4Vk7biqtr6adjXMs7PzzYPCzNCRjPFiDjm";
     let mgb_pkp_info = end_user
-        .mint_grant_and_burn_next_pkp(ipfs_cid)
+        .mint_grant_and_burn_next_pkp(ipfs_cid, DEFAULT_KEY_SET_NAME)
         .await
         .unwrap();
     let mgb_pubkey = mgb_pkp_info.pubkey;

@@ -55,6 +55,14 @@ pub async fn sign_with_hd_key(
         .await;
     let node_set_with_keys = get_identity_pubkeys_from_node_set(&node_set).await;
 
+    let key_set_id = validator_collection
+        .actions()
+        .get_key_set_id_from_pubkey(&pubkey)
+        .await
+        .unwrap();
+
+    info!("the key_set_id value: {}", key_set_id);
+
     let mut validation = false;
     let mut future_validations = Vec::new();
     let expected_responses = node_set_with_keys.len();
@@ -83,10 +91,16 @@ pub async fn sign_with_hd_key(
         };
 
         if concurrent_signing {
-            let data_to_send =
-                generate_data_to_send(&node_set, end_user, pubkey.clone(), to_sign, signing_scheme)
-                    .await
-                    .expect("Failed to generate PKP Signing Request.");
+            let data_to_send = generate_data_to_send(
+                &node_set,
+                end_user,
+                pubkey.clone(),
+                to_sign,
+                signing_scheme,
+                &key_set_id,
+            )
+            .await
+            .expect("Failed to generate PKP Signing Request.");
             let cmd = "web/pkp/sign/v2".to_string();
 
             let node_set_clone = node_set_with_keys.clone();
@@ -114,6 +128,7 @@ pub async fn sign_with_hd_key(
                 pubkey.clone(),
                 epoch,
                 signing_scheme,
+                &key_set_id,
             )
             .await
             .expect("Failed to sign message.");

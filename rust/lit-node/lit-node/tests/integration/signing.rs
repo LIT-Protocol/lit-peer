@@ -82,6 +82,7 @@ pub async fn test_pkp_hd_sign_and_submit_eth_txn() {
     let pubkey = end_user.first_pkp().pubkey.clone();
     let token_id = end_user.first_pkp().token_id;
     let pkp_address = end_user.first_pkp().eth_address;
+    let key_set_id = end_user.first_pkp().key_set_id.clone();
 
     let dest_wallet = LocalWallet::new(&mut OsRng).with_chain_id(testnet.chain_id);
 
@@ -149,7 +150,7 @@ pub async fn test_pkp_hd_sign_and_submit_eth_txn() {
         pubkey.clone(),
         epoch,
         SigningScheme::EcdsaK256Sha256,
-        None,
+        &key_set_id,
     )
     .await
     .unwrap();
@@ -234,7 +235,7 @@ pub async fn test_pkp_hd_sign_and_submit_eth_txn() {
         pubkey,
         epoch,
         SigningScheme::EcdsaK256Sha256,
-        None,
+        &key_set_id,
     )
     .await;
 
@@ -259,13 +260,38 @@ pub async fn test_pkp_hd_sign_and_submit_eth_txn() {
 pub async fn test_pkp_hd_sign_generic_key() {
     crate::common::setup_logging();
     info!("Starting test: test_hd_pkp_sign");
-    let (testnet, validator_collection, end_user) = TestSetupBuilder::default()
-        .include_datil_testnet(true)
-        .build()
-        .await;
+    let (testnet, validator_collection, end_user) = TestSetupBuilder::default().build().await;
     let pubkey = end_user.first_pkp().pubkey.clone();
 
     sign_with_each_curve_type(&validator_collection, &end_user, pubkey.clone()).await;
+
+    drop(testnet);
+}
+
+#[tokio::test]
+#[doc = "Primary test to ensure that the network can sign with a Datil PKP key.  It goes through the process of spinning up the network, minting a new Datil PKP, and then signing with it."]
+#[ignore] // we can run this locally, but epoch change tests below already implement this test.
+pub async fn test_pkp_hd_sign_generic_key_datil() {
+    crate::common::setup_logging();
+    info!("Starting test: test_hd_pkp_sign");
+    let (testnet, validator_collection, mut end_user) = TestSetupBuilder::default()
+        .include_datil_testnet(true)
+        .build()
+        .await;
+    let pkp_data = end_user.new_datil_pkp().await.unwrap();
+    let pubkey = pkp_data.0;
+
+    let scheme = SigningScheme::EcdsaK256Sha256;
+    let result = simple_single_sign_with_hd_key(
+        &validator_collection,
+        &end_user,
+        pubkey.clone(),
+        scheme,
+        &vec![],
+    )
+    .await;
+
+    assert!(result, "Failed to sign with Datil PKP");
 
     drop(testnet);
 }
@@ -593,6 +619,7 @@ pub async fn eoa_session_sig_with_mgb_pkp_signing() {
     pkp.add_permitted_address_to_pkp(non_owner_wallet.address(), &[U256::from(1)])
         .await
         .expect("Could not add permitted address to pkp");
+    let key_set_id = pkp.key_set_id.clone();
 
     // Burn the PKP
     let pkpnft_address = validator_collection.actions().contracts().pkpnft.address();
@@ -637,7 +664,7 @@ pub async fn eoa_session_sig_with_mgb_pkp_signing() {
         pubkey.clone(),
         epoch,
         SigningScheme::EcdsaK256Sha256,
-        None,
+        &key_set_id,
     )
     .await;
 
@@ -656,7 +683,7 @@ pub async fn eoa_session_sig_with_mgb_pkp_signing() {
         pubkey.clone(),
         epoch,
         SigningScheme::EcdsaK256Sha256,
-        None,
+        &key_set_id,
     )
     .await
     .unwrap();

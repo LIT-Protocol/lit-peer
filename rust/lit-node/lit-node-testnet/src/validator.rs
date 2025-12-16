@@ -295,7 +295,7 @@ impl ValidatorCollectionBuilder {
         if self.wait_for_root_keys {
             for keyset_config in &self.keyset_configs {
                 actions
-                    .wait_for_root_keys(realm_id, Some(keyset_config.identifier.clone()))
+                    .wait_for_root_keys(realm_id, &keyset_config.identifier)
                     .await;
             }
         }
@@ -495,7 +495,7 @@ impl ValidatorCollection {
             // Check that all the nodes have synced up to chain.
             for keyset_config in &self.keyset_configs {
                 self.actions
-                    .wait_for_root_keys(realm_id, Some(keyset_config.identifier.clone()))
+                    .wait_for_root_keys(realm_id, &keyset_config.identifier)
                     .await;
             }
         }
@@ -544,7 +544,7 @@ impl ValidatorCollection {
         let realm_id = U256::from(realm_id);
         for keyset_config in &self.keyset_configs {
             self.actions
-                .wait_for_root_keys(realm_id, Some(keyset_config.identifier.clone()))
+                .wait_for_root_keys(realm_id, &keyset_config.identifier)
                 .await;
         }
 
