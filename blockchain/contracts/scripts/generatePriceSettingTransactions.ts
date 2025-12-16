@@ -1,7 +1,8 @@
 // Script to generate SAFE multisig transaction JSON payloads for setting prices
-// Usage: HARDHAT_NETWORK=litMainnet npx ts-node --files scripts/generatePriceSettingTransactions.ts
+// Usage: HARDHAT_NETWORK=litMainnet npx ts-node --files scripts/generatePriceSettingTransactions.ts --contract-resolver-address <ADDRESS>
 
 import hre from 'hardhat';
+import yargs from 'yargs';
 import { ContractResolver } from '../typechain-types';
 
 const { ethers } = hre;
@@ -153,59 +154,63 @@ function usdToLitKeyWei(usdPrice: number, litKeyPriceUSD: number): bigint {
 }
 
 /**
+ * Get inputs from command line arguments
+ */
+async function getInputsFromCliOptions(): Promise<{
+  contractResolverAddress: string;
+}> {
+  const argv = await yargs(process.argv.slice(2)).options({
+    'contract-resolver-address': {
+      type: 'string',
+      describe: 'Address of the ContractResolver contract',
+      required: true,
+    },
+  }).argv;
+
+  return {
+    contractResolverAddress: argv['contract-resolver-address'] as string,
+  };
+}
+
+/**
  * Get contract addresses from ContractResolver
  */
-async function getContractAddresses(): Promise<{
+async function getContractAddresses(contractResolverAddress: string): Promise<{
   pkpNftAddress: string;
   priceFeedAddress: string;
+  stakingAddress: string;
 }> {
-  // Try to get from environment or use defaults
-  const contractResolverAddress =
-    process.env.CONTRACT_RESOLVER_ADDRESS ||
-    '0x0000000000000000000000000000000000000000'; // Update with actual address
+  const contractResolver: ContractResolver = await ethers.getContractAt(
+    'ContractResolver',
+    contractResolverAddress
+  );
 
-  if (
-    contractResolverAddress === '0x0000000000000000000000000000000000000000'
-  ) {
-    // Fallback to hardcoded addresses if resolver not available
-    console.warn(
-      'ContractResolver address not set, using hardcoded addresses. Set CONTRACT_RESOLVER_ADDRESS env var for dynamic lookup.'
-    );
-    return {
-      pkpNftAddress:
-        process.env.PKPNFT_ADDRESS ||
-        '0x0000000000000000000000000000000000000000',
-      priceFeedAddress:
-        process.env.PRICE_FEED_ADDRESS ||
-        '0x88F5535Fa6dA5C225a3C06489fE4e3405b87608C', // From calculateUSDPricing.ts
-    };
-  }
+  const network = await ethers.provider.getNetwork();
+  const env =
+    network.chainId === 175200n
+      ? 0 // Mainnet
+      : network.chainId === 987n
+      ? 1 // Testnet
+      : 0; // Default to mainnet
 
-  try {
-    const contractResolver: ContractResolver = await ethers.getContractAt(
-      'ContractResolver',
-      contractResolverAddress
-    );
+  const pkpNftAddress = await contractResolver.getContract(
+    await contractResolver.PKP_NFT_CONTRACT(),
+    env
+  );
+  const priceFeedAddress = await contractResolver.getContract(
+    await contractResolver.PRICE_FEED_CONTRACT(),
+    env
+  );
+  const stakingAddress = await contractResolver.getContract(
+    await contractResolver.STAKING_CONTRACT(),
+    env
+  );
 
-    const network = await ethers.provider.getNetwork();
-    const env =
-      network.chainId === 175200n
-        ? 0 // Mainnet
-        : network.chainId === 987n
-        ? 1 // Testnet
-        : 0; // Default to mainnet
-
-    const pkpNftAddress = await contractResolver.PKP_NFT_CONTRACT();
-    const priceFeedAddress = await contractResolver.PRICE_FEED_CONTRACT();
-
-    return {
-      pkpNftAddress,
-      priceFeedAddress,
-    };
-  } catch (error) {
-    console.error('Error getting contract addresses from resolver:', error);
-    throw error;
-  }
+  return {
+    pkpNftAddress,
+    priceFeedAddress,
+    stakingAddress,
+  };
 }
 
 /**
@@ -238,19 +243,33 @@ async function main() {
     '=== Generating SAFE Transaction Payloads for Price Setting ===\n'
   );
 
+  // Get inputs from command line
+  const inputs = await getInputsFromCliOptions();
+  const contractResolverAddress = inputs.contractResolverAddress;
+
   // Get network info
   const network = await ethers.provider.getNetwork();
   console.log(`Network: ${network.name} (Chain ID: ${network.chainId})\n`);
+
+  // Validate contract resolver address
+  if (!ethers.isAddress(contractResolverAddress)) {
+    throw new Error(
+      `Invalid ContractResolver address: ${contractResolverAddress}`
+    );
+  }
+
+  // Get contract addresses from ContractResolver
+  console.log('Looking up contract addresses from ContractResolver...');
+  const { pkpNftAddress, priceFeedAddress, stakingAddress } =
+    await getContractAddresses(contractResolverAddress);
+  console.log(`PKPNFT Contract: ${pkpNftAddress}`);
+  console.log(`PriceFeed Contract: ${priceFeedAddress}`);
+  console.log(`Staking Contract: ${stakingAddress}\n`);
 
   // Get LITKEY price in USD
   console.log('Fetching LITKEY token price from CoinGecko...');
   const litKeyPriceUSD = await getLitKeyPrice();
   console.log(`LITKEY Price: $${litKeyPriceUSD.toFixed(4)} USD\n`);
-
-  // Get contract addresses
-  const { pkpNftAddress, priceFeedAddress } = await getContractAddresses();
-  console.log(`PKPNFT Contract: ${pkpNftAddress}`);
-  console.log(`PriceFeed Contract: ${priceFeedAddress}\n`);
 
   // Get contract instances
   const pkpNft = await ethers.getContractAt('PKPNFTDiamond', pkpNftAddress);
@@ -258,6 +277,7 @@ async function main() {
     'PriceFeedDiamond',
     priceFeedAddress
   );
+  const staking = await ethers.getContractAt('StakingDiamond', stakingAddress);
 
   const transactions: Array<{
     to: string;
@@ -331,7 +351,7 @@ async function main() {
 
     const setBasePriceData = priceFeed.interface.encodeFunctionData(
       'setBaseNetworkPrices',
-      [priceWei, [productId]] as [bigint, bigint[]]
+      [priceWei, [productId]]
     );
 
     transactions.push({
@@ -454,6 +474,67 @@ async function main() {
   }
 
   // ============================================================================
+  // 4. Staking Token Price
+  // ============================================================================
+  console.log('\n=== Staking Token Price ===');
+  // tokenPrice is "The number of LIT tokens per USD"
+  // If LIT is $0.50, then tokenPrice = 2.0 (2 LIT per USD)
+  // Formula: tokenPrice = (1 / litKeyPriceUSD) * 1e18 (using 18 decimals for WAD precision)
+  // Use BigInt arithmetic to avoid floating point precision issues:
+  // tokenPrice = (1e18 * 1e18) / (litKeyPriceUSD * 1e18)
+  const oneEther = ethers.parseEther('1');
+  const litKeyPriceWei = ethers.parseUnits(litKeyPriceUSD.toFixed(18), 18);
+  const tokenPrice = (oneEther * oneEther) / litKeyPriceWei;
+  const tokenPriceTokens = parseFloat(ethers.formatUnits(tokenPrice, 18));
+  console.log(
+    `Setting tokenPrice to: ${tokenPriceTokens.toFixed(
+      6
+    )} LIT per USD (LIT price: $${litKeyPriceUSD.toFixed(4)} USD)`
+  );
+
+  // Get current globalConfig
+  const currentGlobalConfig = await staking.globalConfig();
+
+  // Create updated config with new tokenPrice
+  const updatedGlobalConfig = {
+    tokenRewardPerTokenPerEpoch:
+      currentGlobalConfig.tokenRewardPerTokenPerEpoch,
+    keyTypes: currentGlobalConfig.keyTypes,
+    minimumValidatorCount: currentGlobalConfig.minimumValidatorCount,
+    rewardEpochDuration: currentGlobalConfig.rewardEpochDuration,
+    maxTimeLock: currentGlobalConfig.maxTimeLock,
+    minTimeLock: currentGlobalConfig.minTimeLock,
+    bmin: currentGlobalConfig.bmin,
+    bmax: currentGlobalConfig.bmax,
+    k: currentGlobalConfig.k,
+    p: currentGlobalConfig.p,
+    enableStakeAutolock: currentGlobalConfig.enableStakeAutolock,
+    tokenPrice: tokenPrice, // Updated value
+    profitMultiplier: currentGlobalConfig.profitMultiplier,
+    usdCostPerMonth: currentGlobalConfig.usdCostPerMonth,
+    maxEmissionRate: currentGlobalConfig.maxEmissionRate,
+    minStakeAmount: currentGlobalConfig.minStakeAmount,
+    maxStakeAmount: currentGlobalConfig.maxStakeAmount,
+    minSelfStake: currentGlobalConfig.minSelfStake,
+    minSelfStakeTimelock: currentGlobalConfig.minSelfStakeTimelock,
+    minValidatorCountToClampMinimumThreshold:
+      currentGlobalConfig.minValidatorCountToClampMinimumThreshold,
+    minThresholdToClampAt: currentGlobalConfig.minThresholdToClampAt,
+    voteToAdvanceTimeOut: currentGlobalConfig.voteToAdvanceTimeOut,
+  };
+
+  const setConfigData = staking.interface.encodeFunctionData('setConfig', [
+    updatedGlobalConfig,
+  ]);
+
+  transactions.push({
+    ...createSafeTransaction(stakingAddress, setConfigData),
+    description: 'Set Staking Token Price',
+    priceUSD: litKeyPriceUSD,
+    priceLITKEY: tokenPriceTokens.toFixed(6),
+  });
+
+  // ============================================================================
   // OUTPUT SAFE TRANSACTION PAYLOAD
   // ============================================================================
   console.log('\n=== SAFE Transaction Payload ===\n');
@@ -508,6 +589,7 @@ async function main() {
   console.log(`LITKEY Price: $${litKeyPriceUSD.toFixed(4)} USD`);
   console.log(`PKPNFT Address: ${pkpNftAddress}`);
   console.log(`PriceFeed Address: ${priceFeedAddress}`);
+  console.log(`Staking Address: ${stakingAddress}`);
   console.log('\n=== Usage Instructions ===');
   console.log(
     '1. Copy the SAFE Transaction JSON above (Transaction Builder format)'
