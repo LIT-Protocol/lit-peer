@@ -106,20 +106,6 @@ const PRODUCT_NAMES = {
   [ProductId.SignSessionKey]: 'Sign Session Key',
 };
 
-const LIT_ACTION_COMPONENT_NAMES = {
-  [LitActionPriceComponent.baseAmount]: 'Base Amount',
-  [LitActionPriceComponent.runtimeLength]: 'Runtime Length',
-  [LitActionPriceComponent.memoryUsage]: 'Memory Usage',
-  [LitActionPriceComponent.codeLength]: 'Code Length',
-  [LitActionPriceComponent.responseLength]: 'Response Length',
-  [LitActionPriceComponent.signatures]: 'Signatures',
-  [LitActionPriceComponent.broadcasts]: 'Broadcasts',
-  [LitActionPriceComponent.contractCalls]: 'Contract Calls',
-  [LitActionPriceComponent.callDepth]: 'Call Depth',
-  [LitActionPriceComponent.decrypts]: 'Decrypts',
-  [LitActionPriceComponent.fetches]: 'Fetches',
-};
-
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
@@ -372,9 +358,9 @@ async function main() {
   });
 
   // ============================================================================
-  // 2. Base Network Prices
+  // 2. Base and Max Network Prices
   // ============================================================================
-  console.log('\n=== Base Network Prices ===');
+  console.log('\n=== Base and Max Network Prices ===');
   const productIds = [
     ProductId.PkpSign,
     ProductId.EncSign,
@@ -397,12 +383,22 @@ async function main() {
     const usdPrice = basePrices[i];
     const priceWei = basePriceWeis[i];
     const priceTokens = parseFloat(ethers.formatUnits(priceWei, 18));
+    const maxPriceWei = priceWei * 10n; // Max price is 10x base price
+    const maxPriceTokens = parseFloat(ethers.formatUnits(maxPriceWei, 18));
+    const maxUsdPrice = usdPrice * 10;
+
     console.log(
-      `${PRODUCT_NAMES[productId]}: ${priceTokens.toFixed(
+      `${PRODUCT_NAMES[productId]} Base: ${priceTokens.toFixed(
         6
       )} LITKEY ($${usdPrice.toFixed(4)} USD)`
     );
+    console.log(
+      `${PRODUCT_NAMES[productId]} Max: ${maxPriceTokens.toFixed(
+        6
+      )} LITKEY ($${maxUsdPrice.toFixed(4)} USD)`
+    );
 
+    // Set base price
     const setBasePriceData = priceFeed.interface.encodeFunctionData(
       'setBaseNetworkPrices',
       [priceWei, [productId]]
@@ -413,6 +409,19 @@ async function main() {
       description: `Set Base Network Price - ${PRODUCT_NAMES[productId]}`,
       priceUSD: usdPrice,
       priceLITKEY: priceTokens.toFixed(6),
+    });
+
+    // Set max price (10x base price)
+    const setMaxPriceData = priceFeed.interface.encodeFunctionData(
+      'setMaxNetworkPrices',
+      [maxPriceWei, [productId]]
+    );
+
+    transactions.push({
+      ...createSafeTransaction(priceFeedAddress, setMaxPriceData),
+      description: `Set Max Network Price - ${PRODUCT_NAMES[productId]}`,
+      priceUSD: maxUsdPrice,
+      priceLITKEY: maxPriceTokens.toFixed(6),
     });
   }
 
