@@ -381,7 +381,7 @@ pub async fn handshake(
     .await
     .map_err(|e| {
         #[cfg(not(feature = "testing"))]
-        warn!("Error creating attestation: {:?}", e);
+        warn!("Error creating attestation: {e:?}");
         unexpected_err(e, Some("error producing attestation".into()))
     })
     .ok();
@@ -892,7 +892,7 @@ pub(crate) async fn execute_function(
     let before = std::time::Instant::now();
     // check if the IPFS id is in the allowlist
     if matches!(cfg.enable_actions_allowlist(), Ok(true)) {
-        let allowlist_entry_id = keccak256(format!("LIT_ACTION_{}", derived_ipfs_id).as_bytes());
+        let allowlist_entry_id = keccak256(format!("LIT_ACTION_{derived_ipfs_id}").as_bytes());
         let action_is_allowed =
             match check_allowlist(allowlist_cache, &allowlist_entry_id, &cfg).await {
                 Ok(action_is_allowed) => action_is_allowed,
@@ -1321,8 +1321,7 @@ async fn get_price_multiplier(
         None => {
             return Err(unexpected_err_code(
                 format!(
-                    "Endpoint type {} not found in call to base_network_prices (len={})",
-                    endpoint_type, base_network_prices_len
+                    "Endpoint type {endpoint_type} not found in call to base_network_prices (len={base_network_prices_len})"
                 ),
                 EC::NodeJsExecutionError,
                 Some("Invalid endpoint type when calculating price_multiplier".into()),
@@ -2012,7 +2011,7 @@ pub(crate) async fn sign_session_key(
     );
     let mut capabilities = Capability::<Value>::default();
     let resource = "Auth/Auth".to_string();
-    let resource_prefix = format!("{}://*", LIT_RESOURCE_PREFIX_RAC); // TODO: Scope with uri
+    let resource_prefix = format!("{LIT_RESOURCE_PREFIX_RAC}://*"); // TODO: Scope with uri
     let capabilities = match capabilities
         .with_actions_convert(resource_prefix, [(resource, [notabene])])
         .map_err(|e| {
@@ -2151,7 +2150,7 @@ pub(crate) async fn sign_session_key(
         &json_sign_session_key_request
             .pkp_key_set_id
             .unwrap_or_default(),
-        &tss_state,
+        tss_state,
     )
     .await
     {
@@ -2166,10 +2165,7 @@ pub(crate) async fn sign_session_key(
         return client_session.json_encrypt_err_custom_response(
             "pkp is not authorized to sign",
             validation_err_code(
-                format!(
-                    "You are not authorized to sign using this PKP: {}",
-                    hex_pubkey
-                ),
+                format!("You are not authorized to sign using this PKP: {hex_pubkey}"),
                 EC::NodePKPNotAuthorized,
                 None,
             )
@@ -2239,12 +2235,11 @@ pub(crate) async fn sign_session_key(
 // see https://github.com/rust-lang/rust/issues/92554
 #[allow(dead_code)]
 fn get_domain_from_request_origin(origin: &str) -> error::Result<String> {
-    let origin = Url::parse(origin).map_err(|e| {
-        conversion_err(e, Some(format!("Unable to parse origin URL of {}", origin)))
-    })?;
+    let origin = Url::parse(origin)
+        .map_err(|e| conversion_err(e, Some(format!("Unable to parse origin URL of {origin}"))))?;
     let domain = origin.domain().ok_or_else(|| {
         conversion_err(
-            format!("Unable to parse domain from origin URL {}", origin),
+            format!("Unable to parse domain from origin URL {origin}"),
             None,
         )
     })?;

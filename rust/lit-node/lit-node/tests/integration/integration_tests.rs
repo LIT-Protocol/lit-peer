@@ -72,7 +72,7 @@ async fn retry_after_signaling_ready_test() {
 
     // Assert that the network works
     let network_checker =
-        NetworkIntegrityChecker::new(&end_user, &validator_collection.actions()).await;
+        NetworkIntegrityChecker::new(&end_user, validator_collection.actions()).await;
     network_checker.check(&validator_collection, &vec![]).await;
 
     let realm_id = U256::from(1);
@@ -87,8 +87,7 @@ async fn retry_after_signaling_ready_test() {
         .retries;
     assert!(
         retries_before_kicking == U256::from(0),
-        "Retries before kicking should be 0 but it is {:?}",
-        retries_before_kicking,
+        "Retries before kicking should be 0 but it is {retries_before_kicking:?}",
     );
 
     let epoch = validator_collection
@@ -161,8 +160,7 @@ async fn retry_after_signaling_ready_test() {
                         staking_clone.epoch(realm_id).call().await.unwrap().retries;
                     assert!(
                         retries_after_kicking == U256::from(1),
-                        "Retries after kicking should be 1 but it is {:?}",
-                        retries_after_kicking,
+                        "Retries after kicking should be 1 but it is {retries_after_kicking:?}",
                     );
 
                     // confirm that a node was kicked
@@ -174,8 +172,7 @@ async fn retry_after_signaling_ready_test() {
                         .len();
                     assert!(
                         validator_count == NUM_NODES - 1,
-                        "There should be 1 less validator in the next epoch since we kicked one.  But there are {} nodes",
-                        validator_count
+                        "There should be 1 less validator in the next epoch since we kicked one.  But there are {validator_count} nodes"
                     );
 
                     break;
@@ -592,7 +589,7 @@ async fn node_restarts_without_key_material() {
                 },
             )
             .await
-            .unwrap_or_else(|_| panic!("Failed to set complaint config for reason {}", i));
+            .unwrap_or_else(|_| panic!("Failed to set complaint config for reason {i}"));
     }
 
     let network_checker = NetworkIntegrityChecker::new(&end_user, &actions).await;

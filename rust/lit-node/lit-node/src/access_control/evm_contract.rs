@@ -228,8 +228,7 @@ pub async fn check_condition(
                     err,
                     EC::NodeConditionTokenizingError,
                     Some(format!(
-                        "Error tokenizing param: {:?} with substituted param: {:?}",
-                        param_type, substituted_param
+                        "Error tokenizing param: {param_type:?} with substituted param: {substituted_param:?}"
                     )),
                 ));
             }

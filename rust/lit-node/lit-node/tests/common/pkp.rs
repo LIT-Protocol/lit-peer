@@ -84,7 +84,7 @@ pub async fn generate_data_to_send(
         .await
         .as_u64();
     generate_data_to_send_with_epoch(
-        &node_set,
+        node_set,
         end_user,
         pubkey,
         to_sign,
@@ -132,7 +132,7 @@ pub async fn generate_session_sigs_and_send_signing_requests(
     key_set_id: &str,
 ) -> Vec<GenericResponse<JsonPKPSigningResponse>> {
     let session_sigs = get_session_sigs_for_auth(
-        &node_set,
+        node_set,
         vec![
             LitResourceAbilityRequest {
                 resource: LitResourceAbilityRequestResource {
@@ -153,10 +153,7 @@ pub async fn generate_session_sigs_and_send_signing_requests(
         None,
         None,
     );
-    let nodes = node_set
-        .iter()
-        .map(|(node_set, _)| node_set.clone())
-        .collect::<Vec<NodeSet>>();
+    let nodes = node_set.keys().cloned().collect::<Vec<NodeSet>>();
 
     let my_secret_key = rand::rngs::OsRng.r#gen();
 

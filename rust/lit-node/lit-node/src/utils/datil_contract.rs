@@ -20,7 +20,7 @@ impl DatilContracts {
         let key_set_config = DataVersionReader::read_field_unchecked(&cdm.key_sets, |key_sets| {
             key_sets.get(key_set_id).cloned().ok_or_else(|| {
                 unexpected_err(
-                    format!("Key set with identifier {} not found", key_set_id),
+                    format!("Key set with identifier {key_set_id} not found"),
                     None,
                 )
             })
@@ -31,10 +31,7 @@ impl DatilContracts {
         let chain_name = key_set_description_parts[0];
         let hex_contract_resolver_address = key_set_description_parts[1];
 
-        let provider = ENDPOINT_MANAGER.get_provider(chain_name).expect(&format!(
-            "Error retrieving provider for chain {} - check name and/or rpc_config yaml.",
-            chain_name
-        ));
+        let provider = ENDPOINT_MANAGER.get_provider(chain_name).unwrap_or_else(|_| panic!("Error retrieving provider for chain {chain_name} - check name and/or rpc_config yaml."));
 
         let contract_resolver_address = Address::from_slice(
             &hex::decode(hex_contract_resolver_address)
@@ -48,23 +45,35 @@ impl DatilContracts {
                     .pkp_permissions_contract()
                     .call()
                     .await
-                    .unwrap(),
+                    .map_err(|e| {
+                        unexpected_err(e, Some("failed to load PKP permissions contract".into()))
+                    })?,
                 env,
             )
             .call()
             .await
-            .unwrap();
+            .map_err(|e| {
+                unexpected_err(e, Some("failed to load PKP permissions contract".into()))
+            })?;
+
         let pkp_permissions_contract =
             PKPPermissions::new(pkp_permissions_address, provider.clone());
 
         let pkp_nft_address = contract_resolver
             .get_contract(
-                contract_resolver.pkp_nft_contract().call().await.unwrap(),
+                contract_resolver
+                    .pkp_nft_contract()
+                    .call()
+                    .await
+                    .map_err(|e| {
+                        unexpected_err(e, Some("failed to load PKP NFT contract".into()))
+                    })?,
                 env,
             )
             .call()
             .await
-            .unwrap();
+            .map_err(|e| unexpected_err(e, Some("failed to load PKP NFT contract".into())))?;
+
         let pkp_nft_contract = PKPNFT::new(pkp_nft_address, provider.clone());
 
         let pubkey_router_address = contract_resolver
@@ -73,12 +82,15 @@ impl DatilContracts {
                     .pub_key_router_contract()
                     .call()
                     .await
-                    .unwrap(),
+                    .map_err(|e| {
+                        unexpected_err(e, Some("failed to load Pubkey Router contract".into()))
+                    })?,
                 env,
             )
             .call()
             .await
-            .unwrap();
+            .map_err(|e| unexpected_err(e, Some("failed to load Pubkey Router contract".into())))?;
+
         let pubkey_router_contract = PubkeyRouter::new(pubkey_router_address, provider.clone());
 
         Ok(Self {

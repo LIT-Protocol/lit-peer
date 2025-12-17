@@ -812,16 +812,14 @@ impl DkgEngine {
                     Ok(Some((private_share, public_key))) => (private_share, public_key),
                     Ok(None) => {
                         let err_msg = format!(
-                            "key share not found on disk for realm {} public key {}",
-                            realm_id, pubkey
+                            "key share not found on disk for realm {realm_id} public key {pubkey}"
                         );
                         error!("{}", err_msg);
                         return Err(unexpected_err(err_msg, None));
                     }
                     Err(e) => {
                         let err_msg = format!(
-                            "Error reading key share for realm {} public key {}",
-                            realm_id, pubkey
+                            "Error reading key share for realm {realm_id} public key {pubkey}"
                         );
                         error!("{}", err_msg);
                         return Err(unexpected_err(e, Some(err_msg)));
@@ -888,8 +886,7 @@ impl DkgEngine {
                     Ok(share) => share,
                     Err(e) => {
                         let err_msg = format!(
-                            "Error reading key share in realm {}, epoch {}, for public key {}",
-                            read_realm_id, read_epoch, pubkey
+                            "Error reading key share in realm {read_realm_id}, epoch {read_epoch}, for public key {pubkey}"
                         );
                         error!("{}", err_msg);
                         error!("Shadow key opts: {:?}", self.shadow_key_opts);
@@ -1037,7 +1034,7 @@ impl std::fmt::Display for DkgScalar {
             Self::Decaf377(scalar) => scalar.to_compressed_hex(),
             Self::Bls12381G1ProofOfPossession(scalar) => scalar.to_compressed_hex(),
         };
-        write!(f, "{}", hex)
+        write!(f, "{hex}")
     }
 }
 

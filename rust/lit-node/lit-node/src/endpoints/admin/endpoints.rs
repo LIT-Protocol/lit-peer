@@ -268,7 +268,7 @@ pub async fn admin_get_key_backup(
             Some(id) => match key_sets.get(id) {
                 Some(key_set) => Ok(key_set.root_keys_by_curve.clone()),
                 None => Err(
-                    unexpected_err(format!("No key set root keys exist for {}", id), None).handle(),
+                    unexpected_err(format!("No key set root keys exist for {id}"), None).handle(),
                 ),
             },
             None => match key_sets.first_key_value() {

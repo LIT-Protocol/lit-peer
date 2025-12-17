@@ -68,7 +68,7 @@ impl CurveState {
             |key_sets| {
                 let config = key_sets.get(key_set_id).ok_or_else(|| {
                     blockchain_err(
-                        format!("No key set with identifier {} exists", key_set_id),
+                        format!("No key set with identifier {key_set_id} exists"),
                         None,
                     )
                 })?;

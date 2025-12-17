@@ -69,7 +69,7 @@ impl EthereumAddress for VerifyingKey {
         let mut buffer = String::new();
         buffer.push('0');
         buffer.push('x');
-        buffer.push_str(&String::from_utf8(address.to_vec()).unwrap());
+        buffer.push_str(core::str::from_utf8(&address).unwrap());
         buffer
     }
 }
@@ -249,11 +249,13 @@ pub async fn download_share(validator: &Validator) -> Vec<DownloadedShareData> {
         .await
         .unwrap();
     let response_bytes = response.bytes().await.unwrap();
-    let share_data: Vec<DownloadedShareData> =
-        serde_json::from_slice(&response_bytes).expect(&format!(
-            "Could not parse response bytes into json: {:?}",
-            std::str::from_utf8(response_bytes.as_ref())
-        ));
+    let share_data: Vec<DownloadedShareData> = serde_json::from_slice(&response_bytes)
+        .unwrap_or_else(|_| {
+            panic!(
+                "Could not parse response bytes into json: {:?}",
+                std::str::from_utf8(response_bytes.as_ref())
+            )
+        });
     info!("got share data{:?}", share_data);
     share_data
 }
@@ -266,7 +268,7 @@ pub fn check_share_data(mut share_data: Vec<DownloadedShareData>) {
     let (bls_share, ecdsa_share) = match (share1.curve.as_str(), share2.curve.as_str()) {
         ("BLS12381G1", "Secp256k1") => (share1, share2),
         ("Secp256k1", "BLS12381G1") => (share2, share1),
-        (x, y) => panic!("Expected BLS12831G1 and Secp256k1, found {} and {}", x, y),
+        (x, y) => panic!("Expected BLS12831G1 and Secp256k1, found {x} and {y}"),
     };
 
     // Parse BLS public key

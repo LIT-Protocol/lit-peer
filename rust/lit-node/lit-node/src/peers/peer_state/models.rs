@@ -243,7 +243,7 @@ impl SimplePeerCollection {
             .ok_or_else(|| {
                 unexpected_err(
                     "Peer not found in peer list (peer_by_id)",
-                    Some(format!("Peer: {}", peer_id)),
+                    Some(format!("Peer: {peer_id}")),
                 )
             })
     }

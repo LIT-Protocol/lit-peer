@@ -141,8 +141,7 @@ async fn test_encryption_decryption_eip1271(
     let network_pubkey = get_network_pubkey(validator_collection.actions()).await;
     let message_bytes = to_encrypt.as_bytes();
     let identity_param = AccessControlConditionResource::new(format!(
-        "{}/{}",
-        hashed_access_control_conditions, data_to_encrypt_hash
+        "{hashed_access_control_conditions}/{data_to_encrypt_hash}"
     ))
     .get_resource_key()
     .into_bytes();
@@ -158,7 +157,7 @@ async fn test_encryption_decryption_eip1271(
     info!("ciphertext: {:?}", ciphertext);
 
     let node_set = &validator_collection.random_threshold_nodeset().await;
-    let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
+    let node_set = get_identity_pubkeys_from_node_set(node_set).await;
     let realm_id = ethers::types::U256::from(1);
     let epoch = actions.get_current_epoch(realm_id).await.as_u64();
 
@@ -174,7 +173,7 @@ async fn test_encryption_decryption_eip1271(
     let sig_bytes: Bytes = signature.to_vec().into();
 
     let is_valid = contract
-        .is_valid_signature(hashed_message.into(), sig_bytes.clone())
+        .is_valid_signature(hashed_message, sig_bytes.clone())
         .call()
         .await
         .unwrap();
@@ -241,7 +240,7 @@ async fn test_encryption_decryption_eip1271(
     // validate that the contract works not for the non-permitted wallet's SIWE hash signature
     let siwe_sig_bytes: Bytes = siwe_signature.to_vec().into();
     let is_valid = contract
-        .is_valid_signature(siwe_message_hash.into(), siwe_sig_bytes.clone())
+        .is_valid_signature(siwe_message_hash, siwe_sig_bytes.clone())
         .call()
         .await
         .unwrap();
@@ -293,7 +292,7 @@ async fn test_encryption_decryption_eip1271(
     // validate that the contract works for the SIWE hash signature
     let siwe_sig_bytes: Bytes = siwe_signature.to_vec().into();
     let is_valid = contract
-        .is_valid_signature(siwe_message_hash.into(), siwe_sig_bytes.clone())
+        .is_valid_signature(siwe_message_hash, siwe_sig_bytes.clone())
         .call()
         .await
         .unwrap();
@@ -381,17 +380,16 @@ fn get_siwe_message(wallet: &Wallet<SigningKey>) -> String {
         .to_rfc3339_opts(SecondsFormat::Millis, true);
     let message = format!(
         "localhost wants you to sign in with your Ethereum account:
-{}
+{address}
 
 This is a key for a Lit Action Test.
 
 URI: https://localhost/
 Version: 1
-Chain ID: {}
+Chain ID: {chain_id}
 Nonce: 1LF00rraLO4f7ZSIt
-Issued At: {}
-Expiration Time: {}",
-        address, chain_id, issue_datetime, expiration_datetime
+Issued At: {issue_datetime}
+Expiration Time: {expiration_datetime}"
     );
 
     message

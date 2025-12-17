@@ -478,7 +478,7 @@ async fn delete_from_disk(path: PathBuf, key_cache: &KeyCache) -> Result<()> {
         unexpected_err_code(
             e,
             EC::NodeSystemFault,
-            Some(format!("Could not delete file: {:?}", path)),
+            Some(format!("Could not delete file: {path:?}")),
         )
     })?;
 
@@ -625,14 +625,14 @@ impl TryFrom<&str> for StorableFile {
                     .map(|name| (*storage_type, name))
             })
             .ok_or_else(|| {
-                unexpected_err(format!("{} is not a valid key file name", file_name), None)
+                unexpected_err(format!("{file_name} is not a valid key file name"), None)
             })?;
 
         let parts = file_name.split('-').collect::<Vec<&str>>();
 
         if parts.len() < 4 {
             return Err(unexpected_err(
-                format!("{} is not a valid file name", file_name),
+                format!("{file_name} is not a valid file name"),
                 None,
             ));
         }
@@ -648,8 +648,7 @@ impl TryFrom<&str> for StorableFile {
             _ => {
                 return Err(unexpected_err(
                     format!(
-                        "{} is not a valid key file name. Expected 'Key', 'Presign', 'KeyShareCommitment'",
-                        file_name
+                        "{file_name} is not a valid key file name. Expected 'Key', 'Presign', 'KeyShareCommitment'"
                     ),
                     None,
                 ));
@@ -730,7 +729,7 @@ impl StorableFile {
             io_err_code(
                 e,
                 EC::NodeSystemFault,
-                Some(format!("Could not read dir: {:?}", path)),
+                Some(format!("Could not read dir: {path:?}")),
             )
         })?;
 
@@ -739,7 +738,7 @@ impl StorableFile {
                 io_err_code(
                     e,
                     EC::NodeSystemFault,
-                    Some(format!("Could not determine file type: {:?}", entry)),
+                    Some(format!("Could not determine file type: {entry:?}")),
                 )
             })?;
 
@@ -840,7 +839,7 @@ mod test {
             let r = key_persistence
                 .read_key(&pubkey, &peer_id, epoch, &staker_address, 1, &key_cache)
                 .await;
-            assert!(r.is_err(), "epoch {}", epoch);
+            assert!(r.is_err(), "epoch {epoch}");
         }
         for epoch in 4..=5 {
             let r = key_persistence
@@ -871,7 +870,7 @@ mod test {
         let peers = dummy_peers();
         for epoch in 1..=5 {
             let commitments = KeyShareCommitments {
-                dkg_id: format!("DKG_ID_{}", epoch),
+                dkg_id: format!("DKG_ID_{epoch}"),
                 commitments: (0..4)
                     .map(|i| k256::ProjectivePoint::random(&mut rng))
                     .collect(),
@@ -914,7 +913,7 @@ mod test {
                     &key_cache,
                 )
                 .await;
-            assert!(r.is_err(), "epoch {}", epoch);
+            assert!(r.is_err(), "epoch {epoch}");
         }
         for epoch in 4..=5 {
             let r =
@@ -931,7 +930,7 @@ mod test {
             assert!(r.is_ok());
             let commitments = r.unwrap();
             assert_eq!(commitments.commitments.len(), 4);
-            assert_eq!(commitments.dkg_id, format!("DKG_ID_{}", epoch));
+            assert_eq!(commitments.dkg_id, format!("DKG_ID_{epoch}"));
         }
     }
 

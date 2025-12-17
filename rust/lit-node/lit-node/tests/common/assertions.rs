@@ -25,7 +25,7 @@ pub struct NetworkIntegrityChecker {
 
 impl NetworkIntegrityChecker {
     pub async fn new(end_user: &EndUser, actions: &Actions) -> Self {
-        let initial_bls_pubkey = get_network_pubkey(&actions).await;
+        let initial_bls_pubkey = get_network_pubkey(actions).await;
 
         // Use the first PKP for the network integrity check.
         let (pubkey, token_id, _, _) = end_user.first_pkp().info();
@@ -64,7 +64,7 @@ impl NetworkIntegrityChecker {
         // Signing operation.
         assert!(
             simple_single_sign_with_hd_key(
-                &validator_collection,
+                validator_collection,
                 &self.end_user,
                 self.minted_pkp_pubkey.clone(),
                 SigningScheme::EcdsaK256Sha256,
@@ -77,7 +77,7 @@ impl NetworkIntegrityChecker {
         info!("Success: ECDSA Signing checks passed");
         assert!(
             simple_single_sign_with_hd_key(
-                &validator_collection,
+                validator_collection,
                 &self.end_user,
                 self.minted_pkp_pubkey.clone(),
                 SigningScheme::SchnorrEd25519Sha512,
@@ -120,14 +120,14 @@ impl NetworkIntegrityChecker {
             .get_current_epoch(realm_id)
             .await
             .as_u64();
-        let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
+        let node_set = get_identity_pubkeys_from_node_set(node_set).await;
         test_encryption_decryption_auth_sig(&node_set, epoch, &key_set_id).await;
 
         // Signing check.
         info!("Running signing checks");
         for idx in 0..MAX_TRIES {
             if sign_with_hd_key(
-                &validator_collection,
+                validator_collection,
                 &self.end_user,
                 self.minted_pkp_pubkey.clone(),
                 false,

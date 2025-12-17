@@ -108,7 +108,7 @@ impl PresignManager {
             Err(e) => {
                 error!("Error reading filename: {:?}", e);
                 return Err(unexpected_err(
-                    Error::new(std::io::ErrorKind::Other, "file"),
+                    Error::other("file"),
                     Some("Presign filename read error.".into()),
                 ));
             }
@@ -120,13 +120,13 @@ impl PresignManager {
             None => {
                 error!("Error reading filename: {:?}", entry.path());
                 return Err(unexpected_err(
-                    Error::new(std::io::ErrorKind::Other, "file"),
+                    Error::other("file"),
                     Some("Presign filename read error.".into()),
                 ));
             }
         };
 
-        let share_ending = format! {"{}-H.cbor", peer_id};
+        let share_ending = format! {"{peer_id}-H.cbor"};
         if filename.ends_with(share_ending.as_str()) {
             let presign =
                 match read_presign_from_disk_direct::<Presign>(filename, &self.tss_state.key_cache)

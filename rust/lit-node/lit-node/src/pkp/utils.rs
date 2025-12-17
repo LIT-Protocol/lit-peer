@@ -161,14 +161,14 @@ pub async fn pkp_permissions_is_permitted(
             .await;
     } else {
         return Err(unexpected_err_code(
-            format!("Method not found: {}", method),
+            format!("Method not found: {method}"),
             NodeUnknownError,
             None,
         ));
     }
 
     res.map_err(|e| {
-        let msg = format!("Error calling {}: {}", method, e);
+        let msg = format!("Error calling {method}: {e}");
         error!("{}", msg);
         unexpected_err_code(e, NodeUnknownError, Some(msg))
     })
@@ -216,7 +216,7 @@ pub async fn pkp_permissions_is_permitted_auth_method(
         .call()
         .await
         .map_err(|e| {
-            let msg = format!("Error calling isPermittedAuthMethod: {}", e);
+            let msg = format!("Error calling isPermittedAuthMethod: {e}");
             error!("{}", msg);
             unexpected_err_code(e, NodeUnknownError, Some(msg))
         })
@@ -246,11 +246,7 @@ pub async fn pkp_permissions_get_permitted(
             .call()
             .await
             .map_err(|e| {
-                unexpected_err_code(
-                    e,
-                    NodeUnknownError,
-                    Some(format!("Error calling {}", method)),
-                )
+                unexpected_err_code(e, NodeUnknownError, Some(format!("Error calling {method}")))
             })?;
         ret_val = res
             .iter()
@@ -262,11 +258,7 @@ pub async fn pkp_permissions_get_permitted(
             .call()
             .await
             .map_err(|e| {
-                unexpected_err_code(
-                    e,
-                    NodeUnknownError,
-                    Some(format!("Error calling {}", method)),
-                )
+                unexpected_err_code(e, NodeUnknownError, Some(format!("Error calling {method}")))
             })?;
         ret_val = res
             .iter()
@@ -280,16 +272,12 @@ pub async fn pkp_permissions_get_permitted(
             .call()
             .await
             .map_err(|e| {
-                unexpected_err_code(
-                    e,
-                    NodeUnknownError,
-                    Some(format!("Error calling {}", method)),
-                )
+                unexpected_err_code(e, NodeUnknownError, Some(format!("Error calling {method}")))
             })?;
         ret_val = res.iter().map(|x| json!(x)).collect::<Vec<Value>>();
     } else {
         return Err(unexpected_err_code(
-            format!("Method not found: {}", method),
+            format!("Method not found: {method}"),
             NodeUnknownError,
             None,
         ));
@@ -332,7 +320,7 @@ pub async fn pkp_permissions_get_permitted_auth_method_scopes(
         .call()
         .await
         .map_err(|e| {
-            let msg = format!("Error calling get_permitted_auth_method_scopes: {}", e);
+            let msg = format!("Error calling get_permitted_auth_method_scopes: {e}");
             error!("{}", msg);
             unexpected_err_code(e, NodeUnknownError, Some(msg))
         })
@@ -376,8 +364,7 @@ pub async fn sign(
     if !is_authed {
         return Err(validation_err_code(
             format!(
-                "Neither you nor this Lit Action are authorized to sign using this PKP: {}",
-                pubkey
+                "Neither you nor this Lit Action are authorized to sign using this PKP: {pubkey}"
             ),
             NodePKPNotAuthorized,
             None,
@@ -405,14 +392,10 @@ pub async fn sign(
                         );
                         return Err(unexpected_err_code(
                             format!(
-                                "Signing scheme '{}' does not support curve type '{}",
-                                signing_scheme, curve_type
+                                "Signing scheme '{signing_scheme}' does not support curve type '{curve_type}"
                             ),
                             NodeUnknownError,
-                            Some(format!(
-                                "Pubkey share not found on this node PKP: {}",
-                                pubkey
-                            )),
+                            Some(format!("Pubkey share not found on this node PKP: {pubkey}")),
                         ));
                     } else {
                         return Err(unexpected_err(
@@ -426,10 +409,7 @@ pub async fn sign(
                     return Err(unexpected_err_code(
                         err,
                         NodeUnknownError,
-                        Some(format!(
-                            "Pubkey share not found on this node PKP: {}",
-                            pubkey
-                        )),
+                        Some(format!("Pubkey share not found on this node PKP: {pubkey}")),
                     ));
                 }
                 Ok(None) => {
@@ -438,7 +418,7 @@ pub async fn sign(
                         pubkey
                     );
                     return Err(unexpected_err_code(
-                        format!("Pubkey share not found on this node PKP: {}", pubkey),
+                        format!("Pubkey share not found on this node PKP: {pubkey}"),
                         NodeUnknownError,
                         None,
                     ));

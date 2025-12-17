@@ -59,9 +59,7 @@ pub async fn chatter_sender_worker(
                 let peer_state = peer_state.clone();
                 let peer_addr = transmission_details.dest_peer.socket_address.clone();
                 let dest_url = match Url::parse(format!(
-                    "{}{}/",
-                    prefix,
-                    peer_addr
+                    "{prefix}{peer_addr}/"
                 ).as_str()) {
                     Ok(url) => url,
                     Err(e) => {

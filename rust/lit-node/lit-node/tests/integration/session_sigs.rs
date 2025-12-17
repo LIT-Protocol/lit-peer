@@ -129,8 +129,7 @@ async fn sign_session_sig_with_lit_actions() {
         let error = response.error.as_ref().unwrap();
         assert!(
             error.contains("You can not sign without providing an auth_sig."),
-            "{:?}",
-            error
+            "{error:?}"
         );
     }
 
@@ -195,14 +194,12 @@ async fn sign_session_sig_with_lit_actions_requires_payment() {
     for response in &responses {
         assert!(
             !response.ok,
-            "response.ok should be false. Response: {:?}",
-            response
+            "response.ok should be false. Response: {response:?}"
         );
         let response_error = response.error.as_ref().unwrap();
         assert!(
             response_error.contains("unable to get payment method"),
-            "response_error doesn't contain 'unable to get payment method': {:?}",
-            response_error
+            "response_error doesn't contain 'unable to get payment method': {response_error:?}"
         );
     }
 }
@@ -940,10 +937,8 @@ async fn decrypt_with_lit_action_session_sig() {
     let test_encryption_params =
         prepare_test_encryption_parameters_with_wallet_address(encoding::bytes_to_hex(eth_address));
 
-    let network_pubkey = lit_node_testnet::node_collection::get_network_pubkey_from_node_set(
-        node_set.iter().map(|(n, _)| n),
-    )
-    .await;
+    let network_pubkey =
+        lit_node_testnet::node_collection::get_network_pubkey_from_node_set(node_set.keys()).await;
 
     let message_bytes = test_encryption_params.to_encrypt.as_bytes();
     let hashed_access_control_conditions = hash_access_control_conditions(RequestConditions {
@@ -1361,7 +1356,7 @@ pub async fn session_sig_only_mbg_pkp() {
     let session_sigs_and_node_set = get_session_sigs_and_node_set_for_pkp(
         &node_set,
         auth_pubkey.clone(),
-        auth_eth_address.into(),
+        auth_eth_address,
         vec![
             LitResourceAbilityRequest {
                 resource: LitResourceAbilityRequestResource {
@@ -1529,8 +1524,5 @@ async fn explicit_resource_permission_required_for_lit_action() {
     assert!(action_result.is_ok());
 
     let action_result = action_result.unwrap();
-    assert!(
-        action_result == true,
-        "The action should have returned true"
-    );
+    assert!(action_result, "The action should have returned true");
 }

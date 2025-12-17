@@ -68,10 +68,8 @@ impl FrostState {
         VerifyingShare,
     )> {
         if !signature_scheme.supports_algorithm(SigningAlgorithm::Schnorr) {
-            let msg = format!(
-                "Requested signature scheme {:?} does not support Schnorr",
-                signature_scheme
-            );
+            let msg =
+                format!("Requested signature scheme {signature_scheme:?} does not support Schnorr");
             return Err(unexpected_err_code(
                 "Unsupported signature curve for Schnorr signature",
                 EC::NodeSignatureNotSupported,

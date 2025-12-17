@@ -47,7 +47,7 @@ impl Cipherable for BlsState {
 
         let sks = secret_key_share
             .sign(blsful::SignatureSchemes::ProofOfPossession, &message_bytes)
-            .map_err(|e| unexpected_err(format!("Failed to sign message: {:?}", e), None))?;
+            .map_err(|e| unexpected_err(format!("Failed to sign message: {e:?}"), None))?;
 
         Ok((sks, share_peer_id))
     }

@@ -177,11 +177,11 @@ impl PeerReviewer {
                         &[
                             KeyValue::new(
                                 metrics::complaint::ATTRIBUTE_COMPLAINT_REASON,
-                                format!("{:?}", key),
+                                format!("{key:?}"),
                             ),
                             KeyValue::new(
                                 metrics::complaint::ATTRIBUTE_EVICTION_CAUSE,
-                                format!("{:?}", cause),
+                                format!("{cause:?}"),
                             ),
                             KeyValue::new(
                                 metrics::complaint::ATTRIBUTE_PEER_KEY,

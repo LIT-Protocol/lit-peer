@@ -73,7 +73,7 @@ pub async fn sign_with_hd_key(
     for i in 0..messages_to_sign {
         let to_sign = match message_to_sign.clone() {
             Some(m) => m,
-            None => format!("test message #{}", i),
+            None => format!("test message #{i}"),
         };
 
         info!("Testing message #{}: {:?}", i, to_sign);

@@ -85,13 +85,13 @@ async fn shadow_splicing_sign_encrypt() {
         target_validators.len()
     );
 
-    let _result = actions
+    actions
         .setup_shadow_splicing(realm_id, new_realm_id, target_validators.clone())
         .await
         .unwrap();
     info!("Shadow splicing has started.");
 
-    let _result = actions
+    actions
         .wait_for_shadow_splicing_to_complete(new_realm_id, target_validators)
         .await
         .unwrap();
@@ -296,13 +296,13 @@ async fn shadow_splicing_epoch() {
         target_validators.len()
     );
 
-    let _result = actions
+    actions
         .setup_shadow_splicing(realm_id, new_realm_id, target_validators.clone())
         .await
         .unwrap();
     info!("Shadow splicing has started.");
 
-    let _result = actions
+    actions
         .wait_for_shadow_splicing_to_complete(new_realm_id, target_validators)
         .await
         .unwrap();

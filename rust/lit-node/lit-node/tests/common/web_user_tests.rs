@@ -80,8 +80,7 @@ pub fn prepare_test_encryption_parameters() -> TestEncryptionParameters {
     })
     .unwrap();
     let identity_param = AccessControlConditionResource::new(format!(
-        "{}/{}",
-        hashed_access_control_conditions, data_to_encrypt_hash
+        "{hashed_access_control_conditions}/{data_to_encrypt_hash}"
     ))
     .get_resource_key()
     .into_bytes();
@@ -138,8 +137,7 @@ pub fn prepare_test_encryption_parameters_with_wallet_address(
     })
     .unwrap();
     let identity_param = AccessControlConditionResource::new(format!(
-        "{}/{}",
-        hashed_access_control_conditions, data_to_encrypt_hash
+        "{hashed_access_control_conditions}/{data_to_encrypt_hash}"
     ))
     .get_resource_key()
     .into_bytes();
@@ -174,7 +172,7 @@ pub async fn test_encryption_decryption_auth_sig(
     // Encrypt.
     let message_bytes = test_encryption_parameters.to_encrypt.as_bytes();
 
-    let network_pubkey = get_network_pubkey_from_node_set(node_set.iter().map(|(n, _)| n)).await;
+    let network_pubkey = get_network_pubkey_from_node_set(node_set.keys()).await;
     let pubkey =
         lit_sdk::lit_node_core::blsful::PublicKey::try_from(hex::decode(network_pubkey).unwrap())
             .unwrap();

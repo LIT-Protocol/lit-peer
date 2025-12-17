@@ -147,7 +147,7 @@ pub async fn do_sign_with_pubkey<C>(
             .0
             .iter()
             .filter(|p| p.key_hash == presign_share.staker_hash)
-            .last()
+            .next_back()
         {
             Some(p) => p,
             None => continue,

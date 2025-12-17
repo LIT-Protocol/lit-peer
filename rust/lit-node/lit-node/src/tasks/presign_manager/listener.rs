@@ -704,7 +704,7 @@ impl PresignManager {
                     .await
                     .map(PreSignatureValue::P384),
                 scheme => Err(unexpected_err(
-                    format!("Unsupported scheme {}.", scheme),
+                    format!("Unsupported scheme {scheme}."),
                     None,
                 )),
             };

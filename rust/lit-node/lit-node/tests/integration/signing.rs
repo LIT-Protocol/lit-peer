@@ -46,7 +46,7 @@ async fn test_pkp_permissions_get_address_registered() {
 
     let permitted_pubkey = "0x5aaeC3Bd77f1F05f7B1C36927CDc4DB24Ec95bFc";
     let permitted_pubkey_h160 =
-        H160::from_str(&permitted_pubkey).expect("Could not convert pubkey string to bytes");
+        H160::from_str(permitted_pubkey).expect("Could not convert pubkey string to bytes");
 
     let token_id = end_user.first_pkp().token_id;
     let res = end_user
@@ -398,8 +398,8 @@ pub async fn sign_with_each_curve_type(
     for scheme in ALL_SIGNING_SCHEMES {
         info!("Signing with scheme: {:?}", scheme);
         let result = simple_single_sign_with_hd_key(
-            &validator_collection,
-            &end_user,
+            validator_collection,
+            end_user,
             pubkey.clone(),
             scheme,
             &vec![],
@@ -471,7 +471,7 @@ pub async fn test_presign(signing_scheme: SigningScheme) {
     let start = std::time::Instant::now();
     for i in 0..messages_to_sign {
         info!("Starting sig #{}", i);
-        let message_to_sign = Some(format!("Test message #{}", i));
+        let message_to_sign = Some(format!("Test message #{i}"));
         let start_1 = std::time::Instant::now();
         let validation = sign_with_hd_key(
             &validator_collection,
@@ -565,8 +565,7 @@ pub async fn test_presign(signing_scheme: SigningScheme) {
 
     assert_eq!(
         sign_success, messages_to_sign,
-        "Sign success: {}, messages_to_sign: {}",
-        sign_success, messages_to_sign
+        "Sign success: {sign_success}, messages_to_sign: {messages_to_sign}"
     );
 }
 

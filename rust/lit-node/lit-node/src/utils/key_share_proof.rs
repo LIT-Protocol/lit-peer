@@ -198,7 +198,7 @@ pub async fn compute_key_share_proof(
                 blsful::SignatureSchemes::ProofOfPossession,
                 noonce.as_bytes(),
             )
-            .map_err(|e| unexpected_err(format!("Failed to sign message: {:?}", e), None))?;
+            .map_err(|e| unexpected_err(format!("Failed to sign message: {e:?}"), None))?;
 
         return postcard::to_stdvec(&sks)
             .map_err(|e| unexpected_err(e, Some("cannot serialize BLS proof".to_string())));
@@ -373,13 +373,13 @@ pub async fn verify_key_share_proofs(
 
     if !peers.contains_address(their_addr) {
         return Err(unexpected_err(
-            format!("Peer {} not found in the set", their_addr),
+            format!("Peer {their_addr} not found in the set"),
             None,
         ));
     }
     if key_share_proofs.proofs.is_empty() {
         return Err(unexpected_err_code(
-            format!("Peer {} has no key share proofs", their_addr),
+            format!("Peer {their_addr} has no key share proofs"),
             EC::IncorrectInfoForKeyShareValidation,
             None,
         ));

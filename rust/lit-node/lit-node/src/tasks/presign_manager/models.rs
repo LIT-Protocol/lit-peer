@@ -184,14 +184,14 @@ pub enum TxnPrefix {
 impl TxnPrefix {
     pub fn as_str(&self) -> String {
         match self {
-            Self::GetPresign(hash) => format!("GET_PRESIGN_{}", hash),
+            Self::GetPresign(hash) => format!("GET_PRESIGN_{hash}"),
             Self::PregenSignal => "PREGEN_SIGNAL".to_string(),
             Self::PregenPresign(hash, curve_type) => {
-                format!("PREGEN_PRESIGN_{}_{}", hash, curve_type)
+                format!("PREGEN_PRESIGN_{hash}_{curve_type}")
             }
-            Self::ConfirmPregenPresign(hash) => format!("CONFIRM_PREGEN_PRESIGN_{}", hash),
+            Self::ConfirmPregenPresign(hash) => format!("CONFIRM_PREGEN_PRESIGN_{hash}"),
             Self::RealTimePresign(hash, curve_type) => {
-                format!("RT_PRESIGN_{}_{}", hash, curve_type)
+                format!("RT_PRESIGN_{hash}_{curve_type}")
             }
         }
     }

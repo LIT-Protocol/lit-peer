@@ -438,10 +438,10 @@ async fn init_observability(
 
     if !cfg.enable_observability_export()? {
         #[cfg(not(feature = "testing"))]
-        simple_logging_subscriber(cfg, Some(format!("{} -", port)))?.init();
+        simple_logging_subscriber(cfg, Some(format!("{port} -")))?.init();
 
         #[cfg(feature = "testing")]
-        simple_file_logging_subscriber(cfg, Some(format!("{} -", port)))?.init();
+        simple_file_logging_subscriber(cfg, Some(format!("{port} -",)))?.init();
 
         return Ok(ObservabilityProviders::default());
     }

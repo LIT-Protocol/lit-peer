@@ -466,10 +466,7 @@ pub fn check_condition_count(
         let count = recursive_access_control_condition_count(conditions);
         if count > MAX_CONDITION_COUNT {
             return Err(validation_err_code(
-                format!(
-                    "Too many conditions, max is {}, got {}",
-                    MAX_CONDITION_COUNT, count
-                ),
+                format!("Too many conditions, max is {MAX_CONDITION_COUNT}, got {count}"),
                 EC::NodeTooManyConditions,
                 None,
             ));
@@ -480,10 +477,7 @@ pub fn check_condition_count(
         let count = recursive_evm_contract_condition_count(conditions);
         if count > MAX_CONDITION_COUNT {
             return Err(validation_err_code(
-                format!(
-                    "Too many conditions, max is {}, got {}",
-                    MAX_CONDITION_COUNT, count
-                ),
+                format!("Too many conditions, max is {MAX_CONDITION_COUNT}, got {count}"),
                 EC::NodeTooManyConditions,
                 None,
             ));
@@ -494,10 +488,7 @@ pub fn check_condition_count(
         let count = recursive_sol_rpc_condition_count(conditions);
         if count > MAX_CONDITION_COUNT {
             return Err(validation_err_code(
-                format!(
-                    "Too many conditions, max is {}, got {}",
-                    MAX_CONDITION_COUNT, count
-                ),
+                format!("Too many conditions, max is {MAX_CONDITION_COUNT}, got {count}"),
                 EC::NodeTooManyConditions,
                 None,
             ));
@@ -508,10 +499,7 @@ pub fn check_condition_count(
         let count = recursive_unified_access_control_condition_count(conditions);
         if count > MAX_CONDITION_COUNT {
             return Err(validation_err_code(
-                format!(
-                    "Too many conditions, max is {}, got {}",
-                    MAX_CONDITION_COUNT, count
-                ),
+                format!("Too many conditions, max is {MAX_CONDITION_COUNT}, got {count}"),
                 EC::NodeTooManyConditions,
                 None,
             ));
@@ -605,7 +593,7 @@ async fn retrieve_from_ipfs(
                     .add_detail(format!("Timeout error getting code from ipfs. Try getting it yourself in a browser and see if it works: {url}"))
             } else {
                 ipfs_err(e, Some("Error getting ipfs file".into()))
-                    .add_detail(format!("Error getting ipfs file: {}", ipfs_id))
+                    .add_detail(format!("Error getting ipfs file: {ipfs_id}"))
             }
         })?;
 
@@ -617,7 +605,7 @@ async fn retrieve_from_ipfs(
             ),
             None,
         )
-        .add_detail(format!("Error getting ipfs file: {}", ipfs_id)));
+        .add_detail(format!("Error getting ipfs file: {ipfs_id}")));
     }
     let text_result = req.text().await.map_err(|e| {
         conversion_err(
@@ -642,8 +630,7 @@ async fn retrieve_from_ipfs(
     if cid != ipfs_id.clone() {
         return Err(ipfs_err(
             format!(
-                "Error getting code from ipfs url.  Hash mismatch.  Expected: {}  Actual: {}",
-                ipfs_id, cid
+                "Error getting code from ipfs url.  Hash mismatch.  Expected: {ipfs_id}  Actual: {cid}"
             ),
             None,
         ));

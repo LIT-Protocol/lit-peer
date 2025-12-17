@@ -9,6 +9,7 @@ use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
 use tokio::time::MissedTickBehavior;
 
+#[allow(clippy::large_enum_variant)]
 #[derive(Debug, Clone)]
 pub enum PeerCheckerMessage {
     AddPeer(PeerItem),

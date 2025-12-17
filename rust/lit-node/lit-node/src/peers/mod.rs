@@ -115,7 +115,7 @@ impl PeerState {
                     .decode_contract_revert::<staking::StakingErrors>()
                     .expect_or_err("Could not decode staking contract error")?;
                 return Err(unexpected_err_code(
-                    format!("{:?}", decoded_err),
+                    format!("{decoded_err:?}"),
                     EC::NodeBlockchainError,
                     Some("Could not register attested wallet".to_string()),
                 ));

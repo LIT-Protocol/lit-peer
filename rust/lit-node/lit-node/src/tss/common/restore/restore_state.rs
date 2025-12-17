@@ -5,7 +5,7 @@ use elliptic_curve::bigint::{NonZero, U256};
 use ethers::types::H160;
 use sdd::{AtomicShared, Shared};
 use serde::{Deserialize, Serialize};
-use std::io::{Error, ErrorKind};
+use std::io::Error;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tokio::sync::RwLock;
@@ -101,8 +101,7 @@ impl RestoreState {
                         None => {
                             return Err(unexpected_err(
                                 format!(
-                                    "Expected key set config information for {} but it doesn't exist",
-                                    id
+                                    "Expected key set config information for {id} but it doesn't exist"
                                 ),
                                 None,
                             ));
@@ -178,7 +177,7 @@ impl RestoreState {
                 Ok(curve) => curve,
                 Err(e) => {
                     let err_msg = format!("Not a valid curve: {}", share.curve);
-                    return Err(parser_err(Error::new(ErrorKind::Other, err_msg), None));
+                    return Err(parser_err(Error::other(err_msg), None));
                 }
             };
 
@@ -508,10 +507,7 @@ impl RestoreState {
     pub fn assert_actively_restoring(&self) -> Result<()> {
         match self.actively_restoring.load(Ordering::Acquire) {
             true => Ok(()),
-            false => Err(unexpected_err(
-                Error::new(ErrorKind::Other, "Not in RESTORE state"),
-                None,
-            )),
+            false => Err(unexpected_err(Error::other("Not in RESTORE state"), None)),
         }
     }
 
@@ -733,8 +729,7 @@ impl RestoreState {
         state
             .bls_recovery_data
             .as_ref()
-            .map(|d| d.eks_and_ds.first())
-            .flatten()
+            .and_then(|d| d.eks_and_ds.first())
             .cloned()
     }
 
@@ -746,16 +741,12 @@ impl RestoreState {
         state
             .k256_recovery_data
             .as_ref()
-            .map(|d| d.eks_and_ds.first())
-            .flatten()
+            .and_then(|d| d.eks_and_ds.first())
             .cloned()
     }
 
     fn ciphertexts_not_set() -> crate::error::Error {
-        unexpected_err(
-            Error::new(ErrorKind::Other, "Ciphertexts are not yet set"),
-            None,
-        )
+        unexpected_err(Error::other("Ciphertexts are not yet set"), None)
     }
 
     #[instrument(level = "debug", skip_all)]
@@ -795,7 +786,7 @@ impl RestoreState {
             Some(rd) => rd,
             None => {
                 let err_msg = format!("Curve is not being restored: {}", share_data.curve);
-                return Err(parser_err(Error::new(ErrorKind::Other, err_msg), None));
+                return Err(parser_err(Error::other(err_msg), None));
             }
         };
 
@@ -808,7 +799,7 @@ impl RestoreState {
                 recovery_data.encryption_key.to_compressed_hex(),
                 share_data.encryption_key,
             );
-            return Err(unexpected_err(Error::new(ErrorKind::Other, err_msg), None));
+            return Err(unexpected_err(Error::other(err_msg), None));
         }
 
         for eks_and_ds in recovery_data.eks_and_ds.iter_mut() {
@@ -828,7 +819,7 @@ impl RestoreState {
             "An encrypted key share with pub_key {} does not exist.",
             share_data.verification_key
         );
-        Err(unexpected_err(Error::new(ErrorKind::Other, err_msg), None))
+        Err(unexpected_err(Error::other(err_msg), None))
     }
 }
 
@@ -1193,12 +1184,12 @@ mod tests {
         inner.threshold = 2;
         inner.bls_recovery_data = Some(CurveRecoveryData {
             encryption_key: bls_enc_key,
-            blinder: restore_state.get_blinders().bls_blinder.unwrap().clone(),
+            blinder: restore_state.get_blinders().bls_blinder.unwrap(),
             eks_and_ds: encrypted_bls_shares,
         });
         inner.k256_recovery_data = Some(CurveRecoveryData {
             encryption_key: k256_enc_key,
-            blinder: restore_state.get_blinders().k256_blinder.unwrap().clone(),
+            blinder: restore_state.get_blinders().k256_blinder.unwrap(),
             eks_and_ds: encrypted_k256_shares,
         });
         restore_state.load_backup(inner).await.unwrap();

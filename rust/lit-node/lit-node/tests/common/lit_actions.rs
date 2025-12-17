@@ -167,7 +167,7 @@ pub async fn sign_from_file_system(
         .await
         .as_u64();
     let node_set = &validator_collection.random_threshold_nodeset().await;
-    let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
+    let node_set = get_identity_pubkeys_from_node_set(node_set).await;
     // let node_set = &validator_collection.complete_node_set();
 
     let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) =
@@ -294,7 +294,7 @@ pub async fn prepare_sign_from_file_parameters(
 
     let (pubkey, _token_id, _eth_address, key_set_id) = end_user.first_pkp().info();
 
-    Ok(lit_action_params(lit_action_code, pubkey, key_set_id).await?)
+    lit_action_params(lit_action_code, pubkey, key_set_id).await
 }
 
 pub async fn execute_lit_action_auth_sig(
@@ -314,7 +314,7 @@ pub async fn execute_lit_action_auth_sig(
         js_params,
         auth_methods,
         epoch,
-        node_set: node_set.iter().map(|(n, _)| n.clone()).collect(),
+        node_set: node_set.keys().cloned().collect(),
         invocation: Invocation::Sync,
         key_set_id: key_set_id.to_string(),
     };
@@ -410,7 +410,7 @@ pub async fn assert_signed_action(
                 .is_ok(),
             ),
             s => {
-                panic!("Unsupported signing scheme type: {}", s);
+                panic!("Unsupported signing scheme type: {s}");
             }
         },
         Err(e) => {
@@ -449,7 +449,7 @@ pub async fn generate_pkp_check_get_permitted_pkp_action(
         token_id.to_string(),
     )
     .await
-    .map_err(|e| anyhow::anyhow!("Error getting permitted actions: {:?}", e));
+    .map_err(|e| anyhow::anyhow!("Error getting permitted actions: {e:?}"));
 
     assert!(res.is_ok());
     Ok((pkp_pubkey, res?))
@@ -484,7 +484,7 @@ pub async fn generate_pkp_check_is_permitted_pkp_action(
         [serde_json::Value::from(ipfs_cid)].to_vec(),
     )
     .await
-    .map_err(|e| anyhow::anyhow!("Error getting permitted actions: {:?}", e));
+    .map_err(|e| anyhow::anyhow!("Error getting permitted actions: {e:?}"));
 
     assert!(res.is_ok());
     res

@@ -125,7 +125,7 @@ pub mod litactions {
         wrap_in_quotes: bool,
     ) -> u8 {
         info!("Starting test: {}.js", file_name);
-        let file_with_path = &format!("./tests/lit_action_scripts/{}.js", file_name);
+        let file_with_path = &format!("./tests/lit_action_scripts/{file_name}.js");
 
         let actions = validator_collection.actions();
         let node_set = validator_collection.random_threshold_nodeset().await;
@@ -143,7 +143,7 @@ pub mod litactions {
         let (access_control_conditions, ciphertext, data_to_encrypt_hash, auth_sig) =
             get_encryption_decryption_test_params(
                 end_user.wallet.clone(),
-                &actions,
+                actions,
                 value,
                 &lit_action_code,
                 fn_accs,
@@ -192,19 +192,17 @@ pub mod litactions {
         .await;
 
         let value = if wrap_in_quotes {
-            format!("\"{}\"", value)
+            format!("\"{value}\"")
         } else {
             value.to_string()
         };
 
         let execute_resp = execute_resp.unwrap();
-        if execute_resp.len() > 0 {
-            if execute_resp[0].ok {
-                assert!(
-                    check_payment_details(&execute_resp, price_components),
-                    "Payment details are not correct."
-                );
-            }
+        if !execute_resp.is_empty() && execute_resp[0].ok {
+            assert!(
+                check_payment_details(&execute_resp, price_components),
+                "Payment details are not correct."
+            );
         }
         assert!(fn_assertion(
             execute_resp,
@@ -231,10 +229,7 @@ pub mod litactions {
             .iter()
             .map(|r| {
                 let payment_details = r.data.as_ref().unwrap().payment_detail.as_ref().unwrap();
-                payment_details
-                    .iter()
-                    .map(|p| p.clone())
-                    .collect::<Vec<_>>()
+                payment_details.iter().copied().collect::<Vec<_>>()
             })
             .collect::<Vec<_>>();
 
@@ -278,9 +273,7 @@ pub mod litactions {
             } else {
                 assert!(
                     count >= response_count,
-                    "Price component {:?} count less than response count.  One or more nodes did not pay the {:?}",
-                    price_component,
-                    price_component
+                    "Price component {price_component:?} count less than response count.  One or more nodes did not pay the {price_component:?}"
                 );
             }
             info!(
@@ -293,13 +286,13 @@ pub mod litactions {
         let mut not_found = vec![];
 
         for payment_detail in payment_details {
-            if !all_price_components.contains(&payment_detail.component) {
-                if !not_found.contains(&payment_detail.component) {
-                    not_found.push(payment_detail.component);
-                }
+            if !all_price_components.contains(&payment_detail.component)
+                && !not_found.contains(&payment_detail.component)
+            {
+                not_found.push(payment_detail.component);
             }
         }
-        if not_found.len() > 0 {
+        if !not_found.is_empty() {
             error!("Price components not found: {:?}", not_found);
             return false;
         }
@@ -436,11 +429,10 @@ pub mod litactions {
         let results = execute_resp
             .into_iter()
             .map(|r| {
-                assert!(r.ok, "Expected response to succeed but got: {:?}", r);
+                assert!(r.ok, "Expected response to succeed but got: {r:?}");
                 assert!(
                     r.data.is_some(),
-                    "Expected response to have data but got: {:?}",
-                    r
+                    "Expected response to have data but got: {r:?}"
                 );
                 r.data.unwrap()
             })
@@ -632,8 +624,7 @@ pub mod litactions {
         })
         .unwrap();
         let identity_param = AccessControlConditionResource::new(format!(
-            "{}/{}",
-            hashed_access_control_conditions, data_to_encrypt_hash
+            "{hashed_access_control_conditions}/{data_to_encrypt_hash}"
         ))
         .get_resource_key()
         .into_bytes();
@@ -912,17 +903,12 @@ pub mod litactions {
 
             let mut signed_outputs = Vec::with_capacity(execute_resp.len());
             for ex in &execute_resp {
-                assert!(ex.ok, "response returned invalid: {:?}", ex);
-                assert!(
-                    ex.data.is_some(),
-                    "response didn't return a result: {:?}",
-                    ex
-                );
+                assert!(ex.ok, "response returned invalid: {ex:?}");
+                assert!(ex.data.is_some(), "response didn't return a result: {ex:?}");
                 let response = ex.data.as_ref().unwrap();
                 assert!(
                     response.success,
-                    "execution response returned false: {:?}",
-                    response
+                    "execution response returned false: {response:?}"
                 );
                 let outer: String = serde_json::from_str(&response.response).unwrap();
                 let output = serde_json::from_str::<SignedDataOutput>(&outer).unwrap();
@@ -970,17 +956,12 @@ pub mod litactions {
             .unwrap();
 
             for ex in pk_execute_resp {
-                assert!(ex.ok, "response returned invalid: {:?}", ex);
-                assert!(
-                    ex.data.is_some(),
-                    "response didn't return a result: {:?}",
-                    ex
-                );
+                assert!(ex.ok, "response returned invalid: {ex:?}");
+                assert!(ex.data.is_some(), "response didn't return a result: {ex:?}");
                 let response = ex.data.as_ref().unwrap();
                 assert!(
                     response.success,
-                    "execution response returned false: {:?}",
-                    response
+                    "execution response returned false: {response:?}"
                 );
                 let outer: String = serde_json::from_str(&response.response).unwrap();
                 assert_eq!(outer, first.verifying_key);
@@ -1023,17 +1004,12 @@ pub mod litactions {
             .unwrap();
 
             for ex in pk_execute_resp {
-                assert!(ex.ok, "response returned invalid: {:?}", ex);
-                assert!(
-                    ex.data.is_some(),
-                    "response didn't return a result: {:?}",
-                    ex
-                );
+                assert!(ex.ok, "response returned invalid: {ex:?}");
+                assert!(ex.data.is_some(), "response didn't return a result: {ex:?}");
                 let response = ex.data.as_ref().unwrap();
                 assert!(
                     response.success,
-                    "execution response returned false: {:?}",
-                    response
+                    "execution response returned false: {response:?}"
                 );
                 let outer: String = serde_json::from_str(&response.response).unwrap();
                 assert_eq!(outer, "true");

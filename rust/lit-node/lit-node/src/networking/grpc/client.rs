@@ -66,7 +66,7 @@ impl ChatterClientFactory {
             Ok(channel) => Ok(ChatterServiceClient::new(channel)),
             Err(e) => Err(unexpected_err(
                 e,
-                Some(format!("Failed to connect to peer: {}", dest_peer)),
+                Some(format!("Failed to connect to peer: {dest_peer}")),
             )),
         }
     }

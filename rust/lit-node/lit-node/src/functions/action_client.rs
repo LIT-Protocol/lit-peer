@@ -844,7 +844,7 @@ impl Client {
                 self.increment_broad_and_collect_counter()?;
 
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
-                let txn_prefix = format!("{}_{}", txn_prefix, name);
+                let txn_prefix = format!("{txn_prefix}_{name}");
 
                 let tss_state = Arc::new(tss_state);
                 let cm = CommsManager::new(&tss_state, 0, &txn_prefix, "0", &self.node_set).await?;
@@ -897,7 +897,7 @@ impl Client {
                 let cipher_state = match tss_state.get_cipher_state(SigningScheme::Bls12381) {
                     Ok(cipher_state) => cipher_state,
                     Err(e) => {
-                        bail!("Couldn't get BLS ciper state: {:?}", e);
+                        bail!("Couldn't get BLS ciper state: {e:?}");
                     }
                 };
 
@@ -908,7 +908,7 @@ impl Client {
                 {
                     Ok(signature_share) => signature_share,
                     Err(e) => {
-                        bail!("Couldn't sign the identity parameter: {:?}", e);
+                        bail!("Couldn't sign the identity parameter: {e:?}");
                     }
                 };
 
@@ -938,7 +938,7 @@ impl Client {
                 let decrypted = match decrypted {
                     Ok(decrypted) => decrypted,
                     Err(e) => {
-                        bail!("Failed to decrypt and combine: {:?}", e);
+                        bail!("Failed to decrypt and combine: {e:?}");
                     }
                 };
 
@@ -1001,7 +1001,7 @@ impl Client {
                 let cipher_state = match tss_state.get_cipher_state(SigningScheme::Bls12381) {
                     Ok(cipher_state) => cipher_state,
                     Err(e) => {
-                        bail!("Couldn't get BLS ciper state: {:?}", e);
+                        bail!("Couldn't get BLS ciper state: {e:?}");
                     }
                 };
 
@@ -1012,7 +1012,7 @@ impl Client {
                 {
                     Ok(signature_share) => signature_share,
                     Err(e) => {
-                        bail!("Couldn't sign the identity parameter: {:?}", e);
+                        bail!("Couldn't sign the identity parameter: {e:?}");
                     }
                 };
 
@@ -1064,18 +1064,16 @@ impl Client {
                         let decrypted = match decrypted {
                             Ok(decrypted) => decrypted,
                             Err(e) => {
-                                bail!("Failed to decrypt and combine: {:?}", e);
+                                bail!("Failed to decrypt and combine: {e:?}");
                             }
                         };
 
-                        let result = match std::str::from_utf8(&decrypted) {
+                        match std::str::from_utf8(&decrypted) {
                             Ok(result) => result.to_string(),
                             Err(e) => {
                                 bail!("Failed to convert decrypted bytes to string.")
                             }
-                        };
-
-                        result
+                        }
                     }
                 };
 
@@ -1092,7 +1090,7 @@ impl Client {
 
                 self.increment_broad_and_collect_counter()?;
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
-                let txn_prefix = format!("{}_combine_{}", txn_prefix, sig_name);
+                let txn_prefix = format!("{txn_prefix}_combine_{sig_name}");
                 let tss_state = Arc::new(tss_state);
 
                 let result = self
@@ -1192,7 +1190,7 @@ impl Client {
                 }
                 self.increment_broad_and_collect_counter()?;
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
-                let txn_prefix = format!("{}_combine_{}", txn_prefix, signing_scheme);
+                let txn_prefix = format!("{txn_prefix}_combine_{signing_scheme}");
                 let tss_state = Arc::new(tss_state);
 
                 let result = self
@@ -1302,7 +1300,7 @@ impl Client {
             }
             UnionResponse::GetRpcUrl(GetRpcUrlRequest { chain }) => {
                 let result = rpc_url(chain)
-                    .unwrap_or_else(|e| format!("Error getting RPC URL: {:?}", e).to_string());
+                    .unwrap_or_else(|e| format!("Error getting RPC URL: {e:?}").to_string());
                 GetRpcUrlResponse { result }.into()
             }
 
@@ -1312,7 +1310,7 @@ impl Client {
 
                 self.increment_broad_and_collect_counter()?;
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
-                let txn_prefix = format!("{}_{}", txn_prefix, name);
+                let txn_prefix = format!("{txn_prefix}_{name}");
                 let tss_state = Arc::new(tss_state);
 
                 trace!(
@@ -1338,7 +1336,7 @@ impl Client {
 
                 // note that the default leader function doesn't take a function parameter, thus we need to generate a hash from the transaction id only
                 let request_hash = generate_hash(txn_prefix.clone());
-                let txn_prefix = format!("{}_{}", txn_prefix, name);
+                let txn_prefix = format!("{txn_prefix}_{name}");
                 let (leader_addr, is_leader) = self.leader_helper(request_hash).await?;
 
                 let peers = tss_state.peer_state.peers();
@@ -1396,7 +1394,7 @@ impl Client {
                         data_encoding::BASE64.encode(&serde_bare::to_vec(&ciphertext)?)
                     }
                     Err(e) => {
-                        bail!("Failed to encrypt: {:?}", e);
+                        bail!("Failed to encrypt: {e:?}");
                     }
                 };
 
@@ -1443,7 +1441,7 @@ impl Client {
                     anyhow::Error::msg("No current action ipfs id is specified".to_string())
                 })?;
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
-                let txn_prefix = format!("{}_signasaction_{}", txn_prefix, scheme);
+                let txn_prefix = format!("{txn_prefix}_signasaction_{scheme}");
                 let tss_state = Arc::new(tss_state);
 
                 self.state.sign_count += 1;
@@ -1487,7 +1485,7 @@ impl Client {
                 }
 
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
-                let txn_prefix = format!("{}_signasaction_{}", txn_prefix, scheme);
+                let txn_prefix = format!("{txn_prefix}_signasaction_{scheme}");
                 let tss_state = Arc::new(tss_state);
                 let curve_type = scheme.curve_type();
                 let curve_state = CurveState::new(
@@ -1530,7 +1528,7 @@ impl Client {
                 let curve_type = scheme.curve_type();
 
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
-                let txn_prefix = format!("{}_signasaction_{}", txn_prefix, scheme);
+                let txn_prefix = format!("{txn_prefix}_signasaction_{scheme}");
                 let tss_state = Arc::new(tss_state);
                 let curve_state = CurveState::new(
                     tss_state.peer_state.clone(),
@@ -1611,13 +1609,12 @@ impl Client {
         let hashed_access_control_conditions = match hash_res {
             Ok(hashed_access_control_conditions) => hashed_access_control_conditions,
             Err(e) => {
-                bail!("Couldn't hash access control conditions: {:?}", e);
+                bail!("Couldn't hash access control conditions: {e:?}");
             }
         };
 
         let identity_param = AccessControlConditionResource::new(format!(
-            "{}/{}",
-            hashed_access_control_conditions, data_to_encrypt_hash
+            "{hashed_access_control_conditions}/{data_to_encrypt_hash}"
         ))
         .get_resource_key()
         .into_bytes();
@@ -1680,7 +1677,7 @@ impl Client {
             key_set_id,
         )
         .await
-        .map_err(|e| anyhow::anyhow!(format!("Failed to sign: {:?}", e)))?;
+        .map_err(|e| anyhow::anyhow!(format!("Failed to sign: {e:?}")))?;
 
         debug!("Lit Action signing with {} complete.", signing_scheme);
 
@@ -1763,7 +1760,7 @@ impl Client {
             self.http_cache()?,
         )
         .await
-        .map_err(|e| anyhow::anyhow!(format!("Error checking access control conditions: {:?}", e)))
+        .map_err(|e| anyhow::anyhow!(format!("Error checking access control conditions: {e:?}")))
     }
 
     async fn get_bls_root_pubkey(&self) -> Result<String> {
@@ -1774,7 +1771,7 @@ impl Client {
             }
         };
         get_bls_root_pubkey(&tss_state, DEFAULT_KEY_SET_NAME)
-            .map_err(|e| anyhow::anyhow!(format!("Error getting BLS root pubkey: {:?}", e)))
+            .map_err(|e| anyhow::anyhow!(format!("Error getting BLS root pubkey: {e:?}")))
     }
 
     async fn leader_helper(&self, request_hash: u64) -> Result<(String, bool)> {
@@ -1818,7 +1815,7 @@ impl Client {
             curve_type,
             DEFAULT_KEY_SET_NAME,
         );
-        let key_id = keccak256(format!("lit_action_{}", action_ipfs_id));
+        let key_id = keccak256(format!("lit_action_{action_ipfs_id}"));
         let epoch = tss_state.get_keyshare_epoch().await;
         let pubkey = self
             .get_action_pubkey(
@@ -1993,8 +1990,7 @@ impl Client {
             .to_compressed(),
             _ => {
                 return Err(anyhow::anyhow!(
-                    "Unsupported derive action pubkey signing scheme: {}",
-                    signing_scheme
+                    "Unsupported derive action pubkey signing scheme: {signing_scheme}"
                 ));
             }
         };
@@ -2015,13 +2011,12 @@ pub fn get_identity_param(
     let hashed_access_control_conditions = match hash_res {
         Ok(hashed_access_control_conditions) => hashed_access_control_conditions,
         Err(e) => {
-            bail!("Couldn't hash access control conditions: {:?}", e);
+            bail!("Couldn't hash access control conditions: {e:?}");
         }
     };
 
     let identity_param = AccessControlConditionResource::new(format!(
-        "{}/{}",
-        hashed_access_control_conditions, data_to_encrypt_hash
+        "{hashed_access_control_conditions}/{data_to_encrypt_hash}"
     ))
     .get_resource_key()
     .into_bytes();
@@ -2039,7 +2034,7 @@ where
     G: HDDerivable + GroupEncoding + Default + CompressedBytes,
     G::Scalar: HDDeriver + CompressedBytes,
 {
-    let key_id = keccak256(format!("lit_action_{}", action_ipfs_id));
+    let key_id = keccak256(format!("lit_action_{action_ipfs_id}"));
     let curve_type = signing_scheme.curve_type();
     let curve_state = CurveState::new(tss_state.peer_state.clone(), curve_type, key_set_id);
     let root_keys = curve_state.root_keys()?;

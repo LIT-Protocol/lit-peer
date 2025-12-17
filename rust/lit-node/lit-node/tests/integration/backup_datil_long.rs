@@ -80,7 +80,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
 
     crate::common::setup_logging();
 
-    let epoch_length = 300 as usize;
+    let epoch_length = 300_usize;
     let (testnet, mut validator_collection, mut end_user) = TestSetupBuilder::default()
         .num_staked_and_joined_validators(number_of_nodes)
         .epoch_length(epoch_length)
@@ -111,7 +111,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
     let result = actions
         .add_keyset(realm_id, identifier, description, root_key_configs)
         .await;
-    assert!(result.is_ok(), "Failed to add keyset `{}`", keyset_id);
+    assert!(result.is_ok(), "Failed to add keyset `{keyset_id}`");
 
     let tx = actions.contracts().pubkey_router.admin_set_root_keys(
         testnet.actions().contracts().staking.address(),
@@ -307,7 +307,7 @@ async fn upload_decryption_shares_to_nodes(recovery_party_size: usize) {
         .arg("--directory")
         .arg("tests/test_data/datil_recovery_into_naga/backups");
 
-        println!("command: {:?}", command);
+        println!("command: {command:?}");
         let output = command.output().await.unwrap();
         if !output.stderr.is_empty() {
             println!(
@@ -346,12 +346,12 @@ async fn upload_key_backups_to_nodes(
             let json_body = serde_json::to_string(&auth_sig.auth_sig).unwrap();
 
             let tar_file =
-                backup_directory.join(format!("{}{}", public_address, BACKUP_ENCRYPTED_KEYS));
+                backup_directory.join(format!("{public_address}{BACKUP_ENCRYPTED_KEYS}"));
             let file = tokio::fs::File::open(tar_file).await.unwrap();
 
             info!("Uploading backup for validator {}", public_address);
             let response = client
-                .post(format!("{}/web/admin/set_key_backup", url))
+                .post(format!("{url}/web/admin/set_key_backup"))
                 .header("Content-Type", "application/octet-stream")
                 .header(
                     "x-auth-sig",
@@ -428,7 +428,7 @@ async fn upload_blinders_to_nodes(
 
         join_set.spawn(async move {
             // Send the blinders to the node operators
-            let url = format!("http://{}/web/admin/set_blinders", public_address);
+            let url = format!("http://{public_address}/web/admin/set_blinders");
             let auth_sig =
                 generate_admin_auth_sig(&admin_signing_key, chain_id, &url, &public_address);
             let auth_sig = serde_json::to_string(&auth_sig.auth_sig).unwrap();
@@ -476,12 +476,11 @@ async fn create_node_operator_admin_signing_key() -> SigningKey {
     let admin_address = admin_signing_key.to_eth_address_str();
 
     tokio::fs::write(
-        format!("./{}.toml", CFG_ADMIN_OVERRIDE_NAME),
+        format!("./{CFG_ADMIN_OVERRIDE_NAME}.toml"),
         format!(
             r#"[node]
-admin_address = "{}"
-    "#,
-            admin_address
+admin_address = "{admin_address}"
+    "#
         ),
     )
     .await
@@ -527,7 +526,7 @@ fn generate_admin_auth_sig(
     buffer[64] = recovery_id.to_byte();
     JsonAuthSigExtended {
         auth_sig: JsonAuthSig::new(
-            hex::encode(&buffer),
+            hex::encode(buffer),
             "web3.eth.personal.sign".to_string(),
             signed_message,
             address,
@@ -542,7 +541,7 @@ trait EthereumAddress {
         let mut buffer = String::new();
         buffer.push('0');
         buffer.push('x');
-        buffer.push_str(&String::from_utf8(address.to_vec()).unwrap());
+        buffer.push_str(core::str::from_utf8(&address).unwrap());
         buffer
     }
 
@@ -715,7 +714,7 @@ async fn test_datil_keyset_pkp_signing(
         .await
         .as_u64();
 
-    let to_sign = format!("Testing signing with datil keyset on naga after restore!");
+    let to_sign = "Testing signing with datil keyset on naga after restore!".to_string();
     let to_sign = keccak256(to_sign.as_bytes()).to_vec();
 
     // Make sure the end user has a PKP

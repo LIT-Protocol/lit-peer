@@ -82,7 +82,7 @@ pub(crate) async fn encrypt_and_tar_backup_keys(
     // Create the temporary dir in which we will save the resulting artifacts.
     let mut path = encrypted_key_path(&staker_address);
     let _ = std::fs::remove_dir_all(path.clone());
-    path.push(format!("backup-{}/", now));
+    path.push(format!("backup-{now}/"));
     fs::create_dir_all(&path)
         .await
         .map_err(|e| io_err(e, None))?;
@@ -401,7 +401,7 @@ pub(crate) async fn untar_keys_stream<R: AsyncRead + Unpin>(
     // Create the temporary dir in which we will save the artefacts.
     let now: DateTime<Utc> = Utc::now();
     let mut path = encrypted_key_path(staker_address);
-    path.push(format!("restore-{}/", now));
+    path.push(format!("restore-{now}/"));
 
     // Untar the data
     untar_stream_to_path(path.as_path(), stream).await?;
@@ -623,7 +623,7 @@ where
 }
 
 fn blinder_not_set_err(curve_type: CurveType) -> crate::error::Error {
-    unexpected_err(format!("{} blinder is not set", curve_type), None)
+    unexpected_err(format!("{curve_type} blinder is not set"), None)
 }
 
 async fn read_key_shares<C>(
@@ -680,7 +680,7 @@ where
             unexpected_err_code(
                 e,
                 EC::NodeSystemFault,
-                Some(format!("Could not open file: {:?}", path)),
+                Some(format!("Could not open file: {path:?}")),
             )
         })?;
         let mut buffer = Vec::new();
@@ -688,7 +688,7 @@ where
             unexpected_err_code(
                 e,
                 EC::NodeSystemFault,
-                Some(format!("Could not read file: {:?}", path)),
+                Some(format!("Could not read file: {path:?}")),
             )
         })?;
 
@@ -702,7 +702,7 @@ where
                 unexpected_err_code(
                     e,
                     EC::NodeSystemFault,
-                    Some(format!("Could not parse cbor file: {:?}", path)),
+                    Some(format!("Could not parse cbor file: {path:?}")),
                 )
             })?;
 
@@ -831,10 +831,9 @@ fn parse_bls_blinder(blinder_str: &str) -> Result<<InnerBls12381G1 as BCA>::Scal
     match blinder.into_option() {
         Some(blinder) => Ok(blinder),
         None => Err(parser_err(
-            std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("Could not convert to bls key blinder:{}", blinder_str),
-            ),
+            std::io::Error::other(format!(
+                "Could not convert to bls key blinder:{blinder_str}"
+            )),
             None,
         )),
     }
@@ -845,10 +844,9 @@ fn parse_k256_blinder(blinder_str: &str) -> Result<<Secp256k1 as BCA>::Scalar> {
     // This is the error closure so we don't repeat it in the code.
     let error = |blinder_str| {
         parser_err(
-            std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("Could not convert to ecdsa key blinder:{}", blinder_str),
-            ),
+            std::io::Error::other(format!(
+                "Could not convert to ecdsa key blinder:{blinder_str}"
+            )),
             None,
         )
     };
@@ -1008,7 +1006,7 @@ mod test {
         write_key_share_to_disk(
             CurveType::BLS,
             &bls_key.hex_public_key,
-            &staker_address,
+            staker_address,
             &bls_key.peer_id,
             333,
             1,
@@ -1020,7 +1018,7 @@ mod test {
         write_key_share_to_disk(
             CurveType::K256,
             &k256_key.hex_public_key,
-            &staker_address,
+            staker_address,
             &k256_key.peer_id,
             333,
             1,
@@ -1033,7 +1031,7 @@ mod test {
         write_key_share_commitments_to_disk(
             CurveType::BLS,
             &bls_key.hex_public_key,
-            &staker_address,
+            staker_address,
             &bls_key.peer_id,
             333,
             1,
@@ -1045,7 +1043,7 @@ mod test {
         write_key_share_commitments_to_disk(
             CurveType::K256,
             &k256_key.hex_public_key,
-            &staker_address,
+            staker_address,
             &k256_key.peer_id,
             333,
             1,
@@ -1060,7 +1058,7 @@ mod test {
         let peers = SimplePeerCollection(vec![SimplePeer {
             socket_address: "127.0.0.1".to_string(),
             peer_id: bls_key.peer_id,
-            staker_address: ethers::types::H160::from_slice(&hex::decode(&staker_address).unwrap()),
+            staker_address: ethers::types::H160::from_slice(&hex::decode(staker_address).unwrap()),
             key_hash: 0,
             kicked: false,
             version: Version::new(1, 0, 0),
@@ -1114,7 +1112,7 @@ mod test {
             .await
             .unwrap();
 
-        let peer_id = PeerId::try_from(555 as usize).unwrap();
+        let peer_id = PeerId::try_from(555_usize).unwrap();
         let epoch = 333;
         let realm_id = 1;
         let restored_key_shares = restore_state
@@ -1307,7 +1305,7 @@ mod test {
             .await
             .unwrap();
 
-        let peer_id = PeerId::try_from(555 as usize).unwrap();
+        let peer_id = PeerId::try_from(555_usize).unwrap();
         let epoch = 333;
         let restored_key_shares = restore_state
             .try_restore_key_shares(&peer_id, epoch, staker_address, realm_id)

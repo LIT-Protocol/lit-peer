@@ -324,7 +324,7 @@ pub fn serialize_auth_context_for_checking_against_contract_data(
 }
 
 pub fn get_user_wallet_auth_method_from_address(address: &str) -> error::Result<Vec<u8>> {
-    let serialized = format!("{}:{}", address, LIT_APP_ID);
+    let serialized = format!("{address}:{LIT_APP_ID}");
     let as_bytes = serialized.as_bytes().to_vec();
     let hashed = keccak256(as_bytes);
 
@@ -359,7 +359,7 @@ pub async fn check_pkp_auth(
         .await;
     }
 
-    use std::io::{Error, ErrorKind};
+    use std::io::Error;
 
     debug!("auth_context- {:?}", auth_context);
 
@@ -606,13 +606,9 @@ pub async fn check_pkp_auth(
     }
 
     Err(validation_err_code(
-        Error::new(
-            ErrorKind::Other,
-            format!(
-                "None of the AuthMethods, AuthSig or Lit Actions meet the required scope {:?}.",
-                required_scopes
-            ),
-        ),
+        Error::other(format!(
+            "None of the AuthMethods, AuthSig or Lit Actions meet the required scope {required_scopes:?}."
+        )),
         EC::NodeAuthSigScopeTooLimited,
         None,
     ))

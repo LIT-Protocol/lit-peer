@@ -37,7 +37,7 @@ pub async fn datil_check_pkp_auth(
     key_set_id: &str,
     tss_state: &TssState,
 ) -> Result<bool, Error> {
-    use std::io::{Error, ErrorKind};
+    use std::io::Error;
 
     let datil_contracts = DatilContracts::new(tss_state, key_set_id).await?;
     let pkp_permissions_contract = datil_contracts.pkp_permissions;
@@ -280,13 +280,9 @@ pub async fn datil_check_pkp_auth(
     }
 
     Err(validation_err_code(
-        Error::new(
-            ErrorKind::Other,
-            format!(
-                "None of the AuthMethods, AuthSig or Lit Actions meet the required scope {:?}.",
-                required_scopes
-            ),
-        ),
+        Error::other(format!(
+            "None of the AuthMethods, AuthSig or Lit Actions meet the required scope {required_scopes:?}."
+        )),
         EC::NodeAuthSigScopeTooLimited,
         None,
     ))

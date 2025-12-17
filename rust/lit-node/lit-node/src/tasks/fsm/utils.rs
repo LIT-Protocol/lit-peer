@@ -92,10 +92,7 @@ fn is_compatible_version(
     // Parse version (e.g. "0.2.14"), otherwise known as NODE_VERSION_UNMARKED!
     let version_parts = version.split('.').collect::<Vec<&str>>();
     if version_parts.len() != 3 {
-        return Err(unexpected_err(
-            format!("Invalid version: {}", version),
-            None,
-        ));
+        return Err(unexpected_err(format!("Invalid version: {version}"), None));
     }
     let curr_major = U256::from_dec_str(version_parts[0]).map_err(|e| unexpected_err(e, None))?;
     let curr_minor = U256::from_dec_str(version_parts[1]).map_err(|e| unexpected_err(e, None))?;
@@ -194,7 +191,7 @@ pub(crate) async fn key_share_proofs_check(
     trace!("Key share proof check - root keys: {:?}", root_keys_map);
 
     for (identifier, map) in &root_keys_map {
-        let noonce = format!("{}-{}-{}", epoch, lifecycle_id, identifier);
+        let noonce = format!("{epoch}-{lifecycle_id}-{identifier}");
         trace!("Key share proofs nonce signed: {}", noonce);
         let proofs =
             compute_key_share_proofs(&noonce, map, &tss_state.addr, peers, realm_id, epoch).await?;

@@ -113,8 +113,7 @@ impl PeerState {
                                     return Err(unexpected_err(
                                         e,
                                         Some(format!(
-                                            "Failed to connect to peer {} while network is {:?} ( will not complain ).",
-                                            addr, network_state,
+                                            "Failed to connect to peer {addr} while network is {network_state:?} ( will not complain ).",
                                         )),
                                     ));
                                 }
@@ -148,17 +147,14 @@ impl PeerState {
 
                                 return Err(unexpected_err(
                                     e,
-                                    Some(format!(
-                                        "Failed to send connect request to peer:{}",
-                                        addr
-                                    )),
+                                    Some(format!("Failed to send connect request to peer:{addr}")),
                                 ));
                             }
                         };
                         break;
                     }
                     None => {
-                        let dest_url = Url::parse(format!("{}{}/", prefix, addr).as_str())
+                        let dest_url = Url::parse(format!("{prefix}{addr}/").as_str())
                             .expect("Failed to parse URL");
                         trace!("Creating a new grpc client connection at {}", addr);
                         match ChatterClientFactory::new_client(dest_url, cfg.clone()).await {
@@ -169,8 +165,7 @@ impl PeerState {
                                     return Err(unexpected_err(
                                         e,
                                         Some(format!(
-                                            "Failed to connect to peer while network is paused ( no complaining ) : {}",
-                                            addr
+                                            "Failed to connect to peer while network is paused ( no complaining ) : {addr}"
                                         )),
                                     ));
                                 }
@@ -192,7 +187,7 @@ impl PeerState {
                                 }
                                 return Err(unexpected_err(
                                     e,
-                                    Some(format!("Failed to connect to peer: {}", addr)),
+                                    Some(format!("Failed to connect to peer: {addr}")),
                                 ));
                             }
                         };
@@ -444,8 +439,7 @@ impl PeerState {
         peer_state_data
             .get_peer_by_staker_addr(staker_address)
             .expect_or_err(format!(
-                "PeerItem not found for staker address: {}",
-                staker_address
+                "PeerItem not found for staker address: {staker_address}"
             ))
     }
 }

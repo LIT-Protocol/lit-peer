@@ -202,7 +202,7 @@ impl TssState {
 
         if root_keys.is_empty() {
             return Err(unexpected_err(
-                format!("No root keys exist for curve: {}", curve_type),
+                format!("No root keys exist for curve: {curve_type}"),
                 None,
             ));
         }
