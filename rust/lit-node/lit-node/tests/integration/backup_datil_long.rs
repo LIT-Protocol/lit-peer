@@ -23,6 +23,7 @@ use lit_node_core::{
     CurveType, JsonAuthSig, LitAbility, LitResourceAbilityRequest,
     LitResourceAbilityRequestResource, SigningScheme,
 };
+use lit_node_testnet::DATIL_KEY_SET_NAME;
 use lit_node_testnet::TestSetupBuilder;
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::get_identity_pubkeys_from_node_set;
@@ -196,7 +197,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
     // Get and log root keys for both keysets
     let datil_root_keys = validator_collection
         .actions()
-        .get_all_root_keys("datil-keyset")
+        .get_all_root_keys(DATIL_KEY_SET_NAME)
         .await;
     let naga_keyset1_root_keys = validator_collection
         .actions()
@@ -602,7 +603,7 @@ async fn test_datil_encrypt_naga_decrypt(
 ) {
     // Encrypt using datil BLS pubkey
     let test_encryption_parameters = prepare_test_encryption_parameters();
-    let key_set_id = "datil-keyset";
+    let key_set_id = DATIL_KEY_SET_NAME;
     let datil_bls_pubkey = get_bls_pubkey(validator_collection.actions(), key_set_id).await;
 
     let datil_bls_pubkey =

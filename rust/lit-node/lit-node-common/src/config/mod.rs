@@ -208,7 +208,7 @@ impl LitNodeConfig for LitConfig {
 
         for key in USER_EDITABLE_KEYS {
             map.insert(
-                format!("{}.{}", CFG_SECTION_KEY, key),
+                format!("{CFG_SECTION_KEY}.{key}"),
                 self.get_section_string(key).unwrap_or("".into()),
             );
         }
@@ -234,13 +234,13 @@ impl LitNodeConfig for LitConfig {
                     && !USER_EDITABLE_KEYS_IN_SECTIONS.contains(&full_key.as_str())
                 {
                     return Err(validation_err(
-                        format!("user editing of config key '{}' not allowed", full_key),
+                        format!("user editing of config key '{full_key}' not allowed"),
                         None,
                     ));
                 }
             } else {
                 return Err(validation_err(
-                    format!("user editing of config key '{}' not allowed", full_key),
+                    format!("user editing of config key '{full_key}' not allowed"),
                     None,
                 ));
             }
@@ -316,8 +316,8 @@ impl LitNodeConfig for LitConfig {
                     parser_err(
                         e,
                         Some(format!(
-                            "Could not parse webauthn_allowed_origins url: {}",
-                            s
+                            "Could not parse webauthn_allowed_origins url: {s}",
+                            
                         )),
                     )
                 })
@@ -408,7 +408,7 @@ impl LitNodeConfig for LitConfig {
 pub fn key_path(staker_address: &str) -> PathBuf {
     let staker_address = match staker_address.starts_with("0x") {
         true => staker_address.to_string(),
-        false => format!("0x{}", staker_address),
+        false => format!("0x{staker_address}"),
     };
     let path_root = format!("./node_keys/{}", staker_address.to_lowercase());
     PathBuf::from(&path_root)

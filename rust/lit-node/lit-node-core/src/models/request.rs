@@ -15,27 +15,6 @@ pub struct SDKHandshakeRequest {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum KeySetIdentifier {
-    #[serde(rename = "datil")]
-    Datil,
-    #[serde(rename = "naga-keyset1")]
-    NagaKeyset1,
-}
-
-impl std::fmt::Display for KeySetIdentifier {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                KeySetIdentifier::Datil => "datil",
-                KeySetIdentifier::NagaKeyset1 => "naga-keyset1",
-            }
-        )
-    }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EncryptionSignRequest {
     pub access_control_conditions: Option<Vec<AccessControlConditionItem>>,
@@ -96,6 +75,7 @@ pub struct JsonExecutionRequest {
     pub node_set: Vec<NodeSet>,
     #[serde(default)]
     pub invocation: Invocation,
+    pub key_set_id: String,
 }
 
 impl JsonExecutionRequest {
@@ -129,6 +109,7 @@ impl std::fmt::Debug for JsonExecutionRequest {
             .field("epoch", &self.epoch)
             .field("node_set", &self.node_set)
             .field("invocation", &self.invocation)
+            .field("key_set_id", &self.key_set_id)
             .finish()
     }
 }

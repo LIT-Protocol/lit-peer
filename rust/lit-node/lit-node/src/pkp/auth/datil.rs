@@ -1,10 +1,13 @@
-use std::sync::Arc;
-
 use crate::auth::auth_material::JsonAuthSigExtendedRef;
-use crate::error::{self, Error, unexpected_err_code, validation_err, validation_err_code};
-use crate::error::{EC, unexpected_err};
+use crate::error::EC;
+use crate::error::{Error, unexpected_err_code, validation_err_code};
 use crate::models;
-use crate::pkp::auth::{is_any_user_address_format_permitted, serialize_auth_context_for_checking_against_contract_data};
+use crate::pkp::auth::{
+    AuthMethodScope, get_user_wallet_auth_method_from_address,
+    serialize_auth_context_for_checking_against_contract_data,
+};
+use crate::tss::common::tss_state::TssState;
+use crate::utils::datil_contract::DatilContracts;
 use crate::utils::encoding;
 use anyhow::Result;
 use ethers::abi::AbiEncode;
@@ -14,15 +17,12 @@ use ethers::types::Bytes;
 use ethers::utils::keccak256;
 
 use lit_blockchain_lite::contracts::pkp_permissions::{self, PKPPermissions};
-use lit_blockchain_lite::contracts::contract_resolver::ContractResolver;
 use lit_core::config::LitConfig;
 
-use lit_core::error::Unexpected;
+// use lit_core::error::Unexpected;
 use lit_core::utils::ipfs::bytes_to_ipfs_cid;
-use lit_node_core::{AuthMethod, JsonAuthSig};
+use lit_node_core::JsonAuthSig;
 use tracing::instrument;
-
-
 
 #[instrument(level = "debug", name = "check_pkp_auth", skip_all)]
 #[allow(clippy::too_many_arguments)]
@@ -35,8 +35,13 @@ pub async fn datil_check_pkp_auth(
     required_scopes: &[usize],
     bls_root_pubkey: &str,
     key_set_id: &str,
+    tss_state: &TssState,
 ) -> Result<bool, Error> {
     use std::io::{Error, ErrorKind};
+
+    let datil_contracts = DatilContracts::new(tss_state, key_set_id).await?;
+    let pkp_permissions_contract = datil_contracts.pkp_permissions;
+    let pkp_nft_contract = datil_contracts.pkp_nft;
 
     debug!("auth_context- {:?}", auth_context);
 
@@ -45,15 +50,7 @@ pub async fn datil_check_pkp_auth(
         ipfs_id_option, pkp_pubkey, required_scopes
     );
 
-    let resolver = ContractResolver::try_from(cfg)
-        .map_err(|e| unexpected_err_code(e, EC::NodeContractResolverConversionFailed, None))?;
-
     let token_id = U256::from(&keccak256(encoding::hex_to_bytes(&pkp_pubkey)?));
-
-    trace!("token_id: {}", token_id.encode_hex());
-
-    let pkp_permissions_contract = resolver.pkp_permissions_contract(cfg).await?;
-    let pkp_nft_contract = resolver.pkp_nft_contract(cfg).await?;
 
     let permitted_auth_methods: Vec<pkp_permissions::AuthMethod> = pkp_permissions_contract
         .get_permitted_auth_methods(token_id)
@@ -152,7 +149,7 @@ pub async fn datil_check_pkp_auth(
 
             let user_wallet_address_string = to_checksum(&user_wallet_address, None); // Because the address is the auth_method.user_id may not be in the checked sum format
 
-            match is_any_user_address_format_permitted(
+            match datil_is_any_user_address_format_permitted(
                 user_wallet_address_string,
                 &owner_address,
                 required_scopes,
@@ -261,7 +258,7 @@ pub async fn datil_check_pkp_auth(
             user_wallet_address_string
         );
 
-        match is_any_user_address_format_permitted(
+        match datil_is_any_user_address_format_permitted(
             user_wallet_address_string,
             &owner_address,
             required_scopes,
@@ -341,4 +338,84 @@ async fn datil_check_scopes(
     });
 
     Ok(all_scopes_permitted)
+}
+
+// We need this due to an issue in the SDK which allows user to permit the following 3 formats:
+// - Bare user address
+// - User address suffixed with ":lit"
+//  - User address is lower case
+//  - User address is checked sum i.e. mixed case
+async fn datil_is_any_user_address_format_permitted(
+    user_wallet_address_string: String,
+    owner_address: &H160,
+    required_scopes: &[usize],
+    permitted_auth_methods: &Vec<pkp_permissions::AuthMethod>,
+    pkp_permissions_contract: PKPPermissions<Provider<Http>>,
+    token_id: U256,
+) -> Result<bool, Error> {
+    debug!(
+        "user_wallet_address_string- {:?}",
+        user_wallet_address_string
+    );
+    let user_wallet_address = encoding::string_to_eth_address(user_wallet_address_string.clone())?; // lower case
+
+    // is this address the owner of the PKP?  if so, we don't need to check for scopes.
+    // also, this won't show up as an auth method
+    // the PKP owner has root access
+    if owner_address == &user_wallet_address {
+        return Ok(true);
+    }
+
+    let wallet_address_bytes = Bytes::from(user_wallet_address.as_bytes().to_vec());
+
+    // Have to check for the encoded authMethod as the permitted AuthMethod on-chain may contain ":lit" suffix
+    // Check for both lowercase & checkedsum (mixedcase) as the permitted address hash will be different for both
+    let lowercase_wallet_auth_method_with_app_id =
+        get_user_wallet_auth_method_from_address(&user_wallet_address_string.to_lowercase())?;
+    let lowercase_wallet_auth_method_with_app_id_bytes =
+        Bytes::from(lowercase_wallet_auth_method_with_app_id);
+
+    let checkedsum_wallet_auth_method_with_app_id =
+        get_user_wallet_auth_method_from_address(&user_wallet_address_string)?;
+    let checkedsum_wallet_auth_method_with_app_id_bytes =
+        Bytes::from(checkedsum_wallet_auth_method_with_app_id);
+
+    let address_auth_method_type = U256::from(1); // AuthMethodType::Address
+
+    for auth_method in permitted_auth_methods {
+        debug!("Checking auth method: {:?}", auth_method);
+        // if the auth method type is 2 aka an IPFS cid, print this too
+        if auth_method.auth_method_type == U256::from(2) {
+            // encode as a base58 ipfs cid
+            trace!(
+                "IPFS cid of auth method: {:?}",
+                bytes_to_ipfs_cid(auth_method.id.clone())
+            );
+        }
+        let is_address_permitted_auth_method_type =
+            auth_method.auth_method_type == address_auth_method_type;
+        if !is_address_permitted_auth_method_type {
+            continue;
+        }
+
+        if auth_method.id == wallet_address_bytes
+            || auth_method.id == lowercase_wallet_auth_method_with_app_id_bytes
+            || auth_method.id == checkedsum_wallet_auth_method_with_app_id_bytes
+        {
+            let has_scopes = datil_check_scopes(
+                required_scopes,
+                pkp_permissions_contract.clone(),
+                token_id,
+                address_auth_method_type,
+                auth_method.id.clone(),
+            )
+            .await?;
+
+            if has_scopes {
+                return Ok(true);
+            }
+        }
+    }
+
+    Ok(false)
 }

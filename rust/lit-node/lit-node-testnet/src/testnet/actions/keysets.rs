@@ -186,10 +186,7 @@ impl Actions {
         let hashed_pubkey = keccak256(pubkey_bytes);
         let token_id = U256::from_big_endian(hashed_pubkey.as_slice());
 
-        info!("token_id: {}", token_id);
         let pubkey_routing_data : Result<PubkeyRoutingData> = self.contracts.pubkey_router.pubkeys(token_id).call().await.map_err(|e| anyhow::anyhow!("Error getting pubkey routing data: {:?}", e));
-
-        info!("pubkey_routing_data: {:?}", pubkey_routing_data);
 
         if pubkey_routing_data.is_ok() {
             let pubkey_routing_data = pubkey_routing_data.unwrap();
@@ -205,7 +202,6 @@ impl Actions {
         let datil_contracts = self.datil_contracts.as_ref().unwrap();
         let pubkey_routing_data : Result<lit_blockchain_lite::contracts::pubkey_router::PubkeyRoutingData> = datil_contracts.pubkey_router.pubkeys(token_id).call().await.map_err(|e| anyhow::anyhow!("Error getting datil pubkey routing data: {:?}", e));
         
-        info!("pubkey_routing_data(datil): {:?}", pubkey_routing_data);
         if pubkey_routing_data.is_ok() {
             if pubkey_routing_data.unwrap().key_type == U256::zero() {
                 return Err(anyhow::anyhow!("Could not find token id in datil pubkey routing contract."));

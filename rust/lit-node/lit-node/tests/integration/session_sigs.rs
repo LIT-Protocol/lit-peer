@@ -341,7 +341,7 @@ async fn sign_lit_actions_with_lit_action_session_sig() {
     let (_testnet, validator_collection, end_user) = init_test().await;
     let node_set = validator_collection.random_threshold_nodeset().await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
-    let (pubkey, _token_id, eth_address, _key_set_id) = end_user.first_pkp().info();
+    let (pubkey, _token_id, eth_address, key_set_id) = end_user.first_pkp().info();
 
     let session_sig_lit_action_code =
         data_encoding::BASE64.encode(VALID_SESSION_SIG_LIT_ACTION_CODE.to_string().as_bytes());
@@ -395,10 +395,13 @@ async fn sign_lit_actions_with_lit_action_session_sig() {
         .unwrap()
     );
 
-    let (lit_action_code, ipfs_id, js_params, auth_methods) =
-        lit_action_params(VALID_PKP_SIGNING_LIT_ACTION_CODE.to_string(), pubkey)
-            .await
-            .expect("Could not get lit action params");
+    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) = lit_action_params(
+        VALID_PKP_SIGNING_LIT_ACTION_CODE.to_string(),
+        pubkey,
+        key_set_id.clone(),
+    )
+    .await
+    .expect("Could not get lit action params");
 
     let execute_resp = execute_lit_action_session_sigs(
         Some(lit_action_code),
@@ -407,6 +410,7 @@ async fn sign_lit_actions_with_lit_action_session_sig() {
         auth_methods, // None
         &session_sigs_and_node_set,
         2,
+        &key_set_id,
     )
     .await
     .expect("Could not execute lit action");
@@ -432,7 +436,7 @@ async fn only_permitted_can_sign_with_lit_action_session_sig() {
         .get_current_epoch(realm_id)
         .await
         .as_u64();
-    let (pubkey, _token_id, eth_address, _key_set_id) = end_user.first_pkp().info();
+    let (pubkey, _token_id, eth_address, key_set_id) = end_user.first_pkp().info();
 
     let session_sig_lit_action_code =
         data_encoding::BASE64.encode(VALID_SESSION_SIG_LIT_ACTION_CODE.to_string().as_bytes());
@@ -485,9 +489,10 @@ async fn only_permitted_can_sign_with_lit_action_session_sig() {
     .await
     .expect("Could not get session sigs");
 
-    let (lit_action_code, ipfs_id, js_params, auth_methods) = lit_action_params(
+    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) = lit_action_params(
         VALID_PKP_SIGNING_LIT_ACTION_CODE.to_string(),
         pubkey.clone(),
+        key_set_id.clone(),
     )
     .await
     .expect("Could not get lit action params");
@@ -499,6 +504,7 @@ async fn only_permitted_can_sign_with_lit_action_session_sig() {
         auth_methods, // None
         &session_sigs_and_node_set,
         epoch,
+        &key_set_id,
     )
     .await
     .expect("Could not execute lit action");
@@ -537,7 +543,7 @@ async fn sign_lit_actions_with_custom_auth_resource_lit_action_session_sig() {
     let (_testnet, validator_collection, end_user) = init_test().await;
     let node_set = validator_collection.random_threshold_nodeset().await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
-    let (pubkey, _token_id, eth_address, _key_set_id) = end_user.first_pkp().info();
+    let (pubkey, _token_id, eth_address, key_set_id) = end_user.first_pkp().info();
 
     let session_sig_lit_action_code = data_encoding::BASE64.encode(
         CUSTOM_AUTH_RESOURCE_VALID_SESSION_SIG_LIT_ACTION_CODE
@@ -594,9 +600,10 @@ async fn sign_lit_actions_with_custom_auth_resource_lit_action_session_sig() {
         .unwrap()
     );
 
-    let (lit_action_code, ipfs_id, js_params, auth_methods) = lit_action_params(
+    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) = lit_action_params(
         CUSTOM_AUTH_RESOURCE_VALID_PKP_SIGNING_LIT_ACTION_CODE.to_string(),
         pubkey,
+        key_set_id.clone(),
     )
     .await
     .expect("Could not get lit action params");
@@ -608,6 +615,7 @@ async fn sign_lit_actions_with_custom_auth_resource_lit_action_session_sig() {
         auth_methods, // None
         &session_sigs_and_node_set,
         2,
+        &key_set_id,
     )
     .await
     .expect("Could not execute lit action");
@@ -710,7 +718,7 @@ async fn sign_lit_actions_with_no_auth_method_lit_action_session_sig() {
     let (_testnet, validator_collection, end_user) = init_test().await;
     let node_set = validator_collection.random_threshold_nodeset().await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
-    let (pubkey, _token_id, eth_address, _key_set_id) = end_user.first_pkp().info();
+    let (pubkey, _token_id, eth_address, key_set_id) = end_user.first_pkp().info();
 
     let session_sig_lit_action_code = data_encoding::BASE64.encode(
         NO_AUTH_METHOD_SESSION_SIG_LIT_ACTION_CODE
@@ -766,9 +774,10 @@ async fn sign_lit_actions_with_no_auth_method_lit_action_session_sig() {
         .unwrap()
     );
 
-    let (lit_action_code, ipfs_id, js_params, auth_methods) = lit_action_params(
+    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) = lit_action_params(
         NO_AUTH_METHOD_PKP_SIGNING_LIT_ACTION_CODE.to_string(),
         pubkey,
+        key_set_id.clone(),
     )
     .await
     .expect("Could not get lit action params");
@@ -780,6 +789,7 @@ async fn sign_lit_actions_with_no_auth_method_lit_action_session_sig() {
         auth_methods, // None
         &session_sigs_and_node_set,
         2,
+        &key_set_id,
     )
     .await
     .expect("Could not execute lit action");
@@ -861,7 +871,7 @@ async fn execute_js_with_eoa_session_sigs() {
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     let wallet = end_user.wallet.clone();
 
-    let (pubkey, _token_id, _eth_address, _key_set_id) = end_user.first_pkp().info();
+    let (pubkey, _token_id, _eth_address, key_set_id) = end_user.first_pkp().info();
 
     let session_sigs_and_node_set = get_session_sigs_for_auth(
         &node_set,
@@ -877,10 +887,13 @@ async fn execute_js_with_eoa_session_sigs() {
         None,
     );
 
-    let (lit_action_code, ipfs_id, js_params, auth_methods) =
-        lit_action_params(HELLO_WORLD_LIT_ACTION_CODE.to_string(), pubkey)
-            .await
-            .expect("Could not get lit action params");
+    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) = lit_action_params(
+        HELLO_WORLD_LIT_ACTION_CODE.to_string(),
+        pubkey,
+        key_set_id.clone(),
+    )
+    .await
+    .expect("Could not get lit action params");
 
     let execute_resp = execute_lit_action_session_sigs(
         Some(lit_action_code),
@@ -889,6 +902,7 @@ async fn execute_js_with_eoa_session_sigs() {
         auth_methods, // None
         &session_sigs_and_node_set,
         2,
+        &key_set_id,
     )
     .await
     .expect("Could not execute lit action");
@@ -1024,7 +1038,7 @@ async fn test_v1_endpoints_api_constraints() {
     let wallet = end_user.wallet.clone();
     let auth_sig = generate_authsig_item(&wallet).await.unwrap();
 
-    let (pubkey, _token_id, eth_address, _key_set_id) = end_user.first_pkp().info();
+    let (pubkey, _token_id, eth_address, key_set_id) = end_user.first_pkp().info();
 
     let signing_key = ed25519_dalek::SigningKey::generate(&mut OsRng);
     let verifying_key = signing_key.verifying_key();
@@ -1097,10 +1111,13 @@ async fn test_v1_endpoints_api_constraints() {
     );
 
     info!("Starting test: Can't provide Authsig to execute_js");
-    let (lit_action_code, ipfs_id, js_params, auth_methods) =
-        lit_action_params(HELLO_WORLD_LIT_ACTION_CODE.to_string(), pubkey.clone())
-            .await
-            .expect("Could not get lit action params");
+    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) = lit_action_params(
+        HELLO_WORLD_LIT_ACTION_CODE.to_string(),
+        pubkey.clone(),
+        key_set_id.clone(),
+    )
+    .await
+    .expect("Could not get lit action params");
 
     let realm_id = U256::from(1);
     let epoch = validator_collection
@@ -1117,16 +1134,20 @@ async fn test_v1_endpoints_api_constraints() {
         auth_methods, // None
         auth_sig.clone(),
         epoch,
+        &key_set_id,
     )
     .await;
 
     assert!(!execute_resp[0].ok);
 
     info!("Starting test: Can't provide AuthMethod to execute_js");
-    let (lit_action_code, ipfs_id, js_params, _auth_methods) =
-        lit_action_params(HELLO_WORLD_LIT_ACTION_CODE.to_string(), pubkey)
-            .await
-            .expect("Could not get lit action params");
+    let (lit_action_code, ipfs_id, js_params, _auth_methods, key_set_id) = lit_action_params(
+        HELLO_WORLD_LIT_ACTION_CODE.to_string(),
+        pubkey,
+        key_set_id.clone(),
+    )
+    .await
+    .expect("Could not get lit action params");
 
     let auth_methods = Some(vec![AuthMethod {
         auth_method_type: 1,
@@ -1141,6 +1162,7 @@ async fn test_v1_endpoints_api_constraints() {
         auth_methods,
         auth_sig,
         epoch,
+        &key_set_id,
     )
     .await;
 
@@ -1420,6 +1442,7 @@ pub async fn session_sig_only_mbg_pkp() {
         None,
         &session_sigs_and_node_set,
         2,
+        &key_set_id,
     )
     .await
     .expect("Could not execute lit action");
@@ -1432,7 +1455,7 @@ async fn explicit_resource_permission_required_for_lit_action() {
 
     let (_testnet, validator_collection, end_user) = init_test().await;
 
-    let (pubkey, _token_id, _eth_address, _key_set_id) = end_user.first_pkp().info();
+    let (pubkey, _token_id, _eth_address, key_set_id) = end_user.first_pkp().info();
 
     // the lit action we're going to test is VALID_PKP_SIGNING_LIT_ACTION_CODE
     // so let's derive the IPFS CID for it
@@ -1482,10 +1505,13 @@ async fn explicit_resource_permission_required_for_lit_action() {
         None,
     );
 
-    let (lit_action_code, ipfs_id, js_params, auth_methods) =
-        lit_action_params(SIGN_ECDSA_LIT_ACTION_CODE.to_string(), pubkey.clone())
-            .await
-            .expect("Could not get lit action params");
+    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) = lit_action_params(
+        SIGN_ECDSA_LIT_ACTION_CODE.to_string(),
+        pubkey.clone(),
+        key_set_id.clone(),
+    )
+    .await
+    .expect("Could not get lit action params");
 
     let execute_resp = execute_lit_action_session_sigs(
         Some(lit_action_code),
@@ -1494,6 +1520,7 @@ async fn explicit_resource_permission_required_for_lit_action() {
         auth_methods, // None
         &session_sigs,
         2,
+        &key_set_id,
     )
     .await
     .expect("Could not execute lit action");

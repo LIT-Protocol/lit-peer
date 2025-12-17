@@ -88,7 +88,7 @@ impl FromStr for SigningScheme {
             "SchnorrRedDecaf377Blake2b512" => Ok(SigningScheme::SchnorrRedDecaf377Blake2b512),
             "SchnorrkelSubstrate" => Ok(SigningScheme::SchnorrkelSubstrate),
             "Bls12381G1ProofOfPossession" => Ok(SigningScheme::Bls12381G1ProofOfPossession),
-            _ => Err(Error::Parse(format!("Invalid signing scheme: {}", s))),
+            _ => Err(Error::Parse(format!("Invalid signing scheme: {s}"))),
         }
     }
 }
@@ -135,7 +135,7 @@ impl TryFrom<u8> for SigningScheme {
             13 => Ok(SigningScheme::SchnorrRedDecaf377Blake2b512),
             14 => Ok(SigningScheme::SchnorrkelSubstrate),
             15 => Ok(SigningScheme::Bls12381G1ProofOfPossession),
-            _ => Err(Error::Parse(format!("Invalid signing scheme: {}", value))),
+            _ => Err(Error::Parse(format!("Invalid signing scheme: {value}"))),
         }
     }
 }

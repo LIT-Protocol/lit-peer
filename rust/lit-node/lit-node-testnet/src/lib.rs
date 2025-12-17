@@ -20,6 +20,7 @@ use tracing::{debug, error};
 use tracing_subscriber::util::SubscriberInitExt;
 
 const DEFAULT_NUM_STAKED_AND_JOINED_VALIDATORS: usize = 5;
+pub const DATIL_KEY_SET_NAME: &str = "datil-keyset";
 
 pub struct TestSetupBuilder {
     num_staked_and_joined_validators: usize,
@@ -221,22 +222,6 @@ impl TestSetupBuilder {
             }
         }
 
-        if self.include_datil_testnet {
-            let keyset_id = "datil-keyset";
-            let datil_root_keys = testnet
-                .actions()
-                .get_all_root_keys(keyset_id)
-                .await
-                .unwrap();
-
-            testnet
-                .datil_testnet
-                .as_ref()
-                .unwrap()
-                .set_root_keys(datil_root_keys)
-                .await;
-        }
-
         let num_staked_nodes = if self.start_staked_only_validators {
             self.num_staked_and_joined_validators + self.num_staked_only_validators
         } else {
@@ -258,6 +243,25 @@ impl TestSetupBuilder {
             .build(&testnet)
             .await
             .expect("Failed to build validator collection");
+
+
+        if self.include_datil_testnet {
+            let keyset_id = DATIL_KEY_SET_NAME;
+            let datil_root_keys = testnet
+                .actions()
+                .get_all_root_keys(keyset_id)
+                .await
+                .unwrap();
+
+            testnet
+                .datil_testnet
+                .as_ref()
+                .unwrap()
+                .set_root_keys(datil_root_keys)
+                .await;
+        }
+
+
 
         let mut end_user = EndUser::new(&testnet);
         if self.fund_wallet {

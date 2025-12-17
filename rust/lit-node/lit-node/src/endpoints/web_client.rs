@@ -2130,8 +2130,10 @@ pub(crate) async fn sign_session_key(
     let bls_root_pubkey = match get_default_bls_root_pubkey(tss_state) {
         Ok(bls_root_pubkey) => bls_root_pubkey,
         Err(e) => {
-            return client_session
-                .json_encrypt_err_custom_response("No default bls root key exists to sign the session key.", e.handle());
+            return client_session.json_encrypt_err_custom_response(
+                "No default bls root key exists to sign the session key.",
+                e.handle(),
+            );
         }
     };
     timing.insert("get bls root pubkey".to_string(), before.elapsed());
@@ -2146,7 +2148,10 @@ pub(crate) async fn sign_session_key(
         &cfg,
         &[2],
         &bls_root_pubkey,
-        &json_sign_session_key_request.pkp_key_set_id.unwrap_or_default(),
+        &json_sign_session_key_request
+            .pkp_key_set_id
+            .unwrap_or_default(),
+        &tss_state,
     )
     .await
     {

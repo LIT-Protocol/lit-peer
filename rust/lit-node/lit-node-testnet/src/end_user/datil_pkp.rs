@@ -17,8 +17,6 @@ impl Pkp {
         let pkpnft_address = end_user
             .actions()
             .datil_contracts()
-            .as_ref()
-            .unwrap()
             .pkpnft
             .address();
 
@@ -34,7 +32,7 @@ impl Pkp {
 
         let pkpnft = PKPNFT::new(pkpnft_address, client);
 
-        info!("Minting a new PKP from the Datil test harness.");
+        info!("Minting a new PKP on the Datil test chain.");
         let mint_cost = pkpnft.mint_cost().call().await?;
         info!("Mint cost: {:}", mint_cost);
 
@@ -51,8 +49,6 @@ impl Pkp {
                         end_user
                             .actions()
                             .datil_contracts()
-                            .as_ref()
-                            .unwrap()
                             .pkpnft
                             .abi()
                     )
@@ -80,8 +76,6 @@ impl Pkp {
         let r = end_user
             .actions()
             .datil_contracts()
-            .as_ref()
-            .unwrap()
             .pubkey_router
             .get_pubkey(token_id)
             .call()
@@ -121,7 +115,7 @@ impl Pkp {
             addr_to_add, self.pubkey
         );
 
-        let pkp_permissions_address = self.actions.datil_contracts().as_ref().unwrap().pkp_permissions.address();
+        let pkp_permissions_address = self.actions.datil_contracts().pkp_permissions.address();
         let pkp_permissions = PKPPermissions::new(pkp_permissions_address, client.clone());
         let pacc = pkp_permissions.add_permitted_address(token_id, addr_to_add, scopes.to_vec());
 
@@ -171,7 +165,7 @@ impl Pkp {
             self.token_id, to_address
         );
 
-        let pkpnft_address = self.actions.datil_contracts().as_ref().unwrap().pkpnft.address();
+        let pkpnft_address = self.actions.datil_contracts().pkpnft.address();
         let pkpnft = PKPNFT::new(pkpnft_address, self.signing_provider.clone());
 
         let cc = pkpnft.transfer_from(
@@ -184,7 +178,7 @@ impl Pkp {
             let e = tx.unwrap_err();
             info!(
                 "Decoded error: {}",
-                decode_revert(&e, self.actions.datil_contracts().as_ref().unwrap().pkpnft.abi()).to_string()
+                decode_revert(&e, self.actions.datil_contracts().pkpnft.abi()).to_string()
             );
             error!("Error sending transfer Datil PKP: {:?}", e);
             return Err(anyhow::anyhow!("Error transferring Datil PKP - sending tx"));
@@ -223,7 +217,7 @@ impl Pkp {
             self.token_id, ipfs_cid
         );
 
-        let pkp_permissions_address = self.actions.datil_contracts().as_ref().unwrap().pkp_permissions.address();
+        let pkp_permissions_address = self.actions.datil_contracts().pkp_permissions.address();
         let pkp_permissions =
             PKPPermissions::new(pkp_permissions_address, self.signing_provider.clone());
         let pacc = pkp_permissions.add_permitted_action(
@@ -266,7 +260,7 @@ impl Pkp {
         };
         debug!("Address Auth method to permit: {:?}", address_auth_method);
 
-        let pkp_permissions_address = self.actions.datil_contracts().as_ref().unwrap().pkp_permissions.address();
+        let pkp_permissions_address = self.actions.datil_contracts().pkp_permissions.address();
         let pkp_permissions =
             PKPPermissions::new(pkp_permissions_address, self.signing_provider.clone());
         let paam = pkp_permissions.add_permitted_auth_method(
@@ -320,8 +314,6 @@ impl Pkp {
         let pkpnft_address = end_user
             .actions()
             .datil_contracts()
-            .as_ref()
-            .unwrap()
             .pkpnft
             .address();
         let pkpnft = PKPNFT::new(pkpnft_address, Arc::new(client));
@@ -347,8 +339,6 @@ impl Pkp {
                         end_user
                             .actions()
                             .datil_contracts()
-                            .as_ref()
-                            .unwrap()
                             .pkpnft
                             .abi()
                     )
@@ -373,8 +363,6 @@ impl Pkp {
         let r = end_user
             .actions()
             .datil_contracts()
-            .as_ref()
-            .unwrap()
             .pubkey_router
             .get_pubkey(token_id)
             .call()
@@ -400,7 +388,7 @@ impl Pkp {
     }
 
     pub async fn datil_burn_pkp(&self) -> Result<bool, anyhow::Error> {
-        let pkpnft_address = self.actions.datil_contracts().as_ref().unwrap().pkpnft.address();
+        let pkpnft_address = self.actions.datil_contracts().pkpnft.address();
         let pkpnft = PKPNFT::new(pkpnft_address, self.signing_provider.clone());
 
         let cc = pkpnft.burn(self.token_id);

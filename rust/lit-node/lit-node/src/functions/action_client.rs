@@ -1678,7 +1678,6 @@ impl Client {
             &self.node_set,
             signing_scheme,
             key_set_id,
-
         )
         .await
         .map_err(|e| anyhow::anyhow!(format!("Failed to sign: {:?}", e)))?;

@@ -278,8 +278,7 @@ pub async fn test_pkp_hd_sign_generic_key_datil() {
         .include_datil_testnet(true)
         .build()
         .await;
-    let pkp_data = end_user.new_datil_pkp().await.unwrap();
-    let pubkey = pkp_data.0;
+    let (pubkey, _, _) = end_user.new_datil_pkp().await.unwrap();
 
     let scheme = SigningScheme::EcdsaK256Sha256;
     let result = simple_single_sign_with_hd_key(

@@ -89,12 +89,15 @@ pub mod litactions {
         wrap_in_quotes: bool,
     ) {
         setup_logging();
-        let (testnet, validator_collection, end_user) = TestSetupBuilder::default().build().await;
+        let (testnet, validator_collection, mut end_user) = TestSetupBuilder::default()
+            .include_datil_testnet(true)
+            .build()
+            .await;
         lit_action_from_file_preloaded(
             price_components,
             &validator_collection,
             &testnet,
-            &end_user,
+            &mut end_user,
             file_name,
             fn_assertion,
             fn_accs,
@@ -109,7 +112,7 @@ pub mod litactions {
         price_components: &[LitActionPriceComponent],
         validator_collection: &ValidatorCollection,
         _testnet: &Testnet,
-        end_user: &EndUser,
+        end_user: &mut EndUser,
         file_name: &str,
         fn_assertion: &dyn Fn(
             Vec<GenericResponse<JsonExecutionResponse>>,
@@ -147,7 +150,9 @@ pub mod litactions {
             )
             .await;
 
-        let (pubkey, _token_id, _eth_address, _key_set_id) = end_user.first_pkp().info();
+        let (pubkey, _token_id, _eth_address, key_set_id) = end_user.first_pkp().info();
+
+        // let (pubkey, _token_id, _eth_address) = end_user.new_datil_pkp().await.unwrap();
 
         let lit_action_code = data_encoding::BASE64.encode(lit_action_code.as_bytes());
         // per above, there are more params than needed for some actions, but they are ignored
@@ -182,6 +187,7 @@ pub mod litactions {
             js_params,
             auth_methods,
             epoch,
+            &key_set_id,
         )
         .await;
 
@@ -695,6 +701,7 @@ pub mod litactions {
             .unwrap();
 
         let mgb_pubkey = mgb_pkp.pubkey;
+        let key_set_id = mgb_pkp.key_set_id;
 
         let mut js_params = serde_json::Map::new();
         js_params.insert(
@@ -794,6 +801,7 @@ pub mod litactions {
             None,
             &session_sigs_and_node_set,
             2,
+            &key_set_id,
         )
         .await
         .expect("Could not execute lit action");
@@ -816,7 +824,7 @@ pub mod litactions {
         let auth_sig = generate_authsig(&end_user.wallet)
             .await
             .expect("Couldn't generate auth sig");
-        let (pubkey, _token_id, _eth_address, _key_set_id) = end_user.first_pkp().info();
+        let (pubkey, _token_id, _eth_address, key_set_id) = end_user.first_pkp().info();
         let lit_action_code = data_encoding::BASE64.encode(lit_action_code.as_bytes());
 
         let mut js_params = serde_json::Map::new();
@@ -878,6 +886,7 @@ pub mod litactions {
                 js_params,
                 None,
                 epoch.as_u64(),
+                &key_set_id,
             )
             .await
             .unwrap();
@@ -955,6 +964,7 @@ pub mod litactions {
                 pk_params,
                 None,
                 epoch.as_u64(),
+                &key_set_id,
             )
             .await
             .unwrap();
@@ -1007,6 +1017,7 @@ pub mod litactions {
                 pk_params,
                 None,
                 epoch.as_u64(),
+                &key_set_id,
             )
             .await
             .unwrap();

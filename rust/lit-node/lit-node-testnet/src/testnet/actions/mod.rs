@@ -87,8 +87,11 @@ impl Actions {
         &self.contracts
     }
 
-    pub fn datil_contracts(&self) -> &Option<DatilContracts> {
-        &self.datil_contracts
+    pub fn datil_contracts(&self) -> &DatilContracts {
+        if self.datil_contracts.is_none() {
+            panic!("Datil contracts not found");
+        }
+        self.datil_contracts.as_ref().unwrap()
     }
 
     pub async fn lit_token_balance(&self, address: Address) -> U256 {

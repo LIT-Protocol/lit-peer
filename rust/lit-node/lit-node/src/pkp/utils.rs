@@ -4,7 +4,10 @@ use crate::{
     peers::PeerState,
     pkp::auth::verify_auth_method_for_claim,
     tss::common::{storage::any_key_share_exists, tss_state::TssState},
-    utils::encoding::{self, ipfs_cid_to_bytes, string_to_eth_address, string_to_u256},
+    utils::{
+        datil_contract::DatilContracts,
+        encoding::{self, ipfs_cid_to_bytes, string_to_eth_address, string_to_u256},
+    },
 };
 
 use crate::error::{
@@ -16,7 +19,7 @@ use lit_blockchain::{
     contracts::pubkey_router::RootKey, resolver::contract::ContractResolver, util::decode_revert,
 };
 use lit_core::{config::LitConfig, error::Unexpected};
-use lit_node_core::JsonAuthSig;
+use lit_node_core::{CurveType, JsonAuthSig};
 use serde_json::{Value, json};
 use std::sync::Arc;
 use tracing::instrument;
@@ -355,6 +358,8 @@ pub async fn sign(
 ) -> Result<SignableOutput> {
     trace!("sign() enter - signing_scheme: {}", signing_scheme);
     // auth check
+    let tss_state = tss_state.expect_or_err("tss_state not set in RustJsComms")?;
+
     let is_authed = crate::pkp::auth::check_pkp_auth(
         lit_action_ipfs_id,
         auth_sig.clone(),
@@ -364,6 +369,7 @@ pub async fn sign(
         required_scopes,
         bls_root_pubkey,
         key_set_id,
+        &tss_state,
     )
     .await?;
 
@@ -378,8 +384,8 @@ pub async fn sign(
         ));
     }
 
-    let pubkey_routing_data = get_pubkey_routing_data_from_pubkey(cfg, &pubkey).await;
-    let tss_state = tss_state.expect_or_err("tss_state not set in RustJsComms")?;
+    let pubkey_routing_data =
+        get_pubkey_routing_data_from_pubkey(&tss_state, cfg, &pubkey, key_set_id).await;
 
     // if this is an HD key, we need to get the root pubkeys, otherwise check the fs for the key share
     let pubkey_routing_data = match pubkey_routing_data {
@@ -474,9 +480,14 @@ pub async fn sign(
 
 #[instrument(skip(cfg), level = "debug")]
 pub async fn get_pubkey_routing_data_from_pubkey(
+    tss_state: &TssState,
     cfg: &LitConfig,
     pubkey: &str,
+    key_set_id: &str,
 ) -> Result<PubKeyRoutingData> {
+    if key_set_id.contains("datil") {
+        return get_datil_pubkey_routing_data_from_pubkey(tss_state, cfg, pubkey, key_set_id).await;
+    }
     let resolver = ContractResolver::try_from(cfg)
         .map_err(|e| unexpected_err_code(e, EC::NodeContractResolverConversionFailed, None))?;
     let contract = resolver.pub_key_router_contract(cfg).await?;
@@ -494,6 +505,38 @@ pub async fn get_pubkey_routing_data_from_pubkey(
         )
     })?;
     pubkey_routing_data.try_into()
+}
+
+#[instrument(skip(cfg), level = "debug")]
+pub async fn get_datil_pubkey_routing_data_from_pubkey(
+    tss_state: &TssState,
+    cfg: &LitConfig,
+    pubkey: &str,
+    key_set_id: &str,
+) -> Result<PubKeyRoutingData> {
+    let datil_contracts = DatilContracts::new(tss_state, key_set_id).await?;
+    let contract = datil_contracts.pubkey_router;
+    let pubkey_bytes = encoding::hex_to_bytes(pubkey)?;
+    let hashed_pubkey = keccak256(pubkey_bytes);
+    let token_id = U256::from_big_endian(hashed_pubkey.as_slice());
+
+    trace!("token_id: {}", token_id);
+    let datil_pubkey_routing_data : lit_blockchain_lite::contracts::pubkey_router::PubkeyRoutingData   = contract.pubkeys(token_id).call().await.map_err(|e| {
+        unexpected_err_code(
+            e,
+            NodeUnknownError,
+            Some("Could not find token id in pubkey routing contract.".to_string()),
+        )
+    })?;
+
+    let pubkey_routing_data = PubKeyRoutingData {
+        pubkey: datil_pubkey_routing_data.pubkey.to_vec(),
+        curve_type: CurveType::try_from(datil_pubkey_routing_data.key_type)
+            .expect("Failed to convert curve type"),
+        tweak_preimage: datil_pubkey_routing_data.derived_key_id,
+        key_set_identifier: key_set_id.to_string(),
+    };
+    Ok(pubkey_routing_data)
 }
 
 pub async fn vote_for_root_key(

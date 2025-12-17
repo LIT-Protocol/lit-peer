@@ -73,8 +73,10 @@ pub(crate) async fn pkp_sign(
     let bls_root_pubkey = match get_bls_root_pubkey(tss_state, &key_set_id) {
         Ok(bls_root_pubkey) => bls_root_pubkey,
         Err(e) => {
-            return client_session
-                .json_encrypt_err_custom_response("No bls root key exists to validate the auth sig.", e.handle());
+            return client_session.json_encrypt_err_custom_response(
+                "No bls root key exists to validate the auth sig.",
+                e.handle(),
+            );
         }
     };
 

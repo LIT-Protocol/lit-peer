@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::error::{self, Error, unexpected_err_code, validation_err, validation_err_code};
 use crate::error::{EC, unexpected_err};
 use crate::models;
+use crate::tss::common::tss_state::TssState;
 use crate::utils::encoding;
 use anyhow::Result;
 use ethers::abi::AbiEncode;
@@ -23,12 +24,12 @@ use tracing::instrument;
 mod apple;
 pub mod auth_method_verifier;
 pub mod constants;
+mod datil;
 mod discord;
 mod google;
 pub mod stytch;
 pub mod wallet;
 pub mod webauthn;
-mod datil;
 
 use self::constants::{
     APPLE_JWT_AUTH_METHOD_TYPE_ID, DISCORD_AUTH_METHOD_TYPE_ID, GOOGLE_AUTH_METHOD_TYPE_ID,
@@ -341,10 +342,21 @@ pub async fn check_pkp_auth(
     required_scopes: &[usize],
     bls_root_pubkey: &str,
     key_set_id: &str,
+    tss_state: &TssState,
 ) -> Result<bool, Error> {
-
     if key_set_id.contains("datil") {
-        return datil::datil_check_pkp_auth(ipfs_id_option, auth_sig, pkp_pubkey, auth_context, cfg, required_scopes, bls_root_pubkey, key_set_id).await;
+        return datil::datil_check_pkp_auth(
+            ipfs_id_option,
+            auth_sig,
+            pkp_pubkey,
+            auth_context,
+            cfg,
+            required_scopes,
+            bls_root_pubkey,
+            key_set_id,
+            tss_state,
+        )
+        .await;
     }
 
     use std::io::{Error, ErrorKind};
