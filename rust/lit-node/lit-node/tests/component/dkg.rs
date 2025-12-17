@@ -18,15 +18,20 @@ use lit_node::tss::dkg::engine::{DkgAfterRestore, DkgAfterRestoreData, DkgEngine
 use lit_node::tss::util::DEFAULT_KEY_SET_NAME;
 use lit_node::utils::key_share_proof::{compute_key_share_proofs, verify_key_share_proofs};
 use lit_node::version::DataVersionWriter;
-use lit_node_core::{CompressedBytes, CurveType, PeerId};
+use lit_node_core::{CompressedBytes, CompressedHex, CurveType, LeBytes, PeerId};
 use lit_rust_crypto::{
     blsful, decaf377,
-    ed448_goldilocks::EdwardsPoint,
+    ed448_goldilocks::{self, EdwardsPoint},
+    elliptic_curve,
     elliptic_curve::{Group, group::GroupEncoding},
     jubjub, k256, p256, p384, pallas,
-    vsss_rs::curve25519::{WrappedEdwards, WrappedRistretto},
+    vsss_rs::{
+        self, IdentifierPrimeField,
+        curve25519::{WrappedEdwards, WrappedRistretto},
+    },
 };
-use std::collections::HashMap;
+
+use std::collections::{HashMap, HashSet};
 use test_case::test_case;
 use tokio::task::JoinHandle;
 use tracing::{error, info};

@@ -10492,7 +10492,6 @@ name = "lit-node-core"
 version = "2.0.1"
 dependencies = [
  "ed25519-dalek 2.2.0",
- "ed448-goldilocks-plus",
  "ethabi",
  "ethers",
  "hd-keys-curves-wasm",
@@ -10900,8 +10899,6 @@ dependencies = [
  "dotenv",
  "ecdsa 0.16.9",
  "ed25519-dalek 2.2.0",
- "ed448-goldilocks-plus",
- "elliptic-curve 0.13.8",
  "ethabi",
  "ethers",
  "flume",

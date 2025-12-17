@@ -4026,7 +4026,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d162beedaa69905488a8da94f5ac3edb4dd4788b732fadb7bd120b2625c1976"
 dependencies = [
  "data-encoding",
- "syn 1.0.109",
+ "syn 2.0.106",
 ]
 
 [[package]]
@@ -9789,7 +9789,7 @@ dependencies = [
 [[package]]
 name = "lit-frost"
 version = "0.4.0"
-source = "git+https://github.com/LIT-Protocol/lit-frost.git?branch=pallas#38ecfb7d037138b16b1bac675e53fa4ab8e4d960"
+source = "git+https://github.com/LIT-Protocol/lit-frost.git?branch=pallas#ffc784219ac181b4dd9822819f8662a4d92d55cc"
 dependencies = [
  "anyhow",
  "ark-serialize 0.4.2",
