@@ -340,7 +340,7 @@ pub async fn check_pkp_auth(
     required_scopes: &[usize],
     bls_root_pubkey: &str,
 ) -> Result<bool, Error> {
-    use std::io::{Error, ErrorKind};
+    use std::io::Error;
 
     debug!("auth_context- {:?}", auth_context);
 

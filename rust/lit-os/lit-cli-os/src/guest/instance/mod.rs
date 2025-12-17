@@ -396,6 +396,7 @@ pub fn print_guest_instances(
     print!("{}", table.render());
 }
 
+#[allow(clippy::collapsible_if)]
 pub fn print_guest_instance_processes(
     cfg: &LitConfig, items: Vec<GuestInstanceItem>, output: Option<OutputType>,
 ) {

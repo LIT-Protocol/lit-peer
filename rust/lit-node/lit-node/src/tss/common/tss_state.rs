@@ -152,6 +152,7 @@ impl TssState {
             | SigningScheme::SchnorrEd448Shake256
             | SigningScheme::SchnorrRedJubjubBlake2b512
             | SigningScheme::SchnorrRedDecaf377Blake2b512
+            | SigningScheme::SchnorrRedPallasBlake2b512
             | SigningScheme::SchnorrkelSubstrate => {
                 Box::new(FrostState::new(state, signing_scheme)) as Box<dyn Signable>
             }
@@ -160,7 +161,7 @@ impl TssState {
             }
             _ => {
                 return Err(unexpected_err(
-                    "Unsupported key type when for Signable.",
+                    "Unsupported key type when creating signing state.",
                     None,
                 ));
             }
@@ -284,7 +285,11 @@ impl TssState {
             return 0;
         }
 
-        let curve_type = CurveType::K256;
+        let root_keys = self.chain_data_config_manager.root_keys();
+        let curve_type = root_keys
+            .first()
+            .map(|rk| rk.curve_type)
+            .unwrap_or(CurveType::K256);
         let epoch = self.get_keyshare_epoch().await;
         let rt = match self
             .get_threshold_using_current_epoch_realm_peers_for_curve(

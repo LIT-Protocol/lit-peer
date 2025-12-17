@@ -103,7 +103,7 @@ async fn bootstrap_prov(
         dest.as_path(),
         ctx.build_env().guest_cpu_type()?,
         guest_vcpus,
-        &vec![id_block, auth_info],
+        &[id_block, auth_info],
     )?;
 
     // Push updates (if any).

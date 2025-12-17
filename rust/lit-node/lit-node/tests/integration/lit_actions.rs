@@ -36,6 +36,7 @@ pub mod litactions {
     use lit_node_testnet::node_collection::{
         get_identity_pubkeys_from_node_set, get_network_pubkey,
     };
+    use lit_rust_crypto::k256;
     use lit_sdk::signature::SignedDataOutput;
     use rocket::form::validate::Contains;
     use serde_json::Value;
@@ -392,10 +393,11 @@ pub mod litactions {
                 k256::Scalar::ZERO
             };
 
-            let scalar_primitive = elliptic_curve::ScalarPrimitive::<k256::Secp256k1>::from_slice(
-                &hex::decode(&la_signed_data.digest).unwrap(),
-            )
-            .unwrap();
+            let scalar_primitive =
+                lit_rust_crypto::elliptic_curve::ScalarPrimitive::<k256::Secp256k1>::from_slice(
+                    &hex::decode(&la_signed_data.digest).unwrap(),
+                )
+                .unwrap();
             let data_signed = k256::Scalar::from(scalar_primitive);
 
             let signed_data: SignedDatak256 = SignedDatak256 {
@@ -632,7 +634,9 @@ pub mod litactions {
         .into_bytes();
 
         debug!("Identity parameter: {:?}", identity_param);
-        let pubkey = blsful::PublicKey::try_from(&hex::decode(&network_pubkey).unwrap()).unwrap();
+        let pubkey =
+            lit_rust_crypto::blsful::PublicKey::try_from(&hex::decode(&network_pubkey).unwrap())
+                .unwrap();
 
         let ciphertext =
             lit_sdk::encryption::encrypt_time_lock(&pubkey, message_bytes, &identity_param)
