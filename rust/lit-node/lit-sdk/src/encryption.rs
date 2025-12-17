@@ -2,7 +2,7 @@
 
 use crate::{EncryptedMulticastRequest, EndpointRequest, Response, SdkError, SdkResult, UrlPrefix};
 use lit_node_core::{
-    blsful::{
+    lit_rust_crypto::blsful::{
         Bls12381G2Impl, PublicKey, Signature, SignatureSchemes, SignatureShare, TimeCryptCiphertext,
     },
     request::EncryptionSignRequest as InnerEncryptionSignRequest,

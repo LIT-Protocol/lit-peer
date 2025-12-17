@@ -340,7 +340,7 @@ pub async fn check_pkp_auth(
     required_scopes: &[usize],
     bls_root_pubkey: &str,
 ) -> Result<bool, Error> {
-    use std::io::{Error, ErrorKind};
+    use std::io::Error;
 
     debug!("auth_context- {:?}", auth_context);
 
@@ -587,13 +587,10 @@ pub async fn check_pkp_auth(
     }
 
     return Err(validation_err_code(
-        Error::new(
-            ErrorKind::Other,
-            format!(
-                "None of the AuthMethods, AuthSig or Lit Actions meet the required scope {:?}.",
-                required_scopes
-            ),
-        ),
+        Error::other(format!(
+            "None of the AuthMethods, AuthSig or Lit Actions meet the required scope {:?}.",
+            required_scopes
+        )),
         EC::NodeAuthSigScopeTooLimited,
         None,
     ));

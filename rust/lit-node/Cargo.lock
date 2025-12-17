@@ -577,7 +577,7 @@ dependencies = [
  "alloy-rlp",
  "alloy-serde",
  "alloy-sol-types",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "serde",
  "serde_json",
  "thiserror 2.0.16",
@@ -2495,25 +2495,15 @@ dependencies = [
 [[package]]
 name = "bulletproofs"
 version = "4.0.0"
-source = "git+https://github.com/LIT-Protocol/bulletproofs?rev=ddf11c2f593e71f24c9a3d64c56f62d82f2b5099#ddf11c2f593e71f24c9a3d64c56f62d82f2b5099"
+source = "git+https://github.com/LIT-Protocol/bulletproofs?branch=pallas#2ee66a6e2770c73514942936950c0ca2dbbcd023"
 dependencies = [
  "blake2",
- "bls12_381_plus",
- "blstrs_plus",
  "byteorder",
- "curve25519-dalek-ml",
  "data-encoding",
- "decaf377 0.10.1 (git+https://github.com/LIT-Protocol/decaf377?rev=1c5755b2b90e1969d47ce89cf2d35078984a0ee5)",
  "digest 0.10.7",
- "ed448-goldilocks-plus",
- "elliptic-curve 0.13.8",
  "elliptic-curve-tools",
- "group 0.13.0",
- "jubjub-plus",
- "k256 0.13.4",
+ "lit-rust-crypto",
  "merlin",
- "p256",
- "p384 0.13.1",
  "rand 0.8.5",
  "rand_core 0.6.4",
  "serde",
@@ -2521,7 +2511,6 @@ dependencies = [
  "sha3 0.10.8",
  "subtle",
  "thiserror 2.0.16",
- "vsss-rs 5.1.0",
  "zeroize",
 ]
 
@@ -4049,7 +4038,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d162beedaa69905488a8da94f5ac3edb4dd4788b732fadb7bd120b2625c1976"
 dependencies = [
  "data-encoding",
- "syn 2.0.106",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -4121,57 +4110,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "decaf377"
-version = "0.10.1"
-source = "git+https://github.com/LIT-Protocol/decaf377?rev=1c5755b2b90e1969d47ce89cf2d35078984a0ee5#1c5755b2b90e1969d47ce89cf2d35078984a0ee5"
-dependencies = [
- "ark-bls12-377",
- "ark-ec",
- "ark-ed-on-bls12-377",
- "ark-ff 0.4.2",
- "ark-serialize 0.4.2",
- "ark-std 0.4.0",
- "blake2",
- "cfg-if 1.0.3",
- "elliptic-curve 0.13.8",
- "frost-dkg",
- "gennaro-dkg",
- "hashbrown 0.15.5",
- "hex",
- "num-bigint",
- "once_cell",
- "rand_core 0.6.4",
- "serdect 0.3.0",
- "subtle",
- "zeroize",
-]
-
-[[package]]
-name = "decaf377"
-version = "0.10.1"
-source = "git+https://github.com/LIT-Protocol/decaf377.git#1c5755b2b90e1969d47ce89cf2d35078984a0ee5"
-dependencies = [
- "ark-bls12-377",
- "ark-ec",
- "ark-ed-on-bls12-377",
- "ark-ff 0.4.2",
- "ark-serialize 0.4.2",
- "ark-std 0.4.0",
- "blake2",
- "cfg-if 1.0.3",
- "elliptic-curve 0.13.8",
- "frost-dkg",
- "gennaro-dkg",
- "hashbrown 0.15.5",
- "hex",
- "num-bigint",
- "once_cell",
- "rand_core 0.6.4",
- "subtle",
- "zeroize",
-]
-
-[[package]]
 name = "decaf377-rdsa"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4180,12 +4118,38 @@ dependencies = [
  "ark-ff 0.4.2",
  "ark-serialize 0.4.2",
  "blake2b_simd 0.5.11",
- "decaf377 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "decaf377",
  "digest 0.9.0",
  "hex",
  "rand_core 0.6.4",
  "serde",
  "thiserror 1.0.69",
+ "zeroize",
+]
+
+[[package]]
+name = "decaf377_plus"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "209f730dfc5f9d877c7549bebc93ea0ef4fe2915b4dbf5ffebc11e8b4c17c740"
+dependencies = [
+ "ark-bls12-377",
+ "ark-ec",
+ "ark-ed-on-bls12-377",
+ "ark-ff 0.4.2",
+ "ark-serialize 0.4.2",
+ "ark-std 0.4.0",
+ "blake2",
+ "cfg-if 1.0.3",
+ "elliptic-curve 0.13.8",
+ "frost-dkg",
+ "hashbrown 0.15.5",
+ "hex",
+ "num-bigint",
+ "once_cell",
+ "rand_core 0.6.4",
+ "serdect 0.3.0",
+ "subtle",
  "zeroize",
 ]
 
@@ -7009,8 +6973,8 @@ dependencies = [
 
 [[package]]
 name = "frost-core"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "byteorder",
  "const-crc32-nostd",
@@ -7032,26 +6996,23 @@ dependencies = [
 
 [[package]]
 name = "frost-decaf377"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "ark-serialize 0.4.2",
  "blake2b_simd 1.0.3",
- "decaf377 0.10.1 (git+https://github.com/LIT-Protocol/decaf377.git)",
- "document-features",
  "frost-core",
  "frost-rerandomized",
- "group 0.13.0",
+ "lit-rust-crypto",
  "num-traits",
  "rand_core 0.6.4",
- "sha2 0.10.9",
 ]
 
 [[package]]
 name = "frost-dkg"
-version = "0.3.3"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8176b54a998a04796e58b0ac3a6da08e5ab05aff5a7d92159619a652a29f63e8"
+checksum = "00b59a575727037fbc977a68a2ace822b4b37f8f0647769946e307dc966ecfbb"
 dependencies = [
  "blake2",
  "blsful",
@@ -7059,6 +7020,7 @@ dependencies = [
  "ed448-goldilocks-plus",
  "elliptic-curve 0.13.8",
  "elliptic-curve-tools",
+ "hex",
  "jubjub-plus",
  "k256 0.13.4",
  "merlin",
@@ -7075,34 +7037,34 @@ dependencies = [
 
 [[package]]
 name = "frost-ed25519"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
- "curve25519-dalek-ml",
  "document-features",
  "frost-core",
  "frost-rerandomized",
+ "lit-rust-crypto",
  "rand_core 0.6.4",
  "sha2 0.10.9",
 ]
 
 [[package]]
 name = "frost-ed448"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "document-features",
- "ed448-goldilocks-plus",
  "frost-core",
  "frost-rerandomized",
+ "lit-rust-crypto",
  "rand_core 0.6.4",
  "sha3 0.10.8",
 ]
 
 [[package]]
 name = "frost-p256"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "document-features",
  "frost-core",
@@ -7114,8 +7076,8 @@ dependencies = [
 
 [[package]]
 name = "frost-p384"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "document-features",
  "frost-core",
@@ -7127,23 +7089,34 @@ dependencies = [
 
 [[package]]
 name = "frost-redjubjub"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "blake2b_simd 1.0.3",
  "document-features",
  "frost-core",
  "frost-rerandomized",
- "group 0.13.0",
- "jubjub-plus",
+ "lit-rust-crypto",
  "rand_core 0.6.4",
- "sha2 0.10.9",
+]
+
+[[package]]
+name = "frost-redpallas"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
+dependencies = [
+ "blake2b_simd 1.0.3",
+ "document-features",
+ "frost-core",
+ "frost-rerandomized",
+ "lit-rust-crypto",
+ "rand_core 0.6.4",
 ]
 
 [[package]]
 name = "frost-rerandomized"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "derive-getters",
  "document-features",
@@ -7154,27 +7127,27 @@ dependencies = [
 
 [[package]]
 name = "frost-ristretto255"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
- "curve25519-dalek-ml",
  "document-features",
  "frost-core",
  "frost-rerandomized",
+ "lit-rust-crypto",
  "rand_core 0.6.4",
  "sha2 0.10.9",
 ]
 
 [[package]]
 name = "frost-schnorrkel25519"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "byte-strings",
- "curve25519-dalek-ml",
  "document-features",
  "frost-core",
  "frost-rerandomized",
+ "lit-rust-crypto",
  "merlin",
  "rand_core 0.6.4",
  "schnorrkel",
@@ -7182,8 +7155,8 @@ dependencies = [
 
 [[package]]
 name = "frost-secp256k1"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "document-features",
  "frost-core",
@@ -7195,13 +7168,13 @@ dependencies = [
 
 [[package]]
 name = "frost-taproot"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "document-features",
  "frost-core",
  "frost-rerandomized",
- "k256 0.13.4",
+ "lit-rust-crypto",
  "rand_core 0.6.4",
  "sha2 0.10.9",
  "signature 2.2.0",
@@ -7514,24 +7487,6 @@ checksum = "2cb8bc4c28d15ade99c7e90b219f30da4be5c88e586277e8cbe886beeb868ab2"
 dependencies = [
  "serde",
  "typenum",
-]
-
-[[package]]
-name = "gennaro-dkg"
-version = "1.0.0-rc6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "352f32caf0eb44d8f340f3bba63ca7a0dbeeb3e169a59bbb86ef40e0da10eec6"
-dependencies = [
- "anyhow",
- "elliptic-curve 0.13.8",
- "elliptic-curve-tools",
- "merlin",
- "postcard",
- "rand_chacha 0.3.1",
- "rand_core 0.6.4",
- "serde",
- "thiserror 2.0.16",
- "vsss-rs 5.1.0",
 ]
 
 [[package]]
@@ -7932,51 +7887,32 @@ dependencies = [
 [[package]]
 name = "hd-keys-curves-wasm"
 version = "1.0.3"
-source = "git+https://github.com/LIT-Protocol/hd-keys-curves-wasm?rev=5e0dcc1a6d8d08f2328d4716dca806db87f93748#5e0dcc1a6d8d08f2328d4716dca806db87f93748"
+source = "git+https://github.com/LIT-Protocol/hd-keys-curves-wasm.git#5e0dcc1a6d8d08f2328d4716dca806db87f93748"
 dependencies = [
- "blake2",
- "blsful",
- "curve25519-dalek-ml",
- "decaf377 0.10.1 (git+https://github.com/LIT-Protocol/decaf377?rev=1c5755b2b90e1969d47ce89cf2d35078984a0ee5)",
  "digest 0.10.7",
  "ecdsa 0.16.9",
- "ed448-goldilocks-plus",
  "elliptic-curve 0.13.8",
- "elliptic-curve-tools",
  "getrandom 0.2.16",
- "jubjub-plus",
  "k256 0.13.4",
  "p256",
- "p384 0.13.1",
  "sha2 0.10.9",
- "sha3 0.10.8",
  "subtle",
- "vsss-rs 5.1.0",
 ]
 
 [[package]]
 name = "hd-keys-curves-wasm"
-version = "1.0.3"
-source = "git+https://github.com/LIT-Protocol/hd-keys-curves-wasm#5e0dcc1a6d8d08f2328d4716dca806db87f93748"
+version = "1.0.5"
+source = "git+https://github.com/LIT-Protocol/hd-keys-curves-wasm.git?branch=pallas#597a14b9cf4bafd4c778f1053ca4bbad0b3d249b"
 dependencies = [
  "blake2",
- "blsful",
- "curve25519-dalek-ml",
- "decaf377 0.10.1 (git+https://github.com/LIT-Protocol/decaf377?rev=1c5755b2b90e1969d47ce89cf2d35078984a0ee5)",
  "digest 0.10.7",
  "ecdsa 0.16.9",
- "ed448-goldilocks-plus",
- "elliptic-curve 0.13.8",
  "elliptic-curve-tools",
  "getrandom 0.2.16",
- "jubjub-plus",
- "k256 0.13.4",
- "p256",
- "p384 0.13.1",
+ "lit-rust-crypto",
  "sha2 0.10.9",
  "sha3 0.10.8",
  "subtle",
- "vsss-rs 5.1.0",
 ]
 
 [[package]]
@@ -9249,9 +9185,9 @@ dependencies = [
 
 [[package]]
 name = "jubjub-plus"
-version = "0.10.8"
+version = "0.10.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c2c5e88d1ac6a903e693287073860ea35299b200273d5c2bd9d7845ec39f319"
+checksum = "e8cd4e5cd65bb1390238c9e2e7dc98078a7b146c9d0d080cf3a7b1ac0d2348ac"
 dependencies = [
  "bitvec 1.0.1",
  "bls12_381_plus",
@@ -9298,6 +9234,7 @@ dependencies = [
  "cfg-if 1.0.3",
  "ecdsa 0.16.9",
  "elliptic-curve 0.13.8",
+ "hex-literal",
  "once_cell",
  "serdect 0.2.0",
  "sha2 0.10.9",
@@ -9905,7 +9842,7 @@ source = "git+https://github.com/LIT-Protocol/lit-ecdsa-wasm-combine?branch=0.2.
 dependencies = [
  "console_error_panic_hook",
  "getrandom 0.2.16",
- "hd-keys-curves-wasm 1.0.3 (git+https://github.com/LIT-Protocol/hd-keys-curves-wasm)",
+ "hd-keys-curves-wasm 1.0.3",
  "hex",
  "js-sys",
  "k256 0.13.4",
@@ -9926,32 +9863,28 @@ version = "0.2.0"
 dependencies = [
  "digest 0.10.7",
  "ecdsa 0.16.9",
- "elliptic-curve 0.13.8",
  "elliptic-curve-tools",
- "hd-keys-curves-wasm 1.0.3 (git+https://github.com/LIT-Protocol/hd-keys-curves-wasm?rev=5e0dcc1a6d8d08f2328d4716dca806db87f93748)",
+ "hd-keys-curves-wasm 1.0.5",
  "hex",
  "lit-poly",
+ "lit-rust-crypto",
  "rand 0.8.5",
  "serde",
  "sha2 0.10.9",
  "subtle",
  "thiserror 2.0.16",
- "vsss-rs 5.1.0",
  "zeroize",
 ]
 
 [[package]]
 name = "lit-frost"
-version = "0.3.0"
-source = "git+https://github.com/LIT-Protocol/lit-frost.git#60ad81f1f637f7042bfee0fd8cc29cee74d754b1"
+version = "0.4.0"
+source = "git+https://github.com/LIT-Protocol/lit-frost.git?branch=pallas#38ecfb7d037138b16b1bac675e53fa4ab8e4d960"
 dependencies = [
  "anyhow",
  "ark-serialize 0.4.2",
- "curve25519-dalek-ml",
- "decaf377 0.10.1 (git+https://github.com/LIT-Protocol/decaf377?rev=1c5755b2b90e1969d47ce89cf2d35078984a0ee5)",
  "decaf377-rdsa",
  "ed25519-dalek 2.2.0",
- "ed448-goldilocks-plus",
  "frost-core",
  "frost-decaf377",
  "frost-ed25519",
@@ -9959,16 +9892,14 @@ dependencies = [
  "frost-p256",
  "frost-p384",
  "frost-redjubjub",
+ "frost-redpallas",
  "frost-ristretto255",
  "frost-schnorrkel25519",
  "frost-secp256k1",
  "frost-taproot",
  "getrandom 0.2.16",
  "hex",
- "jubjub-plus",
- "k256 0.13.4",
- "p256",
- "p384 0.13.1",
+ "lit-rust-crypto",
  "rand_core 0.6.4",
  "reddsa",
  "schnorrkel",
@@ -9977,7 +9908,6 @@ dependencies = [
  "sha2 0.10.9",
  "subtle",
  "thiserror 2.0.16",
- "vsss-rs 5.1.0",
  "zeroize",
 ]
 
@@ -10027,7 +9957,7 @@ dependencies = [
  "rand_chacha 0.3.1",
  "rand_core 0.6.4",
  "reqwest 0.11.27",
- "sdd 3.0.10",
+ "sdd 4.2.4",
  "serde",
  "serde_json",
  "serdect 0.3.0",
@@ -10044,23 +9974,17 @@ dependencies = [
 name = "lit-node-core"
 version = "2.0.1"
 dependencies = [
- "blsful",
- "curve25519-dalek-ml",
- "decaf377 0.10.1 (git+https://github.com/LIT-Protocol/decaf377?rev=1c5755b2b90e1969d47ce89cf2d35078984a0ee5)",
  "ed25519-dalek 2.2.0",
- "ed448-goldilocks-plus",
  "ethabi 16.0.0",
  "ethers",
- "hd-keys-curves-wasm 1.0.3 (git+https://github.com/LIT-Protocol/hd-keys-curves-wasm)",
+ "hd-keys-curves-wasm 1.0.5",
  "hex",
- "jubjub-plus",
- "k256 0.13.4",
- "p256",
- "p384 0.13.1",
+ "lit-rust-crypto",
+ "rand_chacha 0.3.1",
+ "rand_core 0.6.4",
  "serde",
  "serde_json",
  "thiserror 2.0.16",
- "vsss-rs 5.1.0",
 ]
 
 [[package]]
@@ -10148,32 +10072,25 @@ dependencies = [
 
 [[package]]
 name = "lit-recovery"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "arc-swap",
  "argon2",
- "blsful",
  "bulletproofs",
  "byteorder",
  "ciborium",
  "clap 4.5.46",
  "colored",
  "cryptex",
- "decaf377 0.10.1 (git+https://github.com/LIT-Protocol/decaf377?rev=1c5755b2b90e1969d47ce89cf2d35078984a0ee5)",
  "dirs 6.0.0",
- "ed448-goldilocks-plus",
- "elliptic-curve 0.13.8",
  "ethers",
  "generic-array 1.1.1",
  "glob",
  "hex",
- "jubjub-plus",
- "k256 0.13.4",
  "lit-blockchain",
  "lit-core",
  "lit-node-core",
- "p256",
- "p384 0.13.1",
+ "lit-rust-crypto",
  "path-clean 1.0.1",
  "rand 0.8.5",
  "reqwest 0.11.27",
@@ -10189,8 +10106,27 @@ dependencies = [
  "tiny-bip39 2.0.0",
  "tokio",
  "verifiable-share-encryption",
- "vsss-rs 5.1.0",
  "winapi",
+]
+
+[[package]]
+name = "lit-rust-crypto"
+version = "0.6.0"
+source = "git+https://github.com/LIT-Protocol/lit-rust-crypto?tag=0.6.0#9548fce521473f289ea1366249b782355e96507d"
+dependencies = [
+ "bls12_381_plus",
+ "blsful",
+ "blstrs_plus",
+ "curve25519-dalek-ml",
+ "decaf377_plus",
+ "ed448-goldilocks-plus",
+ "elliptic-curve 0.13.8",
+ "jubjub-plus",
+ "k256 0.13.4",
+ "p256",
+ "p384 0.13.1",
+ "pasta_curves_plus",
+ "vsss-rs 5.1.0",
 ]
 
 [[package]]
@@ -10198,7 +10134,6 @@ name = "lit-sdk"
 version = "2.0.1"
 dependencies = [
  "chrono",
- "data-encoding",
  "ecdsa 0.16.9",
  "elliptic-curve-tools",
  "futures",
@@ -10224,21 +10159,13 @@ version = "0.2.0"
 dependencies = [
  "blake2",
  "bulletproofs",
- "curve25519-dalek-ml",
- "decaf377 0.10.1 (git+https://github.com/LIT-Protocol/decaf377?rev=1c5755b2b90e1969d47ce89cf2d35078984a0ee5)",
- "ed448-goldilocks-plus",
- "elliptic-curve 0.13.8",
  "elliptic-curve-tools",
- "jubjub-plus",
- "k256 0.13.4",
- "p256",
- "p384 0.13.1",
+ "lit-rust-crypto",
  "rfc6979 0.4.0",
  "serde",
  "sha2 0.10.9",
  "sha3 0.10.8",
  "thiserror 2.0.16",
- "vsss-rs 5.1.0",
 ]
 
 [[package]]
@@ -10253,26 +10180,19 @@ dependencies = [
  "async-trait",
  "base64_light",
  "bech32 0.11.0",
- "blsful",
- "blstrs_plus",
  "bs58 0.5.1",
  "bulletproofs",
- "cc",
  "chrono",
  "ciborium",
  "clap 4.5.46",
  "ctor",
- "curve25519-dalek-ml",
  "data-encoding",
- "decaf377 0.10.1 (git+https://github.com/LIT-Protocol/decaf377?rev=1c5755b2b90e1969d47ce89cf2d35078984a0ee5)",
  "derive_builder",
  "derive_more 2.0.1",
  "digest 0.10.7",
  "dotenv",
  "ecdsa 0.16.9",
  "ed25519-dalek 2.2.0",
- "ed448-goldilocks-plus",
- "elliptic-curve 0.13.8",
  "ethabi 16.0.0",
  "ethers",
  "flume",
@@ -10280,7 +10200,6 @@ dependencies = [
  "futures",
  "generic-array 1.1.1",
  "glob",
- "hd-keys-curves-wasm 1.0.3 (git+https://github.com/LIT-Protocol/hd-keys-curves-wasm?rev=5e0dcc1a6d8d08f2328d4716dca806db87f93748)",
  "hex",
  "hex-literal",
  "indicatif 0.15.0",
@@ -10288,8 +10207,6 @@ dependencies = [
  "ipfs-hasher",
  "iri-string 0.6.0",
  "jsonpath-plus",
- "jubjub-plus",
- "k256 0.13.4",
  "lazy_static",
  "libaes",
  "libsecp256k1 0.7.1",
@@ -10309,6 +10226,7 @@ dependencies = [
  "lit-node-testnet",
  "lit-observability",
  "lit-recovery",
+ "lit-rust-crypto",
  "lit-sdk",
  "lit-vrf",
  "maplit",
@@ -10320,8 +10238,6 @@ dependencies = [
  "opentelemetry 0.24.0",
  "opentelemetry-semantic-conventions 0.15.0",
  "opentelemetry_sdk 0.24.1",
- "p256",
- "p384 0.13.1",
  "postcard",
  "pretty_assertions",
  "pretty_env_logger",
@@ -10336,8 +10252,8 @@ dependencies = [
  "rsa 0.7.0-pre",
  "rstest",
  "rusqlite",
- "scc 2.4.0",
- "sdd 3.0.10",
+ "scc 3.3.2",
+ "sdd 4.2.4",
  "semver 1.0.26",
  "serde",
  "serde_bare",
@@ -10369,7 +10285,6 @@ dependencies = [
  "utils",
  "verifiable-share-encryption",
  "visibility",
- "vsss-rs 5.1.0",
  "web3",
  "webauthn-rs",
  "webauthn-rs-core",
@@ -11958,6 +11873,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "pasta_curves_plus"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42e265b7ebdbfc61a8c0eeac79350cf3225cd390325dc91dd0edede5b6742d58"
+dependencies = [
+ "blake2",
+ "blake2b_simd 1.0.3",
+ "elliptic-curve 0.13.8",
+ "ff 0.13.1",
+ "frost-dkg",
+ "group 0.13.0",
+ "hex",
+ "lazy_static",
+ "rand 0.8.5",
+ "serde",
+ "static_assertions",
+ "subtle",
+]
+
+[[package]]
 name = "paste"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12712,7 +12647,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be769465445e8c1474e9c5dac2018218498557af32d9ed057325ec9a41ae81bf"
 dependencies = [
  "heck 0.5.0",
- "itertools 0.14.0",
+ "itertools 0.11.0",
  "log",
  "multimap",
  "once_cell",
@@ -12732,7 +12667,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a56d757972c98b346a9b766e3f02746cde6dd1cd1d1d563472929fdd74bec4d"
 dependencies = [
  "anyhow",
- "itertools 0.14.0",
+ "itertools 0.11.0",
  "proc-macro2 1.0.101",
  "quote 1.0.40",
  "syn 2.0.106",
@@ -12745,7 +12680,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9120690fafc389a67ba3803df527d0ec9cbbc9cc45e4cc20b332996dfb672425"
 dependencies = [
  "anyhow",
- "itertools 0.14.0",
+ "itertools 0.11.0",
  "proc-macro2 1.0.101",
  "quote 1.0.40",
  "syn 2.0.106",
@@ -17869,8 +17804,8 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.3",
- "rand 0.8.5",
+ "cfg-if 0.1.10",
+ "rand 0.7.3",
  "static_assertions",
 ]
 
@@ -18344,13 +18279,14 @@ checksum = "f1bddf1187be692e79c5ffeab891132dfb0f236ed36a43c7ed39f1165ee20191"
 
 [[package]]
 name = "verifiable-share-encryption"
-version = "0.3.0"
-source = "git+https://github.com/LIT-Protocol/verifiable-share-encryption?rev=7eddfbe736369db596d0f302c72f1d76b0fd332d#7eddfbe736369db596d0f302c72f1d76b0fd332d"
+version = "0.4.0"
+source = "git+https://github.com/LIT-Protocol/verifiable-share-encryption?branch=pallas#decd38dd09da1fbbfd18b3323e22ce681cd121cc"
 dependencies = [
  "anyhow",
  "bulletproofs",
  "data-encoding",
  "elliptic-curve-tools",
+ "lit-rust-crypto",
  "rand_core 0.6.4",
  "rayon",
  "serde",

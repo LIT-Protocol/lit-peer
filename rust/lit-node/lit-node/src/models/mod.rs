@@ -8,9 +8,8 @@ use lit_blockchain::resolver::rpc::config::RpcConfig;
 #[cfg(feature = "lit-actions")]
 use lit_core::config::LitConfig;
 use lit_node_core::{
-    AccessControlConditionItem, AuthMethod, AuthSigItem, Blinders, CurveType,
-    EVMContractConditionItem, JsonAuthSig, NodeSet, SolRpcConditionItem,
-    UnifiedAccessControlConditionItem,
+    AccessControlConditionItem, AuthMethod, AuthSigItem, CurveType, EVMContractConditionItem,
+    JsonAuthSig, NodeSet, SolRpcConditionItem, UnifiedAccessControlConditionItem,
 };
 use lit_recovery::models::UploadedShareData;
 use moka::future::Cache;
@@ -22,18 +21,8 @@ use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
 use web3::types::{Bytes, CallRequest};
-use webauthn_rs_core::proto::PublicKeyCredential;
 
 pub mod auth;
-pub mod siwe;
-pub mod webauthn_signature_verification_material;
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct JsonAdminSetBlindersRequest {
-    pub auth_sig: JsonAuthSig,
-    pub blinders: Blinders,
-}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -224,31 +213,6 @@ pub struct JwtSignedChainDataPayload {
     pub call_responses: Vec<Bytes>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct JsonSigningResourceId {
-    pub base_url: String,
-    pub path: String,
-    pub org_id: String,
-    pub role: String,
-    pub extra_data: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct SigningAccessControlConditionRequest {
-    pub access_control_conditions: Option<Vec<AccessControlConditionItem>>,
-    pub evm_contract_conditions: Option<Vec<EVMContractConditionItem>>,
-    pub sol_rpc_conditions: Option<Vec<SolRpcConditionItem>>,
-    pub unified_access_control_conditions: Option<Vec<UnifiedAccessControlConditionItem>>,
-    pub chain: Option<String>,
-    pub auth_sig: AuthSigItem,
-    pub iat: u64,
-    pub exp: u64,
-    #[serde(default = "default_epoch")]
-    pub epoch: u64,
-}
-
 /* accessControlConditions looks like this:
 accessControlConditions: [
 {
@@ -304,16 +268,6 @@ pub struct JwtPayloadV2 {
     pub unified_access_control_conditions: Option<Vec<UnifiedAccessControlConditionItem>>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct RecoveryShare {
-    pub recovery_share: Vec<u8>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct JsonRecoveryShareResponse {
-    pub result: String,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PeerValidator {
     pub ip: u32,
@@ -331,14 +285,6 @@ pub struct PeerValidator {
     pub is_kicked: bool,
     pub version: String,
     pub realm_id: U256,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct WebAuthnAuthenticationRequest {
-    pub credential: PublicKeyCredential,
-    pub session_pubkey: String,
-    pub siwe_message: String,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]

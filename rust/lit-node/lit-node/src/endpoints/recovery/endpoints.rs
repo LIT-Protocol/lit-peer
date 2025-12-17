@@ -77,7 +77,10 @@ pub async fn recovery_set_dec_share(
     }
 
     if let Err(e) = restore_state
-        .add_decryption_shares(&request.auth_sig.address, &[request.share_data.clone()])
+        .add_decryption_shares(
+            &request.auth_sig.address,
+            std::slice::from_ref(&request.share_data),
+        )
         .await
     {
         return e.handle();
