@@ -1,4 +1,4 @@
-use crate::models::{GaugeMetric, OsMetric};
+use crate::models::{InfoMetric, OsMetric};
 use lit_observability::opentelemetry::KeyValue;
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -13,15 +13,11 @@ pub struct KernelInfo {
 }
 
 impl OsMetric for KernelInfo {
-    const NAME: &'static str = "kernel_info";
+    const NAME: &'static str = "kernel_info_info";
 }
 
-impl GaugeMetric for KernelInfo {
-    fn gauge_value(&self) -> Option<f64> {
-        Some(1.0)
-    }
-
-    fn gauge_labels(&self) -> Vec<KeyValue> {
+impl InfoMetric for KernelInfo {
+    fn info_labels(&self) -> Vec<KeyValue> {
         vec![
             KeyValue::new("version", self.version.clone()),
             KeyValue::new("arguments", self.arguments.clone()),

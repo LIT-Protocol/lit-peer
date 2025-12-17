@@ -17,6 +17,24 @@ pub trait GaugeMetric: OsMetric {
     fn gauge_labels(&self) -> Vec<KeyValue>;
 }
 
+/// Trait for metrics that represent metadata/attributes without meaningful numeric values.
+/// Implementing this trait allows the metric to be emitted as an OpenTelemetry Non-Monotonic Sum
+/// (Prometheus Info metric) with value 1 to indicate the presence/existence of a system with
+/// these attributes.
+///
+/// This follows the [OpenTelemetry Prometheus compatibility specification](https://opentelemetry.io/docs/specs/otel/compatibility/prometheus_and_openmetrics/#info):
+/// - Info metrics are converted to OTLP Non-Monotonic Sum (not Gauge)
+/// - The value of 1 is intended to be viewed as a count, which should be summed together
+///   when aggregating away labels
+/// - Metric names MUST have the `_info` suffix to comply with the specification
+///
+/// The actual information is conveyed through the metric attributes/labels, not the numeric value.
+pub trait InfoMetric: OsMetric {
+    /// Returns labels (key-value pairs) for this metric.
+    /// These provide dimensional breakdown of the metric and contain the actual information.
+    fn info_labels(&self) -> Vec<KeyValue>;
+}
+
 mod cpu_info;
 mod cron_job;
 mod debian_package;

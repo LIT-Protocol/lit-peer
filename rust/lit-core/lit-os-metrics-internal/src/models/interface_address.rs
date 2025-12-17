@@ -1,4 +1,4 @@
-use super::{GaugeMetric, OsMetric};
+use super::{InfoMetric, OsMetric};
 use lit_observability::opentelemetry::KeyValue;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -20,15 +20,11 @@ pub struct InterfaceAddress {
 }
 
 impl OsMetric for InterfaceAddress {
-    const NAME: &'static str = "os.interface_addresses";
+    const NAME: &'static str = "os.interface_addresses_info";
 }
 
-impl GaugeMetric for InterfaceAddress {
-    fn gauge_value(&self) -> Option<f64> {
-        Some(1.0)
-    }
-
-    fn gauge_labels(&self) -> Vec<KeyValue> {
+impl InfoMetric for InterfaceAddress {
+    fn info_labels(&self) -> Vec<KeyValue> {
         vec![
             KeyValue::new("address", self.address.clone()),
             KeyValue::new("interface", self.interface.clone()),

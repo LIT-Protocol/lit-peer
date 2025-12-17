@@ -1,4 +1,4 @@
-use crate::error::{EC, Result, blockchain_err_code, conversion_err};
+use crate::error::{blockchain_err_code, conversion_err, Result, EC};
 use crate::utils::eth::EthereumAddress;
 use ethers::middleware::SignerMiddleware;
 use ethers::providers::{Http, Provider};
@@ -100,7 +100,7 @@ pub async fn get_or_generate_keys(
 mod attested_wallet {
     use async_std::path::PathBuf;
     use lit_node_common::config::attested_wallet_key_path;
-    use serde::{Serialize, de::DeserializeOwned};
+    use serde::{de::DeserializeOwned, Serialize};
 
     use crate::common::storage::{create_storage_dir, read_from_disk, write_to_disk};
     use crate::error::Result;
@@ -157,7 +157,7 @@ mod attested_wallet {
 mod comms_keys {
     use async_std::path::PathBuf;
     use lit_node_common::config::comms_key_path;
-    use serde::{Serialize, de::DeserializeOwned};
+    use serde::{de::DeserializeOwned, Serialize};
 
     use crate::common::storage::{create_storage_dir, read_from_disk, write_to_disk};
     use crate::error::Result;

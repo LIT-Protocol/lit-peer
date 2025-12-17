@@ -1,24 +1,24 @@
 use super::super::{
-    PeerState,
     peer_item::PeerItem,
     peer_reviewer::{Issue, PeerComplaint},
+    PeerState,
 };
 use std::{sync::Arc, time::Duration};
 
 use ethers::types::{Address, U256};
 use libsecp256k1::PublicKey;
-use lit_attestation::{AttestationType, attestation::FromSystem};
-use lit_node_common::config::{CFG_KEY_SIGNING_ROUND_TIMEOUT_MS_DEFAULT, LitNodeConfig};
-use rand::{Rng, rngs::OsRng};
+use lit_attestation::{attestation::FromSystem, AttestationType};
+use lit_node_common::config::{LitNodeConfig, CFG_KEY_SIGNING_ROUND_TIMEOUT_MS_DEFAULT};
+use rand::{rngs::OsRng, Rng};
 use tonic::{Code, Request};
-use tracing::{Instrument, info_span, warn};
+use tracing::{info_span, warn, Instrument};
 use url::Url;
 
 use crate::p2p_comms::web::chatter_server::chatter::ConnectRequest;
 use crate::utils::networking::get_web_addr_from_chain_info;
 use crate::version;
 use crate::{
-    error::{EC, Result, blockchain_err_code, unexpected_err},
+    error::{blockchain_err_code, unexpected_err, Result, EC},
     networking::grpc::client::ChatterClientFactory,
 };
 use crate::{models::PeerValidator, peers::peer_state::models::NetworkState};

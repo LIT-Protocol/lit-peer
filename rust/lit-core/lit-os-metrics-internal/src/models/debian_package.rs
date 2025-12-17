@@ -1,4 +1,4 @@
-use super::{GaugeMetric, OsMetric};
+use super::{InfoMetric, OsMetric};
 use lit_observability::opentelemetry::KeyValue;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -29,15 +29,11 @@ pub struct DebianPackage {
 }
 
 impl OsMetric for DebianPackage {
-    const NAME: &'static str = "os.installed_debian_packages";
+    const NAME: &'static str = "os.installed_debian_packages_info";
 }
 
-impl GaugeMetric for DebianPackage {
-    fn gauge_value(&self) -> Option<f64> {
-        Some(1.0)
-    }
-
-    fn gauge_labels(&self) -> Vec<KeyValue> {
+impl InfoMetric for DebianPackage {
+    fn info_labels(&self) -> Vec<KeyValue> {
         vec![
             KeyValue::new("arch", self.arch.clone()),
             KeyValue::new("name", self.name.clone()),

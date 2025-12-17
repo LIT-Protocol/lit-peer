@@ -1,16 +1,16 @@
 use super::super::PeerState;
 use crate::error::unexpected_err;
 use crate::{
-    error::{EC, Result, blockchain_err, blockchain_err_code},
+    error::{blockchain_err, blockchain_err_code, Result, EC},
     utils::eth::EthereumAddress,
 };
 use ethers::{
     providers::Middleware,
-    types::{U64, U256},
+    types::{U256, U64},
 };
 use lit_blockchain::util::decode_revert;
 use std::time::Duration;
-use tracing::{Instrument, debug_span, instrument, trace};
+use tracing::{debug_span, instrument, trace, Instrument};
 
 #[allow(dead_code)]
 impl PeerState {

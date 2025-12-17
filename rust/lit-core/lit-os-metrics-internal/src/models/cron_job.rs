@@ -1,4 +1,4 @@
-use super::{GaugeMetric, OsMetric};
+use super::{InfoMetric, OsMetric};
 use lit_observability::opentelemetry::KeyValue;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -30,15 +30,11 @@ pub struct CronJob {
 }
 
 impl OsMetric for CronJob {
-    const NAME: &'static str = "os.cron_jobs";
+    const NAME: &'static str = "os.cron_jobs_info";
 }
 
-impl GaugeMetric for CronJob {
-    fn gauge_value(&self) -> Option<f64> {
-        Some(1.0)
-    }
-
-    fn gauge_labels(&self) -> Vec<KeyValue> {
+impl InfoMetric for CronJob {
+    fn info_labels(&self) -> Vec<KeyValue> {
         vec![
             KeyValue::new("command", self.command.clone()),
             KeyValue::new("cron_file", self.cron_file.clone()),
