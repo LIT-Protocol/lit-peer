@@ -540,11 +540,12 @@ async function main() {
   // 4. Staking Token Price
   // ============================================================================
   console.log('\n=== Staking Token Price ===');
-  // tokenPrice is "The number of LIT tokens per USD"
-  // If LIT is $0.50, then tokenPrice = 2.0 (2 LIT per USD)
-  // Formula: tokenPrice = (1 / litKeyPriceUSD) * 1e18 (using 18 decimals for WAD precision)
-  // Use BigInt arithmetic to avoid floating point precision issues:
-  // tokenPrice = (1e18 * 1e18) / (litKeyPriceUSD * 1e18)
+  // tokenPrice is the number of LIT tokens per USD, represented in WAD format (18 decimals).
+  // Units: tokenPrice has 18 decimals (WAD), so a value of 2 * 1e18 means "2 LIT per USD".
+  // Formula: tokenPrice = (1 / litKeyPriceUSD) * 1e18
+  // Example: If LIT is $0.50, then tokenPrice = (1 / 0.5) * 1e18 = 2 * 1e18 (2 LIT per USD).
+  // Implementation: Use BigInt arithmetic to avoid floating point precision issues:
+  //   tokenPrice = (1e18 * 1e18) / (litKeyPriceUSD * 1e18)
   const oneEther = ethers.parseEther('1');
   const litKeyPriceWei = ethers.parseUnits(litKeyPriceUSD.toFixed(18), 18);
   const tokenPrice = (oneEther * oneEther) / litKeyPriceWei;
