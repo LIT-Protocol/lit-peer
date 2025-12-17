@@ -46,14 +46,14 @@ use tracing::{debug, instrument};
 use crate::tss::common::curve_state::CurveState;
 use lit_node_common::config::LitNodeConfig as _;
 use lit_node_core::{
-    AccessControlConditionResource, AuthSigItem, BeHex, CompressedBytes, CurveType,
-    EndpointVersion, JsonAuthSig, LitActionPriceComponent, LitResource, NodeSet, PeerId,
-    SignableOutput, SignedData, SigningScheme, UnifiedAccessControlConditionItem,
+    AccessControlConditionResource, AuthSigItem, BeHex, CompressedBytes, EndpointVersion,
+    JsonAuthSig, LitActionPriceComponent, LitResource, NodeSet, PeerId, SignableOutput, SignedData,
+    SigningScheme, UnifiedAccessControlConditionItem,
     hd_keys_curves_wasm::{HDDerivable, HDDeriver},
     response,
 };
 use lit_rust_crypto::{
-    blsful::{Bls12381G2Impl, PublicKey, SignatureShare, inner_types::G1Projective},
+    blsful::{self, Bls12381G2Impl, SignatureShare},
     decaf377, ed448_goldilocks,
     elliptic_curve::{CurveArithmetic, PrimeCurve, generic_array::ArrayLength},
     group::GroupEncoding,

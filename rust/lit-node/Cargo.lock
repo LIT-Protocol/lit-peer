@@ -9885,7 +9885,6 @@ name = "lit-node-core"
 version = "2.0.1"
 dependencies = [
  "ed25519-dalek 2.2.0",
- "ed448-goldilocks-plus",
  "ethabi",
  "ethers",
  "hd-keys-curves-wasm 1.0.5",
@@ -10104,8 +10103,6 @@ dependencies = [
  "dotenv",
  "ecdsa 0.16.9",
  "ed25519-dalek 2.2.0",
- "ed448-goldilocks-plus",
- "elliptic-curve 0.13.8",
  "ethabi",
  "ethers",
  "flume",
@@ -10166,8 +10163,8 @@ dependencies = [
  "rsa 0.7.0-pre",
  "rstest",
  "rusqlite",
- "scc 3.3.2",
- "sdd 4.2.4",
+ "scc",
+ "sdd",
  "semver 1.0.26",
  "serde",
  "serde_bare",

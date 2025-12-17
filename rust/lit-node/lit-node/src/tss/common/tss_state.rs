@@ -285,11 +285,7 @@ impl TssState {
             return 0;
         }
 
-        let root_keys = self.chain_data_config_manager.root_keys();
-        let curve_type = root_keys
-            .first()
-            .map(|rk| rk.curve_type)
-            .unwrap_or(CurveType::K256);
+        let curve_type = CurveType::K256;
         let epoch = self.get_keyshare_epoch().await;
         let rt = match self
             .get_threshold_using_current_epoch_realm_peers_for_curve(

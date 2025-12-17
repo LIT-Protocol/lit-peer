@@ -350,16 +350,7 @@ impl RestoreState {
             restored_key_shares.bls12381g1_shares = recovery_data.try_restore(&params).await;
         }
         if let Some(recovery_data) = &state.pallas_recovery_data {
-            restored_key_shares.pallas_shares = recovery_data
-                .try_restore(
-                    state.threshold,
-                    peer_id,
-                    epoch,
-                    realm_id,
-                    staker_address,
-                    &state.restored_key_cache,
-                )
-                .await;
+            restored_key_shares.pallas_shares = recovery_data.try_restore(&params).await;
         }
 
         restored_key_shares
@@ -491,9 +482,10 @@ impl RestoreState {
                     &state.bls12381g1_recovery_data,
                     root_keys,
                 ),
-                CurveType::RedPallas => CurveRecoveryData::are_all_keys_restored(
+                CurveType::RedPallas => Self::are_all_curve_keys_restored(
+                    *curve_type,
                     &state.pallas_recovery_data,
-                    &root_key.public_key,
+                    root_keys,
                 ),
             };
             restored &= r;

@@ -587,13 +587,10 @@ pub async fn check_pkp_auth(
     }
 
     Err(validation_err_code(
-        Error::new(
-            ErrorKind::Other,
-            format!(
-                "None of the AuthMethods, AuthSig or Lit Actions meet the required scope {:?}.",
-                required_scopes
-            ),
-        ),
+        Error::other(format!(
+            "None of the AuthMethods, AuthSig or Lit Actions meet the required scope {:?}.",
+            required_scopes
+        )),
         EC::NodeAuthSigScopeTooLimited,
         None,
     ))

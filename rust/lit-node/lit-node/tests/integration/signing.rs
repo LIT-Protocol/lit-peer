@@ -11,8 +11,8 @@ use lit_node_testnet::end_user::EndUser;
 
 use lit_node_core::SigningScheme;
 use lit_node_testnet::node_collection::get_identity_pubkeys_from_node_set;
-use lit_rust_crypto::k256;
 use lit_node_testnet::validator::ValidatorCollection;
+use lit_rust_crypto::k256;
 use rand::Rng;
 use rand_core::OsRng;
 use std::str::FromStr;

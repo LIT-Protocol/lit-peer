@@ -334,7 +334,7 @@ impl Signable for FrostState {
                 let deriver = pallas::Scalar::create(&key_id, self.signing_scheme.id_sign_ctx());
                 self.derive_frost_signing_components::<pallas::Point>(
                     deriver,
-                    root_pubkeys,
+                    &root_pubkeys,
                     &self_peer,
                     epoch,
                 )
