@@ -1,5 +1,8 @@
-// Script to generate SAFE multisig transaction JSON payloads for setting prices
-// Usage: HARDHAT_NETWORK=litMainnet npx ts-node --files scripts/generatePriceSettingTransactions.ts --contract-resolver-address <ADDRESS>
+// Script to generate SAFE multisig transaction JSON payloads for setting prices, or send transactions directly
+// Usage (SAFE mode - default):
+//   HARDHAT_NETWORK=litMainnet npx ts-node --files scripts/generatePriceSettingTransactions.ts --contract-resolver-address <ADDRESS> --env <dev|staging|prod>
+// Usage (send mode):
+//   HARDHAT_NETWORK=litMainnet npx ts-node --files scripts/generatePriceSettingTransactions.ts --contract-resolver-address <ADDRESS> --env <dev|staging|prod> --mode send --private-key <PRIVATE_KEY>
 
 import hre from 'hardhat';
 import yargs from 'yargs';
@@ -158,6 +161,9 @@ function usdToLitKeyWei(usdPrice: number, litKeyPriceUSD: number): bigint {
  */
 async function getInputsFromCliOptions(): Promise<{
   contractResolverAddress: string;
+  env: number;
+  mode: 'safe' | 'send';
+  privateKey?: string;
 }> {
   const argv = await yargs(process.argv.slice(2)).options({
     'contract-resolver-address': {
@@ -165,17 +171,56 @@ async function getInputsFromCliOptions(): Promise<{
       describe: 'Address of the ContractResolver contract',
       required: true,
     },
+    env: {
+      type: 'string',
+      describe: 'Environment: dev, staging, or prod',
+      choices: ['dev', 'staging', 'prod'],
+      required: true,
+    },
+    mode: {
+      type: 'string',
+      describe:
+        'Mode: "safe" to generate SAFE JSON, "send" to send transactions directly',
+      choices: ['safe', 'send'],
+      default: 'safe',
+    },
+    'private-key': {
+      type: 'string',
+      describe:
+        'Private key of the wallet to send transactions (required if mode is "send")',
+    },
   }).argv;
+
+  const mode = argv['mode'] as 'safe' | 'send';
+  const privateKey = argv['private-key'] as string | undefined;
+  const envStr = argv['env'] as 'dev' | 'staging' | 'prod';
+
+  // Map env string to number: dev=0, staging=1, prod=2
+  const envMap: Record<string, number> = {
+    dev: 0,
+    staging: 1,
+    prod: 2,
+  };
+
+  if (mode === 'send' && !privateKey) {
+    throw new Error('--private-key is required when mode is "send"');
+  }
 
   return {
     contractResolverAddress: argv['contract-resolver-address'] as string,
+    env: envMap[envStr],
+    mode,
+    privateKey,
   };
 }
 
 /**
  * Get contract addresses from ContractResolver
  */
-async function getContractAddresses(contractResolverAddress: string): Promise<{
+async function getContractAddresses(
+  contractResolverAddress: string,
+  env: number
+): Promise<{
   pkpNftAddress: string;
   priceFeedAddress: string;
   stakingAddress: string;
@@ -184,14 +229,6 @@ async function getContractAddresses(contractResolverAddress: string): Promise<{
     'ContractResolver',
     contractResolverAddress
   );
-
-  const network = await ethers.provider.getNetwork();
-  const env =
-    network.chainId === 175200n
-      ? 0 // Mainnet
-      : network.chainId === 987n
-      ? 1 // Testnet
-      : 0; // Default to mainnet
 
   const pkpNftAddress = await contractResolver.getContract(
     await contractResolver.PKP_NFT_CONTRACT(),
@@ -239,17 +276,27 @@ function createSafeTransaction(
 // ============================================================================
 
 async function main() {
-  console.log(
-    '=== Generating SAFE Transaction Payloads for Price Setting ===\n'
-  );
-
   // Get inputs from command line
   const inputs = await getInputsFromCliOptions();
-  const contractResolverAddress = inputs.contractResolverAddress;
+  const { contractResolverAddress, env, mode, privateKey } = inputs;
+
+  const envNames: Record<number, string> = {
+    0: 'dev',
+    1: 'staging',
+    2: 'prod',
+  };
+
+  console.log(
+    mode === 'safe'
+      ? '=== Generating SAFE Transaction Payloads for Price Setting ===\n'
+      : '=== Sending Price Setting Transactions Directly ===\n'
+  );
 
   // Get network info
   const network = await ethers.provider.getNetwork();
-  console.log(`Network: ${network.name} (Chain ID: ${network.chainId})\n`);
+  console.log(`Network: ${network.name} (Chain ID: ${network.chainId})`);
+  console.log(`Environment: ${envNames[env]} (${env})`);
+  console.log(`Mode: ${mode}\n`);
 
   // Validate contract resolver address
   if (!ethers.isAddress(contractResolverAddress)) {
@@ -258,10 +305,17 @@ async function main() {
     );
   }
 
+  // Get signer if in send mode
+  let signer: any;
+  if (mode === 'send' && privateKey) {
+    signer = new ethers.Wallet(privateKey).connect(ethers.provider);
+    console.log(`Signer address: ${signer.address}\n`);
+  }
+
   // Get contract addresses from ContractResolver
   console.log('Looking up contract addresses from ContractResolver...');
   const { pkpNftAddress, priceFeedAddress, stakingAddress } =
-    await getContractAddresses(contractResolverAddress);
+    await getContractAddresses(contractResolverAddress, env);
   console.log(`PKPNFT Contract: ${pkpNftAddress}`);
   console.log(`PriceFeed Contract: ${priceFeedAddress}`);
   console.log(`Staking Contract: ${stakingAddress}\n`);
@@ -535,53 +589,96 @@ async function main() {
   });
 
   // ============================================================================
-  // OUTPUT SAFE TRANSACTION PAYLOAD
+  // OUTPUT OR SEND TRANSACTIONS
   // ============================================================================
-  console.log('\n=== SAFE Transaction Payload ===\n');
 
-  // Create the SAFE transaction payload
-  // This format is compatible with SAFE's Transaction Builder
-  const safePayload = {
-    version: '1.0',
-    chainId: network.chainId.toString(),
-    createdAt: new Date().toISOString(),
-    meta: {
-      name: 'Price Setting Transactions',
-      description:
-        'Transactions to set prices for PKP minting and PriceFeed products',
-      txBuilderVersion: '1.0.0',
-    },
-    transactions: transactions.map((tx) => ({
+  if (mode === 'send' && signer) {
+    // Send transactions directly
+    console.log('\n=== Sending Transactions ===\n');
+
+    for (let i = 0; i < transactions.length; i++) {
+      const tx = transactions[i];
+      console.log(`[${i + 1}/${transactions.length}] ${tx.description}...`);
+
+      try {
+        const txResponse = await signer.sendTransaction({
+          to: tx.to,
+          value: tx.value,
+          data: tx.data,
+        });
+        console.log(`  Transaction hash: ${txResponse.hash}`);
+        console.log('  Waiting for confirmation...');
+        const receipt = await txResponse.wait();
+        console.log(
+          `  Confirmed in block ${receipt.blockNumber} (gas used: ${receipt.gasUsed})\n`
+        );
+      } catch (error: any) {
+        console.error(`  ERROR: ${error.message}\n`);
+        console.log(`error data: ${error.data}`);
+        throw error;
+      }
+    }
+
+    console.log('=== All transactions sent successfully! ===\n');
+  } else {
+    // Generate SAFE transaction payload
+    console.log('\n=== SAFE Transaction Payload ===\n');
+
+    // Create the SAFE transaction payload
+    // This format is compatible with SAFE's Transaction Builder
+    const safePayload = {
+      version: '1.0',
+      chainId: network.chainId.toString(),
+      createdAt: new Date().toISOString(),
+      meta: {
+        name: 'Price Setting Transactions',
+        description:
+          'Transactions to set prices for PKP minting and PriceFeed products',
+        txBuilderVersion: '1.0.0',
+      },
+      transactions: transactions.map((tx) => ({
+        to: tx.to,
+        value: tx.value,
+        data: tx.data,
+        operation: tx.operation,
+      })),
+    };
+
+    // Also create a simple array format (alternative format for SAFE)
+    const simpleSafePayload = transactions.map((tx) => ({
       to: tx.to,
       value: tx.value,
       data: tx.data,
       operation: tx.operation,
-    })),
-  };
+    }));
 
-  // Also create a simple array format (alternative format for SAFE)
-  const simpleSafePayload = transactions.map((tx) => ({
-    to: tx.to,
-    value: tx.value,
-    data: tx.data,
-    operation: tx.operation,
-  }));
+    // Also create a detailed version with descriptions
+    const detailedPayload = {
+      ...safePayload,
+      transactions: transactions,
+    };
 
-  // Also create a detailed version with descriptions
-  const detailedPayload = {
-    ...safePayload,
-    transactions: transactions,
-  };
+    // Output JSON
+    console.log('=== SAFE Transaction JSON (Transaction Builder format) ===');
+    console.log(JSON.stringify(safePayload, null, 2));
 
-  // Output JSON
-  console.log('=== SAFE Transaction JSON (Transaction Builder format) ===');
-  console.log(JSON.stringify(safePayload, null, 2));
+    console.log('\n=== Simple SAFE Transaction Array (alternative format) ===');
+    console.log(JSON.stringify(simpleSafePayload, null, 2));
 
-  console.log('\n=== Simple SAFE Transaction Array (alternative format) ===');
-  console.log(JSON.stringify(simpleSafePayload, null, 2));
+    console.log('\n=== Detailed Transaction List (for reference) ===');
+    console.log(JSON.stringify(detailedPayload, null, 2));
 
-  console.log('\n=== Detailed Transaction List (for reference) ===');
-  console.log(JSON.stringify(detailedPayload, null, 2));
+    console.log('\n=== Usage Instructions ===');
+    console.log(
+      '1. Copy the SAFE Transaction JSON above (Transaction Builder format)'
+    );
+    console.log('2. Go to your SAFE wallet and use the Transaction Builder');
+    console.log('3. Import the JSON or manually add each transaction');
+    console.log('4. Review and sign the transactions with your multisig');
+    console.log(
+      "\nAlternatively, you can use the simple array format with SAFE's API directly."
+    );
+  }
 
   // Summary
   console.log('\n=== Summary ===');
@@ -590,16 +687,6 @@ async function main() {
   console.log(`PKPNFT Address: ${pkpNftAddress}`);
   console.log(`PriceFeed Address: ${priceFeedAddress}`);
   console.log(`Staking Address: ${stakingAddress}`);
-  console.log('\n=== Usage Instructions ===');
-  console.log(
-    '1. Copy the SAFE Transaction JSON above (Transaction Builder format)'
-  );
-  console.log('2. Go to your SAFE wallet and use the Transaction Builder');
-  console.log('3. Import the JSON or manually add each transaction');
-  console.log('4. Review and sign the transactions with your multisig');
-  console.log(
-    "\nAlternatively, you can use the simple array format with SAFE's API directly."
-  );
 }
 
 main()
