@@ -1,4 +1,3 @@
-use blsful::inner_types::{Group, GroupEncoding};
 use lit_node_testnet::{
     end_user::EndUser,
     testnet::{NodeAccount, Testnet, WhichTestnet, contracts::StakingContractRealmConfig},
@@ -15,6 +14,11 @@ use lit_node::tss::common::key_persistence::KeyPersistence;
 use lit_node::tss::common::key_share_commitment::KeyShareCommitments;
 use lit_node::tss::common::storage::read_key_share_commitments_from_disk;
 use lit_node_core::{CompressedBytes, CurveType, PeerId};
+use lit_rust_crypto::{
+    blsful, decaf377, ed448_goldilocks,
+    group::{Group, GroupEncoding},
+    jubjub, k256, p256, p384, pallas, vsss_rs,
+};
 use network_state::{NetworkState, get_next_random_network_state};
 use semver::Version;
 use tracing::info;
@@ -281,6 +285,15 @@ async fn test_many_epochs() {
                 }
                 CurveType::RedDecaf377 => {
                     check_for_lingering_keys::<decaf377::Element>(
+                        curve_type,
+                        pub_key,
+                        &peers,
+                        realm_id.as_u64(),
+                    )
+                    .await;
+                }
+                CurveType::RedPallas => {
+                    check_for_lingering_keys::<pallas::Point>(
                         curve_type,
                         pub_key,
                         &peers,

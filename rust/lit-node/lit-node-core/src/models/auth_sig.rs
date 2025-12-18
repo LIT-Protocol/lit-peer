@@ -106,15 +106,15 @@ impl JsonAuthSig {
     ///
     /// TODO: After a stabilization period, we should make our pattern matching
     /// stricter and perhaps turn this function to returning a core::Result.
+    #[allow(clippy::collapsible_if)]
     pub fn determine_auth_material_type(
         derived_via: &str,
         algo: &Option<String>,
     ) -> AuthMaterialType {
-        if derived_via == AUTH_SIG_DERIVED_VIA_SESSION_SIG {
-            if let Some(algo) = algo {
-                if algo == AUTH_SIG_SESSION_SIG_ALGO {
-                    return AuthMaterialType::SessionSig;
-                }
+        if let Some(algo) = algo {
+            if derived_via == AUTH_SIG_DERIVED_VIA_SESSION_SIG && algo == AUTH_SIG_SESSION_SIG_ALGO
+            {
+                return AuthMaterialType::SessionSig;
             }
         }
 
@@ -124,11 +124,11 @@ impl JsonAuthSig {
             return AuthMaterialType::ContractSig;
         }
 
-        if derived_via == AUTH_SIG_DERIVED_VIA_BLS_NETWORK_SIG {
-            if let Some(algo) = algo {
-                if algo == AUTH_SIG_BLS_NETWORK_SIG_ALGO {
-                    return AuthMaterialType::BLSNetworkSig;
-                }
+        if let Some(algo) = algo {
+            if derived_via == AUTH_SIG_DERIVED_VIA_BLS_NETWORK_SIG
+                && algo == AUTH_SIG_BLS_NETWORK_SIG_ALGO
+            {
+                return AuthMaterialType::BLSNetworkSig;
             }
         }
 

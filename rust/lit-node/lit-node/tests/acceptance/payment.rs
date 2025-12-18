@@ -48,7 +48,9 @@ async fn test_all_payment_methods_for_user() {
     let test_encryption_parameters = prepare_test_encryption_parameters();
     let network_pubkey = get_network_pubkey(&actions).await;
     let message_bytes = test_encryption_parameters.to_encrypt.as_bytes();
-    let pubkey = blsful::PublicKey::try_from(&hex::decode(&network_pubkey).unwrap()).unwrap();
+    let pubkey =
+        lit_rust_crypto::blsful::PublicKey::try_from(&hex::decode(&network_pubkey).unwrap())
+            .unwrap();
     let ciphertext = lit_sdk::encryption::encrypt_time_lock(
         &pubkey,
         message_bytes,
@@ -805,7 +807,9 @@ async fn test_all_payment_methods_for_pkp() {
     let network_pubkey = get_network_pubkey(&actions).await;
     let message_bytes = test_encryption_parameters.to_encrypt.as_bytes();
 
-    let bls_pubkey = blsful::PublicKey::try_from(&hex::decode(&network_pubkey).unwrap()).unwrap();
+    let bls_pubkey =
+        lit_rust_crypto::blsful::PublicKey::try_from(&hex::decode(&network_pubkey).unwrap())
+            .unwrap();
 
     let ciphertext = lit_sdk::encryption::encrypt_time_lock(
         &bls_pubkey,
@@ -1212,7 +1216,9 @@ async fn test_pending_payments_block_usage() {
     let test_encryption_parameters = prepare_test_encryption_parameters();
     let network_pubkey = get_network_pubkey(&actions).await;
     let message_bytes = test_encryption_parameters.to_encrypt.as_bytes();
-    let pubkey = blsful::PublicKey::try_from(&hex::decode(&network_pubkey).unwrap()).unwrap();
+    let pubkey =
+        lit_rust_crypto::blsful::PublicKey::try_from(&hex::decode(&network_pubkey).unwrap())
+            .unwrap();
     let ciphertext = lit_sdk::encryption::encrypt_time_lock(
         &pubkey,
         message_bytes,

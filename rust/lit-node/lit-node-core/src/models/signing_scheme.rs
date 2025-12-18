@@ -42,6 +42,7 @@ pub enum SigningScheme {
     SchnorrRedJubjubBlake2b512,
     SchnorrK256Taproot,
     SchnorrRedDecaf377Blake2b512,
+    SchnorrRedPallasBlake2b512,
     SchnorrkelSubstrate,
     Bls12381G1ProofOfPossession,
 }
@@ -60,6 +61,7 @@ impl Display for SigningScheme {
             Self::SchnorrRistretto25519Sha512 => write!(f, "SchnorrRistretto25519Sha512"),
             Self::SchnorrEd448Shake256 => write!(f, "SchnorrEd448Shake256"),
             Self::SchnorrRedJubjubBlake2b512 => write!(f, "SchnorrRedJubjubBlake2b512"),
+            Self::SchnorrRedPallasBlake2b512 => write!(f, "SchnorrRedPallasBlake2b512"),
             Self::SchnorrK256Taproot => write!(f, "SchnorrK256Taproot"),
             Self::SchnorrRedDecaf377Blake2b512 => write!(f, "SchnorrRedDecaf377Blake2b512"),
             Self::SchnorrkelSubstrate => write!(f, "SchnorrkelSubstrate"),
@@ -84,6 +86,7 @@ impl FromStr for SigningScheme {
             "SchnorrRistretto25519Sha512" => Ok(SigningScheme::SchnorrRistretto25519Sha512),
             "SchnorrEd448Shake256" => Ok(SigningScheme::SchnorrEd448Shake256),
             "SchnorrRedJubjubBlake2b512" => Ok(SigningScheme::SchnorrRedJubjubBlake2b512),
+            "SchnorrRedPallasBlake2b512" => Ok(SigningScheme::SchnorrRedPallasBlake2b512),
             "SchnorrK256Taproot" => Ok(SigningScheme::SchnorrK256Taproot),
             "SchnorrRedDecaf377Blake2b512" => Ok(SigningScheme::SchnorrRedDecaf377Blake2b512),
             "SchnorrkelSubstrate" => Ok(SigningScheme::SchnorrkelSubstrate),
@@ -111,6 +114,7 @@ impl From<SigningScheme> for u8 {
             SigningScheme::SchnorrRedDecaf377Blake2b512 => 13,
             SigningScheme::SchnorrkelSubstrate => 14,
             SigningScheme::Bls12381G1ProofOfPossession => 15,
+            SigningScheme::SchnorrRedPallasBlake2b512 => 16,
         }
     }
 }
@@ -135,6 +139,7 @@ impl TryFrom<u8> for SigningScheme {
             13 => Ok(SigningScheme::SchnorrRedDecaf377Blake2b512),
             14 => Ok(SigningScheme::SchnorrkelSubstrate),
             15 => Ok(SigningScheme::Bls12381G1ProofOfPossession),
+            16 => Ok(SigningScheme::SchnorrRedPallasBlake2b512),
             _ => Err(Error::Parse(format!("Invalid signing scheme: {}", value))),
         }
     }
@@ -207,6 +212,10 @@ impl SigningScheme {
                     SigningAlgorithm::Schnorr,
                     SigningScheme::SchnorrkelSubstrate
                 )
+                | (
+                    SigningAlgorithm::Schnorr,
+                    SigningScheme::SchnorrRedPallasBlake2b512
+                )
         )
     }
 
@@ -226,6 +235,7 @@ impl SigningScheme {
             | Self::SchnorrRistretto25519Sha512
             | Self::SchnorrEd448Shake256
             | Self::SchnorrRedJubjubBlake2b512
+            | Self::SchnorrRedPallasBlake2b512
             | Self::SchnorrRedDecaf377Blake2b512
             | Self::SchnorrkelSubstrate => KeyFormatPreference::Compressed,
             Self::EcdsaK256Sha256 | Self::EcdsaP256Sha256 | Self::EcdsaP384Sha384 => {
@@ -258,6 +268,7 @@ impl SigningScheme {
             }
             Self::SchnorrEd448Shake256 => CurveType::Ed448,
             Self::SchnorrRedJubjubBlake2b512 => CurveType::RedJubjub,
+            Self::SchnorrRedPallasBlake2b512 => CurveType::RedPallas,
             Self::SchnorrK256Taproot => CurveType::K256,
             Self::SchnorrRedDecaf377Blake2b512 => CurveType::RedDecaf377,
             Self::Bls12381G1ProofOfPossession => CurveType::BLS12381G1,
@@ -288,6 +299,9 @@ impl SigningScheme {
             SigningScheme::SchnorrRedJubjubBlake2b512 => {
                 b"LIT_HD_KEY_ID_REDJUBJUB_XMD:BLAKE2B-512_ELL2_RO_NUL_"
             }
+            SigningScheme::SchnorrRedPallasBlake2b512 => {
+                b"LIT_HD_KEY_ID_REDPALLAS_XMD:BLAKE2B-512_SSWU_RO_NUL_"
+            }
             SigningScheme::SchnorrRedDecaf377Blake2b512 => {
                 b"LIT_HD_KEY_ID_DECAF377_XMD:BLAKE2B-512_ELL2_RO_NUL_"
             }
@@ -306,6 +320,7 @@ impl SigningScheme {
             | Self::SchnorrRistretto25519Sha512
             | Self::SchnorrEd448Shake256
             | Self::SchnorrRedJubjubBlake2b512
+            | Self::SchnorrRedPallasBlake2b512
             | Self::SchnorrRedDecaf377Blake2b512
             | Self::SchnorrkelSubstrate
             | Self::Bls12381
@@ -330,6 +345,7 @@ impl SigningScheme {
             Self::SchnorrRistretto25519Sha512 => "SchnorrRistretto25519Sha512",
             Self::SchnorrEd448Shake256 => "SchnorrEd448Shake256",
             Self::SchnorrRedJubjubBlake2b512 => "SchnorrRedJubjubBlake2b512",
+            Self::SchnorrRedPallasBlake2b512 => "SchnorrRedPallasBlake2b512",
             Self::SchnorrK256Taproot => "SchnorrK256Taproot",
             Self::SchnorrRedDecaf377Blake2b512 => "SchnorrRedDecaf377Blake2b512",
             Self::SchnorrkelSubstrate => "SchnorrkelSubstrate",
