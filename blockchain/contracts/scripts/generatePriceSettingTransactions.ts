@@ -311,6 +311,22 @@ async function main() {
   const litKeyPriceUSD = await getLitKeyPrice();
   console.log(`LITKEY Price: $${litKeyPriceUSD.toFixed(4)} USD\n`);
 
+  // Apply dev environment discount (divide prices by 100 for testnets)
+  const isDev = env === 0;
+  if (isDev) {
+    console.log(
+      '⚠️  DEV ENVIRONMENT DETECTED: All token costs will be divided by 100 for testnet affordability.\n'
+    );
+  }
+
+  // Helper function to adjust price for dev environment
+  const adjustPriceForEnv = (priceWei: bigint): bigint => {
+    if (isDev) {
+      return priceWei / 100n;
+    }
+    return priceWei;
+  };
+
   // Get contract instances
   const pkpNft = await ethers.getContractAt('PKPNFTDiamond', pkpNftAddress);
   const priceFeed = await ethers.getContractAt(
@@ -333,9 +349,8 @@ async function main() {
   // 1. PKP Mint Cost
   // ============================================================================
   console.log('=== PKP Mint Cost ===');
-  const pkpMintPriceWei = usdToLitKeyWei(
-    PRICE_MAP.pkpMintPriceUSD,
-    litKeyPriceUSD
+  const pkpMintPriceWei = adjustPriceForEnv(
+    usdToLitKeyWei(PRICE_MAP.pkpMintPriceUSD, litKeyPriceUSD)
   );
   const pkpMintPriceTokens = parseFloat(
     ethers.formatUnits(pkpMintPriceWei, 18)
@@ -375,7 +390,7 @@ async function main() {
   ];
 
   const basePriceWeis = basePrices.map((usdPrice) =>
-    usdToLitKeyWei(usdPrice, litKeyPriceUSD)
+    adjustPriceForEnv(usdToLitKeyWei(usdPrice, litKeyPriceUSD))
   );
 
   for (let i = 0; i < productIds.length; i++) {
@@ -505,7 +520,9 @@ async function main() {
   ];
 
   for (const config of litActionComponentMap) {
-    const priceWei = usdToLitKeyWei(config.usdPrice, litKeyPriceUSD);
+    const priceWei = adjustPriceForEnv(
+      usdToLitKeyWei(config.usdPrice, litKeyPriceUSD)
+    );
     const priceTokens = parseFloat(ethers.formatUnits(priceWei, 18));
     const measurementName =
       config.measurement === NodePriceMeasurement.perSecond
