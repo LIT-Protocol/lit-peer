@@ -15,7 +15,8 @@ use lit_node_core::{
 };
 use lit_rust_crypto::{
     blsful::{
-        Bls12381G1Impl, Bls12381G2Impl, Pairing, SecretKeyShare, SignatureSchemes, SignatureShare,
+        self, Bls12381G1Impl, Bls12381G2Impl, Pairing, SecretKeyShare, SignatureSchemes,
+        SignatureShare,
         inner_types::{G1Projective, Scalar},
     },
     group::Group,

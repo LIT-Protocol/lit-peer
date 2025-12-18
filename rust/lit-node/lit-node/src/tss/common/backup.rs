@@ -140,6 +140,10 @@ fn read_k256_pub_key(bytes: &[u8]) -> Result<k256::ProjectivePoint> {
     helper.pk_from_bytes(bytes)
 }
 
+fn read_pallas_pub_key(bytes: &[u8]) -> Result<pallas::Point> {
+    let helper = KeyPersistence::<pallas::Point>::new(CurveType::RedPallas);
+    helper.pk_from_bytes(bytes)
+}
 pub struct BackupGenerator<V>(pub PhantomData<V>);
 
 impl<V> BackupGenerator<V>

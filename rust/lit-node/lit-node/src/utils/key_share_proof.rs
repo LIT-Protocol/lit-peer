@@ -19,8 +19,8 @@ use lit_node_core::{
 };
 use lit_rust_crypto::{
     blsful::{
-        Bls12381G2Impl, Pairing, PublicKey, SecretKey, SecretKeyShare, Signature, SignatureSchemes,
-        SignatureShare,
+        self, Bls12381G2Impl, Pairing, PublicKey, SecretKey, SecretKeyShare, Signature,
+        SignatureSchemes, SignatureShare,
         inner_types::{G1Projective, Scalar},
     },
     ed448_goldilocks,
