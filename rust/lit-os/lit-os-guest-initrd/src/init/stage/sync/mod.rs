@@ -309,10 +309,10 @@ fn run_prepare(ctx: &mut InitContext, root_mnt: &Path, var_mnt: &Path) -> Result
         .arg("--fqdn")
         .arg(fqdn);
 
-    if let Some(allow_ssh) = ctx.build_env().build_opt_ssh.as_ref() {
-        if *allow_ssh {
-            cmd.arg("--init-ssh");
-        }
+    if let Some(allow_ssh) = ctx.build_env().build_opt_ssh.as_ref()
+        && *allow_ssh
+    {
+        cmd.arg("--init-ssh");
     }
 
     let out = cmd

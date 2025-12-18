@@ -1,9 +1,12 @@
 use crate::common::storage::{read_from_disk, write_to_disk};
 use crate::error::Result;
 use async_std::path::PathBuf;
-use blsful::inner_types::{G1Projective, InnerBls12381G1};
 use bulletproofs::BulletproofCurveArithmetic as BCA;
 use lit_node_core::CompressedHex;
+use lit_rust_crypto::{
+    blsful::inner_types::{G1Projective, InnerBls12381G1},
+    decaf377, ed448_goldilocks, jubjub, k256, p256, p384, pallas, vsss_rs,
+};
 
 #[allow(async_fn_in_trait)]
 pub trait PointReader: BCA {
@@ -110,6 +113,20 @@ impl PointReader for bulletproofs::JubJub {
     async fn write_point(path: PathBuf, file_name: &str, point: &Self::Point) -> Result<()> {
         write_to_disk(path, file_name, point).await
     }
+    fn parse_old_backup_public_key(public_key_hex: &str) -> Option<Self::Point> {
+        None
+    }
+}
+
+impl PointReader for pallas::Pallas {
+    async fn read_point(path: PathBuf, file_name: &str) -> Result<Self::Point> {
+        read_from_disk::<pallas::Point>(path, file_name).await
+    }
+
+    async fn write_point(path: PathBuf, file_name: &str, point: &Self::Point) -> Result<()> {
+        write_to_disk(path, file_name, point).await
+    }
+
     fn parse_old_backup_public_key(public_key_hex: &str) -> Option<Self::Point> {
         None
     }

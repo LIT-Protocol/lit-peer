@@ -1,14 +1,17 @@
 use crate::*;
 use bulletproofs::{Ed25519, Ristretto25519};
-use curve25519_dalek::{EdwardsPoint, RistrettoPoint};
-use elliptic_curve::{Group, group::GroupEncoding, hash2curve::ExpandMsgXmd};
-use sha2::Digest;
-use vsss_rs::{
-    curve25519::{WrappedEdwards, WrappedRistretto, WrappedScalar},
-    curve25519_dalek::{
-        EdwardsPoint as AltEdwardsPoint, RistrettoPoint as AltRistrettoPoint, Scalar,
+use lit_rust_crypto::{
+    curve25519_dalek::{EdwardsPoint, RistrettoPoint},
+    group::{Group, GroupEncoding},
+    hash2curve::ExpandMsgXmd,
+    vsss_rs::{
+        curve25519::{WrappedEdwards, WrappedRistretto, WrappedScalar},
+        curve25519_dalek::{
+            EdwardsPoint as AltEdwardsPoint, RistrettoPoint as AltRistrettoPoint, Scalar,
+        },
     },
 };
+use sha2::Digest;
 
 const EDWARDS_SUITE_STRING: u8 = 0x04;
 const RISTRETTO_SUITE_STRING: u8 = 0x05;
@@ -181,7 +184,7 @@ impl VrfVerifier for Ristretto25519 {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use elliptic_curve::Field;
+    use lit_rust_crypto::ff::Field;
     use rand::SeedableRng;
 
     #[test]

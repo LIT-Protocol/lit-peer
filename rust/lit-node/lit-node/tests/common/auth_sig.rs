@@ -4,7 +4,6 @@ use std::ops::Add;
 use std::str::FromStr;
 
 use anyhow::Result;
-use blsful::{Bls12381G2Impl, Signature, SignatureShare};
 use chrono::{Duration, SecondsFormat};
 use ed25519_dalek::Signer;
 use ethers::core::k256::ecdsa::SigningKey;
@@ -16,12 +15,13 @@ use lit_core::config::LitConfig;
 use lit_node::models::auth::SessionKeySignedMessageV2;
 use lit_node::payment::payed_endpoint::PayedEndpoint;
 use lit_node::utils::encoding::{self, hex_to_bytes};
-use lit_node_core::CurveType;
-use lit_node_core::response::JsonSignSessionKeyResponseV2;
 use lit_node_core::{
-    AuthMethod, AuthSigItem, JsonAuthSig, LitResourceAbilityRequest, LitResourcePrefix, NodeSet,
+    AuthMethod, AuthSigItem, CurveType, JsonAuthSig, LitResourceAbilityRequest, LitResourcePrefix,
+    NodeSet,
     constants::{AUTH_SIG_DERIVED_VIA_SESSION_SIG, AUTH_SIG_SESSION_SIG_ALGO},
+    response::JsonSignSessionKeyResponseV2,
 };
+use lit_rust_crypto::blsful::{Bls12381G2Impl, PublicKey, Signature, SignatureShare};
 use serde_json::Value;
 use siwe::Message;
 use siwe_recap::Capability;
@@ -38,6 +38,7 @@ use rand_core::RngCore;
 
 use super::session_sigs::SessionSigAndNodeSet;
 use lit_node_testnet::node_collection::NodeIdentityKey;
+use lit_rust_crypto::k256;
 use lit_sdk::UrlPrefix;
 
 pub fn node_wallet(cfg: &LitConfig) -> Result<Wallet<SigningKey>> {
@@ -387,7 +388,7 @@ pub async fn get_session_delegation_sig_for_pkp(
 
     let signature = Signature::from_shares(&shares)?;
 
-    let bls_root_key = blsful::PublicKey::<Bls12381G2Impl>::try_from(
+    let bls_root_key = PublicKey::<Bls12381G2Impl>::try_from(
         &hex::decode(&one_response_with_share.bls_root_pubkey).expect("Failed to decode root key"),
     )
     .expect("Failed to convert bls public key from bytes");

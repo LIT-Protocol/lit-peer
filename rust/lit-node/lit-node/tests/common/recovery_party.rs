@@ -1,7 +1,5 @@
-use blsful::inner_types::{G1Projective, InnerBls12381G1};
 use bulletproofs::BulletproofCurveArithmetic as BCA;
 use ethers::types::{Address, H160};
-use k256::ecdsa::{RecoveryId, Signature, SigningKey, VerifyingKey};
 use sha3::{Keccak256, digest::Digest};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -13,9 +11,16 @@ use lit_blockchain::contracts::{
     backup_recovery::BackupRecovery,
     staking::{AddressMapping, Staking, Validator},
 };
-use lit_node_core::CompressedBytes;
-use lit_node_core::JsonAuthSig;
+use lit_node_core::{CompressedBytes, JsonAuthSig};
 use lit_recovery::models::DownloadedShareData;
+use lit_rust_crypto::{
+    blsful::inner_types::{G1Projective, InnerBls12381G1},
+    elliptic_curve::ScalarPrimitive,
+    k256::{
+        self,
+        ecdsa::{RecoveryId, Signature, SigningKey, VerifyingKey},
+    },
+};
 use reqwest::Url;
 use std::sync::Arc;
 use tracing::info;
@@ -284,9 +289,8 @@ pub fn check_share_data(mut share_data: Vec<DownloadedShareData>) {
     k256::ProjectivePoint::from_compressed(&hex::decode(&ecdsa_share.encryption_key).unwrap())
         .unwrap();
     // Parse ECDSA private key
-    let scalar_primitive = elliptic_curve::scalar::ScalarPrimitive::from_slice(
-        &hex::decode(&ecdsa_share.decryption_key_share).unwrap(),
-    )
-    .unwrap();
+    let scalar_primitive =
+        ScalarPrimitive::from_slice(&hex::decode(&ecdsa_share.decryption_key_share).unwrap())
+            .unwrap();
     let _ = k256::Scalar::from(&scalar_primitive);
 }
