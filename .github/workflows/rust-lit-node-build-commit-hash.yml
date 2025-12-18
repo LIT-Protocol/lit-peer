@@ -48,7 +48,7 @@ jobs:
       - name: Install rust
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: '1.86' # keep in sync with rust/lit-node/rust-toolchain.toml
+          toolchain: '1.91' # keep in sync with rust/lit-node/rust-toolchain.toml
           components: rustfmt rust-src
       - name: Build node
         run: cargo build --features lit-actions,testing
@@ -59,7 +59,7 @@ jobs:
         working-directory: rust/lit-node/shiva
         run: cargo build
       - name: Upload build artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: lit_node_${{ github.sha }}
           path: |

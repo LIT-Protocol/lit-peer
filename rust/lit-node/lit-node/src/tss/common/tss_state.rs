@@ -152,6 +152,7 @@ impl TssState {
             | SigningScheme::SchnorrEd448Shake256
             | SigningScheme::SchnorrRedJubjubBlake2b512
             | SigningScheme::SchnorrRedDecaf377Blake2b512
+            | SigningScheme::SchnorrRedPallasBlake2b512
             | SigningScheme::SchnorrkelSubstrate => {
                 Box::new(FrostState::new(state, signing_scheme)) as Box<dyn Signable>
             }
@@ -160,7 +161,7 @@ impl TssState {
             }
             _ => {
                 return Err(unexpected_err(
-                    "Unsupported key type when for Signable.",
+                    "Unsupported key type when creating signing state.",
                     None,
                 ));
             }

@@ -1,7 +1,5 @@
 use super::utils::virtual_node_collection::{VirtualNode, VirtualNodeCollection};
-use crate::common::interpolation::{get_secret_and_shares, interpolate_secret};
-use ed448_goldilocks::EdwardsPoint;
-use elliptic_curve::{Group, group::GroupEncoding};
+use crate::common::interpolation::{CurveScalar, get_secret_and_shares, interpolate_secret};
 use ethers::types::{H160, U256};
 use futures::future::join_all;
 use lit_blockchain::contracts::backup_recovery::RecoveredPeerId;
@@ -20,14 +18,23 @@ use lit_node::tss::dkg::engine::{DkgAfterRestore, DkgAfterRestoreData, DkgEngine
 use lit_node::tss::util::DEFAULT_KEY_SET_NAME;
 use lit_node::utils::key_share_proof::{compute_key_share_proofs, verify_key_share_proofs};
 use lit_node::version::DataVersionWriter;
-use lit_node_core::CompressedBytes;
-use lit_node_core::CurveType;
-use lit_node_core::PeerId;
+use lit_node_core::{CompressedBytes, CompressedHex, CurveType, LeBytes, PeerId};
+use lit_rust_crypto::{
+    blsful, decaf377,
+    ed448_goldilocks::{self, EdwardsPoint},
+    elliptic_curve,
+    elliptic_curve::{Group, group::GroupEncoding},
+    jubjub, k256, p256, p384, pallas,
+    vsss_rs::{
+        self, IdentifierPrimeField,
+        curve25519::{WrappedEdwards, WrappedRistretto},
+    },
+};
+
 use std::collections::{HashMap, HashSet};
 use test_case::test_case;
 use tokio::task::JoinHandle;
 use tracing::{error, info};
-use vsss_rs::curve25519::{WrappedEdwards, WrappedRistretto};
 
 // The following tests show how components can be tested in isolation.
 #[test_case(CurveType::K256; "K256 Key generation")]
@@ -38,6 +45,7 @@ use vsss_rs::curve25519::{WrappedEdwards, WrappedRistretto};
 #[test_case(CurveType::P256; "P256 Key generation")]
 #[test_case(CurveType::P384; "P384 Key generation")]
 #[test_case(CurveType::RedJubjub; "RedJubjub Key generation")]
+#[test_case(CurveType::RedPallas; "RedPallas Key generation")]
 #[test_case(CurveType::RedDecaf377; "RedDecaf377 Key generation")]
 #[test_case(CurveType::BLS12381G1; "Bls12381G1 Key Generation")]
 #[tokio::test]
@@ -54,6 +62,7 @@ pub async fn dkg_only(curve_type: CurveType) {
 #[test_case(CurveType::P256; "P256 Key Share Proofs")]
 #[test_case(CurveType::P384; "P384 Key Share Proofs")]
 #[test_case(CurveType::RedJubjub; "RedJubjub Key Share Proofs")]
+#[test_case(CurveType::RedPallas; "RedPallas Key Share Proofs")]
 #[test_case(CurveType::RedDecaf377; "RedDecaf377 Key Share Proofs")]
 #[test_case(CurveType::BLS12381G1; "Bls12381G1 Key Share Proofs")]
 #[tokio::test]
@@ -156,6 +165,7 @@ pub async fn dkg_and_key_share_proofs(curve_type: CurveType) {
 #[test_case(p256::ProjectivePoint::default(), CurveType::P256; "P256 Refresh")]
 #[test_case(p384::ProjectivePoint::default(), CurveType::P384; "P384 Refresh")]
 #[test_case(jubjub::SubgroupPoint::default(), CurveType::RedJubjub; "RedJubjub Refresh")]
+#[test_case(pallas::Point::default(), CurveType::RedPallas; "RedPallas Refresh")]
 #[test_case(decaf377::Element::default(), CurveType::RedDecaf377; "RedDecaf377 Refresh")]
 #[test_case(blsful::inner_types::G1Projective::default(), CurveType::BLS12381G1; "Bls12381G1 Key Generation")]
 #[tokio::test]
@@ -180,10 +190,11 @@ where
 #[test_case(blsful::inner_types::G1Projective::default(), CurveType::BLS12381G1, 3, [1, 0].to_vec(); "Bls12381G1 add node, keep threshold")]
 #[test_case(WrappedEdwards::default(), CurveType::Ed25519, 3, [1, 0].to_vec(); "Ed25519 add node, keep threshold")]
 #[test_case(WrappedRistretto::default(), CurveType::Ristretto25519, 3, [1, 0].to_vec(); "Ristretto25519 add node, keep threshold")]
-#[test_case(ed448_goldilocks::EdwardsPoint::default(), CurveType::Ed448, 3, [1, 0].to_vec(); "Ed448 add node, keep threshold")]
+#[test_case(EdwardsPoint::default(), CurveType::Ed448, 3, [1, 0].to_vec(); "Ed448 add node, keep threshold")]
 #[test_case(p256::ProjectivePoint::default(), CurveType::P256, 3, [1, 0].to_vec(); "P256 add node, keep threshold")]
 #[test_case(p384::ProjectivePoint::default(), CurveType::P384, 3, [1, 0].to_vec(); "P384 add node, keep threshold")]
 #[test_case(jubjub::SubgroupPoint::default(), CurveType::RedJubjub, 3, [1, 0].to_vec(); "RedJubjub add node, keep threshold")]
+#[test_case(pallas::Point::default(), CurveType::RedPallas, 3, [1, 0].to_vec(); "RedPallas add node, keep threshold")]
 #[test_case(decaf377::Element::default(), CurveType::RedDecaf377, 3, [1, 0].to_vec(); "RedDecaf377 add node, keep threshold")]
 // #[test_case( CurveType::K256, 4, [-2,0].to_vec() ; "ECDSA remove node, keep threshold")]
 // #[test_case( CurveType::BLS, 4, [-2,0].to_vec() ; "BLS remove node, keep threshold")]
@@ -281,11 +292,12 @@ pub async fn dkg_and_reshare<G>(
 #[test_case(blsful::inner_types::G1Projective::default(), CurveType::BLS12381G1, 3, 3; "Bls12381G1 restore 3 nodes")]
 #[test_case(WrappedEdwards::default(), CurveType::Ed25519, 5, 4; "Ed25519 restore 5 nodes")]
 #[test_case(WrappedRistretto::default(), CurveType::Ristretto25519, 5, 3; "Ristretto25519 restore 5 nodes")]
-#[test_case(ed448_goldilocks::EdwardsPoint::default(), CurveType::Ed448, 3, 3; "Ed448 restore 3 nodes")]
+#[test_case(EdwardsPoint::default(), CurveType::Ed448, 3, 3; "Ed448 restore 3 nodes")]
 #[test_case(p256::ProjectivePoint::default(), CurveType::P256, 3, 3; "P256 restore 3 nodes")]
 #[test_case(p384::ProjectivePoint::default(), CurveType::P384, 3, 3; "P384 restore 3 nodes")]
 #[test_case(jubjub::SubgroupPoint::default(), CurveType::RedJubjub, 5, 4; "RedJubjub restore 5 nodes")]
 #[test_case(decaf377::Element::default(), CurveType::RedDecaf377, 3, 3; "RedDecaf377 restore 3 nodes")]
+#[test_case(pallas::Point::default(), CurveType::RedPallas, 3, 3; "RedPallas restore 3 nodes")]
 #[tokio::test]
 pub async fn dkg_after_restore<G>(
     _g: G,
@@ -409,6 +421,7 @@ pub async fn dkg_after_restore<G>(
             DkgAfterRestore::True(DkgAfterRestoreData {
                 peers: recovered_peer_ids.clone(),
                 key_cache: recovery_key_cache.clone(),
+                use_raw_peer_ids: false,
             }),
         );
         for (i, pubkey) in root_keys.iter().enumerate() {
@@ -446,6 +459,163 @@ pub async fn dkg_after_restore<G>(
     }
 }
 
+#[test_case(k256::ProjectivePoint::GENERATOR, CurveType::K256, 5, 5; "K256 restore 5 nodes")]
+#[test_case(blsful::inner_types::G1Projective::GENERATOR, CurveType::BLS, 5, 3;  "BLS restore 5 nodes")]
+#[test_case(blsful::inner_types::G1Projective::GENERATOR, CurveType::BLS12381G1, 3, 3; "Bls12381G1 restore 3 nodes")]
+#[test_case(WrappedEdwards::generator(), CurveType::Ed25519, 5, 4; "Ed25519 restore 5 nodes")]
+#[test_case(WrappedRistretto::generator(), CurveType::Ristretto25519, 5, 3; "Ristretto25519 restore 5 nodes")]
+#[test_case(ed448_goldilocks::EdwardsPoint::generator(), CurveType::Ed448, 3, 3; "Ed448 restore 3 nodes")]
+#[test_case(p256::ProjectivePoint::generator(), CurveType::P256, 3, 3; "P256 restore 3 nodes")]
+#[test_case(p384::ProjectivePoint::generator(), CurveType::P384, 3, 3; "P384 restore 3 nodes")]
+#[test_case(lit_frost::red_jubjub_generator(), CurveType::RedJubjub, 5, 4; "RedJubjub restore 5 nodes")]
+#[test_case(decaf377::Element::generator(), CurveType::RedDecaf377, 3, 3; "RedDecaf377 restore 3 nodes")]
+#[tokio::test]
+pub async fn dkg_after_restore_datil<G>(
+    generator: G,
+    curve_type: CurveType,
+    num_nodes_before: usize,
+    num_nodes_after: usize,
+) where
+    G: Group + GroupEncoding + Default + CompressedBytes,
+    G::Scalar: From<PeerId> + CompressedBytes + LeBytes,
+    CurveScalar: From<G::Scalar>,
+{
+    use elliptic_curve::ff::Field;
+
+    crate::common::setup_logging();
+    let vnc_after = VirtualNodeCollection::new(num_nodes_after).await;
+    let current_peers = SimplePeerCollection(vec![]);
+    let next_peers = vnc_after.peers();
+    let realm_id = 1;
+    let threshold = next_peers.threshold_for_set_testing_only();
+
+    let initial_secrets = vec![
+        G::Scalar::random(rand::rngs::OsRng),
+        G::Scalar::random(rand::rngs::OsRng),
+    ];
+    let root_keys = vec![
+        (generator * initial_secrets[0]).to_compressed_hex(),
+        (generator * initial_secrets[1]).to_compressed_hex(),
+    ];
+
+    let mut key_shares = HashMap::with_capacity(num_nodes_before);
+    for (secret, pubkey) in initial_secrets.iter().zip(root_keys.iter()) {
+        let shared_secret = IdentifierPrimeField(*secret);
+        let shares = vsss_rs::shamir::split_secret::<
+            vsss_rs::DefaultShare<IdentifierPrimeField<G::Scalar>, IdentifierPrimeField<G::Scalar>>,
+        >(
+            threshold,
+            num_nodes_before,
+            &shared_secret,
+            rand::rngs::OsRng,
+        )
+        .unwrap();
+        let peers = shares
+            .iter()
+            .map(|s| PeerId::from_u8(s.identifier.0.to_le_bytes()[0]))
+            .collect::<Vec<_>>();
+        let node_shares = shares
+            .iter()
+            .map(|s| KeyShare {
+                hex_private_share: s.value.0.to_compressed_hex(),
+                hex_public_key: pubkey.to_string(),
+                curve_type,
+                peer_id: PeerId::from_u8(s.identifier.0.to_le_bytes()[0]),
+                threshold: num_nodes_before,
+                total_shares: num_nodes_before,
+                txn_prefix: "".to_string(),
+                realm_id,
+                peers: peers.clone(),
+            })
+            .collect::<Vec<_>>();
+        key_shares.insert(pubkey.clone(), node_shares);
+    }
+
+    let mut recovered_peer_ids = vec![];
+    let mut recovery_key_cache = KeyCache::default();
+    for (index, new_node) in vnc_after.nodes.iter().enumerate() {
+        for pub_key in &root_keys {
+            let key_share = &key_shares[pub_key][index];
+            assert_eq!(key_share.peer_id, PeerId::from_usize(index + 1));
+            write_key_share_to_cache_only(
+                curve_type,
+                pub_key,
+                &new_node.peer.peer_id,
+                &new_node.hex_staker_address,
+                2,
+                realm_id,
+                &mut recovery_key_cache,
+                key_share,
+            )
+            .await
+            .expect("write key share to disk failed");
+        }
+        recovered_peer_ids.push(RecoveredPeerId {
+            node_address: H160::random(),
+            old_peer_id: U256::from(index + 1),
+            new_peer_id: U256::from(new_node.peer.peer_id),
+        });
+    }
+
+    let dkg_id = "TEST_DKG_1_2.";
+    let mut join_set = tokio::task::JoinSet::new();
+
+    let next_peers = vnc_after.peers();
+    let threshold = next_peers.threshold_for_set_testing_only();
+    for node in vnc_after.nodes.iter() {
+        // assume this wait is because the join set starts executing immediately on creation
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+
+        let mut dkg_engine = DkgEngine::new(
+            node.tss_state.clone(),
+            DkgType::Standard,
+            2,
+            threshold,
+            &ShadowOptions::new(false, 2, realm_id, 2, realm_id),
+            &current_peers,
+            &next_peers,
+            DkgAfterRestore::True(DkgAfterRestoreData {
+                peers: recovered_peer_ids.clone(),
+                key_cache: recovery_key_cache.clone(),
+                use_raw_peer_ids: true,
+            }),
+        );
+        for (i, pubkey) in root_keys.iter().enumerate() {
+            let dkg_id = format!("{}{}_key_{}", dkg_id, curve_type, i + 1);
+            dkg_engine.add_dkg(
+                &dkg_id,
+                DEFAULT_KEY_SET_NAME,
+                curve_type,
+                Some(pubkey.clone()),
+            );
+        }
+        join_set.spawn(async move {
+            let r = dkg_engine.execute(dkg_id, realm_id).await;
+            info!("change epoch result: {:?}", r);
+            let _ = r.expect("error from dkg manager change epoch");
+            let root_keys = dkg_engine.get_dkgs().collect::<Vec<_>>();
+            assert_eq!(root_keys.len(), 2);
+            root_keys
+                .iter()
+                .map(|r| r.result().unwrap().public_key())
+                .collect::<Vec<_>>()
+        });
+    }
+
+    while let Some(node_info) = join_set.join_next().await {
+        let _ = node_info.expect("error from dkg engine");
+    }
+
+    for (i, pubkey) in root_keys.iter().enumerate() {
+        let secret = interpolate_secret(curve_type, &next_peers, pubkey, 3, realm_id).await;
+        assert_eq!(
+            secret,
+            initial_secrets[i].into(),
+            "secrets do not match after restore"
+        );
+    }
+}
+
 #[tokio::test]
 pub async fn dkg_only_all_curves() {
     crate::common::setup_logging();
@@ -458,7 +628,7 @@ pub async fn dkg_only_all_curves() {
     let pubkeys = dkg_all_curves(&vnc, epoch, &current_peers).await;
 
     info!("Generated {} pubkeys", pubkeys.len());
-    assert_eq!(pubkeys.len(), 20);
+    assert_eq!(pubkeys.len(), 22);
 }
 
 async fn restore(
@@ -744,7 +914,7 @@ pub async fn dkg_all_curves(
             info!("change epoch result: {:?}", r);
             let _ = r.expect("error from dkg manager change epoch");
             let root_keys = dkg_engine.get_dkgs().collect::<Vec<_>>();
-            assert_eq!(root_keys.len(), 20);
+            assert_eq!(root_keys.len(), 22);
             root_keys
                 .iter()
                 .map(|r| r.result().unwrap().public_key())

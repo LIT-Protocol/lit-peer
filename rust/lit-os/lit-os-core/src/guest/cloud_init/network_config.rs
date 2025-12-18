@@ -78,6 +78,7 @@ impl CloudInitNetworkConfig {
         Ok(())
     }
 
+    #[allow(clippy::collapsible_if)]
     // Generators
     pub fn to_network_interfaces(&self, path: &Path, skip_internal: bool) -> Result<()> {
         let mut contents = String::new();

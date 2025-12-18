@@ -7,7 +7,7 @@ use ecdsa::{
     },
 };
 use hd_keys_curves_wasm::HDDerivable;
-use vsss_rs::{FeldmanVerifierSet, ParticipantIdGeneratorType, feldman};
+use lit_rust_crypto::vsss_rs::{FeldmanVerifierSet, ParticipantIdGeneratorType, feldman};
 
 use super::*;
 use crate::*;
