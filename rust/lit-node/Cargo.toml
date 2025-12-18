@@ -15,9 +15,8 @@ members = [
     "lit-node-common",
     "lit-node-core",
     "lit-node-testnet", 
-    "shiva", 
-    
-    "lit-sdk"
+    "shiva",     
+    "lit-sdk" 
 ]
 exclude = ["lit-node-monitor"]
 
