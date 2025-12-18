@@ -2509,7 +2509,7 @@ dependencies = [
  "sha2 0.10.9",
  "sha3 0.10.8",
  "subtle",
- "thiserror 2.0.16",
+ "thiserror 2.0.17",
  "zeroize",
 ]
 
@@ -4163,13 +4163,9 @@ checksum = "437967a34e0699b50b986a72ce6c4e2e5930bde85ec8f3749701f7e50d6d32b0"
 dependencies = [
  "ark-ff 0.4.2",
  "ark-serialize 0.4.2",
- "ark-std 0.4.0",
- "blake2",
- "cfg-if 1.0.3",
- "elliptic-curve 0.13.8",
- "frost-dkg",
- "gennaro-dkg",
- "hashbrown 0.15.5",
+ "blake2b_simd 0.5.11",
+ "decaf377",
+ "digest 0.9.0",
  "hex",
  "rand_core 0.6.4",
  "serde",
@@ -4178,9 +4174,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "decaf377"
+name = "decaf377_plus"
 version = "0.10.1"
-source = "git+https://github.com/LIT-Protocol/decaf377.git#1c5755b2b90e1969d47ce89cf2d35078984a0ee5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "209f730dfc5f9d877c7549bebc93ea0ef4fe2915b4dbf5ffebc11e8b4c17c740"
 dependencies = [
  "ark-bls12-377",
  "ark-ec",
@@ -4192,7 +4189,6 @@ dependencies = [
  "cfg-if 1.0.4",
  "elliptic-curve 0.13.8",
  "frost-dkg",
- "gennaro-dkg",
  "hashbrown 0.15.5",
  "hex",
  "num-bigint",
@@ -6983,8 +6979,8 @@ dependencies = [
 
 [[package]]
 name = "frost-core"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "byteorder",
  "const-crc32-nostd",
@@ -7006,13 +7002,11 @@ dependencies = [
 
 [[package]]
 name = "frost-decaf377"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "ark-serialize 0.4.2",
  "blake2b_simd 1.0.3",
- "decaf377 0.10.1 (git+https://github.com/LIT-Protocol/decaf377.git)",
- "document-features",
  "frost-core",
  "frost-rerandomized",
  "lit-rust-crypto",
@@ -7048,26 +7042,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "frost-dkg"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "00b59a575727037fbc977a68a2ace822b4b37f8f0647769946e307dc966ecfbb"
-dependencies = [
- "elliptic-curve 0.13.8",
- "elliptic-curve-tools",
- "hex",
- "merlin",
- "postcard",
- "rand_core 0.6.4",
- "serde",
- "thiserror 2.0.17",
- "vsss-rs 5.1.0",
-]
-
-[[package]]
 name = "frost-ed25519"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "document-features",
  "frost-core",
@@ -7079,8 +7056,8 @@ dependencies = [
 
 [[package]]
 name = "frost-ed448"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "document-features",
  "frost-core",
@@ -7092,8 +7069,8 @@ dependencies = [
 
 [[package]]
 name = "frost-p256"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "document-features",
  "frost-core",
@@ -7105,8 +7082,8 @@ dependencies = [
 
 [[package]]
 name = "frost-p384"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "document-features",
  "frost-core",
@@ -7118,8 +7095,8 @@ dependencies = [
 
 [[package]]
 name = "frost-redjubjub"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "blake2b_simd 1.0.3",
  "document-features",
@@ -7144,8 +7121,8 @@ dependencies = [
 
 [[package]]
 name = "frost-rerandomized"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "derive-getters",
  "document-features",
@@ -7156,8 +7133,8 @@ dependencies = [
 
 [[package]]
 name = "frost-ristretto255"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "document-features",
  "frost-core",
@@ -7169,8 +7146,8 @@ dependencies = [
 
 [[package]]
 name = "frost-schnorrkel25519"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "byte-strings",
  "document-features",
@@ -7184,8 +7161,8 @@ dependencies = [
 
 [[package]]
 name = "frost-secp256k1"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "document-features",
  "frost-core",
@@ -7197,8 +7174,8 @@ dependencies = [
 
 [[package]]
 name = "frost-taproot"
-version = "2.1.0"
-source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.1.0#272dd53869e7c82f7d5c72af73b5801e84c7b52e"
+version = "2.2.0"
+source = "git+https://github.com/LIT-Protocol/frost.git?branch=2.2.0#613ae60ad77a8a5cf973c4a8c7be2c20e9b13d89"
 dependencies = [
  "document-features",
  "frost-core",
@@ -7496,24 +7473,6 @@ checksum = "2cb8bc4c28d15ade99c7e90b219f30da4be5c88e586277e8cbe886beeb868ab2"
 dependencies = [
  "serde",
  "typenum",
-]
-
-[[package]]
-name = "gennaro-dkg"
-version = "1.0.0-rc6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "352f32caf0eb44d8f340f3bba63ca7a0dbeeb3e169a59bbb86ef40e0da10eec6"
-dependencies = [
- "anyhow",
- "elliptic-curve 0.13.8",
- "elliptic-curve-tools",
- "merlin",
- "postcard",
- "rand_chacha 0.3.1",
- "rand_core 0.6.4",
- "serde",
- "thiserror 2.0.16",
- "vsss-rs 5.1.0",
 ]
 
 [[package]]
@@ -9893,15 +9852,14 @@ dependencies = [
  "serde",
  "sha2 0.10.9",
  "subtle",
- "thiserror 2.0.16",
- "vsss-rs 5.1.0",
+ "thiserror 2.0.17",
  "zeroize",
 ]
 
 [[package]]
 name = "lit-frost"
-version = "0.3.0"
-source = "git+https://github.com/LIT-Protocol/lit-frost.git#60ad81f1f637f7042bfee0fd8cc29cee74d754b1"
+version = "0.4.0"
+source = "git+https://github.com/LIT-Protocol/lit-frost.git?branch=pallas#ffc784219ac181b4dd9822819f8662a4d92d55cc"
 dependencies = [
  "anyhow",
  "ark-serialize 0.4.2",
@@ -9929,8 +9887,7 @@ dependencies = [
  "serde_bare",
  "sha2 0.10.9",
  "subtle",
- "thiserror 2.0.16",
- "vsss-rs 5.1.0",
+ "thiserror 2.0.17",
  "zeroize",
 ]
 
@@ -10007,8 +9964,7 @@ dependencies = [
  "rand_core 0.6.4",
  "serde",
  "serde_json",
- "thiserror 2.0.16",
- "vsss-rs 5.1.0",
+ "thiserror 2.0.17",
 ]
 
 [[package]]
@@ -10191,8 +10147,7 @@ dependencies = [
  "serde",
  "sha2 0.10.9",
  "sha3 0.10.8",
- "thiserror 2.0.16",
- "vsss-rs 5.1.0",
+ "thiserror 2.0.17",
 ]
 
 [[package]]
@@ -10206,9 +10161,7 @@ dependencies = [
  "async-std",
  "async-trait",
  "base64_light",
- "bech32 0.11.0",
- "blsful",
- "blstrs_plus",
+ "bech32 0.11.1",
  "bs58 0.5.1",
  "bulletproofs",
  "chrono",
@@ -10225,7 +10178,7 @@ dependencies = [
  "ethabi",
  "ethers",
  "flume",
- "frost-dkg 0.3.3",
+ "frost-dkg",
  "futures",
  "generic-array 1.1.1",
  "glob",
@@ -12672,9 +12625,9 @@ checksum = "8a56d757972c98b346a9b766e3f02746cde6dd1cd1d1d563472929fdd74bec4d"
 dependencies = [
  "anyhow",
  "itertools 0.14.0",
- "proc-macro2 1.0.101",
- "quote 1.0.40",
- "syn 2.0.106",
+ "proc-macro2 1.0.103",
+ "quote 1.0.42",
+ "syn 2.0.111",
 ]
 
 [[package]]
@@ -12685,9 +12638,9 @@ checksum = "9120690fafc389a67ba3803df527d0ec9cbbc9cc45e4cc20b332996dfb672425"
 dependencies = [
  "anyhow",
  "itertools 0.14.0",
- "proc-macro2 1.0.101",
- "quote 1.0.40",
- "syn 2.0.106",
+ "proc-macro2 1.0.103",
+ "quote 1.0.42",
+ "syn 2.0.111",
 ]
 
 [[package]]
@@ -17798,7 +17751,7 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.3",
+ "cfg-if 0.1.10",
  "rand 0.8.5",
  "static_assertions",
 ]
