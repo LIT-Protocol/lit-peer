@@ -102,51 +102,50 @@ impl DkgManager {
             self.dkg_type, dkg_id, mode
         );
         let mut root_keys = HashMap::with_capacity(key_sets.len());
-        if let Some(m) = mode {
-            if m == Mode::Initial {
-                let mut key_sets = DataVersionWriter::new_unchecked(
-                    &self.tss_state.chain_data_config_manager.key_sets,
-                );
-                for dkg in dkg_engine.get_dkgs() {
-                    match dkg.result {
-                        Some(ref result) => {
-                            debug!(
-                                "DKG for epoch change complete for {} {}.",
-                                dkg.dkg_id, dkg.curve_type
-                            );
-                            let key_set = key_sets
-                                .get_mut(&dkg.key_set_id)
-                                .expect("How can key set have a DKG but not exist in the key set?");
-                            let counts = key_set.root_key_counts[&dkg.curve_type];
-                            key_set
-                                .root_keys_by_curve
-                                .entry(dkg.curve_type)
-                                .and_modify(|v: &mut Vec<String>| v.push(result.public_key()))
-                                .or_insert_with(|| {
-                                    let mut v = Vec::with_capacity(counts);
-                                    v.push(result.public_key());
-                                    v
-                                });
-                            root_keys
-                                .entry(dkg.key_set_id.clone())
-                                .and_modify(|v: &mut Vec<CachedRootKey>| {
-                                    v.push(result.dkg_root_key())
-                                })
-                                .or_insert_with(|| {
-                                    let mut v = Vec::with_capacity(counts);
-                                    v.push(result.dkg_root_key());
-                                    v
-                                });
-                        }
-                        None => {
-                            error!("DKG failed!");
-                            return Err(unexpected_err("DKG failed", None));
-                        }
+        if let Some(m) = mode
+            && m == Mode::Initial
+        {
+            let mut key_sets = DataVersionWriter::new_unchecked(
+                &self.tss_state.chain_data_config_manager.key_sets,
+            );
+            for dkg in dkg_engine.get_dkgs() {
+                match dkg.result {
+                    Some(ref result) => {
+                        debug!(
+                            "DKG for epoch change complete for {} {}.",
+                            dkg.dkg_id, dkg.curve_type
+                        );
+                        let key_set = key_sets
+                            .get_mut(&dkg.key_set_id)
+                            .expect("How can key set have a DKG but not exist in the key set?");
+                        let counts = key_set.root_key_counts[&dkg.curve_type];
+                        key_set
+                            .root_keys_by_curve
+                            .entry(dkg.curve_type)
+                            .and_modify(|v: &mut Vec<String>| v.push(result.public_key()))
+                            .or_insert_with(|| {
+                                let mut v = Vec::with_capacity(counts);
+                                v.push(result.public_key());
+                                v
+                            });
+                        root_keys
+                            .entry(dkg.key_set_id.clone())
+                            .and_modify(|v: &mut Vec<CachedRootKey>| v.push(result.dkg_root_key()))
+                            .or_insert_with(|| {
+                                let mut v = Vec::with_capacity(counts);
+                                v.push(result.dkg_root_key());
+                                v
+                            });
+                    }
+                    None => {
+                        error!("DKG failed!");
+                        return Err(unexpected_err("DKG failed", None));
                     }
                 }
-                key_sets.commit();
             }
+            key_sets.commit();
         }
+
         Ok(root_keys)
     }
 }

@@ -96,6 +96,7 @@ pub async fn peer_checker_worker(
     info!("Stopped: tasks::peer_checker_worker");
 }
 
+#[allow(clippy::collapsible_if)]
 async fn check_for_peer_updates(
     peer_state: &Arc<PeerState>,
     peer_checker_tx: &flume::Sender<PeerCheckerMessage>,

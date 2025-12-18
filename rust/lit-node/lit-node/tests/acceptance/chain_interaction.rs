@@ -34,6 +34,7 @@ use lit_node_core::{
         CHAIN_LOCALCHAIN,
     },
 };
+use lit_rust_crypto::blsful::PublicKey;
 
 use lit_node::models::RequestConditions;
 

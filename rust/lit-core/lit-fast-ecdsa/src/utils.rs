@@ -118,6 +118,8 @@ impl<C: CurveArithmetic> ParticipantList<C> {
 
 #[test]
 fn test_lagrange() {
+    use lit_rust_crypto::k256;
+
     let participants: [NonZeroScalar<k256::Secp256k1>; 3] = [
         NonZeroScalar::new(k256::Scalar::ONE).unwrap(),
         NonZeroScalar::new(k256::Scalar::from(2u32)).unwrap(),

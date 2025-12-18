@@ -19,6 +19,7 @@ use lit_node_core::{
     request::JsonExecutionRequest,
     response::{GenericResponse, JsonExecutionResponse},
 };
+use lit_rust_crypto::{k256, p256, p384};
 use rand::Rng;
 use rand_core::OsRng;
 use std::collections::HashMap;

@@ -10,7 +10,6 @@ use std::collections::HashMap;
 
 use crate::common::auth_sig::generate_authsig;
 use anyhow::Result;
-use blsful::Bls12381G2Impl;
 use ethers::signers::LocalWallet;
 use ethers::types::U256;
 use rand::Rng;
@@ -23,16 +22,16 @@ use lit_node_core::{
     EVMContractConditionItem, JsonAccessControlCondition, JsonAuthSig, JsonReturnValueTest,
     LitAbility, LitResource, LitResourceAbilityRequest, LitResourceAbilityRequestResource, NodeSet,
     SolRpcConditionItem, UnifiedAccessControlCondition, UnifiedAccessControlConditionItem,
-    constants::CHAIN_LOCALCHAIN, request::EncryptionSignRequest, response::EncryptionSignResponse,
+    constants::CHAIN_LOCALCHAIN,
+    request::EncryptionSignRequest,
+    response::{EncryptionSignResponse, GenericResponse, JsonExecutionResponse},
 };
+use lit_rust_crypto::blsful::{Bls12381G2Impl, PublicKey, TimeCryptCiphertext};
 
 use lit_node::models::RequestConditions;
-use lit_node_core::response::JsonExecutionResponse;
-
 use lit_node::utils::web::hash_access_control_conditions;
 
 use super::session_sigs::SessionSigAndNodeSet;
-use lit_node_core::response::GenericResponse;
 use tracing::{debug, info};
 
 #[derive(Debug, Clone)]
@@ -410,10 +409,10 @@ pub async fn retrieve_decryption_key_session_sigs_with_version(
 }
 
 pub fn assert_decrypted(
-    network_pubkey: &blsful::PublicKey<Bls12381G2Impl>,
+    network_pubkey: &PublicKey<Bls12381G2Impl>,
     identity_param: Vec<u8>,
     expected_plaintext: &str,
-    ciphertext: &blsful::TimeCryptCiphertext<Bls12381G2Impl>,
+    ciphertext: &TimeCryptCiphertext<Bls12381G2Impl>,
     decryption_resp: Vec<GenericResponse<EncryptionSignResponse>>,
 ) {
     // assert_eq!(decryption_resp.len(), num_staked as usize);

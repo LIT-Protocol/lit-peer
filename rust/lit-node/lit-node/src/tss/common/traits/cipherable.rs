@@ -1,6 +1,6 @@
 use crate::error::Result; // EC , conversion_err_code
-use blsful::{Bls12381G2Impl, SignatureShare};
 use lit_node_core::PeerId;
+use lit_rust_crypto::blsful::{Bls12381G2Impl, SignatureShare};
 use std::fmt::Debug;
 
 #[async_trait::async_trait]

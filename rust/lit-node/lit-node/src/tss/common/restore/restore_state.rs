@@ -1,7 +1,4 @@
-use blsful::inner_types::{G1Projective, InnerBls12381G1};
 use bulletproofs::BulletproofCurveArithmetic as BCA;
-use elliptic_curve::Field;
-use elliptic_curve::bigint::{NonZero, U256};
 use ethers::types::H160;
 use sdd::{AtomicShared, Shared};
 use serde::{Deserialize, Serialize};
@@ -25,10 +22,17 @@ use crate::utils::traits::SignatureCurve;
 use crate::version::{DataVersionReader, DataVersionWriter};
 use lit_blockchain::contracts::backup_recovery::{BackupRecoveryErrors, RecoveredPeerId};
 use lit_core::config::LitConfig;
-use lit_node_core::CurveType;
-use lit_node_core::PeerId;
-use lit_node_core::{Blinders, CompressedBytes, CompressedHex};
+use lit_node_core::{Blinders, CompressedBytes, CompressedHex, CurveType, PeerId};
 use lit_recovery::models::UploadedShareData;
+use lit_rust_crypto::{
+    blsful::inner_types::{G1Projective, InnerBls12381G1},
+    decaf377, ed448_goldilocks,
+    elliptic_curve::{
+        Field,
+        bigint::{NonZero, U256},
+    },
+    jubjub, k256, p256, p384, pallas, vsss_rs,
+};
 use verifiable_share_encryption::{DecryptionShare, VerifiableEncryptionDecryptor};
 
 // DATIL_BACKUP: Remove this type once old Datil backup is obsolete.
@@ -60,6 +64,7 @@ pub(crate) struct InnerState {
     pub jubjub_recovery_data: Option<CurveRecoveryData<bulletproofs::JubJub>>,
     pub decaf377_recovery_data: Option<CurveRecoveryData<bulletproofs::Decaf377>>,
     pub bls12381g1_recovery_data: Option<CurveRecoveryData<InnerBls12381G1>>,
+    pub pallas_recovery_data: Option<CurveRecoveryData<pallas::Pallas>>,
     pub threshold: usize,
     pub restored_key_cache: KeyCache,
     pub use_raw_peer_ids: bool,
@@ -142,6 +147,7 @@ impl RestoreState {
         let jubjub_blinder = jubjub::Scalar::random(&mut rng);
         let decaf377_blinder = decaf377::Fr::random(&mut rng);
         let bls12381g1_blinder = <InnerBls12381G1 as BCA>::Scalar::random(&mut rng);
+        let pallas_blinder = pallas::Scalar::random(&mut rng);
         Blinders {
             bls_blinder: Some(bls_blinder),
             k256_blinder: Some(k256_blinder),
@@ -153,6 +159,7 @@ impl RestoreState {
             jubjub_blinder: Some(jubjub_blinder),
             decaf377_blinder: Some(decaf377_blinder),
             bls12381g1_blinder: Some(bls12381g1_blinder),
+            pallas_blinder: Some(pallas_blinder),
         }
     }
 
@@ -266,6 +273,9 @@ impl RestoreState {
                 CurveType::BLS12381G1 => {
                     Self::add_decryption_share(&mut inner.bls12381g1_recovery_data, rpm_id, share)?
                 }
+                CurveType::RedPallas => {
+                    Self::add_decryption_share(&mut inner.pallas_recovery_data, rpm_id, share)?
+                }
             };
         }
         Ok(())
@@ -338,6 +348,9 @@ impl RestoreState {
         if let Some(recovery_data) = &state.bls12381g1_recovery_data {
             restored_key_shares.bls12381g1_shares = recovery_data.try_restore(&params).await;
         }
+        if let Some(recovery_data) = &state.pallas_recovery_data {
+            restored_key_shares.pallas_shares = recovery_data.try_restore(&params).await;
+        }
 
         restored_key_shares
     }
@@ -387,13 +400,16 @@ impl RestoreState {
                 &restored_key_shares.bls12381g1_shares,
             );
         }
+        if let Some(data) = &mut state.pallas_recovery_data {
+            EksAndDs::mark_keys_restored(&mut data.eks_and_ds, &restored_key_shares.pallas_shares);
+        }
     }
 
     pub fn get_blinders(&self) -> DataVersionReader<Blinders> {
         DataVersionReader::new_unchecked(&self.blinders)
     }
 
-    pub fn get_blinders_mut(&self) -> DataVersionWriter<Blinders> {
+    pub fn get_blinders_mut(&self) -> DataVersionWriter<'_, Blinders> {
         DataVersionWriter::new_unchecked(&self.blinders)
     }
 
@@ -465,6 +481,11 @@ impl RestoreState {
                     &state.bls12381g1_recovery_data,
                     root_keys,
                 ),
+                CurveType::RedPallas => Self::are_all_curve_keys_restored(
+                    *curve_type,
+                    &state.pallas_recovery_data,
+                    root_keys,
+                ),
             };
             restored &= r;
         }
@@ -532,7 +553,8 @@ impl RestoreState {
             .or(inner.ed448_recovery_data.as_ref().and_then(|d| d.original_peer_id()))
             .or(inner.jubjub_recovery_data.as_ref().and_then(|d| d.original_peer_id()))
             .or(inner.decaf377_recovery_data.as_ref().and_then(|d| d.original_peer_id()))
-            .or(inner.bls12381g1_recovery_data.as_ref().and_then(|d| d.original_peer_id()));
+            .or(inner.bls12381g1_recovery_data.as_ref().and_then(|d| d.original_peer_id())
+            .or(inner.pallas_recovery_data.as_ref().and_then(|d| d.original_peer_id())));
 
         match peer_id {
             Some(peer_id) => Ok(PeerId(NonZero::<U256>::from_uint(peer_id))),
@@ -835,10 +857,11 @@ pub struct RestoredKeyShares {
     pub jubjub_shares: Vec<String>,
     pub decaf377_shares: Vec<String>,
     pub bls12381g1_shares: Vec<String>,
+    pub pallas_shares: Vec<String>,
 }
 
 /// Used to log the state of the disaster recovery.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct RestoreStateLog {
     actively_restoring: bool,
     backups_loaded: bool,
@@ -853,6 +876,7 @@ pub struct RestoreStateLog {
     jubjub_enc_key: Option<String>,
     decaf377_enc_key: Option<String>,
     bls12381g1_enc_key: Option<String>,
+    pallas_enc_key: Option<String>,
     bls_shares: Vec<RootKeyRecoveryLog>,
     k256_shares: Vec<RootKeyRecoveryLog>,
     p256_shares: Vec<RootKeyRecoveryLog>,
@@ -863,6 +887,7 @@ pub struct RestoreStateLog {
     jubjub_shares: Vec<RootKeyRecoveryLog>,
     decaf377_shares: Vec<RootKeyRecoveryLog>,
     bls12381g1_shares: Vec<RootKeyRecoveryLog>,
+    pallas_shares: Vec<RootKeyRecoveryLog>,
     threshold: usize,
 }
 
@@ -888,6 +913,7 @@ impl RestoreStateLog {
                 bls12381g1_enc_key: CurveRecoveryData::encryption_key(
                     &state.bls12381g1_recovery_data,
                 ),
+                pallas_enc_key: CurveRecoveryData::encryption_key(&state.pallas_recovery_data),
                 bls_shares: CurveRecoveryData::log_shares(&state.bls_recovery_data),
                 k256_shares: CurveRecoveryData::log_shares(&state.k256_recovery_data),
                 p256_shares: CurveRecoveryData::log_shares(&state.p256_recovery_data),
@@ -900,33 +926,12 @@ impl RestoreStateLog {
                 jubjub_shares: CurveRecoveryData::log_shares(&state.jubjub_recovery_data),
                 decaf377_shares: CurveRecoveryData::log_shares(&state.decaf377_recovery_data),
                 bls12381g1_shares: CurveRecoveryData::log_shares(&state.bls12381g1_recovery_data),
+                pallas_shares: CurveRecoveryData::log_shares(&state.pallas_recovery_data),
                 threshold: state.threshold,
             },
             None => Self {
                 actively_restoring: restore_state.actively_restoring.load(Ordering::Acquire),
-                backups_loaded: false,
-                recovery_party_members: Default::default(),
-                bls_enc_key: Default::default(),
-                k256_enc_key: Default::default(),
-                p256_enc_key: Default::default(),
-                p384_enc_key: Default::default(),
-                ed25519_enc_key: Default::default(),
-                ristretto25519_enc_key: Default::default(),
-                ed448_enc_key: Default::default(),
-                jubjub_enc_key: Default::default(),
-                decaf377_enc_key: Default::default(),
-                bls12381g1_enc_key: Default::default(),
-                bls_shares: Default::default(),
-                k256_shares: Default::default(),
-                p256_shares: Default::default(),
-                p384_shares: Default::default(),
-                ed25519_shares: Default::default(),
-                ristretto25519_shares: Default::default(),
-                ed448_shares: Default::default(),
-                jubjub_shares: Default::default(),
-                decaf377_shares: Default::default(),
-                bls12381g1_shares: Default::default(),
-                threshold: 0,
+                ..Default::default()
             },
         }
     }
@@ -1002,14 +1007,13 @@ mod tests {
     };
     use crate::tss::util::DEFAULT_KEY_SET_NAME;
     use async_std::path::PathBuf;
-    use blsful::inner_types::G1Projective;
-    use elliptic_curve::Group;
-    use elliptic_curve::group::GroupEncoding;
     use k256::Secp256k1;
-    use lit_node_core::CompressedBytes;
-    use lit_node_core::CompressedHex;
-    use lit_node_core::CurveType;
+    use lit_node_core::{CompressedBytes, CompressedHex, CurveType};
     use lit_recovery::models::{EncryptedKeyShare, OldEncryptedKeyShare, UploadedShareData};
+    use lit_rust_crypto::{
+        blsful::inner_types::G1Projective,
+        group::{Group, GroupEncoding},
+    };
     use verifiable_share_encryption::VerifiableEncryption;
     use vsss_rs::{DefaultShare, IdentifierPrimeField};
 
@@ -1308,7 +1312,7 @@ mod tests {
     where
         C: VerifiableEncryption + VerifiableEncryptionDecryptor,
     {
-        use elliptic_curve::PrimeField;
+        use lit_rust_crypto::ff::PrimeField;
         let mut decryption_key_bytes = hex::decode(decryption_key_share).unwrap();
         if curve_type == CurveType::BLS {
             decryption_key_bytes.reverse(); // Converting from Big Endian to Little Endian which is required by DecryptionShare

@@ -1,4 +1,4 @@
-use elliptic_curve::PrimeField;
+use lit_rust_crypto::ff::PrimeField;
 
 pub fn lagrange<F: PrimeField>(xi: F, participants: &[F]) -> F {
     let mut num = F::ONE;

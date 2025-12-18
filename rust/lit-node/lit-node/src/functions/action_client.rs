@@ -26,15 +26,10 @@ use crate::utils::tracing::inject_tracing_metadata;
 use crate::utils::web::{get_bls_root_pubkey, hash_access_control_conditions};
 use anyhow::{Context as _, Result, bail};
 use base64_light::base64_decode;
-use blsful::inner_types::GroupEncoding;
-use blsful::{Bls12381G2Impl, SignatureShare};
 use derive_builder::Builder;
 use ecdsa::SignatureSize;
-use elliptic_curve::generic_array::ArrayLength;
-use elliptic_curve::{CurveArithmetic, PrimeCurve};
 use ethers::utils::keccak256;
 use futures::{FutureExt as _, TryFutureExt};
-use hd_keys_curves::{HDDerivable, HDDeriver};
 use lit_actions_grpc::tokio_stream::StreamExt as _;
 use lit_actions_grpc::tonic::{
     Code, Extensions, Request, Status, metadata::MetadataMap, transport::Error as TransportError,
@@ -54,7 +49,16 @@ use lit_node_common::config::LitNodeConfig as _;
 use lit_node_core::{
     AccessControlConditionResource, AuthSigItem, BeHex, CompressedBytes, EndpointVersion,
     JsonAuthSig, LitActionPriceComponent, LitResource, NodeSet, PeerId, SignableOutput, SignedData,
-    SigningScheme, UnifiedAccessControlConditionItem, response,
+    SigningScheme, UnifiedAccessControlConditionItem,
+    hd_keys_curves_wasm::{HDDerivable, HDDeriver},
+    response,
+};
+use lit_rust_crypto::{
+    blsful::{self, Bls12381G2Impl, SignatureShare},
+    decaf377, ed448_goldilocks,
+    elliptic_curve::{CurveArithmetic, PrimeCurve, generic_array::ArrayLength},
+    group::GroupEncoding,
+    jubjub, k256, p256, p384, vsss_rs,
 };
 use lit_sdk::signature::{SignedDataOutput, combine_and_verify_signature_shares};
 
@@ -1264,6 +1268,7 @@ impl Client {
                     | SigningScheme::SchnorrRistretto25519Sha512
                     | SigningScheme::SchnorrEd448Shake256
                     | SigningScheme::SchnorrRedJubjubBlake2b512
+                    | SigningScheme::SchnorrRedPallasBlake2b512
                     | SigningScheme::SchnorrRedDecaf377Blake2b512
                     | SigningScheme::SchnorrkelSubstrate => {
                         let frost_signature: lit_frost::Signature =

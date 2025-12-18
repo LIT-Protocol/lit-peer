@@ -4,11 +4,11 @@ use crate::{
     error::{Result, unexpected_err},
     tss::common::storage::read_key_share_from_disk,
 };
-use elliptic_curve::group::GroupEncoding;
-use hd_keys_curves::{HDDerivable, HDDeriver};
-use lit_node_core::CompressedBytes;
-use lit_node_core::CurveType;
-use lit_node_core::PeerId;
+use lit_node_core::{
+    CompressedBytes, CurveType, PeerId,
+    hd_keys_curves_wasm::{HDDerivable, HDDeriver},
+};
+use lit_rust_crypto::group::GroupEncoding;
 use tracing::instrument;
 
 #[allow(clippy::too_many_arguments)]

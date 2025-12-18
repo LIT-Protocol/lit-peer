@@ -10,19 +10,20 @@ use elliptic_curve_tools::{group, prime_field};
 use lit_node_core::{
     CompressedBytes, CompressedHex, CurveType, EcdsaSignedMessageShare, KeyFormatPreference,
     PeerId, SignableOutput, SigningAlgorithm, SigningScheme,
-    blsful::{self, Bls12381G2Impl, PublicKey, Signature},
-    hd_keys_curves_wasm::{
-        HDDerivable, HDDeriver,
+    hd_keys_curves_wasm::{HDDerivable, HDDeriver},
+    lit_rust_crypto::{
+        blsful::{self, Bls12381G2Impl, PublicKey, Signature},
+        decaf377, ed448_goldilocks,
         elliptic_curve::{
             self, Curve, CurveArithmetic, Field, FieldBytesSize, PrimeCurve, ScalarPrimitive,
             generic_array::ArrayLength,
-            group::GroupEncoding,
             ops::Reduce,
             pkcs8::AssociatedOid,
             point::{AffineCoordinates, DecompressPoint, PointCompression},
             sec1::{FromEncodedPoint, ModulusSize, ToEncodedPoint},
         },
-        k256, p256, p384,
+        group::GroupEncoding,
+        jubjub, k256, p256, p384, pallas, vsss_rs,
     },
 };
 
@@ -165,7 +166,7 @@ pub fn combine_and_verify_signature_shares(
                         serde_json::from_str(&bls_msg_share.signature_share)?;
                     let verifying_share: blsful::PublicKeyShare<Bls12381G2Impl> =
                         serde_json::from_str(&bls_msg_share.verifying_share)?;
-                    let public_key: blsful::PublicKey<Bls12381G2Impl> =
+                    let public_key: PublicKey<Bls12381G2Impl> =
                         serde_json::from_str(&bls_msg_share.public_key)?;
                     let message = hex::decode(&bls_msg_share.message)?;
                     bls_signing_package.push((
@@ -247,7 +248,7 @@ pub fn combine_and_verify_signature_shares(
             &verifying_shares,
             &first_entry.3,
         );
-        if res.is_err() {
+        return if res.is_err() {
             let e = res.expect_err("frost signature from shares is invalid");
             match e {
                 lit_frost::Error::Cheaters(cheaters) => {
@@ -261,25 +262,23 @@ pub fn combine_and_verify_signature_shares(
                             cheater_peer_ids.push(peer_id);
                         }
                     }
-                    return Err(SdkError::SignatureCombine(format!(
+                    Err(SdkError::SignatureCombine(format!(
                         "frost signature from shares is invalid. Invalid share peer ids: {}",
                         cheater_peer_ids.join(", ")
-                    )));
+                    )))
                 }
-                _ => {
-                    return Err(SdkError::SignatureCombine(e.to_string()));
-                }
+                _ => Err(SdkError::SignatureCombine(e.to_string())),
             }
         } else {
-            return Ok(SignedDataOutput {
+            Ok(SignedDataOutput {
                 signature: serde_json::to_string(
                     &res.expect("frost signature from shares is valid"),
                 )?,
                 verifying_key: serde_json::to_string(&first_entry.3)?,
                 signed_data: hex::encode(&first_entry.6),
                 recovery_id: None,
-            });
-        }
+            })
+        };
     }
     if bls_signing_package.len() > 1 {
         let first_entry = &bls_signing_package[0];
@@ -305,7 +304,7 @@ pub fn combine_and_verify_signature_shares(
             verifying_shares.push((entry.0, entry.5.clone(), entry.2));
         }
         let public_key = first_entry.3;
-        let signature = blsful::Signature::<Bls12381G2Impl>::from_shares(&signature_shares)
+        let signature = Signature::<Bls12381G2Impl>::from_shares(&signature_shares)
             .expect("bls signature from shares");
         if signature.verify(&public_key, &first_entry.4).is_err() {
             // Identify which shares are invalid
@@ -427,6 +426,7 @@ pub fn verify_signature(
         | SigningScheme::SchnorrK256Taproot
         | SigningScheme::SchnorrEd448Shake256
         | SigningScheme::SchnorrRedJubjubBlake2b512
+        | SigningScheme::SchnorrRedPallasBlake2b512
         | SigningScheme::SchnorrRedDecaf377Blake2b512
         | SigningScheme::SchnorrkelSubstrate => {
             let scheme = signing_scheme_to_frost_scheme(signing_scheme)?;
@@ -467,6 +467,7 @@ pub fn signing_scheme_to_frost_scheme(value: SigningScheme) -> SdkResult<lit_fro
         SigningScheme::SchnorrRistretto25519Sha512 => Ok(lit_frost::Scheme::Ristretto25519Sha512),
         SigningScheme::SchnorrEd448Shake256 => Ok(lit_frost::Scheme::Ed448Shake256),
         SigningScheme::SchnorrRedJubjubBlake2b512 => Ok(lit_frost::Scheme::RedJubjubBlake2b512),
+        SigningScheme::SchnorrRedPallasBlake2b512 => Ok(lit_frost::Scheme::RedPallasBlake2b512),
         SigningScheme::SchnorrK256Taproot => Ok(lit_frost::Scheme::K256Taproot),
         SigningScheme::SchnorrRedDecaf377Blake2b512 => Ok(lit_frost::Scheme::RedDecaf377Blake2b512),
         SigningScheme::SchnorrkelSubstrate => Ok(lit_frost::Scheme::SchnorrkelSubstrate),
@@ -530,25 +531,28 @@ pub fn get_derived_public_key(
         CurveType::P384 => {
             derive_public_key::<p384::ProjectivePoint>(signing_scheme, key_id, root_keys)
         }
-        CurveType::Ed25519 => {
-            derive_public_key::<lit_node_core::vsss_rs::curve25519::WrappedEdwards>(
-                signing_scheme,
-                key_id,
-                root_keys,
-            )
+        CurveType::Ed25519 => derive_public_key::<vsss_rs::curve25519::WrappedEdwards>(
+            signing_scheme,
+            key_id,
+            root_keys,
+        ),
+        CurveType::Ristretto25519 => derive_public_key::<vsss_rs::curve25519::WrappedRistretto>(
+            signing_scheme,
+            key_id,
+            root_keys,
+        ),
+        CurveType::Ed448 => {
+            derive_public_key::<ed448_goldilocks::EdwardsPoint>(signing_scheme, key_id, root_keys)
         }
-        CurveType::Ristretto25519 => derive_public_key::<
-            lit_node_core::vsss_rs::curve25519::WrappedRistretto,
-        >(signing_scheme, key_id, root_keys),
-        CurveType::Ed448 => derive_public_key::<
-            lit_node_core::hd_keys_curves_wasm::ed448_goldilocks_plus::EdwardsPoint,
-        >(signing_scheme, key_id, root_keys),
-        CurveType::RedJubjub => derive_public_key::<
-            lit_node_core::hd_keys_curves_wasm::jubjub::SubgroupPoint,
-        >(signing_scheme, key_id, root_keys),
-        CurveType::RedDecaf377 => derive_public_key::<
-            lit_node_core::hd_keys_curves_wasm::decaf377::Element,
-        >(signing_scheme, key_id, root_keys),
+        CurveType::RedJubjub => {
+            derive_public_key::<jubjub::SubgroupPoint>(signing_scheme, key_id, root_keys)
+        }
+        CurveType::RedPallas => {
+            derive_public_key::<pallas::Point>(signing_scheme, key_id, root_keys)
+        }
+        CurveType::RedDecaf377 => {
+            derive_public_key::<decaf377::Element>(signing_scheme, key_id, root_keys)
+        }
     }
 }
 

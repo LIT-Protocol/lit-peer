@@ -19,7 +19,7 @@ use std::collections::HashMap;
 use std::result::Result as StdResult;
 use std::str::FromStr;
 
-use super::{substitute_special_params, validate_boolean_expression};
+use super::{eval_condition, substitute_special_params, validate_boolean_expression};
 
 const VALID_CHAIN_NAMES: [&str; 3] = ["solana", "solanaDevnet", "solanaTestnet"];
 
@@ -468,22 +468,11 @@ fn check_return_value_uint(condition: &SolRpcConditionV2, returned_value: u64) -
         returned_value, condition.return_value_test.comparator, valid_return_value
     );
 
-    if condition.return_value_test.comparator == ">" {
-        Ok(returned_value > valid_return_value)
-    } else if condition.return_value_test.comparator == "<" {
-        return Ok(returned_value < valid_return_value);
-    } else if condition.return_value_test.comparator == ">=" {
-        return Ok(returned_value >= valid_return_value);
-    } else if condition.return_value_test.comparator == "<=" {
-        return Ok(returned_value <= valid_return_value);
-    } else if condition.return_value_test.comparator == "=" {
-        return Ok(returned_value == valid_return_value);
-    } else if condition.return_value_test.comparator == "!=" {
-        return Ok(returned_value != valid_return_value);
-    } else {
-        warn!("Error - unsupported return value test comparator");
-        return Ok(false);
-    }
+    Ok(eval_condition(
+        &condition.return_value_test.comparator,
+        returned_value,
+        valid_return_value,
+    ))
 }
 
 async fn check_return_value_string(
@@ -511,18 +500,18 @@ async fn check_return_value_string(
     if condition.return_value_test.comparator == ">" {
         Ok(returned_value > valid_return_value)
     } else if condition.return_value_test.comparator == "<" {
-        return Ok(returned_value < valid_return_value);
+        Ok(returned_value < valid_return_value)
     } else if condition.return_value_test.comparator == ">=" {
-        return Ok(returned_value >= valid_return_value);
+        Ok(returned_value >= valid_return_value)
     } else if condition.return_value_test.comparator == "<=" {
-        return Ok(returned_value <= valid_return_value);
+        Ok(returned_value <= valid_return_value)
     } else if condition.return_value_test.comparator == "=" {
-        return Ok(returned_value == valid_return_value);
+        Ok(returned_value == valid_return_value)
     } else if condition.return_value_test.comparator == "!=" {
-        return Ok(returned_value != valid_return_value);
+        Ok(returned_value != valid_return_value)
     } else {
         warn!("Error - unsupported return value test comparator");
-        return Ok(false);
+        Ok(false)
     }
 }
 
@@ -596,10 +585,11 @@ fn check_balance_of_metaplex_collection(
                     .to_string();
                 let metadata_result = get_metaplex_metadata(condition, token_address.clone());
                 if let Ok(metadata) = metadata_result {
-                    if let Some(collection) = metadata.collection {
-                        if collection.verified && collection.key == collection_address {
-                            verified_token_count += 1;
-                        }
+                    if let Some(collection) = metadata.collection
+                        && collection.verified
+                        && collection.key == collection_address
+                    {
+                        verified_token_count += 1;
                     }
                 } else {
                     debug!("Could not get metadata for {} - skipping", token_address);
@@ -748,11 +738,11 @@ async fn check_balance_of_token(
                 message,
                 data,
             }) = &err.kind
+                && *code == -32602
+                && message == "Invalid param: could not find account"
             {
-                if *code == -32602 && message == "Invalid param: could not find account" {
-                    // the balance is zero, we couldn't find the acct.  return false.
-                    return Ok(false);
-                }
+                // the balance is zero, we couldn't find the acct.  return false.
+                return Ok(false);
             }
 
             Err(validation_err_code(

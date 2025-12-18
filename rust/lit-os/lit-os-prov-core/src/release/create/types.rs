@@ -62,10 +62,10 @@ impl CreateRelease {
         if self.manifest_cid.is_empty() {
             return Err(validation_err("missing required field: manifest_cid", None));
         }
-        if self.password.len() == 0 {
+        if self.password.is_empty() {
             return Err(validation_err("missing required field: password", None));
         }
-        if self.public_key.len() == 0 {
+        if self.public_key.is_empty() {
             return Err(validation_err("missing required field: public_key", None));
         }
 
@@ -75,19 +75,19 @@ impl CreateRelease {
     pub fn sha512(&self) -> Output<Sha512> {
         let mut hasher = Sha512::new();
         hasher.update("release_id");
-        hasher.update(&(self.release_id.len() as u64).to_be_bytes());
+        hasher.update((self.release_id.len() as u64).to_be_bytes());
         hasher.update(self.release_id.as_bytes());
 
         hasher.update("manifest_cid");
-        hasher.update(&(self.manifest_cid.len() as u64).to_be_bytes());
+        hasher.update((self.manifest_cid.len() as u64).to_be_bytes());
         hasher.update(self.manifest_cid.as_bytes());
 
         hasher.update("password");
-        hasher.update(&(self.password.len() as u64).to_be_bytes());
+        hasher.update((self.password.len() as u64).to_be_bytes());
         hasher.update(self.password.as_slice());
 
         hasher.update("public_key");
-        hasher.update(&(self.public_key.len() as u64).to_be_bytes());
+        hasher.update((self.public_key.len() as u64).to_be_bytes());
         hasher.update(self.public_key.as_slice());
         hasher.finalize()
     }
