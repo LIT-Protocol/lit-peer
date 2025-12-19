@@ -251,9 +251,10 @@ async fn get_network_config(network_name: &str) -> Result<(NetworkConfig, Facets
 
     network_data.chain_api_url = format!(
         "{}{}",
-        chain_api_url.replace("yellowstone-rpc", "yellowstone-explorer"),
+        chain_api_url.replace("yellowstone-rpc", "yellowstone-explorer").replace("lit-chain-rpc", "lit-chain-explorer"),
         "/api"
     );
+
 
     Ok((
         NetworkConfig {

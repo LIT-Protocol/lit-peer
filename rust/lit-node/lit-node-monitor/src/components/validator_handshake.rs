@@ -99,6 +99,7 @@ async fn handshake_node(row: RwSignal<Validator>) -> JsonSDKHandshakeResponse {
         status: "Up".to_string(),
         wallet_address: row_data.wallet_address,
         staker_address: row_data.staker_address,
+        operator_address: row_data.operator_address,
         ver: handshake_result.node_version.clone(),
         socket_address: row_data.socket_address.clone(),
         commit_hash: handshake_result.git_commit_hash.clone(),

@@ -190,6 +190,7 @@ impl RpcCalls {
             true => "txlistinternal",
             false => "txlist",
         };
+
         //txlistinternal
         let mut url = format!(
             "{}?module=account&action={}&sort=dsc&startblock={}&endblock={}&address=0x{}",

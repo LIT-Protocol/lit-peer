@@ -4,7 +4,6 @@ use leptos_meta::*;
 use leptos_struct_table::*;
 use lit_blockchain_lite::contracts::{
     backup_recovery::{BackupRecovery, RecoveredPeerId},
-    staking::{KeySetConfig, Staking},
 };
 use serde::{Deserialize, Serialize};
 

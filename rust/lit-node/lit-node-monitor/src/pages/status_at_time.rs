@@ -2,10 +2,10 @@ use crate::{
     components::network_status_at_block::NetWorkStatusAtBlock, models::GlobalState,
     utils::rpc_calls,
 };
-use chrono::{FixedOffset, Local, NaiveDate, NaiveDateTime, NaiveTime, TimeDelta};
+use chrono::{Local, NaiveDateTime, NaiveTime, TimeDelta};
 use leptos::prelude::*;
 use leptos_meta::*;
-use thaw::{Button, DatePicker, Slider, SliderLabel, TimePicker};
+use thaw::{Button, DatePicker, Slider, TimePicker};
 
 #[component]
 pub fn StatusAtTime() -> impl IntoView {
@@ -142,7 +142,7 @@ pub async fn get_datetime_from_block_number(
     rpc_api_type: u32,
     chain_api_url: &str,
     block_number_read: ReadSignal<Option<u64>>,
-    selected_date_time_write: WriteSignal<Option<NaiveDateTime>>,
+    _selected_date_time_write: WriteSignal<Option<NaiveDateTime>>,
 ) {
     if block_number_read.get().is_none() {
         return;
@@ -151,7 +151,7 @@ pub async fn get_datetime_from_block_number(
     log::info!("block_number: {:?}", block_number);
     let datetime =
         rpc_calls::get_datetime_from_block_number(rpc_api_type, chain_api_url, block_number).await;
-    let datetime = datetime.unwrap();
+    let _datetime = datetime.unwrap();
     // selected_date_write.set(Some(datetime.naive_utc().into()));
     // selected_time_write.set(Some(datetime.naive_utc().time()));
 }

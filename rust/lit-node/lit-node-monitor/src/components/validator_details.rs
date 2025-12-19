@@ -1,11 +1,13 @@
-use crate::utils::{get_address, get_lit_config};
-use ethers::types::H160;
+use crate::pages::history::simple_hex;
 use leptos::prelude::*;
 
 use crate::pages::validators::Validator;
 
 #[component]
 pub fn ValidatorDetails(validator: Validator) -> impl IntoView {
+
+    // lit-chain-explorer.litprotocol.com
+    // yellowstone-explorer.litprotocol.com
     view! {
         <div class="row">
             <table class="table">
@@ -21,19 +23,23 @@ pub fn ValidatorDetails(validator: Validator) -> impl IntoView {
                         <td>Guest IP</td>
                         <td>{validator.socket_address.clone()}</td>
                         <td></td>
-                        <td>Node Identity Key</td>
-                        <td>{validator.node_identity_key.clone()}</td>
+                        <td>Operator Address</td>
+                        <td><a href={format!("https://lit-chain-explorer.litprotocol.com/address/{}", validator.operator_address.clone())} target="_blank">{simple_hex(validator.operator_address.clone())}</a></td>
                     </tr>
                     <tr>
                         <td>Wallet Address</td>
-                        <td><a href={format!("https://yellowstone-explorer.litprotocol.com/address/{}", validator.wallet_address.clone())} target="_blank">{validator.wallet_address.clone()}</a></td>
+                        <td><a href={format!("https://lit-chain-explorer.litprotocol.com/address/{}", validator.wallet_address.clone())} target="_blank">{simple_hex(validator.wallet_address.clone())}</a></td>
                         <td></td>
                         <td>Staker Address</td>
-                        <td><a href={format!("https://yellowstone-explorer.litprotocol.com/address/{}", validator.staker_address.clone())} target="_blank">{validator.staker_address.clone()}</a></td>
+                        <td><a href={format!("https://lit-chain-explorer.litprotocol.com/address/{}", validator.staker_address.clone())} target="_blank">{simple_hex(validator.staker_address.clone())}</a></td>
+                    </tr>
+                    <tr>
+                        <td>Node Identity Key</td>
+                        <td colspan="3">{validator.node_identity_key.clone()}</td>
                     </tr>
                     <tr>
                         <td>Commit Hash</td>
-                        <td><a href={format!("https://github.com/lit-protocol/lit-assets/commit/{}", validator.commit_hash.clone())} target="_blank">{validator.commit_hash.clone()}</a></td>
+                        <td><a href={format!("https://github.com/lit-protocol/lit-peer/commit/{}", validator.commit_hash.clone())} target="_blank">{validator.commit_hash.clone()}</a></td>
                         <td></td>
                         <td>Version</td>
                         <td>{validator.ver.clone()}</td>

@@ -2,7 +2,7 @@ use leptos::prelude::*;
 
 use thaw::{
     Button, ButtonAppearance, DrawerBody, DrawerHeader, DrawerHeaderTitle, DrawerHeaderTitleAction,
-    DrawerPosition, DrawerSize, OverlayDrawer,
+    DrawerPosition, OverlayDrawer,
 };
 
 #[component]

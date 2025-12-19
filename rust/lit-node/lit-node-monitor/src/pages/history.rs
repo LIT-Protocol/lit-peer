@@ -414,7 +414,10 @@ pub async fn fetch_chain_tx_rows(
         None => address.to_string(),
     };
 
+    log::info!("chain_api_url: {:?}", chain_api_url);
+
     log::info!("address: {:?}", address);
+
     let block_start = start_block.get().parse::<u64>().unwrap();
     let block_end = end_block.get().parse::<u64>().unwrap();
     let start_date = match start_date.get() {

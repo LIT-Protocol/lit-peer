@@ -11,7 +11,7 @@ use crate::{
         contract_helper::get_staking,
     },
 };
-use ethers::types::{H160, U256};
+use ethers::types::H160;
 use ethers_providers::{Http, Provider};
 use leptos::prelude::*;
 use leptos_meta::*;
@@ -37,6 +37,8 @@ pub struct Validator {
     pub staker_address: String,
     #[table(renderer = "ValidatorStatusRenderer")]
     pub ver: String,
+    #[table(skip)]
+    pub operator_address: String,
     #[table(skip)]
     pub commit_hash: String,
     #[table(skip)]
@@ -350,6 +352,7 @@ pub async fn get_validators(
             socket_address: socket_address.clone(),
             wallet_address: format!("0x{}", hex::encode(v.node_address.as_bytes())),
             staker_address: format!("0x{}", hex::encode(staker_address.as_bytes())),
+            operator_address: format!("0x{}", hex::encode(v.operator_address.as_bytes())),
             ver: "?".to_string(),
             host_name: info,
             commit_hash: "".to_string(),

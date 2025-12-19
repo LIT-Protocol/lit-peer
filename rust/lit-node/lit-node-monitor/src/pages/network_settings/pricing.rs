@@ -131,7 +131,7 @@ pub async fn get_price_feed() -> (Vec<PricingConfig>, Vec<PricingConfig>) {
     ];
     let mut rows2 = vec![];
     let mut lit_action_sig_price: U256;
-    for (i, price) in la_prices.iter().enumerate() {
+    for (_i, price) in la_prices.iter().enumerate() {
         let mut notes = "".to_string();
         if price.price_component == 5 {
             lit_action_sig_price = price.price;

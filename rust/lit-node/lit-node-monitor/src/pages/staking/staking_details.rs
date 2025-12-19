@@ -1,6 +1,5 @@
 use crate::utils::datetime::{format_timelock, format_timestamp};
 use crate::utils::{get_address, get_lit_config};
-use ethers::utils::format_units;
 use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_struct_table::*;
@@ -91,7 +90,7 @@ pub async fn get_staking_records() -> Vec<StakeRecord> {
     for v in validators {
         let records = staking.get_stake_records_for_user(v, v).await;
         let records = records.unwrap();
-        let units = "ether";
+        let _units = "ether";
         let status = if current_validators.contains(&v) {
             "Current".to_string()
         } else if next_validators.contains(&v) {
