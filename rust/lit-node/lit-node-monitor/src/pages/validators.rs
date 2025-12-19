@@ -15,7 +15,7 @@ use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_struct_table::*;
 use lit_blockchain_lite::contracts::staking::Staking;
-// use lit_sdk::models::response::JsonSDKHandshakeResponse;
+// use lit_sdk_core::models::response::JsonSDKHandshakeResponse;
 use serde::{Deserialize, Serialize};
 use std::net::Ipv4Addr;
 #[derive(TableRow, Clone, Serialize, Deserialize)]

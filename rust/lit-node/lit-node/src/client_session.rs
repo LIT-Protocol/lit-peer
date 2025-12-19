@@ -1,7 +1,7 @@
 use crate::error::Result;
 use lit_node_common::client_state::{ClientState, IdentityKey};
 use lit_node_core::response::GenericResponse;
-use lit_sdk::EncryptedPayload;
+use lit_sdk_core::EncryptedPayload;
 use rocket::http::Status;
 use rocket::response::status;
 use serde::{Serialize, de::DeserializeOwned};

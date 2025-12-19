@@ -948,7 +948,7 @@ async fn decrypt_with_lit_action_session_sig() {
             .unwrap();
     // Encrypt
     let ciphertext =
-        lit_sdk::encryption::encrypt_time_lock(&bls_pubkey, message_bytes, &identity_param)
+        lit_sdk_core::encryption::encrypt_time_lock(&bls_pubkey, message_bytes, &identity_param)
             .expect("Unable to encrypt");
     info!("ciphertext: {:?}", ciphertext);
 

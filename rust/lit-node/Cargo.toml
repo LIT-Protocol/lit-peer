@@ -6,7 +6,7 @@ default-members = [
     "utils",
     "lit-node-core",
     "lit-node-common",
-    "lit-sdk"
+    "lit-sdk-core"
 ]
 # all the things in this workspace (including dev and test stuff)
 members = [
@@ -17,7 +17,7 @@ members = [
     "lit-node-testnet", 
     "shiva", 
     
-    "lit-sdk"
+    "lit-sdk-core"
 ]
 exclude = ["lit-node-monitor"]
 

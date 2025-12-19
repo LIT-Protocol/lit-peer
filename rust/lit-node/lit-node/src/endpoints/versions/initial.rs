@@ -17,7 +17,7 @@ use lit_node_core::{
     request::{self, EncryptionSignRequest, JsonPKPClaimKeyRequest, JsonSDKHandshakeRequest},
     response::GenericResponse,
 };
-use lit_sdk::EncryptedPayload;
+use lit_sdk_core::EncryptedPayload;
 use moka::future::Cache;
 use rocket::response::status;
 use rocket::serde::json::serde_json::json;

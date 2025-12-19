@@ -24,7 +24,7 @@ use lit_rust_crypto::{
     curve25519_dalek, decaf377, ed448_goldilocks, group::GroupEncoding, jubjub, k256, p256, p384,
     pallas, vsss_rs,
 };
-use lit_sdk::signature::signing_scheme_to_frost_scheme;
+use lit_sdk_core::signature::signing_scheme_to_frost_scheme;
 use std::{num::NonZeroU16, sync::Arc};
 use verifiable_share_encryption::legacy_vsss_rs::ShareIdentifier;
 

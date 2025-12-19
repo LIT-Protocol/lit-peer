@@ -402,10 +402,10 @@ async fn upload_blinders_to_nodes(
                 serde_json::to_string_pretty(&blinders).unwrap()
             );
 
-            let response = lit_sdk::admin::SetBlindersRequest::new()
-                .url_prefix(lit_sdk::UrlPrefix::Http)
+            let response = lit_sdk_core::admin::SetBlindersRequest::new()
+                .url_prefix(lit_sdk_core::UrlPrefix::Http)
                 .public_address(public_address.clone())
-                .request(lit_sdk::admin::SetBlindersData { auth_sig, blinders })
+                .request(lit_sdk_core::admin::SetBlindersData { auth_sig, blinders })
                 .build()
                 .unwrap()
                 .send()
@@ -453,8 +453,8 @@ async fn node_operator_perform_backup(
 
             info!("Getting backup for validator {}", public_address);
 
-            let blinders_response = lit_sdk::admin::GetBlindersRequest::new()
-                .url_prefix(lit_sdk::UrlPrefix::Http)
+            let blinders_response = lit_sdk_core::admin::GetBlindersRequest::new()
+                .url_prefix(lit_sdk_core::UrlPrefix::Http)
                 .public_address(public_address.clone())
                 .request(auth_sig.clone())
                 .build()
@@ -475,10 +475,10 @@ async fn node_operator_perform_backup(
             let file = async_std::fs::File::create(backup_directory.join(node_tar_name))
                 .await
                 .unwrap();
-            let _response = lit_sdk::admin::GetKeyBackupRequest::new()
-                .url_prefix(lit_sdk::UrlPrefix::Http)
+            let _response = lit_sdk_core::admin::GetKeyBackupRequest::new()
+                .url_prefix(lit_sdk_core::UrlPrefix::Http)
                 .public_address(public_address.clone())
-                .request(lit_sdk::admin::GetKeyBackupParameters {
+                .request(lit_sdk_core::admin::GetKeyBackupParameters {
                     auth: auth_sig,
                     epoch,
                 })

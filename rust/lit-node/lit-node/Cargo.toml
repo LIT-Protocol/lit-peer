@@ -81,7 +81,7 @@ lit-rust-crypto = { workspace = true, features = [
     "sha",
     "serde"
 ] }
-lit-sdk = { path = "../lit-sdk" }
+lit-sdk-core = { path = "../lit-sdk-core" }
 lit-vrf = { path = "../../lit-core/lit-vrf" }
 moka = { version = "0.12.7", features = ["future"] }
 mpl-token-metadata = "1.2.10"

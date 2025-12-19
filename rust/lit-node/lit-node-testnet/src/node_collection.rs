@@ -15,7 +15,7 @@ use tracing::trace;
 
 use lit_node_common::client_state::KeyPair;
 use lit_node_core::NodeSet;
-use lit_sdk::EncryptedPayload;
+use lit_sdk_core::EncryptedPayload;
 use reqwest;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
@@ -268,13 +268,13 @@ pub async fn get_node_versions(node_set: &Vec<NodeSet>) -> Vec<String> {
         .collect::<Vec<String>>()
 }
 
-async fn do_handshake<'a, I>(node_set: I) -> lit_sdk::HandshakeResponse
+async fn do_handshake<'a, I>(node_set: I) -> lit_sdk_core::HandshakeResponse
 where
     I: Iterator<Item = &'a NodeSet>,
 {
-    lit_sdk::HandshakeRequest::new()
+    lit_sdk_core::HandshakeRequest::new()
         .node_set_from_iter(node_set)
-        .url_prefix(lit_sdk::UrlPrefix::Http)
+        .url_prefix(lit_sdk_core::UrlPrefix::Http)
         .challenge("0x1234123412341234123412341234123412341234123412341234123412341234".to_string())
         .client_public_key("blah".to_string())
         .build()

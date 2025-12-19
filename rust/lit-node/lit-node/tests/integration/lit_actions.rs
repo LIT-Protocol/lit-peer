@@ -37,7 +37,7 @@ pub mod litactions {
         get_identity_pubkeys_from_node_set, get_network_pubkey,
     };
     use lit_rust_crypto::k256;
-    use lit_sdk::signature::SignedDataOutput;
+    use lit_sdk_core::signature::SignedDataOutput;
     use rocket::form::validate::Contains;
     use serde_json::Value;
     use sha2::{Digest, Sha256};
@@ -639,7 +639,7 @@ pub mod litactions {
                 .unwrap();
 
         let ciphertext =
-            lit_sdk::encryption::encrypt_time_lock(&pubkey, message_bytes, &identity_param)
+            lit_sdk_core::encryption::encrypt_time_lock(&pubkey, message_bytes, &identity_param)
                 .expect("Unable to encrypt");
         debug!("ciphertext: {:?}", ciphertext);
 
@@ -810,7 +810,7 @@ pub mod litactions {
         let (_testnet, validator_collection, end_user) = TestSetupBuilder::default().build().await;
         let file_with_path = "./tests/lit_action_scripts/sign_as_lit_action.js";
         let lit_action_code = std::fs::read_to_string(file_with_path).unwrap();
-        let action_ipfs_id = lit_sdk::compute_ipfs_hash(&lit_action_code);
+        let action_ipfs_id = lit_sdk_core::compute_ipfs_hash(&lit_action_code);
         let actions = validator_collection.actions();
         let node_set = validator_collection.random_threshold_nodeset().await;
         let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
@@ -893,7 +893,7 @@ pub mod litactions {
                 }
                 let _r = tokio::time::sleep(std::time::Duration::from_secs(1)).await;
             }
-            let lit_action_public_key = lit_sdk::signature::get_lit_action_public_key(
+            let lit_action_public_key = lit_sdk_core::signature::get_lit_action_public_key(
                 signing_scheme,
                 &action_ipfs_id,
                 &root_keys,
@@ -929,7 +929,7 @@ pub mod litactions {
                 assert_eq!(first.verifying_key, output.verifying_key);
             }
 
-            assert!(lit_sdk::signature::verify_signature(signing_scheme, first).is_ok());
+            assert!(lit_sdk_core::signature::verify_signature(signing_scheme, first).is_ok());
 
             let mut pk_params = serde_json::Map::new();
             pk_params.insert("publicKey".to_string(), pubkey.clone().into());

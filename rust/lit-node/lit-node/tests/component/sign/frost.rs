@@ -10,7 +10,7 @@ use lit_node::tss::common::key_share::KeyShare;
 use lit_node::tss::frost::FrostState;
 use lit_node_core::PeerId;
 use lit_node_core::SigningScheme;
-use lit_sdk::signature::signing_scheme_to_frost_scheme;
+use lit_sdk_core::signature::signing_scheme_to_frost_scheme;
 use test_case::test_case;
 use tokio::task::JoinHandle;
 use tracing::info;

@@ -16,7 +16,7 @@ use lit_node_common::client_state::ClientState;
 use lit_node_core::request::EncryptionSignRequest;
 use lit_node_core::response::GenericResponse;
 use lit_node_core::{EndpointVersion, request};
-use lit_sdk::EncryptedPayload;
+use lit_sdk_core::EncryptedPayload;
 use moka::future::Cache;
 use rocket::response::status;
 use rocket::serde::json::{Json, Value, serde_json::json};
@@ -400,7 +400,7 @@ pub(crate) async fn admin_get_blinders(
 pub async fn admin_set_blinders(
     cfg: &State<ReloadableLitConfig>,
     restore_state: &State<Arc<RestoreState>>,
-    data: Json<lit_sdk::admin::SetBlindersData>,
+    data: Json<lit_sdk_core::admin::SetBlindersData>,
 ) -> status::Custom<Value> {
     with_timeout(&cfg.load_full(), None, None, async move {
         admin::endpoints::admin_set_blinders(cfg, restore_state, &data.auth_sig, &data.blinders)
@@ -420,7 +420,7 @@ pub async fn admin_get_key_backup(
     cfg: &State<ReloadableLitConfig>,
     tss_state: &State<Arc<TssState>>,
     restore_state: &State<Arc<RestoreState>>,
-    data: Json<lit_sdk::admin::GetKeyBackupParameters>,
+    data: Json<lit_sdk_core::admin::GetKeyBackupParameters>,
 ) -> Result<Vec<u8>, status::Custom<Value>> {
     let auth = JsonAuthSigExtended {
         auth_sig: data.auth.auth_sig.clone(),

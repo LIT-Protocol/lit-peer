@@ -146,8 +146,8 @@ pub async fn get_pkp_sign(
         .collect::<Vec<NodeSet>>();
     if let Some(session_sigs_and_node_set) = session_sigs_and_node_set {
         let my_secret_key = rand::rngs::OsRng.r#gen();
-        let response = lit_sdk::PKPSigningRequest::new()
-            .url_prefix(lit_sdk::UrlPrefix::Http)
+        let response = lit_sdk_core::PKPSigningRequest::new()
+            .url_prefix(lit_sdk_core::UrlPrefix::Http)
             .node_set(
                 session_sigs_and_node_set
                     .iter()
@@ -165,7 +165,7 @@ pub async fn get_pkp_sign(
                         };
 
                         // json_body_vec.push(json_body);
-                        lit_sdk::EndpointRequest {
+                        lit_sdk_core::EndpointRequest {
                             identity_key: session_sig_and_node_set.identity_key,
                             node_set: session_sig_and_node_set.node.clone(),
                             body: data_to_send,
@@ -201,12 +201,12 @@ pub async fn get_pkp_sign(
             node_set: nodes.clone(),
         };
         let my_secret_key = rand::rngs::OsRng.r#gen();
-        let responses = lit_sdk::PKPSigningRequest::new()
-            .url_prefix(lit_sdk::UrlPrefix::Http)
+        let responses = lit_sdk_core::PKPSigningRequest::new()
+            .url_prefix(lit_sdk_core::UrlPrefix::Http)
             .node_set(
                 node_set
                     .iter()
-                    .map(|(node, key)| lit_sdk::EndpointRequest {
+                    .map(|(node, key)| lit_sdk_core::EndpointRequest {
                         node_set: node.clone(),
                         identity_key: *key,
                         body: data_to_send.clone(),

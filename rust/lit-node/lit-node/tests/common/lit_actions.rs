@@ -241,8 +241,8 @@ pub async fn execute_lit_action_session_sigs(
         .map(|sig_and_nodeset| sig_and_nodeset.node.clone())
         .collect::<Vec<_>>();
     let my_private_key = OsRng.r#gen();
-    let response = lit_sdk::ExecuteFunctionRequest::new()
-        .url_prefix(lit_sdk::UrlPrefix::Http)
+    let response = lit_sdk_core::ExecuteFunctionRequest::new()
+        .url_prefix(lit_sdk_core::UrlPrefix::Http)
         .node_set(
             session_sigs_and_node_set
                 .iter()
@@ -257,7 +257,7 @@ pub async fn execute_lit_action_session_sigs(
                         node_set: nodes.clone(),
                         invocation: Invocation::Sync,
                     };
-                    lit_sdk::EndpointRequest {
+                    lit_sdk_core::EndpointRequest {
                         node_set: sig_and_nodeset.node.clone(),
                         identity_key: sig_and_nodeset.identity_key,
                         body: execute_request,
@@ -308,12 +308,12 @@ pub async fn execute_lit_action_auth_sig(
         invocation: Invocation::Sync,
     };
     let my_private_key = OsRng.r#gen();
-    let response = lit_sdk::ExecuteFunctionRequest::new()
-        .url_prefix(lit_sdk::UrlPrefix::Http)
+    let response = lit_sdk_core::ExecuteFunctionRequest::new()
+        .url_prefix(lit_sdk_core::UrlPrefix::Http)
         .node_set(
             node_set
                 .iter()
-                .map(|(node_set, identity_key)| lit_sdk::EndpointRequest {
+                .map(|(node_set, identity_key)| lit_sdk_core::EndpointRequest {
                     node_set: node_set.clone(),
                     identity_key: *identity_key,
                     body: execute_request.clone(),
@@ -381,19 +381,19 @@ pub async fn assert_signed_action(
     match ecdsa_message_shares[0].sig_type.parse() {
         Ok(signing_scheme) => match signing_scheme {
             SigningScheme::EcdsaK256Sha256 => Ok(
-                lit_sdk::signature::verify_ecdsa_signing_package::<k256::Secp256k1>(
+                lit_sdk_core::signature::verify_ecdsa_signing_package::<k256::Secp256k1>(
                     &ecdsa_message_shares,
                 )
                 .is_ok(),
             ),
             SigningScheme::EcdsaP256Sha256 => Ok(
-                lit_sdk::signature::verify_ecdsa_signing_package::<p256::NistP256>(
+                lit_sdk_core::signature::verify_ecdsa_signing_package::<p256::NistP256>(
                     &ecdsa_message_shares,
                 )
                 .is_ok(),
             ),
             SigningScheme::EcdsaP384Sha384 => Ok(
-                lit_sdk::signature::verify_ecdsa_signing_package::<p384::NistP384>(
+                lit_sdk_core::signature::verify_ecdsa_signing_package::<p384::NistP384>(
                     &ecdsa_message_shares,
                 )
                 .is_ok(),

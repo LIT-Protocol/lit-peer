@@ -51,7 +51,7 @@ async fn test_all_payment_methods_for_user() {
     let pubkey =
         lit_rust_crypto::blsful::PublicKey::try_from(&hex::decode(&network_pubkey).unwrap())
             .unwrap();
-    let ciphertext = lit_sdk::encryption::encrypt_time_lock(
+    let ciphertext = lit_sdk_core::encryption::encrypt_time_lock(
         &pubkey,
         message_bytes,
         &test_encryption_parameters.identity_param,
@@ -811,7 +811,7 @@ async fn test_all_payment_methods_for_pkp() {
         lit_rust_crypto::blsful::PublicKey::try_from(&hex::decode(&network_pubkey).unwrap())
             .unwrap();
 
-    let ciphertext = lit_sdk::encryption::encrypt_time_lock(
+    let ciphertext = lit_sdk_core::encryption::encrypt_time_lock(
         &bls_pubkey,
         message_bytes,
         &test_encryption_parameters.identity_param,
@@ -1219,7 +1219,7 @@ async fn test_pending_payments_block_usage() {
     let pubkey =
         lit_rust_crypto::blsful::PublicKey::try_from(&hex::decode(&network_pubkey).unwrap())
             .unwrap();
-    let ciphertext = lit_sdk::encryption::encrypt_time_lock(
+    let ciphertext = lit_sdk_core::encryption::encrypt_time_lock(
         &pubkey,
         message_bytes,
         &test_encryption_parameters.identity_param,

@@ -55,7 +55,7 @@ lit-blockchain = { path = "../../lit-core/lit-blockchain" }
 lit-attestation = { path = "../../lit-core/lit-attestation", features = ["generate-via-service", "kdf"] }
 lit-node-common ={ path = "../lit-node-common" }
 lit-node-core = { path = "../lit-node-core" }
-lit-sdk = { path = "../lit-sdk" }
+lit-sdk-core = { path = "../lit-sdk-core" }
 toml_edit = "0.22"
 toxiproxy_rust = "*"
 uuid = { version = "1.4", features = ["v4"] }

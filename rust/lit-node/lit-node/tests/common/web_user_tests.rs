@@ -175,7 +175,7 @@ pub async fn test_encryption_decryption_auth_sig(
     let network_pubkey = get_network_pubkey_from_node_set(node_set.iter().map(|(n, _)| n)).await;
     let pubkey = PublicKey::try_from(hex::decode(network_pubkey).unwrap()).unwrap();
 
-    let ciphertext = lit_sdk::encryption::encrypt_time_lock(
+    let ciphertext = lit_sdk_core::encryption::encrypt_time_lock(
         &pubkey,
         message_bytes,
         &test_encryption_parameters.identity_param,
@@ -268,7 +268,7 @@ pub async fn test_encryption_decryption_session_sigs(
 
     let pubkey = PublicKey::try_from(hex::decode(&network_pubkey).unwrap()).unwrap();
     let ciphertext =
-        lit_sdk::encryption::encrypt_time_lock(&pubkey, message_bytes, &identity_param)
+        lit_sdk_core::encryption::encrypt_time_lock(&pubkey, message_bytes, &identity_param)
             .expect("Unable to encrypt");
     debug!(
         "encrypting with pubkey {} -> ciphertext: {:?}",
@@ -314,12 +314,12 @@ pub async fn retrieve_decryption_key(
     };
     info!("Sending payload {:?}", payload);
     let my_secret_key = rand::rngs::OsRng.r#gen();
-    let response = lit_sdk::EncryptionSignRequest::new()
-        .url_prefix(lit_sdk::UrlPrefix::Http)
+    let response = lit_sdk_core::EncryptionSignRequest::new()
+        .url_prefix(lit_sdk_core::UrlPrefix::Http)
         .node_set(
             node_set
                 .iter()
-                .map(|(node_set, node)| lit_sdk::EndpointRequest {
+                .map(|(node_set, node)| lit_sdk_core::EndpointRequest {
                     identity_key: *node,
                     node_set: node_set.clone(),
                     body: payload.clone(),
@@ -372,7 +372,7 @@ pub async fn retrieve_decryption_key_session_sigs_with_version(
             epoch,
         };
 
-        endpoint_requests.push(lit_sdk::EndpointRequest {
+        endpoint_requests.push(lit_sdk_core::EndpointRequest {
             node_set: session_sig_and_nodeset.node.clone(),
             identity_key: session_sig_and_nodeset.identity_key,
             body: encryption_sign_request,
@@ -380,8 +380,8 @@ pub async fn retrieve_decryption_key_session_sigs_with_version(
     }
 
     let my_secret_key = rand::rngs::OsRng.r#gen();
-    let response = lit_sdk::EncryptionSignRequest::new()
-        .url_prefix(lit_sdk::UrlPrefix::Http)
+    let response = lit_sdk_core::EncryptionSignRequest::new()
+        .url_prefix(lit_sdk_core::UrlPrefix::Http)
         .node_set(endpoint_requests)
         .build()
         .unwrap()
@@ -412,7 +412,7 @@ pub fn assert_decrypted(
             parsed_resp.signature_share
         })
         .collect::<Vec<_>>();
-    let decrypted = lit_sdk::encryption::verify_and_decrypt_with_signatures_shares(
+    let decrypted = lit_sdk_core::encryption::verify_and_decrypt_with_signatures_shares(
         network_pubkey,
         &identity_param,
         ciphertext,

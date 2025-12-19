@@ -58,7 +58,7 @@ use lit_rust_crypto::{
     group::GroupEncoding,
     jubjub, k256, p256, p384, vsss_rs,
 };
-use lit_sdk::signature::{SignedDataOutput, combine_and_verify_signature_shares};
+use lit_sdk_core::signature::{SignedDataOutput, combine_and_verify_signature_shares};
 
 const DEFAULT_TIMEOUT_MS: u64 = 30_000; // 30s
 const DEFAULT_ASYNC_TIMEOUT_MS: u64 = 300_000; // 5m
@@ -925,7 +925,7 @@ impl Client {
                     shares.iter().map(|(_, share)| *share).collect::<Vec<_>>();
                 let ciphertext = serde_bare::from_slice(&base64_decode(&ciphertext))?;
 
-                let decrypted = lit_sdk::encryption::verify_and_decrypt_with_signatures_shares(
+                let decrypted = lit_sdk_core::encryption::verify_and_decrypt_with_signatures_shares(
                     &network_pubkey,
                     &identity_parameter,
                     &ciphertext,
@@ -1048,7 +1048,7 @@ impl Client {
                         let ciphertext = serde_bare::from_slice(&base64_decode(&ciphertext))?;
 
                         let decrypted =
-                            lit_sdk::encryption::verify_and_decrypt_with_signatures_shares(
+                            lit_sdk_core::encryption::verify_and_decrypt_with_signatures_shares(
                                 &network_pubkey,
                                 &identity_parameter,
                                 &ciphertext,
@@ -1377,7 +1377,7 @@ impl Client {
                 let message_bytes = &to_encrypt;
                 let identity_param = get_identity_param(&conditions, &data_to_encrypt_hash)?;
 
-                let ciphertext = match lit_sdk::encryption::encrypt_time_lock(
+                let ciphertext = match lit_sdk_core::encryption::encrypt_time_lock(
                     &network_pubkey,
                     message_bytes,
                     &identity_param,
@@ -1482,7 +1482,7 @@ impl Client {
                 let curve_type = scheme.curve_type();
                 let dkg_state = tss_state.get_dkg_state(curve_type)?;
                 let root_keys = dkg_state.root_keys().await;
-                let pubkey = lit_sdk::signature::get_lit_action_public_key(
+                let pubkey = lit_sdk_core::signature::get_lit_action_public_key(
                     scheme,
                     &action_ipfs_cid,
                     &root_keys,
@@ -1520,7 +1520,7 @@ impl Client {
                 let tss_state = Arc::new(tss_state);
                 let dkg_state = tss_state.get_dkg_state(curve_type)?;
                 let root_keys = dkg_state.root_keys().await;
-                let pubkey = lit_sdk::signature::get_lit_action_public_key(
+                let pubkey = lit_sdk_core::signature::get_lit_action_public_key(
                     scheme,
                     &action_ipfs_cid,
                     &root_keys,
@@ -1534,7 +1534,7 @@ impl Client {
                     );
                     VerifyActionSignatureResponse { result: false }.into()
                 } else {
-                    match lit_sdk::signature::verify_signature(scheme, &output) {
+                    match lit_sdk_core::signature::verify_signature(scheme, &output) {
                         Err(e) => {
                             tracing::error!("action signature verification failed {:?}", e);
                             VerifyActionSignatureResponse { result: false }.into()

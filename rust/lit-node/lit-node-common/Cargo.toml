@@ -12,7 +12,7 @@ ethers = { version = "2.0.8", features = [ "abigen", "legacy" ]}
 hex = { workspace = true, features = ["serde"] }
 hkdf = "0.12"
 k256 = { version = "0.13", features = ["arithmetic", "ecdsa", "ecdsa-core"] }
-lit-sdk = { path = "../lit-sdk" }
+lit-sdk-core = { path = "../lit-sdk-core" }
 rand.workspace = true
 rand_core.workspace = true
 rand_chacha.workspace = true

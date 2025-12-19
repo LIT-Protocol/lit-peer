@@ -39,7 +39,7 @@ use rand_core::RngCore;
 use super::session_sigs::SessionSigAndNodeSet;
 use lit_node_testnet::node_collection::NodeIdentityKey;
 use lit_rust_crypto::k256;
-use lit_sdk::UrlPrefix;
+use lit_sdk_core::UrlPrefix;
 
 pub fn node_wallet(cfg: &LitConfig) -> Result<Wallet<SigningKey>> {
     let secret_key = SigningKey::from_bytes(k256::FieldBytes::from_slice(
@@ -506,9 +506,9 @@ pub async fn get_auth_sig_for_session_sig_from_nodes(
     js_params: Option<Value>,
     epoch: u64,
 ) -> Result<Vec<GenericResponse<JsonSignSessionKeyResponseV2>>> {
-    let results = lit_sdk::HandshakeRequest::new()
+    let results = lit_sdk_core::HandshakeRequest::new()
         .node_set_from_iter(node_set.iter().map(|(n, _)| n))
-        .url_prefix(lit_sdk::UrlPrefix::Http)
+        .url_prefix(lit_sdk_core::UrlPrefix::Http)
         .challenge("0x1234123412341234123412341234123412341234123412341234123412341234".to_string())
         .client_public_key("blah".to_string())
         .build()
@@ -602,7 +602,7 @@ pub async fn get_auth_sig_for_session_sig_from_nodes(
 
     let mut secret_key = [0u8; 32];
     rand::rngs::OsRng.fill_bytes(&mut secret_key);
-    let response = lit_sdk::SignSessionKeyRequest::new()
+    let response = lit_sdk_core::SignSessionKeyRequest::new()
         .request(signing_request)
         .node_set_from_iter(node_set.iter())
         .url_prefix(UrlPrefix::Http)

@@ -149,7 +149,7 @@ async fn test_encryption_decryption_eip1271(
     .into_bytes();
     let pubkey = PublicKey::try_from(&hex::decode(&network_pubkey).unwrap()).unwrap();
     let ciphertext =
-        lit_sdk::encryption::encrypt_time_lock(&pubkey, message_bytes, &identity_param)
+        lit_sdk_core::encryption::encrypt_time_lock(&pubkey, message_bytes, &identity_param)
             .expect("Unable to encrypt");
     info!("ciphertext: {:?}", ciphertext);
 

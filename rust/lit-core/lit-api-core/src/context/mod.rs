@@ -21,7 +21,7 @@ pub const HEADER_KEY_X_CORRELATION_ID: &str = "X-Correlation-Id";
 pub const HEADER_KEY_X_REQUEST_ID: &str = "X-Request-Id";
 pub const HEADER_KEY_X_LIT_SDK_VERSION: &str = "X-Lit-SDK-Version";
 
-pub const TRACKING_LOG_KEY_LIT_SDK_VERSION: &str = "lit_sdk_version";
+pub const TRACKING_LOG_KEY_LIT_SDK_VERSION: &str = "lit_sdk_core_version";
 
 task_local! {
     pub static TRACING: Box<dyn Tracer>;

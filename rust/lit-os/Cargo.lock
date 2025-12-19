@@ -10558,7 +10558,7 @@ dependencies = [
  "lit-core-derive",
  "lit-logging",
  "lit-observability",
- "lit-sdk",
+ "lit-sdk-core",
  "postcard",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
@@ -10642,7 +10642,7 @@ dependencies = [
  "lit-node-common",
  "lit-node-core",
  "lit-observability",
- "lit-sdk",
+ "lit-sdk-core",
  "once_cell",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
@@ -10927,7 +10927,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "lit-sdk"
+name = "lit-sdk-core"
 version = "2.0.1"
 dependencies = [
  "chrono",
@@ -11019,7 +11019,7 @@ dependencies = [
  "lit-observability",
  "lit-recovery",
  "lit-rust-crypto",
- "lit-sdk",
+ "lit-sdk-core",
  "lit-vrf",
  "moka 0.12.10",
  "mpl-token-metadata",

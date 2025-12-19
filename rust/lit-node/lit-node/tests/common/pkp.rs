@@ -14,7 +14,7 @@ use lit_node_core::{
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::NodeIdentityKey;
 use lit_rust_crypto::k256;
-use lit_sdk::signature::combine_and_verify_signature_shares;
+use lit_sdk_core::signature::combine_and_verify_signature_shares;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -132,8 +132,8 @@ pub async fn generate_session_sigs_and_send_signing_requests(
     let my_secret_key = rand::rngs::OsRng.r#gen();
 
     let start = std::time::Instant::now();
-    let responses = lit_sdk::PKPSigningRequest::new()
-        .url_prefix(lit_sdk::UrlPrefix::Http)
+    let responses = lit_sdk_core::PKPSigningRequest::new()
+        .url_prefix(lit_sdk_core::UrlPrefix::Http)
         .node_set(
             session_sigs
                 .into_iter()
@@ -147,7 +147,7 @@ pub async fn generate_session_sigs_and_send_signing_requests(
                         epoch,
                         node_set: nodes.clone(),
                     };
-                    lit_sdk::EndpointRequest {
+                    lit_sdk_core::EndpointRequest {
                         identity_key: sig_and_nodeset.identity_key,
                         node_set: sig_and_nodeset.node.clone(),
                         body,
@@ -210,7 +210,7 @@ pub async fn sign_with_pkp_request(
     trace!("json_responses: {:?}", responses);
 
     // collect the shares into a struct and a set of string that can be used to recombine using the WASM module.
-    let lit_sdk::signature::SignedDataOutput {
+    let lit_sdk_core::signature::SignedDataOutput {
         signature,
         verifying_key: public_key,
         signed_data: message,
@@ -251,7 +251,7 @@ pub fn recombine_shares_using_wasm(
 #[doc = "Decode the responses from the nodes into a set of string based shares and a set of ECDSA signature shares."]
 pub fn decode_endpoint_responses(
     endpoint_responses: Vec<JsonPKPSigningResponse>,
-) -> lit_sdk::signature::SignedDataOutput {
+) -> lit_sdk_core::signature::SignedDataOutput {
     let mut shares = Vec::with_capacity(endpoint_responses.len());
     for r in endpoint_responses {
         shares.push(r.signature_share);

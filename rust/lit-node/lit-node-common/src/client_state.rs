@@ -1,5 +1,5 @@
 use crate::error::unexpected_err;
-use lit_sdk::EncryptedPayload;
+use lit_sdk_core::EncryptedPayload;
 use rand_core::{OsRng, RngCore};
 use sdd::{AtomicOwned, Guard, Owned, Tag};
 use serde::Serialize;

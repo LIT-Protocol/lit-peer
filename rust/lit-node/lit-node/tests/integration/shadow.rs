@@ -19,7 +19,7 @@ use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::{get_identity_pubkeys_from_node_set, get_network_pubkey};
 use lit_node_testnet::testnet::Testnet;
 use lit_node_testnet::validator::ValidatorCollection;
-use lit_sdk::signature::combine_and_verify_signature_shares;
+use lit_sdk_core::signature::combine_and_verify_signature_shares;
 const INITIAL_VALIDATORS: usize = 5;
 const MAX_VALIDATORS: usize = 10;
 const EPOCH_LENGTH: usize = 300;
@@ -166,7 +166,7 @@ async fn shadow_splicing_sign_encrypt() {
         lit_rust_crypto::blsful::PublicKey::try_from(hex::decode(&network_pubkey).unwrap())
             .unwrap();
 
-    let ciphertext = lit_sdk::encryption::encrypt_time_lock(
+    let ciphertext = lit_sdk_core::encryption::encrypt_time_lock(
         &pubkey,
         test_encryption_parameters.to_encrypt.as_bytes(),
         &identity_param,

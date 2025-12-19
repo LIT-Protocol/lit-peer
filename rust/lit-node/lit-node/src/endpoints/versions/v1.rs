@@ -9,7 +9,7 @@ use lit_core::config::ReloadableLitConfig;
 use lit_node_common::client_state::ClientState;
 use lit_node_core::request;
 use lit_node_core::request::EncryptionSignRequest;
-use lit_sdk::EncryptedPayload;
+use lit_sdk_core::EncryptedPayload;
 use moka::future::Cache;
 use rocket::response::status;
 use rocket::serde::json::{Json, Value};
