@@ -81,7 +81,6 @@ impl GlobalState {
         let staker_names = get_staker_names().await.unwrap();
         staker_names.iter().for_each(|(key, value)| {
             new_staker_names.write().insert(key.clone(), value.clone());
-            // log::info!("Staker details: {:?} / {:?}", key.clone(), value.clone());
         });
 
         for i in 0..=20 {
@@ -89,7 +88,7 @@ impl GlobalState {
                 .write()
                 .insert(format!("127.0.0.1:{}", 7470 + i), format!("Local-{}", i));
         }
-        Self::populate_common_addresses(&Self::local_network(), new_common_addresses).await;
+        // Self::populate_common_addresses(&Self::local_network(), new_common_addresses).await;
 
         #[cfg(any(feature = "naga-dev", feature = "naga-all"))]
         {

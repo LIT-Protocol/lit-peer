@@ -104,13 +104,16 @@ pub fn App() -> impl IntoView {
                                     <Route path=path!("/home") view=pages::home::Home />
                                     <Route path=path!("/history") view=pages::history::History />
                                     <Route path=path!("/status_at_time") view=pages::status_at_time::StatusAtTime />
+                                    <Route path=path!("/account_inspector") view=pages::account_inspector::AccountInspector />
                                     <Route path=path!("/contracts") view=pages::network_settings::contracts::Contracts />
                                     <Route path=path!("events") view=pages::events::Events />
                                     <Route path=path!("/action_playground") view=pages::action_playground::ActionPlayground />
                                     <Route path=path!("/epoch") view=pages::network_settings::epoch::Epoch />
                                     <Route path=path!("/network_configuration") view=pages::network_settings::network_configuration::NetworkConfiguration />
                                     <Route path=path!("pkps") view=pages::network_settings::pkps::PKPs />
+                                    <Route path=path!("/keysets") view=pages::network_settings::keysets::Keysets />
                                     <Route path=path!("/root_keys") view=pages::network_settings::root_keys::RootKeys />
+                                    <Route path=path!("/restore_info") view=pages::network_settings::restore_info::BackupRecovery />
                                     <Route path=path!("/validators") view=pages::validators::Validators />
                                     <Route path=path!("/staking") view=pages::staking::staking_details::StakingDetails />
                                     <Route path=path!("/wallets") view=pages::staking::wallets::Wallets />

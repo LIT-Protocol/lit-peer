@@ -1,3 +1,4 @@
+pub mod account_inspector;
 pub mod action_playground;
 pub mod admin;
 pub mod app_settings;

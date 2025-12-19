@@ -14,7 +14,7 @@ use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_struct_table::*;
 use lit_blockchain_lite::contracts::{
-    contract_resolver, ledger, lit_token, pkp_helper, pkpnft, price_feed, pubkey_router, staking,
+    contract_resolver, ledger, lit_token, pkp_helper, pkpnft, price_feed, pubkey_router, staking, payment_delegation,
 };
 use serde::{Deserialize, Serialize};
 use thaw::DatePicker;
@@ -46,6 +46,8 @@ pub struct ChainHistoryRow {
     to: String,
     #[table(skip)]
     decoded_input: String,
+    #[table(skip)]
+    value: String,
 }
 
 // Easy cell renderer that just displays an image from an URL.
@@ -64,10 +66,9 @@ fn DescriptionRenderer(
         .split("|")
         .map(|s| s.to_string())
         .collect::<Vec<String>>();
-    let name = description[1].clone();
-    let details = match description.len() {
-        1 => "".to_string(),
-        _ => description[2].clone(),
+    let (name, details) = match description.len() {
+        1 => (description[0].clone(), "".to_string()),
+        _ => (description[1].clone(), description[2].clone()),
     };
 
     let details = details
@@ -76,9 +77,28 @@ fn DescriptionRenderer(
         .collect::<Vec<String>>();
     let details = details.join(", ");
 
+    let row = row.get_untracked();
+    let value = row.value;
+    
+    let decimal_val = match i128::from_str_radix(&value.replace("0x", ""), 16) {
+        Ok(val) => val,
+        Err(e) => {
+            log::error!("Error converting value to decimal: {:?}", e);
+            0
+        }
+    };
+// 1000000000000000000
+// 8091994000000000000
     view! {
         <td class=class>
-            {name}<Label>"("</Label> <i class="text-muted">{details}</i> <Label>")"</Label>
+            {name}<Label>"("</Label> <i class="text-muted">{details}</i> <Label>")"</Label> 
+            { if decimal_val > 0 {
+                view! { <br/> <Label>Value: {decimal_val}</Label> }.into_any()
+            } 
+            else {
+                view! { <br/> }.into_any()
+            } 
+            } 
         </td>
     }
 }
@@ -148,6 +168,7 @@ pub fn History() -> impl IntoView {
     let filter_open = RwSignal::new(false);
     let filter_text = RwSignal::new("No filters".to_string());
     let pagination_pages = RwSignal::new(100);
+    let alt_address = RwSignal::new(None).read_only();
 
     let time_zones = vec![
         chrono_tz::UTC,
@@ -179,7 +200,7 @@ pub fn History() -> impl IntoView {
     let (sel_row_read, sel_row_write) = signal(None::<ChainHistoryRow>);
 
     let data = LocalResource::new(move || async move {
-        fetch_chain_rows(
+        fetch_chain_tx_rows(
             page.read_only(),
             page_size.read_only(),
             include_internal_transactions.read_only(),
@@ -192,6 +213,7 @@ pub fn History() -> impl IntoView {
             end_time.read_only(),
             filter_text,
             pagination_pages.write_only(),
+            alt_address,
         )
         .await
     });
@@ -358,7 +380,7 @@ pub async fn get_network_status(realm_id: u64, block_number: u64) -> String {
     )
 }
 
-pub async fn fetch_chain_rows(
+pub async fn fetch_chain_tx_rows(
     page_signal: ReadSignal<usize>,
     page_size: ReadSignal<String>,
     include_internal_transactions: ReadSignal<bool>,
@@ -371,6 +393,7 @@ pub async fn fetch_chain_rows(
     end_time: ReadSignal<Option<NaiveTime>>,
     filter_text: RwSignal<String>,
     pagination_pages: WriteSignal<usize>,
+    alt_address: ReadSignal<Option<String>>,
 ) -> Vec<ChainHistoryRow> {
     let page = move || page_signal.get() as u64;
     let include_internal_transactions = move || include_internal_transactions.get();
@@ -385,6 +408,12 @@ pub async fn fetch_chain_rows(
         .await
         .expect("Error getting staking contract address");
     let address = &hex::encode(address.0);
+
+    let address = match alt_address.get() {
+        Some(alt_address) => alt_address,
+        None => address.to_string(),
+    };
+
     log::info!("address: {:?}", address);
     let block_start = start_block.get().parse::<u64>().unwrap();
     let block_end = end_block.get().parse::<u64>().unwrap();
@@ -407,11 +436,11 @@ pub async fn fetch_chain_rows(
         end_date.unwrap().format("%Y-%m-%d %H:%M").to_string(),
         time_zone.get()
     ));
-    // let block_end = 161000001000;
+
     let txs = rpc_calls::get_tx_list_async(
         rpc_api_type,
         &chain_api_url,
-        address,
+        &address,
         block_start,
         block_end,
         start_date,
@@ -425,12 +454,6 @@ pub async fn fetch_chain_rows(
 
     let time_zone = time_zone.get();
 
-    log::info!("txs.len(): {:?}", txs.len());
-    log::info!("page_size(): {:?}", page_size());
-    log::info!(
-        "txs.len() / page_size() as usize: {:?}",
-        txs.len() / page_size() as usize
-    );
     pagination_pages.set(txs.len() / page_size() as usize);
 
     let rows = txs
@@ -445,6 +468,7 @@ pub async fn fetch_chain_rows(
             to: tx.to.clone(),
             to_from: "".to_string(),
             decoded_input: get_description(tx.input.clone()),
+            value: tx.value.clone(),
         })
         .collect();
     rows
@@ -569,6 +593,15 @@ fn get_abi_function(short_signature: &str) -> (&str, &ethers::abi::Function) {
     if let Some(abi_function) = abi_function {
         return ("PriceFeed", abi_function);
     }
+// payment_delegation
+
+    let abi_function = payment_delegation::PAYMENTDELEGATION_ABI
+        .functions()
+        .find(|f| hex::encode(f.short_signature()) == short_signature);
+    if let Some(abi_function) = abi_function {
+        return ("PaymentDelegation", abi_function);
+    }
+
     log::error!("Unknown function: {:?}", short_signature);
     let abi_function = staking::STAKING_ABI.functions().last().unwrap();
     ("Unknown", abi_function)

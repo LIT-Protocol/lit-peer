@@ -17,6 +17,7 @@ pub struct SimpleTx {
     pub nonce: String,
     pub time_stamp: String,
     pub transaction_index: String,
+    pub value: String,
 }
 
 impl SimpleTx {

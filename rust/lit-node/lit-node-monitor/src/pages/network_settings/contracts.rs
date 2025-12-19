@@ -123,6 +123,18 @@ pub fn Contracts() -> impl IntoView {
                     .await
                     .unwrap(),
             },
+            ContractAddress {
+                name: contracts::PRICE_FEED_CONTRACT.to_string(),
+                address: get_hex_encoded_address(contracts::PRICE_FEED_CONTRACT)
+                    .await
+                    .unwrap(),
+            },
+            ContractAddress {
+                name: contracts::LEDGER_CONTRACT.to_string(),
+                address: get_hex_encoded_address(contracts::LEDGER_CONTRACT)
+                    .await
+                    .unwrap(),
+            },
         ];
         rows
     });

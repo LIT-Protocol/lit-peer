@@ -47,6 +47,7 @@ pub async fn get_tx_list_async(
                     nonce: tx.nonce.clone(),
                     time_stamp: tx.timeStamp.clone(),
                     transaction_index: tx.transactionIndex.clone(),
+                    value: tx.value.clone(),
                 })
                 .collect();
 
@@ -94,6 +95,7 @@ pub async fn get_tx_list_async(
                     nonce: tx.nonce.clone(),
                     time_stamp: tx.timeStamp.clone(),
                     transaction_index: tx.transactionIndex.clone(),
+                    value: tx.value.clone(),
                 }));
             };
 
@@ -112,7 +114,7 @@ pub async fn get_tx_list_async(
                 otter::RpcCalls::get_tx_list_async(chain_api_url, address, block_start, block_end)
                     .await;
 
-            log::info!("ot_tx: {:?}", ot_tx);
+            log::info!("ot_tx (address: {:?}): {:?}", address, ot_tx);
 
             let ot_result = ot_tx.unwrap();
             ot_result
@@ -140,6 +142,7 @@ pub async fn get_tx_list_async(
                     //     .timestamp
                     //     .to_string(),
                     transaction_index: tx.transactionIndex.clone(),
+                    value: tx.value.clone(),
                 })
                 .collect()
         }

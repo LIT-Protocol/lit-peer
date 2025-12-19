@@ -129,6 +129,10 @@ pub async fn get_epoch_details(realm_id: ethers::types::U256) -> Vec<EpochDetail
             name: "timeout".to_string(),
             value: epoch_details.timeout.to_string(),
         },
+        EpochDetails {
+            name: "last_advance_vote_time".to_string(),
+            value: format_timestamp(epoch_details.last_advance_vote_time.as_u64()),
+        },
     ];
     rows
 }

@@ -203,7 +203,7 @@ pub fn Validators() -> impl IntoView {
 
 pub async fn get_validators_for_all_realms(ctx: &WebCallBackContext) -> Vec<Realm> {
     let staking = get_staking(ctx).await;
-    let num_realms = U256::from(1); //  staking.num_realms().call().await.unwrap();
+    let num_realms = staking.num_realms().call().await.unwrap();
     let num_realms = num_realms.as_u64() as u8;
 
     let mut realms = Vec::new();

@@ -46,6 +46,53 @@ pub struct Tx {
     pub value: String,
 }
 
+#[derive(Serialize, Deserialize)]
+#[allow(non_snake_case)]
+pub struct TokenTransfer {
+    #[serde(default)]
+    pub blockHash: String,
+    #[serde(default)]
+    pub blockNumber: String,
+    #[serde(default)]
+    pub confirmations: String,
+    #[serde(default)]
+    pub contractAddress: String,
+    #[serde(default)]
+    pub cumulativeGasUsed: String,
+    #[serde(default)]
+    pub from: String,
+    #[serde(default)]
+    pub functionName: String,
+    #[serde(default)]
+    pub gas: String,
+    #[serde(default)]
+    pub gasPrice: String,
+    #[serde(default)]
+    pub gasUsed: String,
+    #[serde(default)]
+    pub hash: String,
+    #[serde(default)]
+    pub input: String,
+    #[serde(default)]
+    pub methodId: String,
+    #[serde(default)]
+    pub nonce: String,
+    #[serde(default)]
+    pub timeStamp: String,
+    #[serde(default)]
+    pub to: String,
+    #[serde(default)]
+    pub tokenDecimal: String,
+    #[serde(default)]
+    pub tokenID: String,
+    #[serde(default)]
+    pub tokenName: String,
+    #[serde(default)]
+    pub tokenSymbol: String,
+    #[serde(default)]
+    pub transactionIndex: String,
+}
+
 impl Tx {
     pub fn chain_time_stamp(&self) -> SystemTime {
         let timestamp: f64 = self.timeStamp.parse().unwrap();
@@ -81,6 +128,21 @@ pub struct BlockScoutResponse<T> {
     pub status: String,
 }
 
+pub enum TokenType {
+    ERC20,   // ERC20 transfer
+    ERC721,  // ERC721 transfer
+    ERC1155, // ERC1155 transfer
+}
+
+impl ToString for TokenType {
+    fn to_string(&self) -> String {
+        match self {
+            TokenType::ERC20 => "tokentx".to_string(),
+            TokenType::ERC721 => "tokennfttx".to_string(),
+            TokenType::ERC1155 => "token1155tx".to_string(),
+        }
+    }
+}
 pub struct RpcCalls;
 
 impl RpcCalls {
@@ -149,6 +211,37 @@ impl RpcCalls {
         }
 
         Self::get_block_scout_response::<Vec<Tx>>(url).await
+    }
+
+    pub async fn get_token_transfer_list_async(
+        chain_api_url: &str,
+        address: &str,
+        address_is_contract: bool,
+        token_type: TokenType,
+        block_start: u64,
+        block_end: u64,
+        page: u64,
+        page_size: u64,
+    ) -> Result<BlockScoutResponse<Vec<TokenTransfer>>, Box<dyn Error>> {
+        //txlistinternal
+        let mut url = format!(
+            "{}?module=account&action={}&sort=dsc&startblock={}&endblock={}&",
+            chain_api_url,
+            token_type.to_string(),
+            block_start,
+            block_end,
+        );
+        log::info!("start/end block: {}/{}", block_start, block_end);
+
+        url = format!("{}&page={}&offset={}", url, page, page_size);
+
+        if address_is_contract {
+            url = format!("{}&contractaddress={}", url, address);
+        } else {
+            url = format!("{}&address={}", url, address);
+        }
+
+        Self::get_block_scout_response::<Vec<TokenTransfer>>(url).await
     }
 
     pub async fn get_block_number(
