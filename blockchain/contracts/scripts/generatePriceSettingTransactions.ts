@@ -322,7 +322,7 @@ async function main() {
   // Helper function to adjust price for dev environment
   const adjustPriceForEnv = (priceWei: bigint): bigint => {
     if (isDev) {
-      return priceWei / 10000n;
+      return priceWei / 100000n;
     }
     return priceWei;
   };
