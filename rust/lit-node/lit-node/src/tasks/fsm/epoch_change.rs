@@ -123,11 +123,8 @@ pub(crate) async fn perform_epoch_change(
 
         let current_epoch = epoch_number.as_u64();
 
-
-        let (mut existing_key_sets, new_key_sets) = match get_key_sets_to_update(
-            peer_state.clone(),
-        )
-        .await
+        let (mut existing_key_sets, new_key_sets) = match get_key_sets_to_update(peer_state.clone())
+            .await
         {
             Ok((existing_key_sets, new_key_sets)) => (existing_key_sets, new_key_sets),
             Err(e) => {
@@ -184,40 +181,39 @@ pub(crate) async fn perform_epoch_change(
                 };
             };
 
-            epoch_change_status =
-                match process_epoch_for_key_set(
-                    dkg_manager,
-                    fsm_worker_metadata.clone(),
-                    realm_id,
-                    is_shadow,
-                    &restore_key_sets,
-                    &latest_dkg_id,
-                    current_epoch,
-                    &shadow_key_opts,
-                    &current_peers,
-                    &new_peers,
-                    None,
-                )
-                .await
-                {
-                    Ok(result) => {
-                        next_dkg_after_restore_data = dkg_manager.next_dkg_after_restore.take();
-                        // if we restart, we need to set this back to the DKG manager.
-                        Some(result)
-                    }
-                    Err(e) => {
-                        warn!(
-                            "Unable to process epoch change for existing key sets when performing epoch change in realm {}: {}",
-                            realm_id, e
-                        );
-                        return None;
-                    }
-                };
+            epoch_change_status = match process_epoch_for_key_set(
+                dkg_manager,
+                fsm_worker_metadata.clone(),
+                realm_id,
+                is_shadow,
+                &restore_key_sets,
+                &latest_dkg_id,
+                current_epoch,
+                &shadow_key_opts,
+                &current_peers,
+                &new_peers,
+                None,
+            )
+            .await
+            {
+                Ok(result) => {
+                    next_dkg_after_restore_data = dkg_manager.next_dkg_after_restore.take();
+                    // if we restart, we need to set this back to the DKG manager.
+                    Some(result)
+                }
+                Err(e) => {
+                    warn!(
+                        "Unable to process epoch change for existing key sets when performing epoch change in realm {}: {}",
+                        realm_id, e
+                    );
+                    return None;
+                }
+            };
         }
         // start by processing the epoch change for the new key sets
         if !new_key_sets.is_empty() {
             trace!("Processing epoch change for new key sets");
-            // this check looks strange, but the empty peer check is necessary to avoid network startup conditions! 
+            // this check looks strange, but the empty peer check is necessary to avoid network startup conditions!
             if current_peers != new_peers && !current_peers.is_empty() {
                 warn!(
                     "When creating a new set of root keys, current peers should be empty or equivalent to new peers.  DKG will not be performed until the keyset is removed or the current peer set is equivalent to the new peer set."
@@ -306,11 +302,12 @@ pub(crate) async fn perform_epoch_change(
         let epoch_change_status = match epoch_change_status {
             Some(epoch_change_status) => epoch_change_status,
             None => {
-                warn!("Epoch change status is None - this would indicate that no epoch changes were attempted.");
+                warn!(
+                    "Epoch change status is None - this would indicate that no epoch changes were attempted."
+                );
                 return None;
             }
         };
-
 
         // If there is a result, we immediately return the result.
         if let Some(res) = epoch_change_status.change_result {
