@@ -2,11 +2,80 @@ use crate::{
     consts::{
         CONTRACT_CHRONICLE_CHAIN_ID, CONTRACT_CHRONICLE_RPC_URL, CONTRACT_RESOLVER_ENVIRONMENT,
     },
-    error::RecoveryResult,
+    error::{Error, RecoveryResult},
 };
 use serde::{Deserialize, Serialize};
+use std::fmt::{self, Display, Formatter};
 use std::io::Write;
 use std::path::PathBuf;
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Ord, PartialOrd)]
+#[repr(u8)]
+pub enum ChainEnvironment {
+    #[default]
+    Develop = 0,
+    Staging = 1,
+    Production = 2,
+}
+
+impl Display for ChainEnvironment {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                ChainEnvironment::Develop => "develop",
+                ChainEnvironment::Staging => "staging",
+                ChainEnvironment::Production => "production",
+            }
+        )
+    }
+}
+
+impl std::str::FromStr for ChainEnvironment {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "develop" => Ok(ChainEnvironment::Develop),
+            "staging" => Ok(ChainEnvironment::Staging),
+            "production" => Ok(ChainEnvironment::Production),
+            _ => Err(Error::General(format!("invalid chain environment: {}", s))),
+        }
+    }
+}
+
+impl TryFrom<u8> for ChainEnvironment {
+    type Error = Error;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(ChainEnvironment::Develop),
+            1 => Ok(ChainEnvironment::Staging),
+            2 => Ok(ChainEnvironment::Production),
+            _ => Err(Error::General(format!("Invalid chain environment: {}", value))),
+        }
+    }
+}
+
+impl serde::Serialize for ChainEnvironment {
+    fn serialize<S>(&self, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        s.serialize_u8(*self as u8)
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for ChainEnvironment {
+    fn deserialize<D>(d: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let c = u8::deserialize(d)?.try_into().map_err(serde::de::Error::custom)?;
+        Ok(c)
+    }
+}
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
 pub struct RecoveryConfig {
@@ -16,24 +85,22 @@ pub struct RecoveryConfig {
     // 0 - develop
     // 1 - staging
     // 2 - production
-    pub environment: Option<u8>,
+    pub environment: Option<ChainEnvironment>,
 }
 
 impl TryFrom<String> for RecoveryConfig {
+    type Error = Error;
+
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        let conf =
-            serde_json::from_str(value.as_str()).map_err(crate::error::Error::InvalidJsonFormat)?;
+        let conf = serde_json::from_str(value.as_str()).map_err(Error::InvalidJsonFormat)?;
         Ok(conf)
     }
-
-    type Error = crate::error::Error;
 }
 
 impl RecoveryConfig {
     #[allow(dead_code)]
     fn from_slice(v: &[u8]) -> RecoveryResult<Self> {
-        let conf: RecoveryConfig =
-            serde_json::from_slice(v).map_err(crate::error::Error::InvalidJsonFormat)?;
+        let conf: RecoveryConfig = serde_json::from_slice(v).map_err(Error::InvalidJsonFormat)?;
         Ok(conf)
     }
 
@@ -51,7 +118,7 @@ impl RecoveryConfig {
         if config_path.exists() {
             let conf = std::fs::read(config_path)?;
             if conf.is_empty() {
-                Err(crate::error::Error::General("Could not find config file on disk".to_string()))
+                Err(Error::General("Could not find config file on disk".to_string()))
             } else {
                 let conf: RecoveryConfig = serde_json::from_slice(&conf)?;
                 Ok(conf)
@@ -59,9 +126,9 @@ impl RecoveryConfig {
         } else {
             let config = Self {
                 resolver_address: None,
-                rpc_url: Some(crate::consts::CONTRACT_CHRONICLE_RPC_URL.into()),
-                chain_id: Some(crate::consts::CONTRACT_CHRONICLE_CHAIN_ID),
-                environment: Some(2),
+                rpc_url: Some(CONTRACT_CHRONICLE_RPC_URL.into()),
+                chain_id: Some(CONTRACT_CHRONICLE_CHAIN_ID),
+                environment: Some(ChainEnvironment::Production),
             };
             let conf = serde_json::to_vec(&config)?;
             let mut fd = std::fs::File::create(config_path.clone())?;
@@ -84,7 +151,9 @@ impl RecoveryConfig {
                         println!("Failed to create config directory: {}", e);
                         println!(
                             "Current directory: {}",
-                            std::env::current_dir().unwrap().display()
+                            std::env::current_dir()
+                                .expect("to know the current directory")
+                                .display()
                         );
                         return Err(e.into());
                     }
@@ -111,23 +180,16 @@ impl RecoveryConfig {
     }
 
     pub fn get_rpc_url_or_default(&self) -> String {
-        match self.rpc_url.clone() {
-            Some(url) => url,
-            None => CONTRACT_CHRONICLE_RPC_URL.into(),
-        }
+        self.rpc_url.clone().unwrap_or_else(|| CONTRACT_CHRONICLE_RPC_URL.into())
     }
 
     pub fn get_chain_id_or_default(&self) -> u64 {
-        match self.chain_id {
-            Some(id) => id,
-            None => CONTRACT_CHRONICLE_CHAIN_ID,
-        }
+        self.chain_id.unwrap_or_else(|| CONTRACT_CHRONICLE_CHAIN_ID)
     }
 
-    pub fn get_env_or_default(&self) -> u8 {
-        match self.environment {
-            Some(env) => env,
-            None => CONTRACT_RESOLVER_ENVIRONMENT,
-        }
+    pub fn get_env_or_default(&self) -> ChainEnvironment {
+        self.environment.unwrap_or_else(|| {
+            CONTRACT_RESOLVER_ENVIRONMENT.try_into().expect("invalid environment")
+        })
     }
 }

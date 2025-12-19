@@ -1,8 +1,7 @@
 use crate::*;
-use bulletproofs::group::Group;
-use ed448_goldilocks_plus::{Ed448, EdwardsPoint, Scalar, WideScalarBytes};
-use elliptic_curve::{
-    group::{GroupEncoding, cofactor::CofactorGroup},
+use lit_rust_crypto::{
+    ed448_goldilocks::{Ed448, EdwardsPoint, Scalar, WideScalarBytes},
+    group::{Group, GroupEncoding, cofactor::CofactorGroup},
     hash2curve::ExpandMsgXof,
 };
 use sha3::digest::{ExtendableOutput, ExtendableOutputReset, Update, XofReader};

@@ -1,6 +1,8 @@
 use crate::*;
-use elliptic_curve::{Field, Group, PrimeField, group::GroupEncoding, subtle::Choice};
 use elliptic_curve_tools::{group, prime_field, prime_field_vec};
+use lit_rust_crypto::elliptic_curve::{
+    Field, Group, PrimeField, group::GroupEncoding, subtle::Choice,
+};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeSet, HashMap},
@@ -448,6 +450,7 @@ where
 mod tests {
     use super::*;
     use k256::{ProjectivePoint, Scalar, Secp256k1};
+    use lit_rust_crypto::{k256, vsss_rs};
     use rand::SeedableRng;
     use rand_chacha::ChaCha8Rng;
     use vsss_rs::{DefaultShare, IdentifierPrimeField, ValuePrimeField, shamir};

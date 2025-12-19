@@ -1,5 +1,5 @@
 use crate::eth::*;
-use bulletproofs::k256::ecdsa::SigningKey;
+use lit_rust_crypto::k256::ecdsa::SigningKey;
 use serde::Serialize;
 
 /// Borrowed from https://github.com/LIT-Protocol/lit-assets/blob/develop/rust/lit-node/src/auth/auth_material.rs#L161

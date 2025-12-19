@@ -164,6 +164,7 @@ pub(crate) async fn handle_cmd_os_guest_template_create(
     }
 }
 
+#[allow(clippy::collapsible_if)]
 pub(crate) async fn do_os_guest_template_create(
     cfg: &LitConfig, opts: &CliGlobalOpts, build_type: GuestType,
     common_args: GuestTemplateCreateArgsCommon, _prov_args: Option<GuestTemplateCreateArgsProv>,
