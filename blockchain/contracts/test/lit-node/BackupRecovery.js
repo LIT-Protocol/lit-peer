@@ -200,8 +200,8 @@ describe('BackupRecovery', function () {
         identifier: 'naga-keyset1',
         description: '',
         realms: [1],
-        curves: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-        counts: [1, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+        curves: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        counts: [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
         recoveryPartyMembers: [],
       });
 
