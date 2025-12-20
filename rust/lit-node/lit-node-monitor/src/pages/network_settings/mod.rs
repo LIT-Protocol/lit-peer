@@ -6,3 +6,4 @@ pub mod pricing;
 pub mod root_keys;
 pub mod keysets;
 pub mod restore_info;
+pub mod complaints;

@@ -161,6 +161,7 @@ pub async fn get_network_status(
 
     let gs = use_context::<GlobalState>().expect("Global State Failed to Load");
     let subnet_id = gs.active_network().subnet_id;
+    let gcp_project = gs.active_network().gcp_project;
     let cursor_timestamp = block_time.format("%Y-%m-%dT%H:%M:%S.%fZ").to_string();
     let time_delta = TimeDelta::minutes(3);
     let start_time = block_time.checked_sub_signed(time_delta).unwrap();
@@ -168,12 +169,11 @@ pub async fn get_network_status(
     let start_time = start_time.format("%Y-%m-%dT%H:%M:%S.%fZ").to_string();
     let end_time = end_time.format("%Y-%m-%dT%H:%M:%S.%fZ").to_string();
     let gcp_logs_url = format!(
-        "https://console.cloud.google.com/logs/query;query=jsonPayload.guest_subnet%3D%22{}%22;
-cursorTimestamp={};
+        "https://console.cloud.google.com/logs/query;cursorTimestamp={};
 startTime={};
 endTime={}?
-project=quickstart-1572387045298",
-        subnet_id, cursor_timestamp, start_time, end_time
+project={}",
+        cursor_timestamp, start_time, end_time, gcp_project
     );
 
     (

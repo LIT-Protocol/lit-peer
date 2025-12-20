@@ -39,6 +39,7 @@ pub struct NetworkConfig {
     pub chain_url: String,
     pub chain_api_url: String,
     pub chain_name: String,
+    pub gcp_project: String,
 }
 
 #[derive(Clone, Debug)]

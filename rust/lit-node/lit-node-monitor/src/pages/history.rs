@@ -140,11 +140,11 @@ fn ToFromRenderer(
     let common_addresses = gs.common_addresses.get_untracked();
     let from = common_addresses
         .get(&from.clone())
-        .unwrap_or(&from.clone())
+        .unwrap_or(&simple_hex(from.clone()))
         .clone();
     let to = common_addresses
         .get(&to.clone())
-        .unwrap_or(&to.clone())
+        .unwrap_or(&simple_hex(to.clone()))
         .clone();
 
     view! {
@@ -457,7 +457,8 @@ pub async fn fetch_chain_tx_rows(
 
     let time_zone = time_zone.get();
 
-    pagination_pages.set(txs.len() / page_size() as usize);
+    // pagination_pages.set(txs.len() / page_size() as usize);
+    pagination_pages.set(10);
 
     let rows = txs
         .iter()

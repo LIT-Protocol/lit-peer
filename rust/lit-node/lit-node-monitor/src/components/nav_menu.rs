@@ -63,6 +63,9 @@ pub fn NavMenu(page_name_signal: RwSignal<String>) -> impl IntoView {
                     <NavSubItem value="/network_configuration" icon=icondata::AiSettingOutlined>
                         "Network Configuration"
                     </NavSubItem>
+                    <NavSubItem value="/complaints" icon=icondata::AiAlertOutlined>
+                        "Complaints"
+                    </NavSubItem>
                     <NavSubItem value="/pricing" icon=icondata::AiDollarOutlined>
                         "Pricing"
                     </NavSubItem>
@@ -115,11 +118,20 @@ pub fn NavMenu(page_name_signal: RwSignal<String>) -> impl IntoView {
 
         <nav>
             <NavDrawer>
-                <NavItem icon=icondata::AiCompassOutlined value="#" href="https://yellowstone-explorer.litprotocol.com/txs">
-                    "Yellowstone Explorer"
+                <NavItem icon=icondata::AiCompassOutlined value="#">
+                    <a style="text-decoration: none; color: #424242" target="_blank" href="https://lit-chain-explorer.litprotocol.com/txs">
+                        "Lit-Chain Explorer"
+                    </a>
                 </NavItem>
-                <NavItem icon=icondata::AiBarChartOutlined value="#" href=updtime_url>
-                    "Uptime Monitor"
+                <NavItem icon=icondata::AiCloudServerOutlined value="#"  >
+                    <a style="text-decoration: none; color: #424242" target="_blank" href=format!("https://console.cloud.google.com/logs/query;duration=PT5M?project={}", gs.active_network().gcp_project)  >
+                        "GCP Logs"
+                    </a>
+                </NavItem>
+                <NavItem icon=icondata::AiBarChartOutlined value="#" >
+                    <a style="text-decoration: none; color: #424242" target="_blank" href=updtime_url>
+                        "Uptime Monitor"
+                    </a>
                 </NavItem>
                 <NavItem icon=icondata::AiFullscreenExitOutlined value="#" href="/monitor">
                     "Exit Network"

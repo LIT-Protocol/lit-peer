@@ -110,6 +110,7 @@ pub fn App() -> impl IntoView {
                                     <Route path=path!("/action_playground") view=pages::action_playground::ActionPlayground />
                                     <Route path=path!("/epoch") view=pages::network_settings::epoch::Epoch />
                                     <Route path=path!("/network_configuration") view=pages::network_settings::network_configuration::NetworkConfiguration />
+                                    <Route path=path!("/complaints") view=pages::network_settings::complaints::Complaints />
                                     <Route path=path!("pkps") view=pages::network_settings::pkps::PKPs />
                                     <Route path=path!("/keysets") view=pages::network_settings::keysets::Keysets />
                                     <Route path=path!("/root_keys") view=pages::network_settings::root_keys::RootKeys />
@@ -120,6 +121,7 @@ pub fn App() -> impl IntoView {
                                     <Route path=path!("/rewards") view=pages::staking::rewards::Rewards />
                                     <Route path=path!("/admin") view=pages::admin::realms::Realms />
                                     <Route path=path!("/validator_admin") view=pages::admin::validator_admin::ValidatorAdmin />
+                                    
                                     <Route path=path!("/chain_config") view=pages::app_settings::ChainConfig />
                                     <Route path=path!("/pricing") view=pages::network_settings::pricing::Pricing />
                                 </Routes>

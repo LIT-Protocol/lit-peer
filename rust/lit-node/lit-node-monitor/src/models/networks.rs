@@ -216,6 +216,7 @@ impl GlobalState {
             chain_url: "http://127.0.0.1:8545".to_string(),
             chain_api_url: "http://127.0.0.1:8545".to_string(),
             chain_name: "http://127.0.0.1:8545".to_string(),
+            gcp_project: "quickstart-1572387045298".to_string(),
         }
     }
 }
@@ -232,13 +233,13 @@ fn add_facet_details(
 }
 
 async fn get_network_config(network_name: &str) -> Result<(NetworkConfig, Facets), String> {
-    let (ansible_src_url, network_src_url) = match network_name {
-        "naga-test" => ("20-test-decentralized/20-naga_test.yml", "naga-test"),
-        "naga-prod" => ("10-prod/10-naga.yml", "naga-prod"),
-        "naga-dev" => ("30-test-centralized/30-naga_dev.yml", "naga-dev"),
-        "naga-staging" => ("15-staging/15-naga_staging.yml", "naga-staging"),
-        "naga-proto" => ("10-prod/10-naga_proto.yml", "naga-proto"),
-        "internalDev" => ("20-test-decentralized/20-internaldev.yml", "internal-dev"),
+    let (ansible_src_url, network_src_url, gcp_project) = match network_name {
+        "naga-test" => ("20-test-decentralized/20-naga_test.yml", "naga-test", "naga-test-feebcdc"),
+        "naga-prod" => ("10-prod/10-naga.yml", "naga-prod", "naga-prod-97fc60d"),
+        "naga-dev" => ("30-test-centralized/30-naga_dev.yml", "naga-dev", "naga-dev-4c8c2f8"    ),
+        "naga-staging" => ("15-staging/15-naga_staging.yml", "naga-staging", "naga-staging-cb97ce8"),
+        "naga-proto" => ("10-prod/10-naga_proto.yml", "naga-proto", "naga-proto-7481c40"),
+        "internalDev" => ("20-test-decentralized/20-internaldev.yml", "internal-dev", "quickstart-1572387045298"   ),
         _ => return Err("Network Not Found.".to_string()),
     };
 
@@ -268,6 +269,7 @@ async fn get_network_config(network_name: &str) -> Result<(NetworkConfig, Facets
             chain_url: network_data.chain_url,
             chain_api_url: network_data.chain_api_url,
             chain_name: network_data.chain_name,
+            gcp_project: gcp_project.to_string(),
         },
         network_data.facets,
     ))
