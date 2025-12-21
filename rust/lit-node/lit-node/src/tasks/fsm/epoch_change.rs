@@ -86,7 +86,7 @@ pub(crate) async fn perform_epoch_change(
     let mut latest_dkg_id = "".to_string();
     // We keep looping until we get a result from a completed epoch change operation.
     let mut abort_and_restart_count = 0;
-    let mut next_dkg_after_restore_data = None;
+    // let mut next_dkg_after_restore_data = None;
 
     // We currently set the limit of aborts and restarts to be a high number to avoid infinite loops. This should never happen,
     // in theory, but we want to be safe. This will be removed as soon as we have implemented an improved strategy to synchronize
@@ -166,21 +166,6 @@ pub(crate) async fn perform_epoch_change(
         let mut epoch_change_status = None;
 
         if !restore_key_sets.is_empty() {
-            if !dkg_manager.next_dkg_after_restore.value() {
-                match next_dkg_after_restore_data {
-                    Some(next_dkg_after_restore) => {
-                        dkg_manager.next_dkg_after_restore =
-                            DkgAfterRestore::True(next_dkg_after_restore);
-                    }
-                    None => {
-                        warn!(
-                            "Next DKG after restore is not set, yet we have a restore keyset. Existing."
-                        );
-                        return None;
-                    }
-                };
-            };
-
             epoch_change_status = match process_epoch_for_key_set(
                 dkg_manager,
                 fsm_worker_metadata.clone(),
@@ -197,13 +182,16 @@ pub(crate) async fn perform_epoch_change(
             .await
             {
                 Ok(result) => {
-                    next_dkg_after_restore_data = dkg_manager.next_dkg_after_restore.take();
+                    // next_dkg_after_restore_data = dkg_manager.next_dkg_after_restore.take();
+                    if result.update_req.is_none() {
+                        dkg_manager.next_dkg_after_restore = DkgAfterRestore::False;
+                    }
                     // if we restart, we need to set this back to the DKG manager.
                     Some(result)
                 }
                 Err(e) => {
                     warn!(
-                        "Unable to process epoch change for existing key sets when performing epoch change in realm {}: {}",
+                        "Unable to process epoch change for restore key sets when performing epoch change in realm {}: {}",
                         realm_id, e
                     );
                     return None;
@@ -247,6 +235,7 @@ pub(crate) async fn perform_epoch_change(
             };
         }
 
+        // create an error dkg id for the case where the epoch change fails.
         if !existing_key_sets.is_empty() {
             trace!("Processing epoch change for existing key sets");
             epoch_change_status = match process_epoch_for_key_set(
@@ -391,9 +380,10 @@ async fn process_epoch_for_key_set(
                 change_result: None,
                 update_req: Some(new_lifecycle_id),
             }
-        }
+        },
 
         res = dkg_manager.change_epoch(latest_dkg_id, current_epoch, shadow_key_opts, realm_id, current_peers, new_peers, key_sets) => {
+            info!("DKG manager.change_epoch result: {:?}", res);
             match res {
                 Ok(res) => {
                 let epoch = match dkg_manager.dkg_type {
