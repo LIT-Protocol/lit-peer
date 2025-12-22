@@ -41,6 +41,11 @@ impl DkgManager {
         new_peers: &SimplePeerCollection,
         key_sets: &Vec<KeySetConfig>,
     ) -> Result<HashMap<String, Vec<CachedRootKey>>> {
+        trace!(
+            "DKG manager.change_epoch called with dkg_id: {} and resstore: {:?}",
+            dkg_id,
+            self.next_dkg_after_restore.value()
+        );
         let threshold = self
             .tss_state
             .peer_state
