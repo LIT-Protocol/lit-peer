@@ -606,7 +606,8 @@ async fn test_datil_encrypt_naga_decrypt(
         get_bls_pubkey(validator_collection.actions(), KeySetIdentifier::Datil).await;
 
     let datil_bls_pubkey =
-        blsful::PublicKey::try_from(hex::decode(&datil_bls_pubkey).unwrap()).unwrap();
+        lit_rust_crypto::blsful::PublicKey::try_from(hex::decode(&datil_bls_pubkey).unwrap())
+            .unwrap();
     let message_bytes = test_encryption_parameters.to_encrypt.as_bytes();
     let ciphertext = lit_sdk::encryption::encrypt_time_lock(
         &datil_bls_pubkey,
@@ -689,7 +690,7 @@ async fn test_datil_keyset_pkp_signing(
 
     // Now try signing with the permitted non-owner wallet.
     let value_to_send = 10;
-    let tx = TransactionRequest::new()
+    let _tx = TransactionRequest::new()
         .to("0x0000000000000000000000000000000000000000"
             .parse::<Address>()
             .unwrap())

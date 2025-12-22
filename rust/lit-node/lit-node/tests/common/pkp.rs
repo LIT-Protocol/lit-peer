@@ -7,7 +7,7 @@ use ethers::signers::Wallet;
 use lit_core::utils::binary::hex_to_bytes;
 use lit_node_core::{
     AuthSigItem, LitAbility, LitResourceAbilityRequest, LitResourceAbilityRequestResource,
-    LitResourcePrefix, NodeSet, SignableOutput, SigningScheme,
+    LitResourcePrefix, NodeSet, SigningScheme,
     request::{JsonPKPSigningRequest, KeySetIdentifier},
     response::{GenericResponse, JsonPKPSigningResponse},
 };
