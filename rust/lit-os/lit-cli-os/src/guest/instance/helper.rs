@@ -312,6 +312,11 @@ impl GuestInstanceItemHelper for GuestInstanceItem {
                 |e| blockchain_err(e, Some("Unable to contact chain to get realm id".into())),
             )?;
 
+        // If realm_id is 0, the node is not assigned on a realm and thus can't be a validator
+        if realm_id.is_zero() {
+            return Ok(false);
+        }
+
         let current_epoch_validators =
             staking_contract.get_validators_in_current_epoch(realm_id).await.unwrap_or_else(|_| panic!("Failed to get validators in current epoch for realm {} on staking contract {:?}",
                 realm_id,
