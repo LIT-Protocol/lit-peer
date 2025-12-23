@@ -78,10 +78,10 @@ impl ChainTrait for Anvil {
         // we run echo 'hi' as a dummy process instead.
         let in_github_ci = std::env::var("IN_GITHUB_CI").unwrap_or("0".to_string());
         if in_github_ci == "1" {
-            info!("Not starting chain in CI");
+            info!("Not starting chain in CI.");
             if !is_anvil_running(&self.rpc_url()).await {
                 panic!(
-                    "anvil is not running in CI.  It should have been loaded by the docker container."
+                    "Anvil is not running in CI at {}.  It should have been loaded by the docker container.", self.rpc_url()
                 );
             }
 
