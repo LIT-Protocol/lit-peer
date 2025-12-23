@@ -8,7 +8,10 @@ use ethers::core::k256::ecdsa::SigningKey;
 use ethers::prelude::*;
 use lit_core::utils::binary::hex_to_bytes;
 use lit_node_common::coms_keys::ComsKeys;
+use tokio::fs::File;
+use tokio::io::AsyncReadExt;
 
+use std::path::Path;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
 use std::time::Duration;
@@ -47,7 +50,7 @@ impl Anvil {
 }
 
 use async_trait::async_trait;
-use lit_blockchain::resolver::rpc::RpcHealthcheckPoller;
+use lit_blockchain::resolver::rpc::{ENDPOINT_MANAGER, RpcHealthcheckPoller};
 // impl chain for Anvil
 #[async_trait]
 impl ChainTrait for Anvil {
@@ -79,9 +82,39 @@ impl ChainTrait for Anvil {
         let in_github_ci = std::env::var("IN_GITHUB_CI").unwrap_or("0".to_string());
         if in_github_ci == "1" {
             info!("Not starting chain in CI.");
-            if !is_anvil_running(&self.rpc_url()).await {
+            if is_anvil_running(&self.rpc_url()).await {
+                info!("Anvil is running in CI at {}. ", self.rpc_url());
+                if self.state_cache_path.is_some() {
+                    let filename = self.state_cache_path.clone().unwrap();
+                    info!("Loading chain state from cache: {}", filename);
+
+                    let path = Path::new(&filename);
+                    let mut file = File::open(&path).await.unwrap();
+                    let mut contents = String::new();
+                    file.read_to_string(&mut contents).await.unwrap();
+
+                    let params: Vec<String> = vec![contents];
+
+                    let provider = ENDPOINT_MANAGER
+                        .get_provider(self.chain_name())
+                        .expect(&format!(
+                            "Error retrieving provider for chain {} - check name and/or rpc_config yaml.",
+                            self.chain_name()
+                        ));
+
+                    let res: bool = provider
+                        .request("anvil_loadState", params.clone())
+                        .await
+                        .unwrap();
+                    if !res {
+                        panic!("Couldn't load chain state into Datil Anvil...");
+                    }
+                    info!("Chain state loaded into Anvil at {}.", self.rpc_url());
+                }
+            } else {
                 panic!(
-                    "Anvil is not running in CI at {}.  It should have been loaded by the docker container.", self.rpc_url()
+                    "Anvil is not running in CI at {}.  It should have been loaded by the docker container.",
+                    self.rpc_url()
                 );
             }
 
