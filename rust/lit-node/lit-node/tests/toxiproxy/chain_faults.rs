@@ -29,7 +29,7 @@ fn setup() {
 async fn single_node_disconnected_from_chain() {
     setup();
 
-    info!("TEST: single_node_disconnects_from_chain");
+    info!("TEST: single_node_disconnected_from_chain");
 
     let faulty_node_port =
         get_random_faulty_node_port(STARTING_PORT, STARTING_PORT + FAULT_TEST_NUM_NODES);
