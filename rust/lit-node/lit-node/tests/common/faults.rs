@@ -375,7 +375,7 @@ pub fn inject_latency_fault_direct(
         };
         let proxy_name = get_proxy_name(&source_url, &target_grpc_url);
 
-        info!("All Proxies: {:?}", TOXIPROXY.all().unwrap());
+        trace!("All Proxies: {:?}", TOXIPROXY.all().unwrap());
         // Retrieve Proxy object
         info!("Retrieving proxy object for {:?}", proxy_name);
         let get_proxy_result = TOXIPROXY.find_proxy(proxy_name.as_str());
