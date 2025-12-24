@@ -8,12 +8,9 @@ edition.workspace = true
 # this needs to happen at runtime, so is just a place holder for now.
 sign_test = ["lit-actions"] #enables unsafe endpoint allowing a test to use a PK directly .
 lit-actions = []
-proxy-chatter = []
 proxy_chatter = []
 lit-actions-server = ["lit-actions"] # start internal lit_actions server for testing
 testing = [] # enables testing features
-
-
 
 [build-dependencies]
 # Deno v1.37.2

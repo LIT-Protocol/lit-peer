@@ -17,11 +17,13 @@ lit-actions-server = [
 testing = [
     "lit-actions-server",
     "lit-observability/testing",
+    "lit-blockchain/testing",
 ] # enables testing features
 proxy_chatter = [
     "lit-node-testnet/proxy_chatter",
     "lit-node-testnet/testing",
     "lit-node-testnet/lit-actions",
+    "lit-blockchain/proxy_chatter",
 ] # enables proxy http for testing
 
 [build-dependencies]

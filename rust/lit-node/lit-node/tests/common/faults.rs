@@ -62,6 +62,49 @@ pub fn generate_and_save_proxy_mappings_for_local_testing(
     Ok(client_proxy_mapping)
 }
 
+pub fn generate_and_save_proxy_mappings_for_local_chain_testing(
+    num_nodes: usize,
+    initial_port: usize,
+) -> Result<ClientProxyMapping> {
+    debug!("Generating proxy URLs for local chain testing");
+
+    const ANVIL_PORT: usize = 8545;
+    let mut proxy_mappings: BTreeMap<Url, BTreeMap<Url, Url>> = BTreeMap::new();
+
+    for i in 0..num_nodes {
+        let source_port = initial_port + i;
+        let our_url = get_local_url_from_port(source_port);
+        assert!(
+            proxy_mappings
+                .insert(our_url.clone(), BTreeMap::new())
+                .is_none()
+        );
+
+        let dest_port = ANVIL_PORT + 10000 + i;
+        let proxy_grpc_url = get_local_url_from_port(dest_port);
+        let dest_grpc_url = get_local_url_from_port(ANVIL_PORT);
+        debug!(
+            "Generated proxy URL for {:?} to {:?}: {:?}",
+            our_url, dest_grpc_url, proxy_grpc_url
+        );
+
+        assert!(
+            proxy_mappings
+                .get_mut(&our_url)
+                .unwrap()
+                .insert(dest_grpc_url, proxy_grpc_url)
+                .is_none()
+        );
+    }
+
+    let client_proxy_mapping = ClientProxyMapping::new_with_mappings(&proxy_mappings);
+
+    // Save proxy mappings to file
+    assert!(client_proxy_mapping.write_file_local().is_ok());
+
+    Ok(client_proxy_mapping)
+}
+
 /// Given proxy mappings, setup fresh proxy for each mapping with no faults.
 ///
 /// Spawns a thread internally to avoid nested runtimes within the same thread.
@@ -299,6 +342,19 @@ pub fn inject_latency_fault(
     jitter_ms: usize,
     toxicity: f32,
 ) {
+    inject_latency_fault_direct(
+        source_url, target_url, latency_ms, jitter_ms, toxicity, false,
+    );
+}
+
+pub fn inject_latency_fault_direct(
+    source_url: Url,
+    target_url: Url,
+    latency_ms: usize,
+    jitter_ms: usize,
+    toxicity: f32,
+    target_is_chain: bool,
+) {
     info!(
         "Injecting latency fault from {:?}:{} to {:?}:{} with latency {}ms, jitter {}ms, toxicity {}",
         source_url.host_str().unwrap(),
@@ -312,9 +368,14 @@ pub fn inject_latency_fault(
 
     thread::spawn(move || {
         // Get name of proxy
-        let target_grpc_url = get_grpc_url_from_http_url(target_url.clone());
+        let target_grpc_url = if target_is_chain {
+            target_url.clone()
+        } else {
+            get_grpc_url_from_http_url(target_url.clone())
+        };
         let proxy_name = get_proxy_name(&source_url, &target_grpc_url);
 
+        info!("All Proxies: {:?}", TOXIPROXY.all().unwrap());
         // Retrieve Proxy object
         info!("Retrieving proxy object for {:?}", proxy_name);
         let get_proxy_result = TOXIPROXY.find_proxy(proxy_name.as_str());
@@ -338,6 +399,15 @@ pub fn inject_latency_fault(
 ///
 /// Spawns a thread internally to avoid nested runtimes within the same thread.
 pub fn inject_timeout_fault(source_url: Url, target_url: Url, timeout_ms: usize, toxicity: f32) {
+    inject_timeout_fault_direct(source_url, target_url, timeout_ms, toxicity, false);
+}
+pub fn inject_timeout_fault_direct(
+    source_url: Url,
+    target_url: Url,
+    timeout_ms: usize,
+    toxicity: f32,
+    target_is_chain: bool,
+) {
     info!(
         "Injecting timeout fault from {}:{} to {}:{} with timeout {}ms, toxicity {}",
         source_url.host_str().unwrap(),
@@ -350,7 +420,11 @@ pub fn inject_timeout_fault(source_url: Url, target_url: Url, timeout_ms: usize,
 
     thread::spawn(move || {
         // Get name of proxy
-        let target_grpc_url = get_grpc_url_from_http_url(target_url.clone());
+        let target_grpc_url = if target_is_chain {
+            target_url.clone()
+        } else {
+            get_grpc_url_from_http_url(target_url.clone())
+        };
         let proxy_name = get_proxy_name(&source_url, &target_grpc_url);
 
         // Retrieve Proxy object
@@ -483,4 +557,48 @@ pub fn get_random_faulty_node_port(
     let mut rng = rand::thread_rng();
 
     rng.gen_range(starting_port_number..ending_port_number)
+}
+
+pub fn disable_fault_channel(source_url: Url, target_url: Url) {
+    disable_fault_channel_direct(source_url, target_url, false);
+}
+
+pub fn disable_fault_channel_direct(source_url: Url, target_url: Url, target_is_chain: bool) {
+    thread::spawn(move || {
+        let target_grpc_url = if target_is_chain {
+            target_url.clone()
+        } else {
+            get_grpc_url_from_http_url(target_url.clone())
+        };
+        let proxy_name = get_proxy_name(&source_url, &target_grpc_url);
+        let get_proxy_result = TOXIPROXY.find_proxy(proxy_name.as_str());
+        assert!(get_proxy_result.is_ok());
+        let r = get_proxy_result.as_ref().unwrap().disable();
+        assert!(r.is_ok());
+        info!("Disabled fault for {:?}", proxy_name);
+    })
+    .join()
+    .expect("Failed to disable fault");
+}
+
+pub fn enable_fault_channel(source_url: Url, target_url: Url) {
+    enable_fault_channel_direct(source_url, target_url, false);
+}
+
+pub fn enable_fault_channel_direct(source_url: Url, target_url: Url, target_is_chain: bool) {
+    thread::spawn(move || {
+        let target_grpc_url = if target_is_chain {
+            target_url.clone()
+        } else {
+            get_grpc_url_from_http_url(target_url.clone())
+        };
+        let proxy_name = get_proxy_name(&source_url, &target_grpc_url);
+        let get_proxy_result = TOXIPROXY.find_proxy(proxy_name.as_str());
+        assert!(get_proxy_result.is_ok());
+        let r = get_proxy_result.as_ref().unwrap().enable();
+        assert!(r.is_ok());
+        info!("Enabled fault for {:?}", proxy_name);
+    })
+    .join()
+    .expect("Failed to enable fault");
 }
