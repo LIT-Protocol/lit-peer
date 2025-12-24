@@ -60,7 +60,7 @@ async fn single_node_disconnected_from_chain() {
     // wait for a few seconds to led the nodes chat with each other.
     actions.sleep_millis(5000).await;
 
-    // This looks odd, but instead of settting a fault within Toxiproxy, we're going to disable 
+    // This looks odd, but instead of settting a fault within Toxiproxy, we're going to disable
     // the entire channel, effectively disconnecting the node from the chain.
     disable_fault_channel_direct(fault_node_url.clone(), anvil_url.clone(), true);
 
