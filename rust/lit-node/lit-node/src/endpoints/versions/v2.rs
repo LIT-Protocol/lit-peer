@@ -7,7 +7,7 @@ use crate::payment::delegated_usage::DelegatedUsageDB;
 use crate::payment::{payed_endpoint::PayedEndpoint, payment_tracker::PaymentTracker};
 use crate::peers::grpc_client_pool::GrpcClientPool;
 use crate::tss::common::{restore::restore_state::RestoreState, tss_state::TssState};
-use crate::utils::rocket::guards::RequestHeaders;
+use crate::utils::rocket::guards::{RequestHeaders, set_request_id_on_span};
 use crate::utils::web::with_timeout;
 use lit_api_core::context::{Tracer, Tracing};
 use lit_api_core::error::ApiError;
@@ -62,6 +62,7 @@ pub(crate) async fn sign_session_key(
     tracing: Tracing,
     request_headers: RequestHeaders<'_>,
 ) -> status::Custom<Value> {
+    set_request_id_on_span(&request_headers);
     payment_tracker.register_usage(&PayedEndpoint::SignSessionKey);
 
     let (json_sign_session_key_request, client_session) =
@@ -129,7 +130,9 @@ pub(crate) async fn encryption_sign(
     http_client: &State<reqwest::Client>,
     encryption_sign_request: Json<EncryptedPayload<EncryptionSignRequest>>,
     tracing: Tracing,
+    request_headers: RequestHeaders<'_>,
 ) -> status::Custom<Value> {
+    set_request_id_on_span(&request_headers);
     // TODO: Uncomment this once we support EIP1271 SessionSig as we currently only support EIP1271 AuthSig
     // // We can only accept a SessionSig in this endpoint
     // match encryption_sign_request.auth_sig.get_auth_type() {
@@ -210,6 +213,7 @@ pub(crate) async fn execute_function(
     request_headers: RequestHeaders<'_>,
     action_store: &State<ActionStore>,
 ) -> status::Custom<Value> {
+    set_request_id_on_span(&request_headers);
     payment_tracker.register_usage(&PayedEndpoint::LitAction);
 
     let (json_execution_request, client_session) =
@@ -273,7 +277,9 @@ pub(crate) async fn get_job_status(
     tss_state: &State<Arc<TssState>>,
     cfg: &State<ReloadableLitConfig>,
     client_state: &State<Arc<ClientState>>,
+    request_headers: RequestHeaders<'_>,
 ) -> status::Custom<Value> {
+    set_request_id_on_span(&request_headers);
     let (job_status_request, client_session) =
         match client_state.json_decrypt_to_session(&job_status_request) {
             Ok(request) => request,
@@ -328,7 +334,9 @@ pub(crate) async fn pkp_sign(
     json_pkp_signing_request: Json<EncryptedPayload<request::JsonPKPSigningRequest>>,
     tracing: Tracing,
     http_client: &State<reqwest::Client>,
+    request_headers: RequestHeaders<'_>,
 ) -> status::Custom<Value> {
+    set_request_id_on_span(&request_headers);
     payment_tracker.register_usage(&PayedEndpoint::PkpSign);
 
     let (json_pkp_signing_request, client_session) =
