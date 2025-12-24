@@ -38,16 +38,6 @@ async fn single_node_disconnected_from_chain() {
     let fault_node_url = get_local_url_from_port(faulty_node_port);
     let anvil_url = get_local_url_from_port(ANVIL_PORT);
 
-    // setup and instantly disable the fault, since we need to hook the nodes config, which gets cached.
-    // inject_timeout_fault_direct(
-    //     fault_node_url.clone(),
-    //     anvil_url.clone(),
-    //     TIMEOUT_MS,
-    //     TOXICITY,
-    //     true,
-    // );
-    // disable_fault_direct(fault_node_url.clone(), anvil_url.clone(), true);
-
     // Start a new node collection
     let (testnet, validator_collection, _end_user) = TestSetupBuilder::default()
         .num_staked_and_joined_validators(FAULT_TEST_NUM_NODES)
