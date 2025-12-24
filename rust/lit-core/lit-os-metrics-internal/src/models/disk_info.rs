@@ -99,8 +99,14 @@ impl GaugeMetric for DiskInfo {
             KeyValue::new("encrypted", self.encrypted.clone()),
             KeyValue::new("encryption_status", self.encryption_status.clone()),
             KeyValue::new("free_gb", self.free_gb.map(|v| v.to_string()).unwrap_or_default()),
-            KeyValue::new("disk_gb_read", self.disk_gb_read.map(|v| v.to_string()).unwrap_or_default()),
-            KeyValue::new("disk_gb_written", self.disk_gb_written.map(|v| v.to_string()).unwrap_or_default()),
+            KeyValue::new(
+                "disk_gb_read",
+                self.disk_gb_read.map(|v| v.to_string()).unwrap_or_default(),
+            ),
+            KeyValue::new(
+                "disk_gb_written",
+                self.disk_gb_written.map(|v| v.to_string()).unwrap_or_default(),
+            ),
         ]
     }
 }

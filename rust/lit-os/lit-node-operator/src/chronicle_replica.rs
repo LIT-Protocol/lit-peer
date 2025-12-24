@@ -1,7 +1,7 @@
 //! Manages the Yellowstone Chronicle replica container's lifecycle and network access control.
 //! Uses a CommandRunner trait for testability. Assumes external script handles iptables setup.
 
-use crate::error::{EC, Result, unexpected_err_code};
+use crate::error::{unexpected_err_code, Result, EC};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde_json::Value;
@@ -493,7 +493,8 @@ impl<R: CommandRunner + 'static> ChronicleReplicaManager<R> {
 
     /// Handles Unhealthy/NoResponse states: blocks traffic, tracks duration, checks eth_syncing, recreates if needed.
     async fn handle_unhealthy_state(
-        &mut self, previous_status: &ReplicaHealthStatus,
+        &mut self,
+        previous_status: &ReplicaHealthStatus,
     ) -> Result<()> {
         let now = Instant::now();
 

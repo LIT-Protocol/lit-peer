@@ -1,4 +1,4 @@
-use crate::models::{GaugeMetric, OsMetric};
+use crate::models::{InfoMetric, OsMetric};
 use lit_observability::opentelemetry::KeyValue;
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -27,15 +27,11 @@ pub struct SystemInfo {
 }
 
 impl OsMetric for SystemInfo {
-    const NAME: &'static str = "system_info";
+    const NAME: &'static str = "system_info_info";
 }
 
-impl GaugeMetric for SystemInfo {
-    fn gauge_value(&self) -> Option<f64> {
-        Some(1.0)
-    }
-
-    fn gauge_labels(&self) -> Vec<KeyValue> {
+impl InfoMetric for SystemInfo {
+    fn info_labels(&self) -> Vec<KeyValue> {
         vec![
             KeyValue::new("hostname", self.hostname.clone()),
             KeyValue::new("cpu_brand", self.cpu_brand.clone()),

@@ -1,4 +1,4 @@
-use crate::models::{GaugeMetric, OsMetric};
+use crate::models::{InfoMetric, OsMetric};
 use lit_observability::opentelemetry::KeyValue;
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -18,15 +18,11 @@ pub struct ListeningPort {
 }
 
 impl OsMetric for ListeningPort {
-    const NAME: &'static str = "listening_ports";
+    const NAME: &'static str = "listening_ports_info";
 }
 
-impl GaugeMetric for ListeningPort {
-    fn gauge_value(&self) -> Option<f64> {
-        Some(1.0)
-    }
-
-    fn gauge_labels(&self) -> Vec<KeyValue> {
+impl InfoMetric for ListeningPort {
+    fn info_labels(&self) -> Vec<KeyValue> {
         let mut labels = vec![
             KeyValue::new("pid", self.pid.clone()),
             KeyValue::new("port", self.port.clone()),

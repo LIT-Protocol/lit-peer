@@ -1,4 +1,4 @@
-use crate::models::{GaugeMetric, OsMetric};
+use crate::models::{InfoMetric, OsMetric};
 use lit_observability::opentelemetry::KeyValue;
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -48,15 +48,11 @@ pub struct IptablesRule {
 }
 
 impl OsMetric for IptablesRule {
-    const NAME: &'static str = "iptables";
+    const NAME: &'static str = "iptables_info";
 }
 
-impl GaugeMetric for IptablesRule {
-    fn gauge_value(&self) -> Option<f64> {
-        Some(1.0)
-    }
-
-    fn gauge_labels(&self) -> Vec<KeyValue> {
+impl InfoMetric for IptablesRule {
+    fn info_labels(&self) -> Vec<KeyValue> {
         vec![
             KeyValue::new("filter_chain", self.filter_chain.clone()),
             KeyValue::new("filter_policy", self.filter_policy.clone()),
