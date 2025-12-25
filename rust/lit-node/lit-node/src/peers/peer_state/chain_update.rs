@@ -202,40 +202,6 @@ impl PeerState {
             return Err(unexpected_err("No realm id set", None));
         };
 
-        let provider = self.staking_contract.client().provider().clone();
-        let wallet_address = self
-            .wallet_keys
-            .verifying_key()
-            .to_eth_address()
-            .map_err(|e| {
-                blockchain_err(
-                    e,
-                    Some(
-                        "Failed to convert verifying key to eth address during request to join."
-                            .to_string(),
-                    ),
-                )
-            })?;
-        let balance = provider
-            .get_balance(wallet_address, None)
-            .await
-            .map_err(|e| {
-                blockchain_err(
-                    e,
-                    Some(
-                        "Failed to get balance of attested node wallet during request to join."
-                            .to_string(),
-                    ),
-                )
-            })?;
-
-        if balance.is_zero() {
-            return Err(blockchain_err(
-                "Aborting request to join as attested node wallet balance is 0.",
-                None,
-            ));
-        }
-
         let func = self
             .staking_contract
             .request_to_join_as_node(realm_id, self.staker_address);
