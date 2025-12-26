@@ -155,7 +155,7 @@ impl TestSetupBuilder {
         fs::create_dir_all(node_keys_path).unwrap();
 
         let signing_round_timeout_ms = if self.signing_round_timeout.is_some() {
-           self.signing_round_timeout
+            self.signing_round_timeout
         } else {
             // if not in CI, set a default signing round timeout of 8000ms
             Some("8000".to_string())
