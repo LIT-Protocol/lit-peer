@@ -49,7 +49,7 @@ async fn kick_node_who_loses_chain_connection() {
 
     assert!(
         actions
-            .update_all_complaint_configss(Some(50), Some(2), None, Some(1))
+            .update_all_complaint_configs(Some(50), Some(2), None, Some(1))
             .await
             .is_ok()
     );
