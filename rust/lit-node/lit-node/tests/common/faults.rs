@@ -492,7 +492,6 @@ pub fn generate_and_save_proxy_mappings_for_local_chain_testing(
 ) -> Result<ClientProxyMapping> {
     debug!("Generating proxy URLs for local chain testing");
 
-    const ANVIL_PORT: usize = 8545;
     let mut proxy_mappings: BTreeMap<Url, BTreeMap<Url, Url>> = BTreeMap::new();
 
     for i in 0..num_nodes {
