@@ -9,10 +9,8 @@ use lit_node_common::config::config_names::{
     CFG_KEY_CHAIN_POLLING_INTERVAL_MS, CFG_KEY_CHATTER_CLIENT_TIMEOUT,
     CFG_KEY_ENABLE_EPOCH_TRANSITIONS, CFG_KEY_ENABLE_PAYMENT,
     CFG_KEY_ENABLE_PROXIED_CHATTER_CLIENT, CFG_KEY_PAYMENT_INTERVAL_MS,
+    CFG_KEY_SIGNING_ROUND_TIMEOUT,
 };
-
-#[cfg(all(feature = "proxy_chatter", feature = "testing"))]
-use lit_node_common::config::config_names::CFG_KEY_SIGNING_ROUND_TIMEOUT;
 
 use tracing::trace;
 
