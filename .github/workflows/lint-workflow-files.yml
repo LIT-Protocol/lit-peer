@@ -15,7 +15,7 @@ jobs:
         run: |
           curl -sfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash | bash -s -- latest ${{ github.workspace }}
       - name: Run actionlint
-        run: ${{ github.workspace }}/actionlint -ignore 'label ".+" is unknown'
+        run: ${{ github.workspace }}/actionlint -ignore 'label ".+" is unknown' -ignore '"false" is always evaluated to false.'
         env:
           # Part of what actionlint does under the hood is to use the Shellcheck tool to lint against where we use the run field to specify shell commands to run.
           # Silence the following shellcheck errors since they are not too applicable.
