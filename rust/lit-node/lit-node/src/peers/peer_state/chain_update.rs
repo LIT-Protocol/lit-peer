@@ -1,11 +1,7 @@
 use super::super::PeerState;
 use crate::error::unexpected_err;
-use crate::{
-    error::{EC, Result, blockchain_err, blockchain_err_code},
-};
-use ethers::{
-    types::{U64, U256},
-};
+use crate::error::{EC, Result, blockchain_err, blockchain_err_code};
+use ethers::types::{U64, U256};
 use lit_blockchain::util::decode_revert;
 use std::time::Duration;
 use tracing::{Instrument, debug_span, instrument, trace};
