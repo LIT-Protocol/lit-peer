@@ -145,6 +145,8 @@ impl
     > {
         let chain = cfg.blockchain_chain_name()?;
         let provider = ENDPOINT_MANAGER.get_provider(chain.as_str())?;
+        #[cfg(feature = "proxy_chatter")]
+        let provider = change_port(provider, cfg)?;
         let meta_signer = meta_signer_key.into();
         let meta_wallet = LocalWallet::from(meta_signer.clone());
         let meta_client = SignerMiddleware::new(provider, meta_wallet);
@@ -207,6 +209,8 @@ impl
     > {
         let chain = cfg.blockchain_chain_name()?;
         let provider = ENDPOINT_MANAGER.get_provider(chain.as_str())?;
+        #[cfg(feature = "proxy_chatter")]
+        let provider = change_port(provider, cfg)?;
         let meta_signer = meta_signer_key.into();
         let meta_wallet = LocalWallet::from(meta_signer.clone());
         let meta_client = SignerMiddleware::new(provider, meta_wallet);
@@ -318,6 +322,8 @@ impl
     > {
         let chain = cfg.blockchain_chain_name()?;
         let provider = ENDPOINT_MANAGER.get_provider(chain.as_str())?;
+        #[cfg(feature = "proxy_chatter")]
+        let provider = change_port(provider, cfg)?;
         let meta_signer = meta_signer_key.into();
         let meta_wallet = LocalWallet::from(meta_signer.clone());
         let meta_client = SignerMiddleware::new(provider, meta_wallet);
@@ -363,6 +369,8 @@ impl
     > {
         let chain = cfg.blockchain_chain_name()?;
         let provider = ENDPOINT_MANAGER.get_provider(chain.as_str())?;
+        #[cfg(feature = "proxy_chatter")]
+        let provider = change_port(provider, cfg)?;
         let meta_signer = meta_signer_key.into();
         let meta_wallet = LocalWallet::from(meta_signer.clone());
         let meta_client = SignerMiddleware::new(provider, meta_wallet);
@@ -428,6 +436,8 @@ impl
     > {
         let chain = cfg.blockchain_chain_name()?;
         let provider = ENDPOINT_MANAGER.get_provider(chain.as_str())?;
+        #[cfg(feature = "proxy_chatter")]
+        let provider = change_port(provider, cfg)?;
         let meta_signer = meta_signer_key.into();
         let meta_wallet = LocalWallet::from(meta_signer.clone());
         let meta_client = SignerMiddleware::new(provider, meta_wallet);
@@ -525,6 +535,8 @@ impl
     > {
         let chain = cfg.blockchain_chain_name()?;
         let provider = ENDPOINT_MANAGER.get_provider(chain.as_str())?;
+        #[cfg(feature = "proxy_chatter")]
+        let provider = change_port(provider, cfg)?;
         let meta_signer = meta_signer_key.into();
         let meta_wallet = LocalWallet::from(meta_signer.clone());
         let meta_client = SignerMiddleware::new(provider, meta_wallet);
@@ -571,6 +583,8 @@ pub fn default_local_client(
     let chain = cfg.blockchain_chain_name()?;
     let wallet = load_wallet(cfg, wallet_key)?;
     let provider = ENDPOINT_MANAGER.get_provider(chain.as_str())?;
+    #[cfg(feature = "proxy_chatter")]
+    let provider = change_port(provider, cfg)?;
 
     Ok(Arc::new(SignerMiddleware::new(provider, wallet)))
 }
@@ -578,6 +592,32 @@ pub fn default_local_client(
 pub fn default_local_client_no_wallet(cfg: &LitConfig) -> Result<Arc<Provider<Http>>> {
     let chain = cfg.blockchain_chain_name()?;
     let provider = ENDPOINT_MANAGER.get_provider(chain.as_str())?;
+    #[cfg(feature = "proxy_chatter")]
+    let provider = change_port(provider, cfg)?;
 
+    Ok(provider)
+}
+
+#[cfg(feature = "proxy_chatter")]
+pub fn change_port(provider: Arc<Provider<Http>>, cfg: &LitConfig) -> Result<Arc<Provider<Http>>> {
+    let chain = cfg.blockchain_chain_name()?;
+    if chain.to_lowercase() == "localchain" {
+        let cfg2 = cfg.config();
+        let port = cfg2
+            .get_int("node.http.port")
+            .map_err(|e| crate::error::unexpected_err(e.to_string(), None))?;
+        let port = port as u16;
+        let port = 11075 + port; // 10000 + 8545 ( anvil default port ) - 7470 ( lit-node default starting port ) + actual port value
+        tracing::trace!(
+            "Changing port for proxy provider {} to {}.",
+            provider.url().as_str(),
+            port
+        );
+        let mut proxy_provider = (*provider).clone();
+        proxy_provider.url_mut().set_port(Some(port)).map_err(|_e| {
+            crate::error::unexpected_err("Could not set port for proxy provider", None)
+        })?;
+        return Ok(Arc::new(proxy_provider));
+    }
     Ok(provider)
 }

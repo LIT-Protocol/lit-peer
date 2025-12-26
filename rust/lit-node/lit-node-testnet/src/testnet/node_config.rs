@@ -36,6 +36,7 @@ pub struct CustomNodeRuntimeConfigBuilder {
     enable_payment: Option<String>,
     chain_polling_interval: Option<String>,
     payment_interval_ms: Option<String>,
+    signing_round_timeout_ms: Option<String>,
 }
 
 impl Default for CustomNodeRuntimeConfigBuilder {
@@ -50,6 +51,7 @@ impl CustomNodeRuntimeConfigBuilder {
             enable_payment: Some("true".to_string()),
             chain_polling_interval: None,
             payment_interval_ms: None,
+            signing_round_timeout_ms: None,
         }
     }
 
@@ -68,11 +70,17 @@ impl CustomNodeRuntimeConfigBuilder {
         self
     }
 
+    pub fn signing_round_timeout_ms(mut self, signing_round_timeout_ms: Option<String>) -> Self {
+        self.signing_round_timeout_ms = signing_round_timeout_ms;
+        self
+    }
+
     pub fn build(self) -> CustomNodeRuntimeConfig {
         CustomNodeRuntimeConfig {
             enable_payment: self.enable_payment,
             chain_polling_interval: self.chain_polling_interval,
             payment_interval_ms: self.payment_interval_ms,
+            signing_round_timeout_ms: self.signing_round_timeout_ms,
         }
     }
 }
@@ -82,6 +90,7 @@ pub struct CustomNodeRuntimeConfig {
     enable_payment: Option<String>,
     chain_polling_interval: Option<String>,
     payment_interval_ms: Option<String>,
+    signing_round_timeout_ms: Option<String>,
 }
 
 impl CustomNodeRuntimeConfig {
@@ -171,6 +180,13 @@ pub fn generate_custom_node_runtime_config(
             .unwrap_or("1000".into()),
     );
 
+    if let Some(signing_round_timeout_ms) = custom_config.signing_round_timeout_ms.clone() {
+        cfg.insertstr(
+            section,
+            CFG_KEY_SIGNING_ROUND_TIMEOUT,
+            &signing_round_timeout_ms,
+        );
+    }
     match node_config_path {
         Some(path) => {
             cfg.write_file(Path::new(&path))
