@@ -14,6 +14,7 @@ use toxiproxy_rust::*;
 use tracing::{debug, info, trace};
 
 pub const FAULT_TEST_CHATTER_CLIENT_TIMEOUT_SECS: u64 = 30;
+const ANVIL_PORT: usize = 8545;
 
 /// Given a number of nodes and a starting port, generate and save proxy mappings for local testing.
 pub fn generate_and_save_proxy_mappings_for_local_testing(
@@ -579,6 +580,21 @@ pub fn disable_fault_channel_direct(source_url: Url, target_url: Url, target_is_
     })
     .join()
     .expect("Failed to disable fault");
+}
+
+pub fn disable_chain_for_random_faulty_node(starting_port_number: usize, num_nodes: usize) -> usize {
+    let random_faulty_node_port =
+        get_random_faulty_node_port(starting_port_number, starting_port_number + num_nodes);
+    let random_fault_node = get_local_url_from_port(random_faulty_node_port);
+    let anvil_url = get_local_url_from_port(ANVIL_PORT);
+    disable_fault_channel_direct(random_fault_node, anvil_url, true);
+    random_faulty_node_port
+}
+
+pub fn enable_chain_for_node(port: usize)  {
+    let url = get_local_url_from_port(port);
+    let anvil_url = get_local_url_from_port(ANVIL_PORT);
+    enable_fault_channel_direct(url, anvil_url, true);
 }
 
 pub fn enable_fault_channel(source_url: Url, target_url: Url) {

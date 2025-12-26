@@ -29,6 +29,7 @@ pub struct TestSetupBuilder {
     register_inactive_validators: bool,
     enable_payment: Option<String>,
     chain_polling_interval: Option<String>,
+    signing_round_timeout: Option<String>,
     epoch_length: Option<U256>,
     max_presign_count: Option<u64>,
     min_presign_count: Option<u64>,
@@ -49,6 +50,7 @@ impl Default for TestSetupBuilder {
             register_inactive_validators: false,
             enable_payment: Some("true".to_string()),
             chain_polling_interval: None,
+            signing_round_timeout: None,
             epoch_length: None,
             max_presign_count: Some(0),
             min_presign_count: Some(0),
@@ -105,6 +107,11 @@ impl TestSetupBuilder {
         self
     }
 
+    pub fn signing_round_timeout_ms(mut self, signing_round_timeout: Option<String>) -> Self {
+        self.signing_round_timeout = signing_round_timeout;
+        self
+    }
+
     pub fn epoch_length(mut self, epoch_length: usize) -> Self {
         self.epoch_length = Some(U256::from(epoch_length));
         self
@@ -147,10 +154,18 @@ impl TestSetupBuilder {
         }
         fs::create_dir_all(node_keys_path).unwrap();
 
+        let signing_round_timeout_ms = if self.signing_round_timeout.is_some() {
+           self.signing_round_timeout
+        } else {
+            // if not in CI, set a default signing round timeout of 8000ms
+            Some("8000".to_string())
+        };
+
         let custom_node_runtime_config = CustomNodeRuntimeConfig::builder()
             .enable_payment(self.enable_payment)
             .payment_interval_ms(self.payment_interval_ms)
-            .chain_polling_interval(self.chain_polling_interval)
+            .chain_polling_interval_ms(self.chain_polling_interval)
+            .signing_round_timeout_ms(signing_round_timeout_ms)
             .build();
 
         let mut testnet = Testnet::builder()

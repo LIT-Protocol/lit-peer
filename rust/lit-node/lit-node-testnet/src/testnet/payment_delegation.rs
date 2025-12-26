@@ -2,7 +2,7 @@ use crate::testnet::ProviderError;
 use ethers::{
     middleware::SignerMiddleware,
     signers::{Signer, Wallet},
-    types::{H160, U256},
+    types::{Address, H160, U256},
 };
 use k256::ecdsa::SigningKey;
 use lit_blockchain::contracts::payment_delegation::{
@@ -32,6 +32,16 @@ impl Actions {
         if let Err(e) = res {
             panic!("Couldn't set balance: {:?}", e);
         }
+    }
+
+    pub async fn fund_address(&self, address: &Address, amount: &str) {
+        let provider = self.deployer_provider();
+        let res: Result<(), ProviderError> = provider
+            .request(
+                "anvil_setBalance",
+                [address.to_string(), amount.to_string()],
+            )
+            .await;
     }
 
     pub async fn create_payment_delegation_entry(
