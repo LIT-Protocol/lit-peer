@@ -39,7 +39,7 @@ async fn kick_node_who_loses_chain_connection() {
 
     let actions = testnet.actions().clone();
 
-    // wait for a few seconds to led the nodes chat with each other.
+    // wait for a few seconds to let the nodes chat with each other.
     actions.sleep_millis(1000).await;
 
     let faulty_node_port =
