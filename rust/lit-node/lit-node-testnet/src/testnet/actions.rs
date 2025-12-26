@@ -1271,7 +1271,7 @@ impl Actions {
     }
 
     // shortcut function to update all complaint configs to the same interval and tolerance for testing
-    pub async fn update_all_complaint_configss(
+    pub async fn update_all_complaint_configs(
         &self,
         interval_secs: Option<u64>,
         tolerance: Option<u64>,
