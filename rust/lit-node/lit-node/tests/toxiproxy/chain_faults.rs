@@ -101,7 +101,7 @@ async fn auto_rejoin_faulty_node() {
 
     assert!(
         actions
-            .update_all_complaint_configss(Some(50), Some(2), None, Some(1))
+            .update_all_complaint_configs(Some(50), Some(2), None, Some(1))
             .await
             .is_ok()
     );
