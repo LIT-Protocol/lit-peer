@@ -22,7 +22,6 @@ fn setup() {
     setup_proxies(&PROXY_MAPPINGS);
 }
 
-// Note that this test is ignored as it filas until we fix the bug in the code where we need to check the attested wallet for funds, even though there is a payer in place for the node.
 #[tokio::test]
 async fn kick_node_who_loses_chain_connection() {
     setup();
