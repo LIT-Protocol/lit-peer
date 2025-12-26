@@ -134,5 +134,4 @@ async fn auto_rejoin_faulty_node() {
     info!("Next epoch: {}", next_epoch);
     actions.wait_for_epoch(realm_id, next_epoch).await;
     info!("Advanced to next epoch: {}", next_epoch);
-
 }
