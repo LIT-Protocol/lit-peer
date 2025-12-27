@@ -55,31 +55,10 @@ pub fn generate_and_save_proxy_mappings_for_local_testing(
         }
     }
 
-    let client_proxy_mapping = ClientProxyMapping::new_with_mappings(&proxy_mappings);
-
-    // Save proxy mappings to file
-    assert!(client_proxy_mapping.write_file_local().is_ok());
-
-    Ok(client_proxy_mapping)
-}
-
-pub fn generate_and_save_proxy_mappings_for_local_chain_testing(
-    num_nodes: usize,
-    initial_port: usize,
-) -> Result<ClientProxyMapping> {
-    debug!("Generating proxy URLs for local chain testing");
-
-    const ANVIL_PORT: usize = 8545;
-    let mut proxy_mappings: BTreeMap<Url, BTreeMap<Url, Url>> = BTreeMap::new();
-
     for i in 0..num_nodes {
         let source_port = initial_port + i;
         let our_url = get_local_url_from_port(source_port);
-        assert!(
-            proxy_mappings
-                .insert(our_url.clone(), BTreeMap::new())
-                .is_none()
-        );
+        assert!(proxy_mappings.get(&our_url).is_some());
 
         let dest_port = ANVIL_PORT + 10000 + i;
         let proxy_grpc_url = get_local_url_from_port(dest_port);

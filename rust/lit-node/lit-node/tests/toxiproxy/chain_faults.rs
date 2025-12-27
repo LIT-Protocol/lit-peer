@@ -1,6 +1,6 @@
 use crate::common::faults::{
-    disable_chain_for_random_faulty_node, enable_chain_for_node,
-    generate_and_save_proxy_mappings_for_local_chain_testing, setup_proxies,
+    disable_chain_for_random_faulty_node, generate_and_save_proxy_mappings_for_local_testing,
+    setup_proxies,
 };
 use crate::common::setup_logging;
 use ethers::types::U256;
@@ -12,8 +12,7 @@ use tracing::info;
 const FAULT_TEST_NUM_NODES: usize = 5;
 const STARTING_PORT: usize = 7470;
 static PROXY_MAPPINGS: Lazy<ClientProxyMapping> = Lazy::new(|| {
-    generate_and_save_proxy_mappings_for_local_chain_testing(FAULT_TEST_NUM_NODES, STARTING_PORT)
-        .unwrap()
+    generate_and_save_proxy_mappings_for_local_testing(FAULT_TEST_NUM_NODES, STARTING_PORT).unwrap()
 });
 
 fn setup() {
