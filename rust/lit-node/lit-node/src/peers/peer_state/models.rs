@@ -1,5 +1,5 @@
 use crate::{
-    error::{unexpected_err, Result},
+    error::{Result, unexpected_err},
     models::PeerValidator,
 };
 use derive_more::Display;

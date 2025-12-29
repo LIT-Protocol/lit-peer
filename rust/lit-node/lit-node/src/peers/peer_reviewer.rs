@@ -4,13 +4,13 @@ use lit_blockchain::util::decode_revert;
 use lit_core::error::Unexpected;
 use lit_observability::channels::TracedReceiver;
 use lit_observability::opentelemetry::KeyValue;
+use moka::Expiry;
 use moka::future::Cache;
 use moka::notification::RemovalCause;
-use moka::Expiry;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::mpsc;
-use tracing::{instrument, Instrument};
+use tracing::{Instrument, instrument};
 
 use lit_blockchain::resolver::contract::ContractResolver;
 use lit_core::config::ReloadableLitConfig;

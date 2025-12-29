@@ -1,6 +1,6 @@
 use super::super::PeerState;
 use super::models::NetworkState;
-use crate::error::{unexpected_err_code, Result, EC};
+use crate::error::{EC, Result, unexpected_err_code};
 use crate::tasks::presign_manager::models::PresignMessage;
 use ethers::providers::StreamExt;
 use lit_blockchain::contracts::staking::StakingEvents;

@@ -1,6 +1,6 @@
-use super::super::peer_state::models::NetworkState;
 use super::super::PeerState;
-use crate::error::{blockchain_err, unexpected_err, Result};
+use super::super::peer_state::models::NetworkState;
+use crate::error::{Result, blockchain_err, unexpected_err};
 use ethers::types::{Address, H160, U256};
 use lit_blockchain::config::LitBlockchainConfig;
 use lit_blockchain::resolver::rpc::RpcHealthcheckPoller;
