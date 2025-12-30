@@ -166,9 +166,9 @@ jobs:
     # TODO: enable this when you want to turn on version upgrade tests.  there's also another spot below where you have to remove a hardcoded "false" with a comment like this.
     # if: false
     # timeout-minutes: 60
-    # strategy:
-    #   matrix:
-    #     partition: [1, 2, 3]
+    strategy:
+      matrix:
+        partition: [1, 2, 3]
 
     services:
       anvil:
