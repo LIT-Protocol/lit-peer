@@ -164,11 +164,11 @@ jobs:
     needs: build-if-needed
     runs-on: warp-ubuntu-latest-x64-16x # change to LargeRunner to run on github.  Change to self-hosted to run on our own runner.  Change to buildjet-8vcpu-ubuntu-2204 to run on buildjet with 8 cpus
     # TODO: enable this when you want to turn on version upgrade tests.  there's also another spot below where you have to remove a hardcoded "false" with a comment like this.
-    if: false
-    timeout-minutes: 60
-    strategy:
-      matrix:
-        partition: [1, 2, 3]
+    # if: false
+    # timeout-minutes: 60
+    # strategy:
+    #   matrix:
+    #     partition: [1, 2, 3]
 
     services:
       anvil:
