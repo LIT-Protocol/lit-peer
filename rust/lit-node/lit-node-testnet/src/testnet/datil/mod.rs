@@ -1,5 +1,3 @@
-pub mod actions;
-
 use crate::testnet::chain::ChainTrait;
 use crate::testnet::{NodeAccount, chain::anvil::Anvil};
 use command_group::GroupChild;
