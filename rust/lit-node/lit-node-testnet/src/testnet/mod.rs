@@ -207,11 +207,10 @@ impl TestnetBuilder {
                 Box::new(chain::hardhat::Hardhat::new(self.total_num_validators()))
                     as Box<dyn ChainTrait>
             }
-            WhichTestnet::Anvil => Box::new(chain::anvil::Anvil::new(
-                self.total_num_validators(),
-                false,
-                None,
-            )) as Box<dyn ChainTrait>,
+            WhichTestnet::Anvil => {
+                Box::new(chain::anvil::Anvil::new(self.total_num_validators(), false))
+                    as Box<dyn ChainTrait>
+            }
             WhichTestnet::NoChain => {
                 Box::new(chain::no_chain::NoChain::new(self.total_num_validators()))
                     as Box<dyn ChainTrait>

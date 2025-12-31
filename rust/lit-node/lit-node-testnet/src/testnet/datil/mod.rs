@@ -7,14 +7,16 @@ use ethers::prelude::*;
 use ethers::providers::Provider;
 use ethers::signers::Wallet;
 use ethers::types::Address;
-use lit_blockchain::resolver::rpc::ENDPOINT_MANAGER;
+use lit_blockchain::resolver::rpc::{ENDPOINT_MANAGER, RpcHealthcheckPoller};
 use lit_node_common::coms_keys::ComsKeys;
 use serde::Deserialize;
+use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
+use tokio::fs::File;
+use tokio::io::AsyncReadExt;
 use tracing::info;
 
-use lit_blockchain::resolver::rpc::RpcHealthcheckPoller;
 use lit_blockchain_lite::contracts::{
     contract_resolver::ContractResolver,
     pubkey_router::{PubkeyRouter, RootKey},
@@ -48,12 +50,17 @@ impl DatilTestnet {
         state_cache_path: String,
         contract_resolver_address: Address,
     ) -> Self {
-        let datil_chain = Box::new(Anvil::new(
-            total_num_validators,
-            true,
-            Some(state_cache_path.clone()),
-        )) as Box<dyn ChainTrait>;
+        let datil_chain = Box::new(Anvil::new(total_num_validators, true)) as Box<dyn ChainTrait>;
+
+        info!("Starting Datil chain. ");
+
         let process = datil_chain.start_chain().await;
+        Self::load_state_cache(
+            state_cache_path.clone(),
+            datil_chain.chain_name(),
+            &datil_chain.rpc_url(),
+        )
+        .await;
 
         let mut provider = ENDPOINT_MANAGER
             .get_provider(datil_chain.chain_name())
@@ -210,5 +217,31 @@ impl DatilTestnet {
                 node_account.node_address
             );
         }
+    }
+
+    pub async fn load_state_cache(state_cache_path: String, chain_name: &str, rpc_url: &str) {
+        let filename = state_cache_path.clone();
+        info!("Loading chain state from cache: {}", filename);
+
+        let path = Path::new(&filename);
+        let mut file = File::open(&path).await.unwrap();
+        let mut contents = String::new();
+        file.read_to_string(&mut contents).await.unwrap();
+
+        let params: Vec<String> = vec![contents];
+
+        let provider = ENDPOINT_MANAGER.get_provider(chain_name).expect(&format!(
+            "Error retrieving provider for chain {} - check name and/or rpc_config yaml.",
+            chain_name
+        ));
+
+        let res: bool = provider
+            .request("anvil_loadState", params.clone())
+            .await
+            .unwrap();
+        if !res {
+            panic!("Couldn't load chain state into Datil Anvil...");
+        }
+        info!("Chain state loaded into Anvil at {}.", rpc_url);
     }
 }

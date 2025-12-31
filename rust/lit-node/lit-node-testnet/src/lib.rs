@@ -221,22 +221,6 @@ impl TestSetupBuilder {
             }
         }
 
-        if self.include_datil_testnet {
-            let keyset_id = "datil-keyset".to_string();
-            let datil_root_keys = testnet
-                .actions()
-                .get_all_root_keys(Some(keyset_id))
-                .await
-                .unwrap();
-
-            testnet
-                .datil_testnet
-                .as_ref()
-                .unwrap()
-                .set_root_keys(datil_root_keys)
-                .await;
-        }
-
         let num_staked_nodes = if self.start_staked_only_validators {
             self.num_staked_and_joined_validators + self.num_staked_only_validators
         } else {
@@ -258,6 +242,23 @@ impl TestSetupBuilder {
             .build(&testnet)
             .await
             .expect("Failed to build validator collection");
+
+        // if this is a datil testnet, set the root keys
+        if self.include_datil_testnet {
+            let keyset_id = "datil-keyset".to_string();
+            let datil_root_keys = testnet
+                .actions()
+                .get_all_root_keys(Some(keyset_id))
+                .await
+                .unwrap();
+
+            testnet
+                .datil_testnet
+                .as_ref()
+                .unwrap()
+                .set_root_keys(datil_root_keys)
+                .await;
+        }
 
         let mut end_user = EndUser::new(&testnet);
         if self.fund_wallet {
