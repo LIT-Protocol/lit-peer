@@ -66,6 +66,17 @@ impl DatilTestnet {
         let provider = Arc::new(provider_mut.set_interval(Duration::from_millis(10)).clone());
         let deployer_signing_provider = datil_chain.deployer().signing_provider.clone();
 
+        // let params: Vec<String> = vec![];
+        // let res: String = provider.request("anvil_dumpState", params).await.unwrap();
+        // let filename = "datil_anvil_state.hex".to_string();
+        // let dir = std::path::Path::new(&"./");
+        // let path = dir.join(&filename);
+        // let mut file = tokio::fs::File::create(&path).await.unwrap();
+        // tokio::io::AsyncWriteExt::write_all(&mut file, res.as_bytes())
+        //     .await
+        //     .unwrap();
+        // file.sync_all().await.unwrap();
+
         let contract_resolver =
             ContractResolver::new(contract_resolver_address, deployer_signing_provider.clone());
         let env: u8 = 0;

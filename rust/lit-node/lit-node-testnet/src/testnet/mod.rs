@@ -191,7 +191,7 @@ impl TestnetBuilder {
         Self {
             include_datil_testnet,
             datil_testnet_state_cache_path: Some(
-                "tests/test_data/datil_cache/datil-anvil-state.json".to_string(),
+                "tests/test_data/datil_cache/datil-anvil-state.hex".to_string(),
             ),
             datil_testnet_contract_resolver_address: Some(Address::from_slice(
                 &hex::decode("5fbdb2315678afecb367f032d93f642f64180aa3")
