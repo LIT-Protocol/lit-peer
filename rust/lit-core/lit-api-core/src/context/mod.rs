@@ -15,6 +15,8 @@ use tracing::{Span, info_span};
 use tracing_opentelemetry::OpenTelemetrySpanExt;
 use uuid::Uuid;
 
+use lit_observability::logging::set_request_context;
+
 use crate::error::{EC, Error, Result, conversion_err_code, validation_err_code};
 
 pub const HEADER_KEY_X_CORRELATION_ID: &str = "X-Correlation-Id";
@@ -167,8 +169,19 @@ impl<'r> FromRequest<'r> for Tracing {
     type Error = crate::error::Error;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        let correlation_id =
-            extract_correlation_id(req).unwrap_or_else(|| format!("LD-{}", Uuid::new_v4()));
+        let (request_id, correlation_id) = extract_request_and_correlation_ids(req);
+
+        // Generate fallback ID only if BOTH headers are missing
+        let fallback_id = || format!("LD-{}", Uuid::new_v4());
+        let correlation_id = correlation_id.unwrap_or_else(&fallback_id);
+        let request_id = request_id.unwrap_or_else(|| correlation_id.clone());
+
+        // Set request context on the current span. This centralizes context storage:
+        // 1. Span extensions (RequestContext) - for log injection in OTLP and stdout
+        // 2. OTel span attributes - for distributed tracing correlation
+        // This ensures other components (like set_request_id_on_span) can find
+        // this context via get_request_context() and avoid generating duplicate IDs.
+        set_request_context(Some(request_id), Some(correlation_id.clone()));
 
         let mut tracing = Self::new(correlation_id);
         apply_req_tracing_fields(req, &mut tracing);
@@ -227,7 +240,16 @@ impl<'r> FromRequest<'r> for TracingRequired {
     type Error = crate::error::Error;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        if let Some(correlation_id) = extract_correlation_id(req) {
+        let (request_id, correlation_id) = extract_request_and_correlation_ids(req);
+
+        // TracingRequired requires at least one header
+        if let Some(correlation_id) = correlation_id {
+            // Preserve distinct values when both headers are present
+            let request_id = request_id.unwrap_or_else(|| correlation_id.clone());
+
+            // Set request context (span extensions + OTel attributes) for consistency
+            set_request_context(Some(request_id), Some(correlation_id.clone()));
+
             let mut tracing = Self::new(correlation_id);
             apply_req_tracing_fields(req, &mut tracing);
 
@@ -257,12 +279,20 @@ where
     TRACING.scope(Box::new(tracing), f)
 }
 
-pub(crate) fn extract_correlation_id(req: &Request<'_>) -> Option<String> {
-    req.headers()
-        .get(HEADER_KEY_X_CORRELATION_ID)
-        .next()
-        .or_else(|| req.headers().get(HEADER_KEY_X_REQUEST_ID).next())
-        .map(|val| val.to_string())
+/// Extracts both request_id and correlation_id from headers, preserving distinct values.
+/// Returns (request_id, correlation_id) tuple.
+/// - request_id: X-Request-Id header, falls back to X-Correlation-Id
+/// - correlation_id: X-Correlation-Id header, falls back to X-Request-Id
+pub(crate) fn extract_request_and_correlation_ids(req: &Request<'_>) -> (Option<String>, Option<String>) {
+    let x_request_id = req.headers().get(HEADER_KEY_X_REQUEST_ID).next().map(|v| v.to_string());
+    let x_correlation_id = req.headers().get(HEADER_KEY_X_CORRELATION_ID).next().map(|v| v.to_string());
+
+    // request_id: prefer X-Request-Id, fall back to X-Correlation-Id
+    let request_id = x_request_id.clone().or_else(|| x_correlation_id.clone());
+    // correlation_id: prefer X-Correlation-Id, fall back to X-Request-Id
+    let correlation_id = x_correlation_id.or(x_request_id);
+
+    (request_id, correlation_id)
 }
 
 pub(crate) fn apply_req_tracing_fields(req: &Request<'_>, tracing: &mut (impl Tracer + 'static)) {
