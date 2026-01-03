@@ -15,27 +15,6 @@ pub struct SDKHandshakeRequest {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum KeySetIdentifier {
-    #[serde(rename = "datil")]
-    Datil,
-    #[serde(rename = "naga-keyset1")]
-    NagaKeyset1,
-}
-
-impl std::fmt::Display for KeySetIdentifier {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                KeySetIdentifier::Datil => "datil",
-                KeySetIdentifier::NagaKeyset1 => "naga-keyset1",
-            }
-        )
-    }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EncryptionSignRequest {
     pub access_control_conditions: Option<Vec<AccessControlConditionItem>>,
@@ -47,7 +26,7 @@ pub struct EncryptionSignRequest {
     pub auth_sig: AuthSigItem,
     #[serde(default = "default_epoch")]
     pub epoch: u64,
-    pub key_set_identifier: Option<KeySetIdentifier>,
+    pub key_set_identifier: String,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -79,7 +58,7 @@ pub struct JsonPKPSigningRequest {
     #[serde(default = "default_epoch")]
     pub epoch: u64,
     pub node_set: Vec<NodeSet>,
-    pub key_set_identifier: Option<KeySetIdentifier>,
+    pub key_set_identifier: String,
 }
 
 #[derive(Clone, Default, Serialize, Deserialize)]

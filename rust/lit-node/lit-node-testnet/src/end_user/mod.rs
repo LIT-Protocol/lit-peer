@@ -12,6 +12,7 @@ use lit_blockchain::util::decode_revert;
 use lit_core::utils::binary::bytes_to_hex;
 use tracing::{error, info, trace};
 
+use crate::DEFAULT_KEY_SET_NAME;
 use crate::testnet::Testnet;
 use crate::testnet::actions::Actions;
 use rand_core::OsRng;
@@ -335,7 +336,7 @@ impl EndUser {
     }
 
     pub async fn new_pkp(&mut self) -> Result<(String, U256, H160), anyhow::Error> {
-        let pkp = Pkp::new(self, "naga-keyset1").await?;
+        let pkp = Pkp::new(self, DEFAULT_KEY_SET_NAME).await?;
         let pkp_info = (pkp.pubkey.clone(), pkp.token_id, pkp.eth_address.clone());
         self.pkps.push(pkp);
         Ok(pkp_info)

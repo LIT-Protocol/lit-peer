@@ -17,17 +17,18 @@ use lit_node::endpoints::auth_sig::LITNODE_ADMIN_RES;
 use lit_node::peers::peer_state::models::NetworkState;
 use lit_node::tss::common::restore::NodeRecoveryStatus;
 
-use lit_node_core::request::KeySetIdentifier;
 use lit_node_core::{
     CurveType, JsonAuthSig, LitAbility, LitResourceAbilityRequest,
     LitResourceAbilityRequestResource, SigningScheme,
 };
-use lit_node_testnet::TestSetupBuilder;
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::get_identity_pubkeys_from_node_set;
 use lit_node_testnet::testnet::Testnet;
 use lit_node_testnet::testnet::actions::{Actions, RootKeyConfig};
 use lit_node_testnet::validator::ValidatorCollection;
+use lit_node_testnet::{
+    DEFAULT_DATIL_KEY_SET_NAME, DEFAULT_KEY_SET_NAME, DatilTestnetType, TestSetupBuilder,
+};
 use lit_rust_crypto::k256::ecdsa::{SigningKey, VerifyingKey};
 use reqwest::Client;
 use rocket::serde::Serialize;
@@ -80,10 +81,10 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
     crate::common::setup_logging();
 
     let epoch_length = 300 as usize;
-    let (testnet, mut validator_collection, mut end_user) = TestSetupBuilder::default()
+    let (testnet, mut validator_collection, end_user) = TestSetupBuilder::default()
         .num_staked_and_joined_validators(number_of_nodes)
         .epoch_length(epoch_length)
-        .include_datil_testnet(true)
+        .include_datil_testnet(DatilTestnetType::NoKeyOverride)
         .build()
         .await;
 
@@ -93,7 +94,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
 
     let (realm_id, identifier, description) = (
         U256::from(1),
-        "datil".to_string(),
+        DEFAULT_DATIL_KEY_SET_NAME.to_string(),
         "Datil Key Set".to_string(),
     );
     let keyset_id = identifier.clone();
@@ -200,7 +201,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
         .await;
     let naga_keyset1_root_keys = validator_collection
         .actions()
-        .get_all_root_keys(Some("naga-keyset1".to_string()))
+        .get_all_root_keys(Some(DEFAULT_KEY_SET_NAME.to_string()))
         .await;
     info!("Datil root keys: {:?}", datil_root_keys);
     info!("Naga keyset1 root keys: {:?}", naga_keyset1_root_keys);
@@ -228,8 +229,11 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
     info!("Testing encrypt and decrypt with datil keyset");
     test_datil_encrypt_naga_decrypt(&validator_collection, &end_user).await;
 
-    info!("Testing PKP signing with datil keyset");
-    test_datil_keyset_pkp_signing(&testnet, &validator_collection, &mut end_user).await;
+    // TODO re-enable this test in PR#4876 "Adapt the end user to support pkps in both chains"
+    // Will do this, as the note below indicates that this PR hasn't implemented PKP
+    // authorization yet - that PR has the datil pkp end-user functionality implemented.
+    // info!("Testing PKP signing with datil keyset");
+    //test_datil_keyset_pkp_signing(&testnet, &validator_collection, &mut end_user).await;
 }
 
 fn datil_root_keys() -> Vec<RootKey> {
@@ -293,7 +297,14 @@ async fn upload_decryption_shares_to_nodes(recovery_party_size: usize) {
             i + 1
         );
 
-        let mut command = Command::new("./tests/test_data/datil_recovery_into_naga/lit-recovery");
+        let in_ci = std::env::var("IN_CI").is_ok();
+        let recovery_binary = if in_ci {
+            "./tests/test_data/datil_recovery_into_naga/lit-recovery"
+        } else {
+            "./tests/test_data/datil_recovery_into_naga/lit-recovery-mac"
+        };
+
+        let mut command = Command::new(recovery_binary);
 
         command.env("SHARE_DB_PATH", &share_db_path)
         .arg("--password=a")
@@ -587,7 +598,7 @@ fn keccak256(bytes: &[u8]) -> [u8; 32] {
 }
 
 // Assertion helpers
-async fn get_bls_pubkey(actions: &Actions, key_set_identifier: KeySetIdentifier) -> String {
+async fn get_bls_pubkey(actions: &Actions, key_set_identifier: &str) -> String {
     let bls_pubkey = actions
         .get_root_keys(1, Some(key_set_identifier.to_string()))
         .await
@@ -603,7 +614,7 @@ async fn test_datil_encrypt_naga_decrypt(
     // Encrypt using datil BLS pubkey
     let test_encryption_parameters = prepare_test_encryption_parameters();
     let datil_bls_pubkey =
-        get_bls_pubkey(validator_collection.actions(), KeySetIdentifier::Datil).await;
+        get_bls_pubkey(validator_collection.actions(), DEFAULT_DATIL_KEY_SET_NAME).await;
 
     let datil_bls_pubkey =
         lit_rust_crypto::blsful::PublicKey::try_from(hex::decode(&datil_bls_pubkey).unwrap())
@@ -615,7 +626,7 @@ async fn test_datil_encrypt_naga_decrypt(
         &test_encryption_parameters.identity_param,
     )
     .expect("Unable to encrypt");
-    debug!(
+    info!(
         "encrypting with pubkey {} -> ciphertext: {:?}",
         datil_bls_pubkey, ciphertext
     );
@@ -649,7 +660,7 @@ async fn test_datil_encrypt_naga_decrypt(
         test_encryption_parameters.clone(),
         &session_sigs,
         epoch.as_u64(),
-        Some(KeySetIdentifier::Datil),
+        DEFAULT_DATIL_KEY_SET_NAME,
     )
     .await;
 
@@ -730,7 +741,7 @@ async fn test_datil_keyset_pkp_signing(
             pubkey,
             epoch,
             SigningScheme::EcdsaK256Sha256,
-            Some(KeySetIdentifier::NagaKeyset1),
+            DEFAULT_KEY_SET_NAME,
         )
         .await
         .is_ok()

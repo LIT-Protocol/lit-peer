@@ -31,7 +31,7 @@ pub async fn test_add_second_keyset() {
 
     let key_set_number = 2;
 
-    let identifier = format!("naga-keyset{}-", key_set_number);
+    let identifier = format!("{}-keyset{}-", DEFAULT_KEY_SET_NAME, key_set_number);
     info!("**** Adding keyset `{}` ****", identifier);
 
     let description = format!("Naga Keyset {}", key_set_number);
@@ -111,7 +111,7 @@ pub async fn test_add_a_lot_of_keysets() {
     let mut keySetId = 2;
     for j in 0..10 {
         for i in 2..10 {
-            let identifier = format!("naga-keyset{}-", keySetId);
+            let identifier = format!("{}-keyset{}-", DEFAULT_KEY_SET_NAME, keySetId);
             info!("**** Adding keyset `{}` ****", identifier);
 
             let description = format!("Naga Keyset {}", i);

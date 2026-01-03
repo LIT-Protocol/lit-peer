@@ -1,5 +1,6 @@
 use super::contracts::{Contracts, StakingContractGlobalConfig, StakingContractRealmConfig};
 use super::{NodeAccount, WhichTestnet};
+use crate::DEFAULT_KEY_SET_NAME;
 use crate::models::VotingStatusToKickValidator;
 use crate::node_collection::{ensure_min_node_epoch, handshake_returns_keys};
 use anyhow::Result;
@@ -602,7 +603,7 @@ impl Actions {
     }
 
     pub async fn get_all_root_keys(&self, keyset_id: Option<String>) -> Option<Vec<RootKey>> {
-        let keyset_id = keyset_id.unwrap_or("naga-keyset1".to_string());
+        let keyset_id = keyset_id.unwrap_or(DEFAULT_KEY_SET_NAME.to_string());
         let staking_address = self.contracts.staking.address();
         let root_keys = self
             .contracts

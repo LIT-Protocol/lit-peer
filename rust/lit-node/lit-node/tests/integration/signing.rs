@@ -6,8 +6,8 @@ use ethers::types::Address;
 use ethers::types::{H160, TransactionRequest, U256};
 use ethers::{providers::Middleware, signers::to_eip155_v};
 use lit_blockchain::contracts::pkpnft::PKPNFT;
-use lit_node_testnet::TestSetupBuilder;
 use lit_node_testnet::end_user::EndUser;
+use lit_node_testnet::{DEFAULT_KEY_SET_NAME, DatilTestnetType, TestSetupBuilder};
 
 use lit_node_core::SigningScheme;
 use lit_node_testnet::node_collection::get_identity_pubkeys_from_node_set;
@@ -151,7 +151,7 @@ pub async fn test_pkp_hd_sign_and_submit_eth_txn() {
         pubkey.clone(),
         epoch,
         SigningScheme::EcdsaK256Sha256,
-        None,
+        DEFAULT_KEY_SET_NAME,
     )
     .await
     .unwrap();
@@ -236,7 +236,7 @@ pub async fn test_pkp_hd_sign_and_submit_eth_txn() {
         pubkey,
         epoch,
         SigningScheme::EcdsaK256Sha256,
-        None,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -262,7 +262,7 @@ pub async fn test_pkp_hd_sign_generic_key() {
     crate::common::setup_logging();
     info!("Starting test: test_hd_pkp_sign");
     let (testnet, validator_collection, end_user) = TestSetupBuilder::default()
-        .include_datil_testnet(true)
+        .include_datil_testnet(DatilTestnetType::Default)
         .build()
         .await;
     let pubkey = end_user.first_pkp().pubkey.clone();
@@ -639,7 +639,7 @@ pub async fn eoa_session_sig_with_mgb_pkp_signing() {
         pubkey.clone(),
         epoch,
         SigningScheme::EcdsaK256Sha256,
-        None,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -658,7 +658,7 @@ pub async fn eoa_session_sig_with_mgb_pkp_signing() {
         pubkey.clone(),
         epoch,
         SigningScheme::EcdsaK256Sha256,
-        None,
+        DEFAULT_KEY_SET_NAME,
     )
     .await
     .unwrap();
