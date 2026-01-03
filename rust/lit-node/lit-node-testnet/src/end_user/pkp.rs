@@ -301,7 +301,7 @@ impl Pkp {
         let ipfs_bytes = Bytes::from(bs58::decode(ipfs_cid).into_vec()?);
 
         let mgb_tx = pkpnft
-            .mint_grant_and_burn_next(key_type, "naga-keyset1".to_string(), ipfs_bytes)
+            .mint_grant_and_burn_next(key_type, DEFAULT_KEY_SET_NAME.to_string(), ipfs_bytes)
             .value(mint_cost);
 
         let receipt = mgb_tx

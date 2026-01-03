@@ -38,6 +38,9 @@ use tracing::{debug, info, warn};
 
 use lit_node_core::response::SDKHandshakeResponseV0;
 
+use crate::DEFAULT_DATIL_KEY_SET_NAME;
+use crate::DEFAULT_KEY_SET_NAME;
+
 use super::testnet::NodeAccount;
 use super::testnet::Testnet;
 use super::testnet::actions::Actions;
@@ -1662,7 +1665,7 @@ fn choose_random_nums_in_range(random_nums: usize, min: usize, max: usize) -> Ve
 pub fn default_keyset_config() -> KeySetConfig {
     KeySetConfig {
         identifier: DEFAULT_KEY_SET_NAME.to_string(),
-        description: String::new(),
+        description: "Naga Key Set".to_string(),
         minimum_threshold: 3,
         monetary_value: 0,
         complete_isolation: false,
@@ -1676,8 +1679,8 @@ pub fn default_keyset_config() -> KeySetConfig {
 }
 pub fn default_datil_keyset_config() -> KeySetConfig {
     KeySetConfig {
-        identifier: DATIL_KEY_SET_NAME.to_string(),
-        description: "anvilDatil|5fbdb2315678afecb367f032d93f642f64180aa3".to_string(),
+        identifier: "datil-keyset".to_string(),
+        description: "Datil Key Set".to_string(),
         minimum_threshold: 3,
         monetary_value: 0,
         complete_isolation: false,

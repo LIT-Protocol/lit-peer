@@ -5,6 +5,7 @@ use lit_node_core::request::JsonPKPSigningRequest;
 use lit_node_core::response::GenericResponse;
 use lit_node_core::response::JsonPKPSigningResponse;
 use lit_node_core::{AuthMethod, AuthSigItem, JsonAuthSig, NodeSet};
+use lit_node_testnet::DEFAULT_KEY_SET_NAME;
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::NodeIdentityKey;
 use lit_node_testnet::{TestSetupBuilder, testnet::Testnet, validator::ValidatorCollection};

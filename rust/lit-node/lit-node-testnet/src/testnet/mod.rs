@@ -6,6 +6,7 @@ pub mod datil;
 pub mod listener;
 pub mod node_config;
 
+use crate::DatilTestnetType;
 use crate::testnet::contracts_repo::{
     contract_addresses_from_deployment, remote_deployment_and_config_creation,
 };
@@ -90,7 +91,7 @@ pub struct TestnetBuilder {
     custom_node_runtime_config: Option<CustomNodeRuntimeConfig>,
     is_fault_test: bool,
     register_inactive_validators: bool,
-    include_datil_testnet: bool,
+    include_datil_testnet: DatilTestnetType,
     datil_testnet_state_cache_path: Option<String>,
     datil_testnet_contract_resolver_address: Option<Address>,
 }
@@ -108,7 +109,7 @@ impl Default for TestnetBuilder {
             custom_node_runtime_config: None,
             is_fault_test: false,
             register_inactive_validators: false,
-            include_datil_testnet: false,
+            include_datil_testnet: DatilTestnetType::None,
             datil_testnet_state_cache_path: None,
             datil_testnet_contract_resolver_address: None,
         }
@@ -186,11 +187,11 @@ impl TestnetBuilder {
         }
     }
 
-    pub fn include_datil_testnet(self, include_datil_testnet: bool) -> Self {
+    pub fn include_datil_testnet(self, include_datil_testnet: DatilTestnetType) -> Self {
         Self {
             include_datil_testnet,
             datil_testnet_state_cache_path: Some(
-                "tests/test_data/datil_cache/datil-anvil-state.json".to_string(),
+                "tests/test_data/datil_cache/datil-anvil-state.hex".to_string(),
             ),
             datil_testnet_contract_resolver_address: Some(Address::from_slice(
                 &hex::decode("5fbdb2315678afecb367f032d93f642f64180aa3")
@@ -206,11 +207,10 @@ impl TestnetBuilder {
                 Box::new(chain::hardhat::Hardhat::new(self.total_num_validators()))
                     as Box<dyn ChainTrait>
             }
-            WhichTestnet::Anvil => Box::new(chain::anvil::Anvil::new(
-                self.total_num_validators(),
-                false,
-                None,
-            )) as Box<dyn ChainTrait>,
+            WhichTestnet::Anvil => {
+                Box::new(chain::anvil::Anvil::new(self.total_num_validators(), false))
+                    as Box<dyn ChainTrait>
+            }
             WhichTestnet::NoChain => {
                 Box::new(chain::no_chain::NoChain::new(self.total_num_validators()))
                     as Box<dyn ChainTrait>
@@ -229,7 +229,7 @@ impl TestnetBuilder {
 
         let provider = Arc::new(provider_mut.set_interval(Duration::from_millis(10)).clone());
 
-        let datil_testnet = if self.include_datil_testnet {
+        let datil_testnet = if self.include_datil_testnet != DatilTestnetType::None {
             let datil_testnet = DatilTestnet::new(
                 self.total_num_validators(),
                 self.datil_testnet_state_cache_path.unwrap(),

@@ -38,8 +38,8 @@ use lit_node_core::{
     AccessControlConditionResource, AuthMaterialType, AuthMethod, AuthSigItem, LitAbility,
     LitResource, LitResourceAbilityRequest, LitResourceAbilityRequestResource, LitResourcePrefix,
 };
-use lit_node_testnet::TestSetupBuilder;
 use lit_node_testnet::node_collection::get_identity_pubkeys_from_node_set;
+use lit_node_testnet::{DEFAULT_KEY_SET_NAME, TestSetupBuilder};
 use rand_core::OsRng;
 use tracing::info;
 
@@ -1009,7 +1009,7 @@ async fn decrypt_with_lit_action_session_sig() {
         test_encryption_params.clone(),
         &session_sigs_and_node_set,
         epoch,
-        DEFAULT_KEY_SET_NAME,
+        DEFAULT_KEY_SET_NAME, 
     )
     .await;
 
@@ -1398,7 +1398,7 @@ pub async fn session_sig_only_mbg_pkp() {
         auth_pubkey.clone(),
         epoch,
         SigningScheme::EcdsaK256Sha256,
-        &key_set_id,
+        None,
     )
     .await;
 
