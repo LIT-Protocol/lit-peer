@@ -12,7 +12,6 @@ use crate::common::web_user_tests::{
 use ethers::signers::Signer;
 use ethers::types::{I256, U256};
 use lit_node::payment::payed_endpoint::PayedEndpoint;
-use lit_node::tss::util::DEFAULT_KEY_SET_NAME;
 use lit_node::utils::encoding;
 use lit_node::utils::encoding::bytes_to_hex;
 use lit_node_core::{

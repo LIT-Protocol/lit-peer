@@ -16,14 +16,13 @@ use lit_core::config::{ENV_LIT_CONFIG_FILE, LitConfigBuilder, ReloadableLitConfi
 use lit_observability::logging::simple_logging_subscriber;
 use once_cell::sync::Lazy;
 use std::{fs, path::Path, sync::Mutex};
-use tracing::{debug, error};
+use tracing::{debug, error, info};
 use tracing_subscriber::util::SubscriberInitExt;
 
 pub const DEFAULT_KEY_SET_NAME: &str = "naga-keyset1";
 pub const DEFAULT_DATIL_KEY_SET_NAME: &str = "datil-keyset";
 
 const DEFAULT_NUM_STAKED_AND_JOINED_VALIDATORS: usize = 5;
-pub const DATIL_KEY_SET_NAME: &str = "datil-keyset";
 
 #[derive(Default, PartialEq, Clone)]
 pub enum DatilTestnetType {
@@ -222,9 +221,29 @@ impl TestSetupBuilder {
             {
                 error!("Error extending epoch end time: {:?}", e);
             }
-        } else {
-            if self.include_datil_testnet == DatilTestnetType::Default {
-                let key_set_config = default_datil_keyset_config();
+        } 
+
+        // for a standard datil testnet, we'll need to setup a new set of root keys that where generated in the Naga setup.
+        // This saves us from doing a restore from datil->naga.
+        // We may be faced with a situation where the caced data already has Datil keys, or it might only have naga keys.
+        // If Datil keys are NOT present, we'll need to add them.
+
+        if self.include_datil_testnet == DatilTestnetType::Default {
+            info!("Checking for existing Datil root keys in our cached NAGA chain data.");
+            let keyset_id = DEFAULT_DATIL_KEY_SET_NAME;
+            let existing_datil_root_keys = testnet
+                .actions()
+                .get_all_root_keys(keyset_id)
+                .await
+                .unwrap_or_default();
+
+            if existing_datil_root_keys.is_empty() {
+                info!("No existing Datil root keys found in our cached NAGA chain data. Adding keyset config and root keys now.");
+                let datil_testnet = testnet.datil_testnet.as_ref().unwrap();
+                let chain_name = datil_testnet.datil_chain.chain_name();
+                let hex_contract_resolver_address = &format!("{:x}", datil_testnet.contracts.contract_resolver.address());
+                let key_set_config = default_datil_keyset_config(chain_name, hex_contract_resolver_address);
+                info!("Adding keyset config: {:?}", key_set_config);
                 testnet
                     .actions()
                     .add_keyset_config(key_set_config)
@@ -232,6 +251,7 @@ impl TestSetupBuilder {
                     .expect("Failed to add keyset config");
             }
         }
+    
 
         let num_staked_nodes = if self.start_staked_only_validators {
             self.num_staked_and_joined_validators + self.num_staked_only_validators
@@ -255,12 +275,12 @@ impl TestSetupBuilder {
             .await
             .expect("Failed to build validator collection");
 
-        // if this is a datil testnet, set the root keys
+        // if this is a datil testnet, set the root keys on the Datil chain ( we may have generated new root keys in the Naga setup )
         if self.include_datil_testnet == DatilTestnetType::Default {
-            let keyset_id = DEFAULT_DATIL_KEY_SET_NAME.to_string();
+            let keyset_id = DEFAULT_DATIL_KEY_SET_NAME;
             let datil_root_keys = testnet
                 .actions()
-                .get_all_root_keys(Some(keyset_id))
+                .get_all_root_keys(keyset_id)
                 .await
                 .unwrap();
 

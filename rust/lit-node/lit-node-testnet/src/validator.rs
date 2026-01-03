@@ -48,8 +48,6 @@ use super::testnet::contracts::Contracts;
 use super::testnet::contracts_repo::node_configs_path;
 
 use lit_node_core::CurveType;
-const DEFAULT_KEY_SET_NAME: &str = "naga-keyset1";
-const DATIL_KEY_SET_NAME: &str = "datil-keyset";
 // this is a duplicated value
 pub static INTERNAL_CHATTER_PORT_OFFSET: u16 = 19608;
 
@@ -1677,10 +1675,10 @@ pub fn default_keyset_config() -> KeySetConfig {
         recovery_session_id: Bytes::from_static(&[]),
     }
 }
-pub fn default_datil_keyset_config() -> KeySetConfig {
+pub fn default_datil_keyset_config(chain_name: &str, hex_contract_resolver_address: &str) -> KeySetConfig {
     KeySetConfig {
-        identifier: "datil-keyset".to_string(),
-        description: "Datil Key Set".to_string(),
+        identifier: DEFAULT_DATIL_KEY_SET_NAME.to_string(),
+        description: format!("{}|{}", chain_name, hex_contract_resolver_address),
         minimum_threshold: 3,
         monetary_value: 0,
         complete_isolation: false,

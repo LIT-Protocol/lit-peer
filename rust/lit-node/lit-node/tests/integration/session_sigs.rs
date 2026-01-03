@@ -30,7 +30,6 @@ use ipfs_hasher::IpfsHasher;
 use lit_node::models::RequestConditions;
 use lit_node::pkp::auth::AuthMethodScope;
 use lit_node::pkp::auth::get_user_wallet_auth_method_from_address;
-use lit_node::tss::util::DEFAULT_KEY_SET_NAME;
 use lit_node::utils::encoding;
 use lit_node::utils::web::hash_access_control_conditions;
 use lit_node_core::SigningScheme;
@@ -1009,7 +1008,7 @@ async fn decrypt_with_lit_action_session_sig() {
         test_encryption_params.clone(),
         &session_sigs_and_node_set,
         epoch,
-        DEFAULT_KEY_SET_NAME, 
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -1398,7 +1397,7 @@ pub async fn session_sig_only_mbg_pkp() {
         auth_pubkey.clone(),
         epoch,
         SigningScheme::EcdsaK256Sha256,
-        None,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 

@@ -19,6 +19,7 @@ pub mod litactions {
         LitResourcePrefix, SigningScheme, UnifiedAccessControlCondition,
         UnifiedAccessControlConditionItem, constants::CHAIN_LOCALCHAIN,
     };
+    use lit_node_testnet::DatilTestnetType;
     use lit_node_testnet::end_user::EndUser;
     use lit_node_testnet::testnet::Testnet;
     use lit_node_testnet::validator::ValidatorCollection;
@@ -91,7 +92,7 @@ pub mod litactions {
     ) {
         setup_logging();
         let (testnet, validator_collection, mut end_user) = TestSetupBuilder::default()
-            .include_datil_testnet(true)
+            .include_datil_testnet(DatilTestnetType::Default)
             .build()
             .await;
         lit_action_from_file_preloaded(

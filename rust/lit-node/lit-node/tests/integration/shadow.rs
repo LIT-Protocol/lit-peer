@@ -9,7 +9,6 @@ use crate::common::web_user_tests::{
 };
 use ethers::prelude::U256;
 use lit_node::models::RequestConditions;
-use lit_node::tss::util::DEFAULT_KEY_SET_NAME;
 use lit_node::utils::web::hash_access_control_conditions;
 use lit_node_core::{
     AccessControlConditionResource, LitAbility, LitResource, LitResourceAbilityRequest,

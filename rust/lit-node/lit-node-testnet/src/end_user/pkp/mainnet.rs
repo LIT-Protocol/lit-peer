@@ -11,7 +11,7 @@ use tracing::{debug, error, info};
 use super::Pkp;
 
 impl Pkp {
-    pub async fn new(end_user: &EndUser, key_set_id: &str) -> Result<Self, anyhow::Error> {
+    pub async fn new_mainnet(end_user: &EndUser, key_set_id: &str) -> Result<Self, anyhow::Error> {
         let key_type: U256 = U256::from(2); // 2 is ECDSA key type
 
         let pkpnft_address = end_user.actions().contracts().pkpnft.address();
@@ -83,17 +83,10 @@ impl Pkp {
         })
     }
 
-    pub fn info(&self) -> (String, U256, H160, String) {
-        (
-            self.pubkey.clone(),
-            self.token_id,
-            self.eth_address,
-            self.key_set_id.clone(),
-        )
-    }
+ 
 
     #[doc = "Grant an address permission to use a PKP"]
-    pub async fn add_permitted_address_to_pkp(
+    pub async fn add_permitted_address_to_pkp_mainnet(
         &self,
         addr_to_add: H160,
         scopes: &[U256],
@@ -148,7 +141,7 @@ impl Pkp {
     }
 
     #[doc = "Transfer a PKP"]
-    pub async fn transfer_pkp_with_wallet(
+    pub async fn transfer_pkp_with_wallet_mainnet(
         &self,
         to_address: Address,
     ) -> Result<bool, anyhow::Error> {
@@ -192,7 +185,7 @@ impl Pkp {
     }
 
     #[doc = "Grant an action permission to use a PKP"]
-    pub async fn add_permitted_action_to_pkp(
+    pub async fn add_permitted_action_to_pkp_mainnet(
         &self,
         ipfs_cid: &str,
         scopes: &[U256],
@@ -232,8 +225,12 @@ impl Pkp {
         Ok(true)
     }
 
+
+
+
+    
     #[doc = "Grant a Address Authmethod permission to use a PKP"]
-    pub async fn add_permitted_address_auth_method_to_pkp(
+    pub async fn add_permitted_address_auth_method_to_pkp_mainnet(
         &self,
         address_token: Vec<u8>,
         scopes: &[U256],
@@ -281,7 +278,7 @@ impl Pkp {
         Ok(true)
     }
 
-    pub async fn mint_grant_and_burn_next_pkp(
+    pub async fn mint_grant_and_burn_next_pkp_mainnet(
         end_user: &EndUser,
         ipfs_cid: &str,
         key_set_id: &str,
@@ -301,7 +298,7 @@ impl Pkp {
         let ipfs_bytes = Bytes::from(bs58::decode(ipfs_cid).into_vec()?);
 
         let mgb_tx = pkpnft
-            .mint_grant_and_burn_next(key_type, DEFAULT_KEY_SET_NAME.to_string(), ipfs_bytes)
+            .mint_grant_and_burn_next(key_type, key_set_id.to_string(), ipfs_bytes)
             .value(mint_cost);
 
         let receipt = mgb_tx
@@ -353,7 +350,7 @@ impl Pkp {
         })
     }
 
-    pub async fn burn_pkp(&self) -> Result<bool, anyhow::Error> {
+    pub async fn burn_pkp_mainnet(&self) -> Result<bool, anyhow::Error> {
         let pkpnft_address = self.actions.contracts().pkpnft.address();
         let pkpnft = PKPNFT::new(pkpnft_address, self.signing_provider.clone());
 

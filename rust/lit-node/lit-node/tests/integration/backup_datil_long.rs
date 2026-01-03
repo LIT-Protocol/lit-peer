@@ -21,7 +21,6 @@ use lit_node_core::{
     CurveType, JsonAuthSig, LitAbility, LitResourceAbilityRequest,
     LitResourceAbilityRequestResource, SigningScheme,
 };
-use lit_node_testnet::TestSetupBuilder; 
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::get_identity_pubkeys_from_node_set;
 use lit_node_testnet::testnet::Testnet;
@@ -198,7 +197,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
     // Get and log root keys for both keysets
     let datil_root_keys = validator_collection
         .actions()
-        .get_all_root_keys(DATIL_KEY_SET_NAME)
+        .get_all_root_keys(DEFAULT_DATIL_KEY_SET_NAME)
         .await;
     let naga_keyset1_root_keys = validator_collection
         .actions()
@@ -230,11 +229,8 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
     info!("Testing encrypt and decrypt with datil keyset");
     test_datil_encrypt_naga_decrypt(&validator_collection, &end_user).await;
 
-    // TODO re-enable this test in PR#4876 "Adapt the end user to support pkps in both chains"
-    // Will do this, as the note below indicates that this PR hasn't implemented PKP
-    // authorization yet - that PR has the datil pkp end-user functionality implemented.
-    // info!("Testing PKP signing with datil keyset");
-    //test_datil_keyset_pkp_signing(&testnet, &validator_collection, &mut end_user).await;
+    info!("Testing PKP signing with datil keyset");
+    test_datil_keyset_pkp_signing(&testnet, &validator_collection, &mut end_user).await;
 }
 
 fn datil_root_keys() -> Vec<RootKey> {
@@ -613,7 +609,7 @@ async fn test_datil_encrypt_naga_decrypt(
 ) {
     // Encrypt using datil BLS pubkey
     let test_encryption_parameters = prepare_test_encryption_parameters();
-    let key_set_id = DATIL_KEY_SET_NAME;
+    let key_set_id = DEFAULT_DATIL_KEY_SET_NAME;
     let datil_bls_pubkey = get_bls_pubkey(validator_collection.actions(), key_set_id).await;
 
     let datil_bls_pubkey =
@@ -687,14 +683,18 @@ async fn test_datil_keyset_pkp_signing(
     non_owner_end_user.fund_wallet_default_amount().await;
     non_owner_end_user.deposit_to_wallet_ledger_default().await;
 
-    let datil_pkp = end_user.first_pkp();
+    let (datil_pkp_pubkey, _, _) = end_user
+        .new_datil_pkp()
+        .await
+        .expect("Could not mint Datil PKP");
+    let datil_pkp = end_user.pkp_by_pubkey(datil_pkp_pubkey);
     datil_pkp
-        .add_permitted_address_to_pkp(non_owner_end_user.wallet.address(), &[U256::from(1)])
+        .datil_add_permitted_address_to_pkp(non_owner_end_user.wallet.address(), &[U256::from(1)])
         .await
         .expect("Could not add permitted address to pkp");
 
     // Burn the PKP
-    let burned = datil_pkp.burn_pkp().await;
+    let burned = datil_pkp.datil_burn_pkp().await;
     assert!(burned.is_ok());
 
     let pkp_address = datil_pkp.eth_address;
