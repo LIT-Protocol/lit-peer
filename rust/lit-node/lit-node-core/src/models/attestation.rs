@@ -32,7 +32,6 @@ impl FromStr for AttestationType {
             "ADMIN_SIGNED" => Ok(AttestationType::AdminSigned),
             _ => Err(Error::InvalidType(format!(
                 "{s} is not a valid AttestationType",
-                
             ))),
         }
     }

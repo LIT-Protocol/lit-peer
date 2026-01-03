@@ -221,7 +221,7 @@ impl TestSetupBuilder {
             {
                 error!("Error extending epoch end time: {:?}", e);
             }
-        } 
+        }
 
         // for a standard datil testnet, we'll need to setup a new set of root keys that where generated in the Naga setup.
         // This saves us from doing a restore from datil->naga.
@@ -238,11 +238,15 @@ impl TestSetupBuilder {
                 .unwrap_or_default();
 
             if existing_datil_root_keys.is_empty() {
-                info!("No existing Datil root keys found in our cached NAGA chain data. Adding keyset config and root keys now.");
+                info!(
+                    "No existing Datil root keys found in our cached NAGA chain data. Adding keyset config and root keys now."
+                );
                 let datil_testnet = testnet.datil_testnet.as_ref().unwrap();
                 let chain_name = datil_testnet.datil_chain.chain_name();
-                let hex_contract_resolver_address = &format!("{:x}", datil_testnet.contracts.contract_resolver.address());
-                let key_set_config = default_datil_keyset_config(chain_name, hex_contract_resolver_address);
+                let hex_contract_resolver_address =
+                    &format!("{:x}", datil_testnet.contracts.contract_resolver.address());
+                let key_set_config =
+                    default_datil_keyset_config(chain_name, hex_contract_resolver_address);
                 info!("Adding keyset config: {:?}", key_set_config);
                 testnet
                     .actions()
@@ -251,7 +255,6 @@ impl TestSetupBuilder {
                     .expect("Failed to add keyset config");
             }
         }
-    
 
         let num_staked_nodes = if self.start_staked_only_validators {
             self.num_staked_and_joined_validators + self.num_staked_only_validators

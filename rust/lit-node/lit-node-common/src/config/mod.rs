@@ -315,10 +315,7 @@ impl LitNodeConfig for LitConfig {
                 Url::parse(s).map_err(|e| {
                     parser_err(
                         e,
-                        Some(format!(
-                            "Could not parse webauthn_allowed_origins url: {s}",
-                            
-                        )),
+                        Some(format!("Could not parse webauthn_allowed_origins url: {s}",)),
                     )
                 })
             })

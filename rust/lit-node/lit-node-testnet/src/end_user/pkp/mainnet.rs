@@ -83,8 +83,6 @@ impl Pkp {
         })
     }
 
- 
-
     #[doc = "Grant an address permission to use a PKP"]
     pub async fn add_permitted_address_to_pkp_mainnet(
         &self,
@@ -225,10 +223,6 @@ impl Pkp {
         Ok(true)
     }
 
-
-
-
-    
     #[doc = "Grant a Address Authmethod permission to use a PKP"]
     pub async fn add_permitted_address_auth_method_to_pkp_mainnet(
         &self,

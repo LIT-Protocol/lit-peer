@@ -1675,7 +1675,10 @@ pub fn default_keyset_config() -> KeySetConfig {
         recovery_session_id: Bytes::from_static(&[]),
     }
 }
-pub fn default_datil_keyset_config(chain_name: &str, hex_contract_resolver_address: &str) -> KeySetConfig {
+pub fn default_datil_keyset_config(
+    chain_name: &str,
+    hex_contract_resolver_address: &str,
+) -> KeySetConfig {
     KeySetConfig {
         identifier: DEFAULT_DATIL_KEY_SET_NAME.to_string(),
         description: format!("{}|{}", chain_name, hex_contract_resolver_address),

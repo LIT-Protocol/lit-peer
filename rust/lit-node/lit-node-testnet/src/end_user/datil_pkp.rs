@@ -14,11 +14,7 @@ impl Pkp {
     pub async fn datil_new(end_user: &EndUser) -> Result<Self, anyhow::Error> {
         let key_type: U256 = U256::from(2); // 2 is ECDSA key type
 
-        let pkpnft_address = end_user
-            .actions()
-            .datil_contracts()
-            .pkpnft
-            .address();
+        let pkpnft_address = end_user.actions().datil_contracts().pkpnft.address();
 
         info!(
             "Datil signing provider: {:?}",
@@ -44,14 +40,7 @@ impl Pkp {
             .map_err(|e| {
                 let revert_msg = format!(
                     "Failed to send Datil PKP mint transaction: {}",
-                    decode_revert(
-                        &e,
-                        end_user
-                            .actions()
-                            .datil_contracts()
-                            .pkpnft
-                            .abi()
-                    )
+                    decode_revert(&e, end_user.actions().datil_contracts().pkpnft.abi())
                 );
                 error!(revert_msg);
                 anyhow::anyhow!(revert_msg)
@@ -311,11 +300,7 @@ impl Pkp {
 
         let key_type: U256 = U256::from(2);
 
-        let pkpnft_address = end_user
-            .actions()
-            .datil_contracts()
-            .pkpnft
-            .address();
+        let pkpnft_address = end_user.actions().datil_contracts().pkpnft.address();
         let pkpnft = PKPNFT::new(pkpnft_address, Arc::new(client));
 
         info!("Minting, granting and burning a new Datil PKP from the test harness.");
@@ -334,14 +319,7 @@ impl Pkp {
             .map_err(|e| {
                 let revert_msg = format!(
                     "Failed to send Datil PKP mint transaction: {}",
-                    decode_revert(
-                        &e,
-                        end_user
-                            .actions()
-                            .datil_contracts()
-                            .pkpnft
-                            .abi()
-                    )
+                    decode_revert(&e, end_user.actions().datil_contracts().pkpnft.abi())
                 );
                 error!(revert_msg);
                 anyhow::anyhow!(revert_msg)

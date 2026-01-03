@@ -1,5 +1,5 @@
-mod mainnet;
 mod datil;
+mod mainnet;
 
 use crate::end_user::EndUser;
 use ethers::middleware::SignerMiddleware;
@@ -8,7 +8,7 @@ use lit_blockchain::contracts::pkpnft::PKPNFT;
 use lit_blockchain::util::decode_revert;
 use lit_core::utils::binary::bytes_to_hex;
 use std::sync::Arc;
-use tracing::{ error, info};
+use tracing::{error, info};
 
 use super::Pkp;
 
@@ -101,9 +101,11 @@ impl Pkp {
         scopes: &[U256],
     ) -> Result<bool, anyhow::Error> {
         if self.is_datil {
-            self.add_permitted_address_to_pkp_datil(addr_to_add, scopes).await
+            self.add_permitted_address_to_pkp_datil(addr_to_add, scopes)
+                .await
         } else {
-            self.add_permitted_address_to_pkp_mainnet(addr_to_add, scopes).await
+            self.add_permitted_address_to_pkp_mainnet(addr_to_add, scopes)
+                .await
         }
     }
 
@@ -126,9 +128,11 @@ impl Pkp {
         scopes: &[U256],
     ) -> Result<bool, anyhow::Error> {
         if self.is_datil {
-            self.add_permitted_action_to_pkp_datil(ipfs_cid, scopes).await
+            self.add_permitted_action_to_pkp_datil(ipfs_cid, scopes)
+                .await
         } else {
-            self.add_permitted_action_to_pkp_mainnet(ipfs_cid, scopes).await
+            self.add_permitted_action_to_pkp_mainnet(ipfs_cid, scopes)
+                .await
         }
     }
 
@@ -138,11 +142,12 @@ impl Pkp {
         address_token: Vec<u8>,
         scopes: &[U256],
     ) -> Result<bool, anyhow::Error> {
-
         if self.is_datil {
-            self.add_permitted_address_auth_method_to_pkp_datil(address_token, scopes).await
+            self.add_permitted_address_auth_method_to_pkp_datil(address_token, scopes)
+                .await
         } else {
-            self.add_permitted_address_auth_method_to_pkp_mainnet(address_token, scopes).await
+            self.add_permitted_address_auth_method_to_pkp_mainnet(address_token, scopes)
+                .await
         }
     }
 
@@ -223,6 +228,6 @@ impl Pkp {
             self.burn_pkp_datil().await
         } else {
             self.burn_pkp_mainnet().await
-        }   
+        }
     }
 }

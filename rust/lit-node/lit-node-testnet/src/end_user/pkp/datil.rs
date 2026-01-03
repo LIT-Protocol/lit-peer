@@ -1,8 +1,8 @@
 use crate::end_user::EndUser;
 use ethers::types::{Address, Bytes, H160, U256};
+use lit_blockchain::util::decode_revert;
 use lit_blockchain_lite::contracts::pkp_permissions::{AuthMethod, PKPPermissions};
 use lit_blockchain_lite::contracts::pkpnft::PKPNFT;
-use lit_blockchain::util::decode_revert;
 use lit_core::utils::binary::bytes_to_hex;
 use std::sync::Arc;
 use tracing::{debug, error, info};
@@ -10,7 +10,6 @@ use tracing::{debug, error, info};
 use super::Pkp;
 
 impl Pkp {
-
     #[doc = "Grant an address permission to use a PKP"]
     pub async fn add_permitted_address_to_pkp_datil(
         &self,
@@ -151,10 +150,6 @@ impl Pkp {
         Ok(true)
     }
 
-
-
-
-    
     #[doc = "Grant a Address Authmethod permission to use a PKP"]
     pub async fn add_permitted_address_auth_method_to_pkp_datil(
         &self,
@@ -224,7 +219,7 @@ impl Pkp {
         let ipfs_bytes = Bytes::from(bs58::decode(ipfs_cid).into_vec()?);
 
         let mgb_tx = pkpnft
-            .mint_grant_and_burn_next(key_type,  ipfs_bytes)
+            .mint_grant_and_burn_next(key_type, ipfs_bytes)
             .value(mint_cost);
 
         let receipt = mgb_tx
