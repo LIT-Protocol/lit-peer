@@ -1398,7 +1398,9 @@ impl Node {
     async fn handshake(port: usize) -> Result<reqwest::Response, reqwest::Error> {
         let request_id = &uuid::Uuid::new_v4().to_string();
         let cmd = "/web/handshake".to_string();
-        let json_body = r#"{"clientPublicKey":"blah","challenge":"0x1234123412341234123412341234123412341234123412341234123412341234"}"#.to_string();
+        let json_body =
+            r#"{"clientPublicKey":"blah","challenge":"0x123412341234123412341234123412341234"}"#
+                .to_string();
         let client = reqwest::Client::new();
 
         client

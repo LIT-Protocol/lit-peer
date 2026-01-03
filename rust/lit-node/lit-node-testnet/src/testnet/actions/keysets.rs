@@ -196,7 +196,10 @@ impl Actions {
         }
 
         if self.datil_contracts.is_none() {
-            info!("No datil contracts exist.");
+            info!(
+                "No datil contracts exist, and no pubkey routing data found in mainnet routing contract for pubkey: {}",
+                pubkey
+            );
             return Err(anyhow::anyhow!(
                 "Could not find token id in pubkey routing contract, and no datil contracts exist."
             ));

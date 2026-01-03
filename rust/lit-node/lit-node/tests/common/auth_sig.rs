@@ -508,7 +508,7 @@ pub async fn get_auth_sig_for_session_sig_from_nodes(
     let results = lit_sdk::HandshakeRequest::new()
         .node_set_from_iter(node_set.keys())
         .url_prefix(lit_sdk::UrlPrefix::Http)
-        .challenge("0x1234123412341234123412341234123412341234123412341234123412341234".to_string())
+        .challenge("0x123412341234123412341234123412341234".to_string())
         .client_public_key("blah".to_string())
         .build()
         .unwrap()
