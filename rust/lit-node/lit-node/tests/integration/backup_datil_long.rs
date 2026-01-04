@@ -298,9 +298,9 @@ async fn upload_decryption_shares_to_nodes(recovery_party_size: usize) {
         );
 
         #[cfg(not(target_os = "macos"))]
-        let recovery_binary =            "./tests/test_data/datil_recovery_into_naga/lit-recovery";
+        let recovery_binary = "./tests/test_data/datil_recovery_into_naga/lit-recovery";
         #[cfg(target_os = "macos")]
-        let recovery_binary =             "./tests/test_data/datil_recovery_into_naga/lit-recovery-mac";
+        let recovery_binary = "./tests/test_data/datil_recovery_into_naga/lit-recovery-mac";
 
         let mut command = Command::new(recovery_binary);
 
