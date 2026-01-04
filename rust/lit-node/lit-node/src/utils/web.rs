@@ -11,7 +11,6 @@ use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::tss_state::TssState;
 use crate::utils::encoding;
 use crate::utils::keysets::get_default_keyset_id;
-use crate::version::DataVersionReader;
 use ethers::utils::keccak256;
 use ipfs_hasher::IpfsHasher;
 use iri_string::spec::UriSpec;
@@ -792,7 +791,7 @@ pub fn pubkey_to_token_id(pubkey: &str) -> Result<String> {
 
 pub fn get_default_bls_root_pubkey(tss_state: &Arc<TssState>) -> Result<String> {
     let cdm = &tss_state.chain_data_config_manager;
-    let default_keyset = match get_default_keyset_id(&cdm) {
+    let default_keyset = match get_default_keyset_id(cdm) {
         Ok(keyset) => keyset.clone(),
         Err(e) => {
             return Err(unexpected_err_code(

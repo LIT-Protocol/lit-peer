@@ -630,7 +630,7 @@ impl PresignManager {
         let signing_state = DamFastState::new(self.tss_state.clone(), signing_scheme);
 
         let cdm = &self.tss_state.chain_data_config_manager;
-        let default_keyset = match get_default_keyset_id(&cdm) {
+        let default_keyset = match get_default_keyset_id(cdm) {
             Ok(keyset) => keyset.clone(),
             Err(e) => {
                 warn!("No default keyset found. Returning blank presign.");

@@ -291,7 +291,7 @@ impl TssState {
         let epoch = self.get_keyshare_epoch().await;
         let cdm = &self.chain_data_config_manager;
 
-        let key_set_id = match get_default_keyset_id(&cdm) {
+        let key_set_id = match get_default_keyset_id(cdm) {
             Ok(keyset) => keyset.clone(),
             Err(e) => {
                 warn!("No default keyset found. Returning 0 threshold.");

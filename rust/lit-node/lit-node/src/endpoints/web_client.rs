@@ -505,7 +505,7 @@ pub async fn handshake_v0(
 
     let cdm = &session.chain_data_config_manager;
 
-    let default_keyset = match get_default_keyset_id(&cdm) {
+    let default_keyset = match get_default_keyset_id(cdm) {
         Ok(keyset_id) => keyset_id,
         Err(e) => {
             warn!("Failed to get default keyset id: {:?}", e);
@@ -2195,7 +2195,7 @@ pub(crate) async fn sign_session_key(
     let before = std::time::Instant::now();
     let cdm = &tss_state.chain_data_config_manager;
 
-    let keyset_id = match get_default_keyset_id(&cdm) {
+    let keyset_id = match get_default_keyset_id(cdm) {
         Ok(keyset) => keyset,
         Err(e) => {
             warn!("Failed to get keyset id: {:?}", e);
