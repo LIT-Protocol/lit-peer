@@ -150,7 +150,7 @@ async fn test_encryption_decryption_eip1271(
             .unwrap();
     let key_set_id = testnet
         .actions()
-        .get_key_set_id_from_pubkey(&network_pubkey)
+        .get_key_set_id_for_pkp(&network_pubkey)
         .await
         .unwrap();
     let ciphertext =

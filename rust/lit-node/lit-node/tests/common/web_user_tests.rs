@@ -272,9 +272,10 @@ pub async fn test_encryption_decryption_session_sigs(
             .unwrap();
     let key_set_id = validator_collection
         .actions()
-        .get_key_set_id_from_pubkey(&network_pubkey)
+        .get_keyset_id_for_root_key(&network_pubkey)
         .await
         .expect("Could not get keyset Id key from public key.");
+
     let ciphertext =
         lit_sdk::encryption::encrypt_time_lock(&pubkey, message_bytes, &identity_param)
             .expect("Unable to encrypt");

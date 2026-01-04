@@ -175,7 +175,27 @@ impl Actions {
         Ok(key_set_config)
     }
 
-    pub async fn get_key_set_id_from_pubkey(&self, pubkey: &str) -> Result<String> {
+    pub async fn get_keyset_id_for_root_key(&self, root_key: &str) -> Result<String> {
+        let key_set_configs = self.get_all_keyset_configs().await?;
+        let root_key_bytes = hex_to_bytes(root_key.to_string())?;
+
+        for key_set_config in key_set_configs {
+            let keyset_id = key_set_config.identifier.clone();
+            let root_keys = self.get_all_root_keys(&keyset_id).await;
+            if root_keys.is_none() {
+                continue;
+            }
+            let root_keys = root_keys.unwrap();
+            for root_key in root_keys {
+                if root_key.pubkey == root_key_bytes {
+                    return Ok(keyset_id);
+                }
+            }
+        }
+        Err(anyhow::anyhow!("Could not find root key in any keyset."))
+    }
+
+    pub async fn get_key_set_id_for_pkp(&self, pubkey: &str) -> Result<String> {
         let pubkey_bytes = hex_to_bytes(pubkey.to_string())?;
         let hashed_pubkey = keccak256(pubkey_bytes);
         let token_id = U256::from_big_endian(hashed_pubkey.as_slice());
@@ -234,5 +254,17 @@ impl Actions {
         return Err(anyhow::anyhow!(
             "Could not find token id in any pubkey routing contract."
         ));
+    }
+
+    pub async fn set_default_keyset_id(&self, realm_id: u64, keyset_id: &str) -> Result<()> {
+        let realm_id = U256::from(realm_id);
+        let mut realm_config = self.contracts.staking.realm_config(realm_id).call().await?;
+        realm_config.default_key_set = keyset_id.to_string();
+        self.contracts
+            .staking
+            .set_realm_config(realm_id, realm_config)
+            .send()
+            .await?;
+        Ok(())
     }
 }

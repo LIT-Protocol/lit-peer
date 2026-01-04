@@ -10,6 +10,7 @@ use crate::models::auth::SessionKeySignedMessageV2;
 use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::tss_state::TssState;
 use crate::utils::encoding;
+use crate::utils::keysets::get_default_keyset_id;
 use crate::version::DataVersionReader;
 use ethers::utils::keccak256;
 use ipfs_hasher::IpfsHasher;
@@ -791,12 +792,9 @@ pub fn pubkey_to_token_id(pubkey: &str) -> Result<String> {
 
 pub fn get_default_bls_root_pubkey(tss_state: &Arc<TssState>) -> Result<String> {
     let cdm = &tss_state.chain_data_config_manager;
-    let keysets = DataVersionReader::read_field_unchecked(&cdm.key_sets, |key_sets| {
-        key_sets.values().cloned().collect::<Vec<_>>()
-    });
-    let default_keyset = match keysets.first() {
-        Some(keyset) => keyset.identifier.clone(),
-        None => {
+    let default_keyset = match get_default_keyset_id(&cdm) {
+        Ok(keyset) => keyset.clone(),
+        Err(e) => {
             return Err(unexpected_err_code(
                 "No default keyset found",
                 EC::NodeBLSRootKeyNotFound,

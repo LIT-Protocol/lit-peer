@@ -7,6 +7,7 @@ pub mod encoding;
 pub mod eth;
 pub mod future;
 pub mod key_share_proof;
+pub mod keysets;
 pub mod networking;
 pub mod rocket;
 pub mod serde_encrypt;

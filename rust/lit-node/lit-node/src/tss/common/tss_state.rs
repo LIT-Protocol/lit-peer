@@ -12,6 +12,7 @@ use crate::tss::common::key_share::KeyShare;
 use crate::tss::common::storage::read_key_share_from_disk;
 use crate::tss::ecdsa_damfast::DamFastState;
 use crate::tss::frost::FrostState;
+use crate::utils::keysets::get_default_keyset_id;
 use crate::version::DataVersionReader;
 use flume::Receiver;
 use lit_core::config::ReloadableLitConfig;
@@ -289,12 +290,10 @@ impl TssState {
         let curve_type = CurveType::K256;
         let epoch = self.get_keyshare_epoch().await;
         let cdm = &self.chain_data_config_manager;
-        let keysets = DataVersionReader::read_field_unchecked(&cdm.key_sets, |key_sets| {
-            key_sets.values().cloned().collect::<Vec<_>>()
-        });
-        let key_set_id = match keysets.first() {
-            Some(keyset) => keyset.identifier.clone(),
-            None => {
+
+        let key_set_id = match get_default_keyset_id(&cdm) {
+            Ok(keyset) => keyset.clone(),
+            Err(e) => {
                 warn!("No default keyset found. Returning 0 threshold.");
                 return 0;
             }

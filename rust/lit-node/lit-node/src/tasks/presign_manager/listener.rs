@@ -7,6 +7,7 @@ use crate::peers::peer_state::models::SimplePeerCollection;
 use crate::tasks::presign_manager::models::Presign;
 use crate::tss::common::storage::{delete_presign, read_presign_from_disk, write_presign_to_disk};
 use crate::tss::ecdsa_damfast::DamFastState;
+use crate::utils::keysets::get_default_keyset_id;
 use crate::version::DataVersionReader;
 use flume::Sender;
 use lit_core::config::ReloadableLitConfig;
@@ -629,12 +630,9 @@ impl PresignManager {
         let signing_state = DamFastState::new(self.tss_state.clone(), signing_scheme);
 
         let cdm = &self.tss_state.chain_data_config_manager;
-        let keysets = DataVersionReader::read_field_unchecked(&cdm.key_sets, |key_sets| {
-            key_sets.values().cloned().collect::<Vec<_>>()
-        });
-        let default_keyset = match keysets.first() {
-            Some(keyset) => keyset.identifier.clone(),
-            None => {
+        let default_keyset = match get_default_keyset_id(&cdm) {
+            Ok(keyset) => keyset.clone(),
+            Err(e) => {
                 warn!("No default keyset found. Returning blank presign.");
                 return;
             }

@@ -207,6 +207,12 @@ impl TestSetupBuilder {
                 .await
                 .expect("Failed to setup contracts");
 
+        testnet
+            .actions()
+            .set_default_keyset_id(1, DEFAULT_KEY_SET_NAME)
+            .await
+            .expect("Failed to set default keyset id");
+
         // if this is a cached testnet, we're not sure about timestamps, blocks, etc,... reset!
         if testnet.is_from_cache {
             debug!("Cached testnet detected, resetting timestamps.");

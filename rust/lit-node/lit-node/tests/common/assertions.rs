@@ -107,7 +107,7 @@ impl NetworkIntegrityChecker {
 
         let key_set_id = validator_collection
             .actions()
-            .get_key_set_id_from_pubkey(&latest_bls_pubkey)
+            .get_key_set_id_for_pkp(&latest_bls_pubkey)
             .await
             .unwrap();
 

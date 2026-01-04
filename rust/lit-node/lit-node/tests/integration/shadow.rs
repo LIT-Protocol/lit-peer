@@ -355,7 +355,7 @@ async fn signature_from_realm(
     let expected_responses = realm_node_set.len();
     let key_set_id = validator_collection
         .actions()
-        .get_key_set_id_from_pubkey(&pubkey)
+        .get_key_set_id_for_pkp(&pubkey)
         .await
         .expect("Couldn't get key set id from pubkey");
 

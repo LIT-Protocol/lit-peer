@@ -23,6 +23,7 @@ use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::tss_state::TssState;
 use crate::utils::attestation::create_attestation;
 use crate::utils::encoding;
+use crate::utils::keysets::get_default_keyset_id;
 use crate::utils::rocket::guards::RequestHeaders;
 use crate::utils::web::{
     check_condition_count, get_auth_context, get_bls_root_pubkey, get_default_bls_root_pubkey,
@@ -503,12 +504,13 @@ pub async fn handshake_v0(
     );
 
     let cdm = &session.chain_data_config_manager;
-    let keysets = DataVersionReader::read_field_unchecked(&cdm.key_sets, |key_sets| {
-        key_sets.values().cloned().collect::<Vec<_>>()
-    });
-    let default_keyset = match keysets.first() {
-        Some(keyset) => keyset.identifier.clone(),
-        None => return handshake_bad_request_response_v0(&version.to_string()),
+
+    let default_keyset = match get_default_keyset_id(&cdm) {
+        Ok(keyset_id) => keyset_id,
+        Err(e) => {
+            warn!("Failed to get default keyset id: {:?}", e);
+            return handshake_bad_request_response_v0(&version.to_string());
+        }
     };
 
     // Validate that the challenge exists in the request.
@@ -2192,18 +2194,13 @@ pub(crate) async fn sign_session_key(
     );
     let before = std::time::Instant::now();
     let cdm = &tss_state.chain_data_config_manager;
-    let keysets = DataVersionReader::read_field_unchecked(&cdm.key_sets, |key_sets| {
-        key_sets.values().cloned().collect::<Vec<_>>()
-    });
-    let keyset_id = match keysets.first() {
-        Some(keyset) => keyset.identifier.clone(),
-        None => {
-            return client_session.json_encrypt_err_custom_response(
-                "no keyset id found",
-                validation_err_code("No keyset id found", EC::NodeNoKeysetIdFound, None)
-                    .add_msg_to_details()
-                    .handle(),
-            );
+
+    let keyset_id = match get_default_keyset_id(&cdm) {
+        Ok(keyset) => keyset,
+        Err(e) => {
+            warn!("Failed to get keyset id: {:?}", e);
+            return client_session
+                .json_encrypt_err_custom_response("no keyset id found", e.handle());
         }
     };
     let (signature_share, share_peer_id) =
