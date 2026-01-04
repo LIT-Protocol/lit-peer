@@ -1,7 +1,13 @@
 # This workflow groups up the unit tests, the standard node build, and the tests that use the standard node build (integration tests, version upgrade tests)
 name: rust-lit-node-group-unit-and-integration-tests
 on:
-  workflow_dispatch: {}
+  workflow_dispatch: 
+    workflow_dispatch: 
+    inputs:
+        enable_version_upgrade_tests:
+          description: 'Enable version upgrade tests?'
+          type: boolean
+          default: false
   workflow_call:
   push:
     paths:
@@ -164,8 +170,8 @@ jobs:
     needs: build-if-needed
     runs-on: warp-ubuntu-latest-x64-16x # change to LargeRunner to run on github.  Change to self-hosted to run on our own runner.  Change to buildjet-8vcpu-ubuntu-2204 to run on buildjet with 8 cpus
     # TODO: enable this when you want to turn on version upgrade tests.  there's also another spot below where you have to remove a hardcoded "false" with a comment like this.
-    # if: false
-    # timeout-minutes: 60
+    if: ${{ inputs.enable_version_upgrade_tests }}
+    timeout-minutes: 60
     strategy:
       matrix:
         partition: [1, 2, 3]
