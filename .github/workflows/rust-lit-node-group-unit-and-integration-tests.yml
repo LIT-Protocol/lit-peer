@@ -2,7 +2,6 @@
 name: rust-lit-node-group-unit-and-integration-tests
 on:
   workflow_dispatch: 
-    workflow_dispatch: 
     inputs:
         enable_version_upgrade_tests:
           description: 'Enable version upgrade tests?'
