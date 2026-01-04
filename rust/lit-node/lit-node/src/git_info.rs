@@ -1,1 +1,1 @@
-pub const GIT_COMMIT_HASH: &str = "8429d9daf7f7d66125c5d2336b75ef1a2d846c1c";
+pub const GIT_COMMIT_HASH: &str = "bec959e05b2721eecdbe8bf8a4be007c53374bd1";
