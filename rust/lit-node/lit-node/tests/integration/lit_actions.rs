@@ -91,10 +91,8 @@ pub mod litactions {
         wrap_in_quotes: bool,
     ) {
         setup_logging();
-        let (testnet, validator_collection, mut end_user) = TestSetupBuilder::default()
-            .include_datil_testnet(DatilTestnetType::Default)
-            .build()
-            .await;
+        let (testnet, validator_collection, mut end_user) =
+            TestSetupBuilder::default().build().await;
         lit_action_from_file_preloaded(
             price_components,
             &validator_collection,
