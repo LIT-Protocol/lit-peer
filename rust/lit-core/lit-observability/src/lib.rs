@@ -3,7 +3,7 @@ use std::str::FromStr;
 pub use config::LitObservabilityConfig;
 use error::unexpected_err;
 use lit_core::config::LitConfig;
-use logging::{init_logger_provider, ContextAwareOtelLogLayer, CustomEventFormatter};
+use logging::{ContextAwareOtelLogLayer, CustomEventFormatter, init_logger_provider};
 use metrics::init_metrics_provider;
 use net::init_tonic_exporter_builder;
 use opentelemetry::trace::TracerProvider;
