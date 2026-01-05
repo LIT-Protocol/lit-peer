@@ -195,7 +195,7 @@ impl Actions {
         Err(anyhow::anyhow!("Could not find root key in any keyset."))
     }
 
-    pub async fn get_key_set_id_for_pkp(&self, pubkey: &str) -> Result<String> {
+    pub async fn get_keyset_id_for_pkp(&self, pubkey: &str) -> Result<String> {
         let pubkey_bytes = hex_to_bytes(pubkey.to_string())?;
         let hashed_pubkey = keccak256(pubkey_bytes);
         let token_id = U256::from_big_endian(hashed_pubkey.as_slice());

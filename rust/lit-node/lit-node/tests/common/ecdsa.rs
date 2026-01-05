@@ -57,7 +57,7 @@ pub async fn sign_with_hd_key(
 
     let key_set_id = validator_collection
         .actions()
-        .get_key_set_id_for_pkp(&pubkey)
+        .get_keyset_id_for_pkp(&pubkey)
         .await
         .unwrap();
 
