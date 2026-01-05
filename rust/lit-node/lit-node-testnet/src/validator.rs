@@ -570,7 +570,7 @@ impl ValidatorCollection {
 
         let mut futures = Vec::new();
         for port in ports {
-            futures.push(tokio::spawn(Node::wait_for_node_awake(port)));
+            futures.push(tokio::spawn(Node::wait_for_node_awake(port, true)));
         }
 
         let _l = join_all(futures).await;
@@ -728,7 +728,7 @@ impl ValidatorCollection {
         // they are assumed to already be online as its peers will be sending them messages)
         for idx in random_validators_to_join.clone() {
             let validator = self.validators[idx].borrow_mut();
-            validator.start_node(false, true).await?;
+            validator.start_node_with_option(false, true, false).await?;
         }
 
         // even after the nodes awake, we need to give the rest of the network time to recognize them.
@@ -985,6 +985,16 @@ impl Validator {
     }
 
     pub async fn start_node(&mut self, clean_slate: bool, wait_for_node_awake: bool) -> Result<()> {
+        self.start_node_with_option(clean_slate, wait_for_node_awake, true)
+            .await
+    }
+
+    pub async fn start_node_with_option(
+        &mut self,
+        clean_slate: bool,
+        wait_for_node_awake: bool,
+        require_valid_handshake: bool,
+    ) -> Result<()> {
         if clean_slate {
             // remove the validator-specific files
             trace!(
@@ -1004,7 +1014,7 @@ impl Validator {
 
         if wait_for_node_awake {
             // check the node is awake
-            Node::wait_for_node_awake(self.node.port)
+            Node::wait_for_node_awake(self.node.port, require_valid_handshake)
                 .await
                 .map_err(|e| {
                     anyhow::anyhow!("Failed to wait for node to wake up with error: {}", e)
@@ -1351,11 +1361,11 @@ impl Node {
         Ok(())
     }
 
-    pub async fn wait_for_node_awake(port: usize) -> Result<()> {
+    pub async fn wait_for_node_awake(port: usize, require_valid_handshake: bool) -> Result<()> {
         // loop until the node is awake
         let mut node_awake = false;
         while !node_awake {
-            node_awake = Self::check_node_awake(port).await?;
+            node_awake = Self::check_node_awake(port, require_valid_handshake).await?;
             if !node_awake {
                 tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
             }
@@ -1365,7 +1375,7 @@ impl Node {
         Ok(())
     }
 
-    pub async fn check_node_awake(port: usize) -> Result<bool> {
+    pub async fn check_node_awake(port: usize, require_valid_handshake: bool) -> Result<bool> {
         let response = Self::handshake(port).await;
 
         if response.is_err() {
@@ -1380,12 +1390,22 @@ impl Node {
         let response = response?;
 
         if response.status() != 200 {
-            info!(
-                "Node {} is responding, but not ready. Status: {:?}",
-                port,
-                response.status()
-            );
-            return Ok(false);
+            if response.status() == 400 && !require_valid_handshake {
+                info!(
+                    "Node {} is responding, but not ready. Status: {:?}.  For this test, assuming node is awake.",
+                    port,
+                    response.status()
+                );
+                return Ok(true);
+            } else {
+                info!(
+                    "Node {} is responding, but not ready. Status: {:?}",
+                    port,
+                    response.status()
+                );
+
+                return Ok(false);
+            }
         }
 
         let response_text = response.text().await?;
@@ -1677,6 +1697,7 @@ pub fn default_keyset_config() -> KeySetConfig {
         recovery_session_id: Bytes::from_static(&[]),
     }
 }
+
 pub fn default_datil_keyset_config(
     chain_name: &str,
     hex_contract_resolver_address: &str,

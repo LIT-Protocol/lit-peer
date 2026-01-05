@@ -488,13 +488,13 @@ pub async fn get_fsm_state(
     let peers_in_epoch = peer_state.peers();
 
     debug!(
-        "Block: {} Epoch: {}, Network state: {:?}, Node state: {:?}, Retries: {:?}, Peers: {:?} ",
+        "Block: {} Epoch: {}, Network: {:?}, Node: {:?}, Retries: {:?}, Peers: {:?} ",
         block_number,
         epoch_number,
         network_state,
         node_state.current_state(),
         retries,
-        peers_in_epoch.debug_addresses(),
+        peers_in_epoch.debug_addresses().replace("127.0.0.1", ""),
     );
 
     // if we're paused, just do another loop.

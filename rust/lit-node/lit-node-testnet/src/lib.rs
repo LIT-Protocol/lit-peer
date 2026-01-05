@@ -51,6 +51,7 @@ pub struct TestSetupBuilder {
     custom_binary_path: Option<String>,
     start_staked_only_validators: bool,
     include_datil_testnet: DatilTestnetType,
+    asleep_initially_override: Option<Vec<usize>>,
 }
 
 impl Default for TestSetupBuilder {
@@ -74,6 +75,7 @@ impl Default for TestSetupBuilder {
             custom_binary_path: None,
             start_staked_only_validators: true,
             include_datil_testnet: DatilTestnetType::None,
+            asleep_initially_override: None,
         }
     }
 }
@@ -169,6 +171,14 @@ impl TestSetupBuilder {
 
     pub fn include_datil_testnet(mut self, include_datil_testnet: DatilTestnetType) -> Self {
         self.include_datil_testnet = include_datil_testnet;
+        self
+    }
+
+    pub fn asleep_initially_override(
+        mut self,
+        asleep_initially_override: Option<Vec<usize>>,
+    ) -> Self {
+        self.asleep_initially_override = asleep_initially_override;
         self
     }
 
@@ -280,6 +290,7 @@ impl TestSetupBuilder {
             .wait_for_root_keys(self.wait_for_root_keys)
             .node_binary_feature_flags(node_binary_feature_flags)
             .custom_binary_path(self.custom_binary_path)
+            .asleep_initially_override(self.asleep_initially_override)
             .build(&testnet)
             .await
             .expect("Failed to build validator collection");

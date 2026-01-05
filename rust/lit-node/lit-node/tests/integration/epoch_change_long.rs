@@ -1,10 +1,5 @@
-use lit_node_testnet::{
-    end_user::EndUser,
-    testnet::{NodeAccount, Testnet, WhichTestnet, contracts::StakingContractRealmConfig},
-    validator::ValidatorCollection,
-};
-
 use crate::common::{assertions::NetworkIntegrityChecker, setup_logging};
+use lit_node_testnet::{TestSetupBuilder, testnet::NodeAccount};
 
 use ethers::types::U256;
 use lit_core::utils::binary::bytes_to_hex;
@@ -60,48 +55,17 @@ async fn test_many_epochs() {
         info!("{}", network_state);
     }
 
-    // Setup the network
-    let mut testnet = Testnet::builder()
-        .which_testnet(WhichTestnet::Anvil)
+    let (testnet, mut validator_collection, end_user) = TestSetupBuilder::default()
         .num_staked_and_joined_validators(INITIAL_VALIDATORS)
         .num_staked_only_validators((MAX_VALIDATORS * 2) - INITIAL_VALIDATORS)
+        .epoch_length(EPOCH_LENGTH as usize)
+        .max_presign_count(0)
+        .min_presign_count(0)
+        .asleep_initially_override(Some((INITIAL_VALIDATORS..(MAX_VALIDATORS * 2)).collect()))
         .build()
         .await;
 
-    info!("Setting up contracts");
-    let _testnet_contracts = Testnet::setup_contracts(
-        &mut testnet,
-        None,
-        Some(
-            StakingContractRealmConfig::builder()
-                .epoch_length(Some(U256::from(EPOCH_LENGTH)))
-                .max_presign_count(U256::from(0))
-                .min_presign_count(U256::from(0))
-                .build(),
-        ),
-    )
-    .await
-    .expect("Failed to setup contracts");
-
     let actions = testnet.actions();
-
-    info!("Building validator collection");
-    let mut validator_collection = ValidatorCollection::builder()
-        .num_staked_nodes(MAX_VALIDATORS * 2) // this is doubled since the entire set can request to leave and a new one requests to join
-        // explicitly indicate that the indices between INITIAL_VALIDATORS and (MAX_VALIDATORS * 2) are asleep as a vec
-        .asleep_initially_override(Some((INITIAL_VALIDATORS..(MAX_VALIDATORS * 2)).collect()))
-        .build(&testnet)
-        .await
-        .expect("Failed to build validator collection");
-
-    info!(
-        "Validator collection: {:?}",
-        validator_collection.addresses()
-    );
-
-    let mut end_user = EndUser::new(&testnet);
-    end_user.fund_wallet_default_amount().await;
-    end_user.new_pkp().await.expect("Failed to mint PKP");
 
     let network_checker = NetworkIntegrityChecker::new(&end_user, &actions).await;
 
