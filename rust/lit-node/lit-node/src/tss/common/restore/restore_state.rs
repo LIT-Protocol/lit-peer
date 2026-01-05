@@ -93,10 +93,12 @@ impl RestoreState {
             .chain_data_config_manager
             .set_key_sets_from_chain()
             .await?;
-        let default_key_set = DataVersionReader::read_field_unchecked(
-            &tss_state.chain_data_config_manager.generic_config,
-            |generic_config| generic_config.default_key_set.clone(),
-        );
+
+        // temporary fix for datil keyset
+        // the real fix may need to dynamically adjust the restore state after the blinders have been uploaded
+        // this will occur in the next PR.       
+        let default_key_set = Some("datil-keyset".to_string());
+
         let key_set = DataVersionReader::read_field_unchecked(
             &tss_state.chain_data_config_manager.key_sets,
             |key_sets| {
