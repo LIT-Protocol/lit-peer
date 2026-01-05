@@ -10282,7 +10282,6 @@ dependencies = [
  "ucan-capabilities-object",
  "url",
  "utils",
- "uuid 1.18.0",
  "verifiable-share-encryption",
  "visibility",
  "web3",

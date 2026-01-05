@@ -174,7 +174,15 @@ where
     }
 
     /// # Safety
-    /// Returns pointers to data owned by this layer, valid for `&self` lifetime.
+    ///
+    /// This implements the `downcast_raw` method required by `tracing_subscriber::Layer`
+    /// to enable type-safe access to this layer's helper types via `Dispatch::downcast_ref`.
+    ///
+    /// Safety invariants upheld:
+    /// - All returned pointers point to fields owned by `self` (`with_context`, `get_context`)
+    /// - Pointers remain valid for the `&self` lifetime (layer lifetime matches subscriber)
+    /// - The tracing-subscriber machinery guarantees pointers aren't stored beyond the call
+    /// - This follows the standard pattern from `tracing-subscriber` and `tracing-opentelemetry`
     unsafe fn downcast_raw(&self, id: TypeId) -> Option<*const ()> {
         match id {
             id if id == TypeId::of::<Self>() => Some(self as *const _ as *const ()),

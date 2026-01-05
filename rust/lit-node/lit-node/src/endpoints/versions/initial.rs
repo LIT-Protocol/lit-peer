@@ -7,7 +7,7 @@ use crate::payment::delegated_usage::DelegatedUsageDB;
 use crate::siwe_db::rpc::EthBlockhashCache;
 use crate::tss::common::restore::RestoreState;
 use crate::tss::common::tss_state::TssState;
-use crate::utils::rocket::guards::{RequestHeaders, set_request_id_on_span};
+use crate::utils::rocket::guards::RequestHeaders;
 use crate::utils::web::with_timeout;
 use lit_api_core::context::{SdkVersion, Tracer, Tracing, TracingRequired};
 use lit_api_core::error::ApiError;
@@ -339,9 +339,8 @@ pub(crate) async fn pkp_claim(
     json_pkp_claim_request: Json<EncryptedPayload<JsonPKPClaimKeyRequest>>,
     tracing: Tracing,
     http_client: &State<reqwest::Client>,
-    request_headers: RequestHeaders<'_>,
 ) -> status::Custom<Value> {
-    set_request_id_on_span(&request_headers);
+    // Context is already set by the Tracing guard's FromRequest implementation
     let (pkp_claim_request, client_session) =
         match client_state.json_decrypt_to_session(&json_pkp_claim_request.0) {
             Ok(data) => data,

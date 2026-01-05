@@ -22,7 +22,7 @@ use crate::siwe_db::{db, rpc::EthBlockhashCache};
 use crate::tss::common::tss_state::TssState;
 use crate::utils::attestation::create_attestation;
 use crate::utils::encoding;
-use crate::utils::rocket::guards::{RequestHeaders, set_request_id_on_span};
+use crate::utils::rocket::guards::RequestHeaders;
 use crate::utils::web::{
     check_condition_count, get_auth_context, get_bls_root_pubkey, get_ipfs_file,
     hash_access_control_conditions,
@@ -628,7 +628,7 @@ pub(crate) async fn execute_function(
     use lit_node_common::config::LitNodeConfig;
     use lit_node_core::{LitActionResource, constants::CHAIN_ETHEREUM, response};
 
-    set_request_id_on_span(&request_headers);
+    // Context is already set by the Tracing guard in the outer handler
 
     let request_start = std::time::Instant::now();
 
@@ -1246,7 +1246,7 @@ pub(crate) async fn sign_session_key(
     };
     use lit_node_core::response;
 
-    set_request_id_on_span(&request_headers);
+    // Context is already set by the Tracing guard in the outer handler
 
     let request_start = std::time::Instant::now();
     trace!(
