@@ -17,6 +17,7 @@ use lit_node::{
     peers::peer_reviewer::{Issue, MAX_COMPLAINT_REASON_VALUE},
     utils::consensus::get_threshold_count,
 };
+use lit_node_testnet::DEFAULT_KEY_SET_NAME;
 use lit_node_testnet::validator::remove_node_keys;
 use lit_node_testnet::{TestSetupBuilder, end_user::EndUser};
 use lit_node_testnet::{
@@ -267,6 +268,12 @@ async fn one_node_never_wakes() {
     .await
     .expect("Failed to setup contracts");
 
+    testnet
+        .actions()
+        .set_default_keyset_id(1, DEFAULT_KEY_SET_NAME)
+        .await
+        .expect("Failed to set default keyset id");
+
     let validator_collection = ValidatorCollection::builder()
         .num_staked_nodes(num_nodes)
         .num_asleep_initially(1)
@@ -479,6 +486,12 @@ async fn one_node_conflicting_networking_info(test_case: usize) {
         .await
         .expect("Failed to setup contracts");
 
+    testnet
+        .actions()
+        .set_default_keyset_id(1, DEFAULT_KEY_SET_NAME)
+        .await
+        .expect("Failed to set default keyset id");
+
     let validator_collection = ValidatorCollection::builder()
         .num_staked_nodes(num_nodes)
         .wait_for_root_keys(false)
@@ -569,6 +582,7 @@ async fn node_restarts_without_key_material() {
     // set epoch length to 30 mins so it never elapses unless we advance the clock
     let (testnet, mut validator_collection, end_user) = TestSetupBuilder::default()
         .num_staked_and_joined_validators(num_nodes)
+        .force_deploy(true)
         .epoch_length(epoch_length)
         .build()
         .await;
@@ -696,6 +710,10 @@ async fn register_attested_wallet() {
     .expect("Failed to setup contracts");
 
     let actions = testnet.actions();
+    actions
+        .set_default_keyset_id(1, DEFAULT_KEY_SET_NAME)
+        .await
+        .expect("Failed to set default keyset id");
 
     // Assert that the node addresses and operator addresses are the same.
     let next_validator_structs = actions.get_next_validator_structs(realm_id).await;

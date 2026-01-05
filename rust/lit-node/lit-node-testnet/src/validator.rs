@@ -1389,19 +1389,18 @@ impl Node {
 
         let response = response?;
 
-        if response.status() != 200 {
-            if response.status() == 400 && !require_valid_handshake {
+        let status_code = response.status();
+        if status_code != 200 {
+            if status_code == 400 && !require_valid_handshake {
                 info!(
                     "Node {} is responding, but not ready. Status: {:?}.  For this test, assuming node is awake.",
-                    port,
-                    response.status()
+                    port, status_code
                 );
                 return Ok(true);
             } else {
                 info!(
                     "Node {} is responding, but not ready. Status: {:?}",
-                    port,
-                    response.status()
+                    port, status_code
                 );
 
                 return Ok(false);
@@ -1410,7 +1409,10 @@ impl Node {
 
         let response_text = response.text().await?;
 
-        warn!("Response from node {}: {}", port, response_text);
+        warn!(
+            "Response from node {}: (Status:{}) {}",
+            port, status_code, response_text
+        );
 
         Ok(true)
     }
