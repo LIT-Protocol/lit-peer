@@ -62,7 +62,6 @@ pub(crate) async fn sign_session_key(
     tracing: Tracing,
     request_headers: RequestHeaders<'_>,
 ) -> status::Custom<Value> {
-    // Context is already set by the Tracing guard's FromRequest implementation
     payment_tracker.register_usage(&PayedEndpoint::SignSessionKey);
 
     let (json_sign_session_key_request, client_session) =
@@ -131,7 +130,6 @@ pub(crate) async fn encryption_sign(
     encryption_sign_request: Json<EncryptedPayload<EncryptionSignRequest>>,
     tracing: Tracing,
 ) -> status::Custom<Value> {
-    // Context is already set by the Tracing guard's FromRequest implementation
     // TODO: Uncomment this once we support EIP1271 SessionSig as we currently only support EIP1271 AuthSig
     // // We can only accept a SessionSig in this endpoint
     // match encryption_sign_request.auth_sig.get_auth_type() {
@@ -212,7 +210,6 @@ pub(crate) async fn execute_function(
     request_headers: RequestHeaders<'_>,
     action_store: &State<ActionStore>,
 ) -> status::Custom<Value> {
-    // Context is already set by the Tracing guard's FromRequest implementation
     payment_tracker.register_usage(&PayedEndpoint::LitAction);
 
     let (json_execution_request, client_session) =
@@ -278,7 +275,6 @@ pub(crate) async fn get_job_status(
     client_state: &State<Arc<ClientState>>,
     tracing: Tracing,
 ) -> status::Custom<Value> {
-    // Context is already set by the Tracing guard's FromRequest implementation
     let (job_status_request, client_session) =
         match client_state.json_decrypt_to_session(&job_status_request) {
             Ok(request) => request,
@@ -334,7 +330,6 @@ pub(crate) async fn pkp_sign(
     tracing: Tracing,
     http_client: &State<reqwest::Client>,
 ) -> status::Custom<Value> {
-    // Context is already set by the Tracing guard's FromRequest implementation
     payment_tracker.register_usage(&PayedEndpoint::PkpSign);
 
     let (json_pkp_signing_request, client_session) =

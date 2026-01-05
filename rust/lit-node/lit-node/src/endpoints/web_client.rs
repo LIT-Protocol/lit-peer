@@ -628,8 +628,6 @@ pub(crate) async fn execute_function(
     use lit_node_common::config::LitNodeConfig;
     use lit_node_core::{LitActionResource, constants::CHAIN_ETHEREUM, response};
 
-    // Context is already set by the Tracing guard in the outer handler
-
     let request_start = std::time::Instant::now();
 
     trace!(
@@ -1245,8 +1243,6 @@ pub(crate) async fn sign_session_key(
         utils::{contract::get_pkp_permissions_contract, siwe::validate_siwe},
     };
     use lit_node_core::response;
-
-    // Context is already set by the Tracing guard in the outer handler
 
     let request_start = std::time::Instant::now();
     trace!(

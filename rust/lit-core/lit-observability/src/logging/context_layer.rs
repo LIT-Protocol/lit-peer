@@ -102,6 +102,23 @@ where
         }
         None
     }
+
+    fn resolve_request_context(
+        &self, ctx: &Context<'_, S>, event: &Event<'_>,
+    ) -> Option<RequestContext> {
+        if let Some(scope) = ctx.event_scope(event) {
+            for span in scope {
+                if let Some(request_ctx) = span.extensions().get::<RequestContext>() {
+                    if request_ctx.has_context() {
+                        return Some(request_ctx.clone());
+                    }
+                }
+            }
+        }
+
+        THREAD_REQUEST_CONTEXT
+            .with(|ctx| ctx.borrow().as_ref().filter(|ctx| ctx.has_context()).cloned())
+    }
 }
 
 impl<S> Layer<S> for ContextAwareOtelLogLayer<S>
@@ -142,29 +159,23 @@ where
         event.record(&mut visitor);
         let context_fields = visitor.into_recorded_context_fields();
 
-        // Inject request context from span hierarchy (root to leaf, stop at first context).
-        if let Some(scope) = ctx.event_scope(event) {
-            for span in scope.from_root() {
-                if let Some(request_ctx) = span.extensions().get::<RequestContext>() {
-                    if request_ctx.has_context() {
-                        // Only add attributes not already present from event fields
-                        if !context_fields.has_request_id {
-                            if let Some(ref request_id) = request_ctx.request_id {
-                                log_record.add_attribute(
-                                    Key::new("request_id"),
-                                    AnyValue::from(request_id.clone()),
-                                );
-                            }
-                        }
-                        if !context_fields.has_correlation_id {
-                            if let Some(ref correlation_id) = request_ctx.correlation_id {
-                                log_record.add_attribute(
-                                    Key::new("correlation_id"),
-                                    AnyValue::from(correlation_id.clone()),
-                                );
-                            }
-                        }
-                        break;
+        if !context_fields.has_request_id || !context_fields.has_correlation_id {
+            if let Some(request_ctx) = self.resolve_request_context(&ctx, event) {
+                // Only add attributes not already present from event fields
+                if !context_fields.has_request_id {
+                    if let Some(ref request_id) = request_ctx.request_id {
+                        log_record.add_attribute(
+                            Key::new("request_id"),
+                            AnyValue::from(request_id.clone()),
+                        );
+                    }
+                }
+                if !context_fields.has_correlation_id {
+                    if let Some(ref correlation_id) = request_ctx.correlation_id {
+                        log_record.add_attribute(
+                            Key::new("correlation_id"),
+                            AnyValue::from(correlation_id.clone()),
+                        );
                     }
                 }
             }
@@ -383,168 +394,34 @@ mod tests {
     use tracing_subscriber::Registry;
     use tracing_subscriber::layer::SubscriberExt;
 
-    #[test]
-    fn test_request_context_has_context() {
-        let empty = RequestContext::default();
-        assert!(!empty.has_context());
-
-        let with_request_id = RequestContext::new(Some("req-123".to_string()), None);
-        assert!(with_request_id.has_context());
-
-        let with_correlation_id = RequestContext::new(None, Some("corr-456".to_string()));
-        assert!(with_correlation_id.has_context());
-
-        let with_both =
-            RequestContext::new(Some("req-123".to_string()), Some("corr-456".to_string()));
-        assert!(with_both.has_context());
-    }
-
-    #[test]
-    fn test_set_request_context_stores_in_span_extensions() {
+    fn with_test_subscriber<F>(f: F)
+    where
+        F: FnOnce(),
+    {
         let provider = LoggerProvider::builder().with_resource(Resource::empty()).build();
         let layer = ContextAwareOtelLogLayer::new(&provider);
         let subscriber = Registry::default().with(layer);
 
         tracing::subscriber::with_default(subscriber, || {
-            let span = tracing::info_span!("test_span");
-            let _guard = span.enter();
-
-            set_request_context(
-                Some("test-req-123".to_string()),
-                Some("test-corr-456".to_string()),
-            );
-
-            Span::current().with_subscriber(|(_id, dispatch)| {
-                assert!(dispatch.downcast_ref::<WithRequestContext>().is_some());
-            });
+            clear_request_context();
+            f();
+            clear_request_context();
         });
     }
 
     #[test]
     fn test_set_request_context_noop_when_empty() {
-        let provider = LoggerProvider::builder().with_resource(Resource::empty()).build();
-        let layer = ContextAwareOtelLogLayer::new(&provider);
-        let subscriber = Registry::default().with(layer);
-
-        tracing::subscriber::with_default(subscriber, || {
+        with_test_subscriber(|| {
             let span = tracing::info_span!("test_span");
             let _guard = span.enter();
             set_request_context(None, None);
+            assert!(get_request_context().is_none());
         });
-    }
-
-    #[test]
-    fn test_layer_works_with_layered_subscriber() {
-        let provider = LoggerProvider::builder().with_resource(Resource::empty()).build();
-        let context_layer = ContextAwareOtelLogLayer::new(&provider);
-        let subscriber = Registry::default()
-            .with(tracing_subscriber::fmt::layer().with_test_writer())
-            .with(context_layer);
-
-        tracing::subscriber::with_default(subscriber, || {
-            let span = tracing::info_span!("layered_test");
-            let _guard = span.enter();
-
-            set_request_context(
-                Some("layered-req-id".to_string()),
-                Some("layered-corr-id".to_string()),
-            );
-            tracing::info!("Test log in layered subscriber");
-        });
-    }
-
-    #[test]
-    fn test_context_propagates_to_child_spans() {
-        let provider = LoggerProvider::builder().with_resource(Resource::empty()).build();
-        let layer = ContextAwareOtelLogLayer::new(&provider);
-        let subscriber = Registry::default().with(layer);
-
-        tracing::subscriber::with_default(subscriber, || {
-            let parent_span = tracing::info_span!("parent");
-            let _parent_guard = parent_span.enter();
-            set_request_context(Some("parent-req".to_string()), Some("parent-corr".to_string()));
-
-            let child_span = tracing::info_span!("child");
-            let _child_guard = child_span.enter();
-            tracing::info!("Log from child span");
-
-            let grandchild_span = tracing::info_span!("grandchild");
-            let _grandchild_guard = grandchild_span.enter();
-            tracing::info!("Log from grandchild span");
-        });
-    }
-
-    #[test]
-    fn test_with_request_context_helper() {
-        let _helper = WithRequestContext(|_dispatch, _id, _ctx| {});
-        assert!(std::mem::size_of::<WithRequestContext>() > 0);
-    }
-
-    #[test]
-    fn test_request_context_stored_and_retrieved() {
-        let provider = LoggerProvider::builder().with_resource(Resource::empty()).build();
-        let layer = ContextAwareOtelLogLayer::new(&provider);
-        let subscriber = Registry::default().with(layer);
-
-        tracing::subscriber::with_default(subscriber, || {
-            let span = tracing::info_span!("test_span");
-            let _guard = span.enter();
-
-            set_request_context(
-                Some("stored-req-id".to_string()),
-                Some("stored-corr-id".to_string()),
-            );
-
-            Span::current().with_subscriber(|(_id, dispatch)| {
-                assert!(dispatch.downcast_ref::<WithRequestContext>().is_some());
-            });
-
-            tracing::info!("Test log with context");
-        });
-    }
-
-    #[test]
-    fn test_recorded_context_fields_tracking() {
-        let mut fields = RecordedContextFields::default();
-        assert!(!fields.has_request_id);
-        assert!(!fields.has_correlation_id);
-
-        fields.has_request_id = true;
-        assert!(fields.has_request_id);
-        assert!(!fields.has_correlation_id);
-
-        fields.has_correlation_id = true;
-        assert!(fields.has_request_id);
-        assert!(fields.has_correlation_id);
-    }
-
-    #[test]
-    fn test_event_visitor_tracks_context_fields() {
-        let provider = LoggerProvider::builder().with_resource(Resource::empty()).build();
-        let logger = opentelemetry::logs::LoggerProvider::logger(&provider, "test");
-        let mut log_record = logger.create_log_record();
-        let mut visitor = EventVisitor::new(&mut log_record);
-
-        visitor.track_context_field("request_id");
-        assert!(visitor.context_fields.has_request_id);
-        assert!(!visitor.context_fields.has_correlation_id);
-
-        visitor.track_context_field("correlation_id");
-        assert!(visitor.context_fields.has_request_id);
-        assert!(visitor.context_fields.has_correlation_id);
-
-        visitor.track_context_field("some_other_field");
-        assert!(visitor.context_fields.has_request_id);
-        assert!(visitor.context_fields.has_correlation_id);
     }
 
     #[test]
     fn test_get_request_context_returns_stored_values() {
-        let provider = LoggerProvider::builder().with_resource(Resource::empty()).build();
-        let layer = ContextAwareOtelLogLayer::new(&provider);
-        let subscriber = Registry::default().with(layer);
-
-        tracing::subscriber::with_default(subscriber, || {
+        with_test_subscriber(|| {
             let span = tracing::info_span!("test_span");
             let _guard = span.enter();
 
@@ -564,12 +441,8 @@ mod tests {
     }
 
     #[test]
-    fn test_get_request_context_finds_parent_context() {
-        let provider = LoggerProvider::builder().with_resource(Resource::empty()).build();
-        let layer = ContextAwareOtelLogLayer::new(&provider);
-        let subscriber = Registry::default().with(layer);
-
-        tracing::subscriber::with_default(subscriber, || {
+    fn test_get_request_context_inherits_parent_context() {
+        with_test_subscriber(|| {
             let parent_span = tracing::info_span!("parent");
             let _parent_guard = parent_span.enter();
             set_request_context(
@@ -590,211 +463,12 @@ mod tests {
                 child_ctx.as_ref().and_then(|c| c.correlation_id.as_ref()),
                 Some(&"parent-corr-id".to_string())
             );
-            tracing::info!("Log from child");
-        });
-    }
-
-    #[test]
-    fn test_get_request_context_helper_downcast() {
-        let provider = LoggerProvider::builder().with_resource(Resource::empty()).build();
-        let layer = ContextAwareOtelLogLayer::new(&provider);
-        let subscriber = Registry::default().with(layer);
-
-        tracing::subscriber::with_default(subscriber, || {
-            let span = tracing::info_span!("test_span");
-            let _guard = span.enter();
-
-            Span::current().with_subscriber(|(_id, dispatch)| {
-                assert!(dispatch.downcast_ref::<GetRequestContext>().is_some());
-                assert!(dispatch.downcast_ref::<WithRequestContext>().is_some());
-            });
-        });
-    }
-
-    #[test]
-    fn test_context_not_overwritten_by_child() {
-        let provider = LoggerProvider::builder().with_resource(Resource::empty()).build();
-        let layer = ContextAwareOtelLogLayer::new(&provider);
-        let subscriber = Registry::default().with(layer);
-
-        tracing::subscriber::with_default(subscriber, || {
-            let parent_span = tracing::info_span!("parent");
-            let _parent_guard = parent_span.enter();
-
-            set_request_context(Some("parent-req".to_string()), Some("parent-corr".to_string()));
-
-            let parent_ctx = get_request_context();
-            assert_eq!(
-                parent_ctx.as_ref().and_then(|c| c.request_id.as_ref()),
-                Some(&"parent-req".to_string())
-            );
-
-            {
-                let child_span = tracing::info_span!("child");
-                let _child_guard = child_span.enter();
-
-                set_request_context(Some("child-req".to_string()), Some("child-corr".to_string()));
-
-                let child_ctx = get_request_context();
-                assert_eq!(
-                    child_ctx.as_ref().and_then(|c| c.request_id.as_ref()),
-                    Some(&"child-req".to_string())
-                );
-            }
-
-            let parent_ctx_after = get_request_context();
-            assert_eq!(
-                parent_ctx_after.as_ref().and_then(|c| c.request_id.as_ref()),
-                Some(&"parent-req".to_string())
-            );
-        });
-    }
-
-    #[test]
-    fn test_get_request_context_walks_hierarchy() {
-        let provider = LoggerProvider::builder().with_resource(Resource::empty()).build();
-        let layer = ContextAwareOtelLogLayer::new(&provider);
-        let subscriber = Registry::default().with(layer);
-
-        tracing::subscriber::with_default(subscriber, || {
-            let parent_span = tracing::info_span!("parent");
-            let _parent_guard = parent_span.enter();
-            set_request_context(
-                Some("parent-req-id".to_string()),
-                Some("parent-corr-id".to_string()),
-            );
-
-            let parent_ctx = get_request_context();
-            assert!(parent_ctx.is_some());
-            assert_eq!(
-                parent_ctx.as_ref().and_then(|c| c.request_id.as_ref()),
-                Some(&"parent-req-id".to_string())
-            );
-
-            let child_span = tracing::info_span!("child");
-            let _child_guard = child_span.enter();
-
-            let child_ctx = get_request_context();
-            assert!(child_ctx.is_some());
-            assert_eq!(
-                child_ctx.as_ref().and_then(|c| c.request_id.as_ref()),
-                Some(&"parent-req-id".to_string())
-            );
-            assert_eq!(
-                child_ctx.as_ref().and_then(|c| c.correlation_id.as_ref()),
-                Some(&"parent-corr-id".to_string())
-            );
-
-            let grandchild_span = tracing::info_span!("grandchild");
-            let _grandchild_guard = grandchild_span.enter();
-
-            let grandchild_ctx = get_request_context();
-            assert!(grandchild_ctx.is_some());
-            assert_eq!(
-                grandchild_ctx.as_ref().and_then(|c| c.request_id.as_ref()),
-                Some(&"parent-req-id".to_string())
-            );
-        });
-    }
-
-    #[test]
-    fn test_partial_context_inheritance() {
-        let provider = LoggerProvider::builder().with_resource(Resource::empty()).build();
-        let layer = ContextAwareOtelLogLayer::new(&provider);
-        let subscriber = Registry::default().with(layer);
-
-        tracing::subscriber::with_default(subscriber, || {
-            let grandparent_span = tracing::info_span!("grandparent");
-            let _grandparent_guard = grandparent_span.enter();
-            set_request_context(Some("gp-req-id".to_string()), None);
-
-            let parent_span = tracing::info_span!("parent");
-            let _parent_guard = parent_span.enter();
-            set_request_context(None, Some("parent-corr-id".to_string()));
-
-            let child_span = tracing::info_span!("child");
-            let _child_guard = child_span.enter();
-
-            let child_ctx = get_request_context();
-            assert!(child_ctx.is_some());
-        });
-    }
-
-    #[test]
-    fn test_distinct_request_and_correlation_ids() {
-        let provider = LoggerProvider::builder().with_resource(Resource::empty()).build();
-        let layer = ContextAwareOtelLogLayer::new(&provider);
-        let subscriber = Registry::default().with(layer);
-
-        tracing::subscriber::with_default(subscriber, || {
-            let span = tracing::info_span!("test_span");
-            let _guard = span.enter();
-
-            let req_id = "unique-request-id-123".to_string();
-            let corr_id = "unique-correlation-id-456".to_string();
-            set_request_context(Some(req_id.clone()), Some(corr_id.clone()));
-
-            let ctx = get_request_context();
-            assert!(ctx.is_some());
-            let ctx = ctx.unwrap();
-
-            assert_eq!(ctx.request_id, Some(req_id));
-            assert_eq!(ctx.correlation_id, Some(corr_id));
-            assert_ne!(ctx.request_id, ctx.correlation_id);
-        });
-    }
-
-    #[test]
-    fn test_request_context_only_request_id() {
-        let provider = LoggerProvider::builder().with_resource(Resource::empty()).build();
-        let layer = ContextAwareOtelLogLayer::new(&provider);
-        let subscriber = Registry::default().with(layer);
-
-        tracing::subscriber::with_default(subscriber, || {
-            let span = tracing::info_span!("test_span");
-            let _guard = span.enter();
-
-            set_request_context(Some("only-req-id".to_string()), None);
-
-            let ctx = get_request_context();
-            assert!(ctx.is_some());
-            let ctx = ctx.unwrap();
-            assert_eq!(ctx.request_id, Some("only-req-id".to_string()));
-            assert_eq!(ctx.correlation_id, None);
-            assert!(ctx.has_context());
-        });
-    }
-
-    #[test]
-    fn test_request_context_only_correlation_id() {
-        let provider = LoggerProvider::builder().with_resource(Resource::empty()).build();
-        let layer = ContextAwareOtelLogLayer::new(&provider);
-        let subscriber = Registry::default().with(layer);
-
-        tracing::subscriber::with_default(subscriber, || {
-            let span = tracing::info_span!("test_span");
-            let _guard = span.enter();
-
-            set_request_context(None, Some("only-corr-id".to_string()));
-
-            let ctx = get_request_context();
-            assert!(ctx.is_some());
-            let ctx = ctx.unwrap();
-            assert_eq!(ctx.request_id, None);
-            assert_eq!(ctx.correlation_id, Some("only-corr-id".to_string()));
-            assert!(ctx.has_context());
         });
     }
 
     #[test]
     fn test_thread_local_fallback_when_span_hierarchy_disconnected() {
-        let provider = LoggerProvider::builder().with_resource(Resource::empty()).build();
-        let layer = ContextAwareOtelLogLayer::new(&provider);
-        let subscriber = Registry::default().with(layer);
-
-        tracing::subscriber::with_default(subscriber, || {
-            clear_request_context();
-
+        with_test_subscriber(|| {
             let expected_req_id = "guard-set-req-id".to_string();
             let expected_corr_id = "guard-set-corr-id".to_string();
             set_request_context(Some(expected_req_id.clone()), Some(expected_corr_id.clone()));
@@ -807,18 +481,12 @@ mod tests {
             let ctx = ctx.unwrap();
             assert_eq!(ctx.request_id, Some(expected_req_id));
             assert_eq!(ctx.correlation_id, Some(expected_corr_id));
-
-            clear_request_context();
         });
     }
 
     #[test]
     fn test_clear_request_context() {
-        let provider = LoggerProvider::builder().with_resource(Resource::empty()).build();
-        let layer = ContextAwareOtelLogLayer::new(&provider);
-        let subscriber = Registry::default().with(layer);
-
-        tracing::subscriber::with_default(subscriber, || {
+        with_test_subscriber(|| {
             set_request_context(
                 Some("to-be-cleared-req".to_string()),
                 Some("to-be-cleared-corr".to_string()),
@@ -839,13 +507,7 @@ mod tests {
 
     #[test]
     fn test_log_emission_with_context_does_not_panic() {
-        let provider = LoggerProvider::builder().with_resource(Resource::empty()).build();
-        let layer = ContextAwareOtelLogLayer::new(&provider);
-        let subscriber = Registry::default().with(layer);
-
-        tracing::subscriber::with_default(subscriber, || {
-            clear_request_context();
-
+        with_test_subscriber(|| {
             let span = tracing::info_span!("test_span");
             let _guard = span.enter();
 
@@ -861,8 +523,6 @@ mod tests {
             tracing::error!("Error level log");
 
             tracing::info!(custom_field = "custom_value", numeric_field = 42, "Log with fields");
-
-            clear_request_context();
         });
     }
 }

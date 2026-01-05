@@ -340,7 +340,6 @@ pub(crate) async fn pkp_claim(
     tracing: Tracing,
     http_client: &State<reqwest::Client>,
 ) -> status::Custom<Value> {
-    // Context is already set by the Tracing guard's FromRequest implementation
     let (pkp_claim_request, client_session) =
         match client_state.json_decrypt_to_session(&json_pkp_claim_request.0) {
             Ok(data) => data,
