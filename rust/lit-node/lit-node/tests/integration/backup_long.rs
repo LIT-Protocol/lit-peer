@@ -83,6 +83,7 @@ async fn end_to_end_test(
     crate::common::setup_logging();
     let (testnet, mut validator_collection, end_user) = TestSetupBuilder::default()
         .num_staked_and_joined_validators(number_of_nodes_before)
+        .force_deploy(true)
         .build()
         .await;
 

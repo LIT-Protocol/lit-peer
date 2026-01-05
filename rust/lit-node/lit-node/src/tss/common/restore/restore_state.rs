@@ -18,6 +18,7 @@ use crate::tss::common::restore::eks_and_ds::{
 use crate::tss::common::restore::point_reader::PointReader;
 use crate::tss::common::tss_state::TssState;
 use crate::utils::contract::get_backup_recovery_contract_with_signer;
+use crate::utils::keysets::{get_default_keyset_id, get_key_set_by_id, key_set_id_exists};
 use crate::utils::traits::SignatureCurve;
 use crate::version::{DataVersionReader, DataVersionWriter};
 use lit_blockchain::contracts::backup_recovery::{BackupRecoveryErrors, RecoveredPeerId};
@@ -96,36 +97,14 @@ impl RestoreState {
 
         // temporary fix for datil keyset (to be removed in the next PR)
         // the real fix may need to dynamically adjust the restore state after the blinders have been uploaded
-        let default_key_set = Some("datil-keyset".to_string());
+        let key_set_id =
+            match key_set_id_exists(&tss_state.chain_data_config_manager, "datil-keyset") {
+                true => "datil-keyset".to_string(),
+                false => get_default_keyset_id(&tss_state.chain_data_config_manager)?,
+            };
 
-        let key_set = DataVersionReader::read_field_unchecked(
-            &tss_state.chain_data_config_manager.key_sets,
-            |key_sets| {
-                let key_set = match &default_key_set {
-                    Some(id) => match key_sets.get(id) {
-                        Some(key_set) => key_set.clone(),
-                        None => {
-                            return Err(unexpected_err(
-                                format!(
-                                    "Expected key set config information for {id} but it doesn't exist"
-                                ),
-                                None,
-                            ));
-                        }
-                    },
-                    None => match key_sets.first_key_value() {
-                        Some((_id, key_set)) => key_set.clone(),
-                        None => {
-                            return Err(unexpected_err(
-                                "No key sets exist to restore".to_string(),
-                                None,
-                            ));
-                        }
-                    },
-                };
-                Ok(key_set)
-            },
-        )?;
+        let key_set = get_key_set_by_id(&tss_state.chain_data_config_manager, &key_set_id)?;
+
         debug!("Restoring key set: {:?}", &key_set);
         DataVersionWriter::store(&self.restoring_key_set, key_set);
         Ok(())
