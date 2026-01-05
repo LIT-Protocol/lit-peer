@@ -1,7 +1,9 @@
 //! Context-aware OpenTelemetry log layer.
 //!
-//! Injects request context (request_id, correlation_id) into OpenTelemetry LogRecords.
-//! Context is stored in span extensions (primary) and thread-local (fallback for disconnected spans).
+//! Injects request context (request_id, correlation_id) into OTLP log records.
+//! Context is stored in span extensions (primary) with a thread-local fallback for
+//! disconnected span lifecycles (e.g., Rocket guards). Thread-local storage must
+//! be cleared at request boundaries (lit-node uses a Rocket fairing for this).
 
 use std::any::TypeId;
 use std::borrow::Cow;
@@ -23,6 +25,7 @@ const INSTRUMENTATION_LIBRARY_NAME: &str = "lit-observability";
 
 thread_local! {
     /// Fallback storage for disconnected span scenarios.
+    /// Thread-bound, not task-bound; clear at request boundaries to prevent leakage.
     static THREAD_REQUEST_CONTEXT: RefCell<Option<RequestContext>> = const { RefCell::new(None) };
 }
 
@@ -293,10 +296,11 @@ impl<LR: opentelemetry::logs::LogRecord> tracing::field::Visit for EventVisitor<
 
 /// Sets request context on the current span for log injection.
 ///
-/// Stores context in three places for different consumers:
-/// - Span extensions: for log injection (OTLP and stdout)
-/// - OTel span attributes: for distributed tracing backends (Jaeger, Tempo)
-/// - Thread-local: fallback for disconnected span scenarios (e.g., Rocket guards)
+/// - Span extensions: primary storage for log injection (OTLP/stdout)
+/// - OTel span attributes: for trace backends
+/// - Thread-local: fallback for disconnected spans (must be cleared at request boundaries)
+///
+/// No-op when both `request_id` and `correlation_id` are `None`.
 pub fn set_request_context(request_id: Option<String>, correlation_id: Option<String>) {
     let request_ctx = RequestContext::new(request_id.clone(), correlation_id.clone());
     if !request_ctx.has_context() {
@@ -356,10 +360,7 @@ pub fn get_request_context() -> Option<RequestContext> {
     THREAD_REQUEST_CONTEXT.with(|ctx| ctx.borrow().clone())
 }
 
-/// Clears the thread-local request context.
-///
-/// Call at end of request processing to prevent context leakage
-/// between requests on the same thread (important for thread-pooled servers).
+/// Clears the thread-local fallback. Call at request boundaries to prevent leakage.
 pub fn clear_request_context() {
     THREAD_REQUEST_CONTEXT.with(|ctx| {
         *ctx.borrow_mut() = None;

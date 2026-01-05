@@ -50,8 +50,8 @@ fn extract_request_context(headers: &RequestHeaders<'_>) -> RequestContext {
 
 /// Sets request context on the current span from request headers.
 ///
-/// Use this in endpoints that have `RequestHeaders` but not the `Tracing` guard.
-/// If `Tracing` or `TracingRequired` guard is used, this call is redundant but harmless.
+/// Use this at the start of endpoints that accept `RequestHeaders` so the
+/// handler span carries request context for log injection.
 pub fn set_request_id_on_span(headers: &RequestHeaders<'_>) {
     let request_ctx = extract_request_context(headers);
     set_request_context(request_ctx.request_id, request_ctx.correlation_id);

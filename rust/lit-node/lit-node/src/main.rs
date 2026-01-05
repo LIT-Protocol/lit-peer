@@ -55,6 +55,7 @@ use tracing::error;
 use tracing_subscriber::util::SubscriberInitExt;
 
 use crate::peers::grpc_client_pool::GrpcClientPool;
+use crate::utils::rocket::fairings::RequestContextCleanupFairing;
 use crate::utils::web::default_http_client;
 use rocket::Request;
 use rocket::serde::json::Value;
@@ -399,6 +400,7 @@ pub fn main() {
                 .mount("/", endpoints::versions::v1::routes())
                 // include the v2 routes
                 .mount("/", endpoints::versions::v2::routes())
+                .attach(RequestContextCleanupFairing)
                 .attach(cors)
                 .attach(AdHoc::on_response("Version Header", |_, resp| {
                     Box::pin(async move {
