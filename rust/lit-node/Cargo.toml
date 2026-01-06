@@ -83,6 +83,7 @@ deno_core = { git = "https://github.com/Lit-Protocol/deno_core", branch = "fix/d
 # Fix libffi build on macOS Sequoia (required by Deno)
 # Upstream issue: https://github.com/tov/libffi-rs/issues/109
 libffi-sys = { git = "https://github.com/integer32llc/libffi-rs", rev = "8df0df577317bdca2c2b5e9ae263ba0e98fa9076" }
+#elliptic-curve-tools = { path = "../../../../mikelodder/elliptic-curve-tools" }
 
 # Please keep all profiles in sync with lit-actions
 [profile.release]

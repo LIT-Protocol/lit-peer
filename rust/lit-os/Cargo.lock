@@ -10237,6 +10237,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "lit-blockchain-lite"
+version = "0.1.0"
+source = "git+https://github.com/LIT-Protocol/datil-lit-blockchain-lite.git#9696ea32aea6437a5780b8b0c36c25e2df97a0d2"
+dependencies = [
+ "ethers",
+ "serde",
+]
+
+[[package]]
 name = "lit-cli"
 version = "0.1.1"
 dependencies = [
@@ -10547,12 +10556,14 @@ dependencies = [
  "k256 0.13.4",
  "lit-attestation",
  "lit-blockchain",
+ "lit-blockchain-lite",
  "lit-core",
  "lit-logging",
  "lit-node-common",
  "lit-node-core",
  "lit-observability",
  "lit-sdk",
+ "multiexp",
  "once_cell",
  "rand 0.8.5",
  "rand_chacha 0.3.1",

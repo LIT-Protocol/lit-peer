@@ -69,7 +69,8 @@ pub(crate) async fn pkp_sign(
     let resource_ability = resource.signing_ability();
 
     // Validate auth sig item
-    let bls_root_pubkey = match get_bls_root_pubkey(tss_state, None) {
+    let key_set_id = json_pkp_signing_request.key_set_identifier;
+    let bls_root_pubkey = match get_bls_root_pubkey(tss_state, Some(&key_set_id)) {
         Ok(bls_root_pubkey) => bls_root_pubkey,
         Err(e) => {
             return client_session
@@ -156,6 +157,7 @@ pub(crate) async fn pkp_sign(
                 &peers,
                 curve_type,
                 Some(json_pkp_signing_request.epoch),
+                Some(key_set_id),
             )
             .await
         {

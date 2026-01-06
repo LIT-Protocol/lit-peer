@@ -14,11 +14,11 @@ use lit_node_core::{
     AccessControlConditionResource, LitAbility, LitResource, LitResourceAbilityRequest,
     LitResourceAbilityRequestResource, SigningScheme, response::JsonPKPSigningResponse,
 };
-use lit_node_testnet::TestSetupBuilder;
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::{get_identity_pubkeys_from_node_set, get_network_pubkey};
 use lit_node_testnet::testnet::Testnet;
 use lit_node_testnet::validator::ValidatorCollection;
+use lit_node_testnet::{DEFAULT_KEY_SET_NAME, TestSetupBuilder};
 use lit_sdk::signature::combine_and_verify_signature_shares;
 const INITIAL_VALIDATORS: usize = 5;
 const MAX_VALIDATORS: usize = 10;
@@ -221,6 +221,7 @@ async fn shadow_splicing_sign_encrypt() {
         test_encryption_parameters.clone(),
         &session_sigs_realm_1,
         epoch,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -233,6 +234,7 @@ async fn shadow_splicing_sign_encrypt() {
         test_encryption_parameters.clone(),
         &session_sigs_realm_2,
         epoch,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
     assert_decrypted(
@@ -359,6 +361,7 @@ async fn signature_from_realm(
         pubkey.clone(),
         epoch,
         scheme,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
     assert!(endpoint_responses.len() >= expected_responses);

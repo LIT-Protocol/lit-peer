@@ -5,6 +5,7 @@ use lit_node_core::request::JsonPKPSigningRequest;
 use lit_node_core::response::GenericResponse;
 use lit_node_core::response::JsonPKPSigningResponse;
 use lit_node_core::{AuthMethod, AuthSigItem, JsonAuthSig, NodeSet};
+use lit_node_testnet::DEFAULT_KEY_SET_NAME;
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::NodeIdentityKey;
 use lit_node_testnet::{TestSetupBuilder, testnet::Testnet, validator::ValidatorCollection};
@@ -162,6 +163,7 @@ pub async fn get_pkp_sign(
                             signing_scheme: SigningScheme::EcdsaK256Sha256,
                             epoch: 2, // Hardcoded as at other places in the tests
                             node_set: nodes.clone(),
+                            key_set_identifier: DEFAULT_KEY_SET_NAME.to_string(),
                         };
 
                         // json_body_vec.push(json_body);
@@ -199,6 +201,7 @@ pub async fn get_pkp_sign(
             signing_scheme: SigningScheme::EcdsaK256Sha256,
             epoch: 2, // Hardcoded as at other places in the tests
             node_set: nodes.clone(),
+            key_set_identifier: DEFAULT_KEY_SET_NAME.to_string(),
         };
         let my_secret_key = rand::rngs::OsRng.r#gen();
         let responses = lit_sdk::PKPSigningRequest::new()

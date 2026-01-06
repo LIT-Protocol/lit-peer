@@ -192,12 +192,17 @@ impl TssState {
         peers: &SimplePeerCollection,
         curve_type: CurveType,
         epoch: Option<u64>,
+        key_set_identifier: Option<String>,
     ) -> Result<usize> {
         let self_peer = peers.peer_at_address(&self.addr)?;
 
         // Shouldn't matter which key set is used, all the keys on this
         // node should have the same threshold
-        let curve_state = CurveState::new(self.peer_state.clone(), curve_type, None);
+        let curve_state = CurveState::new(
+            self.peer_state.clone(),
+            curve_type,
+            key_set_identifier.clone(),
+        );
         let root_keys = curve_state.root_keys()?;
 
         if root_keys.is_empty() {
@@ -292,6 +297,7 @@ impl TssState {
                 &peers,
                 curve_type,
                 Some(epoch),
+                None,
             )
             .await
         {

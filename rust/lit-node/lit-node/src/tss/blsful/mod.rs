@@ -84,6 +84,7 @@ impl Signable for BlsState {
                     &peers,
                     CurveType::BLS,
                     Some(epoch),
+                    None,
                 )
                 .await?
         };

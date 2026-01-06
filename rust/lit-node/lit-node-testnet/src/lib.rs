@@ -8,8 +8,8 @@ pub mod validator;
 use self::testnet::Testnet;
 use self::testnet::node_config::CustomNodeRuntimeConfig;
 use self::validator::ValidatorCollection;
-use crate::end_user::EndUser;
 use crate::testnet::contracts::StakingContractRealmConfig;
+use crate::{end_user::EndUser, validator::default_datil_keyset_config};
 use ethers::types::U256;
 use lit_core::config::{ENV_LIT_CONFIG_FILE, LitConfigBuilder, ReloadableLitConfig};
 
@@ -19,7 +19,18 @@ use std::{fs, path::Path, sync::Mutex};
 use tracing::{debug, error};
 use tracing_subscriber::util::SubscriberInitExt;
 
+pub const DEFAULT_KEY_SET_NAME: &str = "naga-keyset1";
+pub const DEFAULT_DATIL_KEY_SET_NAME: &str = "datil-keyset";
+
 const DEFAULT_NUM_STAKED_AND_JOINED_VALIDATORS: usize = 5;
+
+#[derive(Default, PartialEq, Clone)]
+pub enum DatilTestnetType {
+    #[default]
+    None,
+    Default,
+    NoKeyOverride,
+}
 
 pub struct TestSetupBuilder {
     num_staked_and_joined_validators: usize,
@@ -39,6 +50,7 @@ pub struct TestSetupBuilder {
     fund_ledger_for_wallet: bool,
     custom_binary_path: Option<String>,
     start_staked_only_validators: bool,
+    include_datil_testnet: DatilTestnetType,
 }
 
 impl Default for TestSetupBuilder {
@@ -61,6 +73,7 @@ impl Default for TestSetupBuilder {
             fund_ledger_for_wallet: true,
             custom_binary_path: None,
             start_staked_only_validators: true,
+            include_datil_testnet: DatilTestnetType::None,
         }
     }
 }
@@ -154,6 +167,11 @@ impl TestSetupBuilder {
         self
     }
 
+    pub fn include_datil_testnet(mut self, include_datil_testnet: DatilTestnetType) -> Self {
+        self.include_datil_testnet = include_datil_testnet;
+        self
+    }
+
     pub async fn build(self) -> (Testnet, ValidatorCollection, EndUser) {
         let node_keys_path = Path::new("./node_keys");
         if node_keys_path.exists() {
@@ -174,6 +192,7 @@ impl TestSetupBuilder {
             .is_fault_test(self.is_fault_test)
             .custom_node_runtime_config(custom_node_runtime_config)
             .force_deploy(self.force_deploy)
+            .include_datil_testnet(self.include_datil_testnet.clone())
             .build()
             .await;
 
@@ -202,6 +221,15 @@ impl TestSetupBuilder {
             {
                 error!("Error extending epoch end time: {:?}", e);
             }
+        } else {
+            if self.include_datil_testnet == DatilTestnetType::Default {
+                let key_set_config = default_datil_keyset_config();
+                testnet
+                    .actions()
+                    .add_keyset_config(key_set_config)
+                    .await
+                    .expect("Failed to add keyset config");
+            }
         }
 
         let num_staked_nodes = if self.start_staked_only_validators {
@@ -225,6 +253,23 @@ impl TestSetupBuilder {
             .build(&testnet)
             .await
             .expect("Failed to build validator collection");
+
+        // if this is a datil testnet, set the root keys
+        if self.include_datil_testnet == DatilTestnetType::Default {
+            let keyset_id = DEFAULT_DATIL_KEY_SET_NAME.to_string();
+            let datil_root_keys = testnet
+                .actions()
+                .get_all_root_keys(Some(keyset_id))
+                .await
+                .unwrap();
+
+            testnet
+                .datil_testnet
+                .as_ref()
+                .unwrap()
+                .set_root_keys(datil_root_keys)
+                .await;
+        }
 
         let mut end_user = EndUser::new(&testnet);
         if self.fund_wallet {

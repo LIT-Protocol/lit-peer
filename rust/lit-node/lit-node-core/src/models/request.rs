@@ -26,6 +26,7 @@ pub struct EncryptionSignRequest {
     pub auth_sig: AuthSigItem,
     #[serde(default = "default_epoch")]
     pub epoch: u64,
+    pub key_set_identifier: String,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -57,6 +58,7 @@ pub struct JsonPKPSigningRequest {
     #[serde(default = "default_epoch")]
     pub epoch: u64,
     pub node_set: Vec<NodeSet>,
+    pub key_set_identifier: String,
 }
 
 #[derive(Clone, Default, Serialize, Deserialize)]
