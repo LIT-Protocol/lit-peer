@@ -95,12 +95,14 @@ pub async fn admin_get_key_backup(
 )]
 pub async fn admin_set_key_backup(
     cfg: &State<ReloadableLitConfig>,
+    tss_state: &State<Arc<TssState>>,
     restore_state: &State<Arc<RestoreState>>,
     admin_auth_sig: JsonAuthSigExtended,
     data: Data<'_>,
 ) -> status::Custom<Value> {
     with_timeout(&cfg.load_full(), None, None, async move {
-        admin::endpoints::admin_set_key_backup(cfg, restore_state, admin_auth_sig, data).await
+        admin::endpoints::admin_set_key_backup(cfg, tss_state, restore_state, admin_auth_sig, data)
+            .await
     })
     .await
 }

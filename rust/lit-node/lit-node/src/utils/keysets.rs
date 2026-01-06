@@ -43,6 +43,7 @@ pub fn key_set_id_exists(cdm: &ChainDataConfigManager, key_set_id: &str) -> bool
     keysets.iter().any(|keyset| keyset.identifier == key_set_id)
 }
 
+#[allow(dead_code)]
 pub fn get_key_set_by_id(cdm: &ChainDataConfigManager, key_set_id: &str) -> Result<KeySetConfig> {
     let keysets = DataVersionReader::read_field_unchecked(&cdm.key_sets, |key_sets| {
         key_sets.values().cloned().collect::<Vec<_>>()
