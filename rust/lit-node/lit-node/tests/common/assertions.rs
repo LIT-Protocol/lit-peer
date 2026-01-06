@@ -92,58 +92,6 @@ impl NetworkIntegrityChecker {
         info!("Success: Network integrity check passed");
     }
 
-    /// This function runs interpolation checks and performs decryption and signing operations on the network.
-    /// The signing operations are only asserted against when the presigns are completely drained.
-    /// Instead of explicitly checking the logs of each deterministic subset of nodes - which is slightly complicated -
-    /// we simply retry the operation up to a maximum number of times in an attempt to drain the presigns.
-    // This should be removed once all nodes have updated to the new code that supports using BTs across boundaries.
-    pub async fn check_with_drained_presigns(&self, validator_collection: &ValidatorCollection) {
-        const MAX_TRIES: usize = 5;
-
-        // Pubkey check.
-        info!("Running pubkey checks");
-        let latest_bls_pubkey = get_network_pubkey(validator_collection.actions()).await;
-        assert_eq!(self.initial_bls_pubkey, latest_bls_pubkey);
-
-        // Decryption check.
-        info!("Running decryption checks");
-        let node_set = &validator_collection.random_threshold_nodeset().await;
-        let realm_id = ethers::types::U256::from(1);
-        let epoch = validator_collection
-            .actions()
-            .get_current_epoch(realm_id)
-            .await
-            .as_u64();
-        let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
-        test_encryption_decryption_auth_sig(&node_set, epoch).await;
-
-        // Signing check.
-        info!("Running signing checks");
-        for idx in 0..MAX_TRIES {
-            if sign_with_hd_key(
-                &validator_collection,
-                &self.end_user,
-                self.minted_pkp_pubkey.clone(),
-                false,
-                false,
-                1,
-                None,
-                SigningScheme::EcdsaK256Sha256,
-                &vec![],
-            )
-            .await
-            {
-                break;
-            }
-            debug!(
-                "Failed {:?} try to sign with HD key (possibly due to bad, uncleared presigns being used) - retrying...",
-                idx + 1
-            );
-        }
-
-        info!("Network integrity check passed");
-    }
-
     pub fn pkp_pubkey(&self) -> &str {
         &self.minted_pkp_pubkey
     }
