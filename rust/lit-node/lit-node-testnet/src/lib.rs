@@ -10,7 +10,6 @@ use self::testnet::node_config::CustomNodeRuntimeConfig;
 use self::validator::ValidatorCollection;
 use crate::testnet::contracts::StakingContractRealmConfig;
 use crate::{end_user::EndUser, validator::default_datil_keyset_config};
-use crate::{end_user::EndUser, validator::default_datil_keyset_config};
 use ethers::types::U256;
 use lit_core::config::{ENV_LIT_CONFIG_FILE, LitConfigBuilder, ReloadableLitConfig};
 
@@ -240,14 +239,19 @@ impl TestSetupBuilder {
             }
         } else {
             if self.include_datil_testnet == DatilTestnetType::Default {
-                let key_set_config = default_datil_keyset_config();
+                let datil_testnet = testnet.datil_testnet.as_ref().unwrap();
+                let chain_name = datil_testnet.datil_chain.chain_name();
+                let hex_contract_resolver_address =
+                    &format!("{:x}", datil_testnet.contracts.contract_resolver.address());
+                let key_set_config =
+                    default_datil_keyset_config(chain_name, hex_contract_resolver_address);
                 testnet
                     .actions()
                     .add_keyset_config(key_set_config)
                     .await
                     .expect("Failed to add keyset config");
             }
-        } 
+        }
 
         // for a standard datil testnet, we'll need to setup a new set of root keys that where generated in the Naga setup.
         // This saves us from doing a restore from datil->naga.

@@ -1,5 +1,5 @@
 use crate::common::auth_sig::get_session_sigs_for_auth;
-use crate::common::pkp::sign_with_pkp_request; 
+use crate::common::pkp::sign_with_pkp_request;
 use crate::common::recovery_party::SiweSignature;
 use crate::common::web_user_tests::{
     assert_decrypted, prepare_test_encryption_parameters,
@@ -97,7 +97,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
         DEFAULT_DATIL_KEY_SET_NAME.to_string(),
         "Datil Key Set".to_string(),
     );
-    let keyset_id = identifier.clone();
+
     let root_key_configs = vec![
         RootKeyConfig {
             curve_type: CurveType::BLS,
@@ -108,9 +108,12 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
             count: 10,
         },
     ];
-    let result = actions
+
+    actions
         .add_keyset(realm_id, identifier, description, root_key_configs)
-    let actions = validator_collection.actions().clone();
+        .await
+        .expect("Failed to add keyset `{keyset_id}`");
+
     actions.wait_for_epoch(realm_id, U256::from(2)).await;
 
     let (realm_id, identifier, description) = (

@@ -2,7 +2,6 @@ use crate::common::auth_sig::{get_session_sigs_and_node_set_for_pkp, get_session
 use crate::common::lit_actions::HELLO_WORLD_LIT_ACTION_CODE;
 use crate::common::lit_actions::execute_lit_action_session_sigs;
 use crate::common::lit_actions::{assert_signed_action, lit_action_params};
-use lit_node_testnet::DEFAULT_KEY_SET_NAME;
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::{NodeIdentityKey, get_identity_pubkeys_from_node_set};
 use lit_node_testnet::node_collection::{get_network_pubkey, get_network_pubkey_from_node_set};
