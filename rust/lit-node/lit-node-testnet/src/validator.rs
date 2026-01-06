@@ -277,7 +277,10 @@ impl ValidatorCollectionBuilder {
                 "Restoring state to {:?} for realm {}",
                 initial_state, realm_id,
             );
-            testnet.actions().set_state(realm_id, initial_state).await;
+            testnet
+                .actions()
+                .set_state(realm_id, initial_state.clone())
+                .await;
         }
 
         let actions = testnet.actions();
@@ -307,6 +310,7 @@ impl ValidatorCollectionBuilder {
                 testnet.provider.clone(),
                 testnet.num_staked_and_joined_validators,
                 testnet.num_staked_only_validators,
+                &initial_state,
             )
             .await;
         }

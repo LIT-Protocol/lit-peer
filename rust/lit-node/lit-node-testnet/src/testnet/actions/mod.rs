@@ -11,8 +11,8 @@ use ethers::providers::Provider;
 use ethers::signers::Wallet;
 // use lit_node::peers::peer_reviewer::MAX_COMPLAINT_REASON_VALUE;
 pub const MAX_COMPLAINT_REASON_VALUE: u8 = 4;
-use std::sync::Arc;
 use std::time::Duration;
+use std::{fmt::Display, sync::Arc};
 use tracing::{debug, info};
 
 pub mod config;
@@ -53,6 +53,12 @@ impl From<u8> for NetworkState {
             5 => NetworkState::Restore,
             _ => NetworkState::Unknown,
         }
+    }
+}
+
+impl Display for NetworkState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
 

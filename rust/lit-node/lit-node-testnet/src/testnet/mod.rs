@@ -18,6 +18,7 @@ use self::contracts_repo::check_and_load_test_state_cache;
 use self::node_config::{CustomNodeRuntimeConfig, generate_custom_node_runtime_config};
 use command_group::GroupChild;
 
+use crate::testnet::actions::NetworkState;
 use contracts::StakingContractRealmConfig;
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::middleware::SignerMiddleware;
@@ -260,11 +261,13 @@ impl TestnetBuilder {
             );
 
             if !self.force_deploy {
+                // Note:  We only try load the state cache if the network is active - this could change, but other types of loading are generally exception cases.
                 is_from_cache = true;
                 if !check_and_load_test_state_cache(
                     provider.clone(),
                     self.num_staked_and_joined_validators,
                     self.num_staked_only_validators,
+                    &NetworkState::Active,
                     &custom_node_runtime_config,
                     self.is_fault_test,
                 )
