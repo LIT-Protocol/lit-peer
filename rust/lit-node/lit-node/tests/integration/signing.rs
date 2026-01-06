@@ -262,7 +262,7 @@ pub async fn test_pkp_hd_sign_generic_key() {
     crate::common::setup_logging();
     info!("Starting test: test_hd_pkp_sign");
     let (testnet, validator_collection, end_user) = TestSetupBuilder::default()
-        .include_datil_testnet(DatilTestnetType::Default)
+        .num_staked_and_joined_validators(3)
         .build()
         .await;
     let pubkey = end_user.first_pkp().pubkey.clone();

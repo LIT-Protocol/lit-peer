@@ -47,6 +47,13 @@ const BACKUP_ENCRYPTED_KEYS: &str = "lit_backup_encrypted_keys.tar.gz";
 // This binary can be found at https://github.com/LIT-Protocol/lit-recovery/pull/60
 // which is the branch "Introduce staker_address_to_url_map"
 
+// Notes:
+// This test is designed to test the recovery of a Datil backup into a Naga network.
+// The datil based lit-recovery binary is used to recover the keyset from the datilbackup and upload the keyset to the nodes.
+// This is not the same as the lit-recovery project that exists in this repository.
+// This binary can be found at https://github.com/LIT-Protocol/lit-recovery/pull/60
+// which is the branch "Introduce staker_address_to_url_map"
+
 #[tokio::test]
 async fn recover_datil_into_naga_test() {
     unsafe {
