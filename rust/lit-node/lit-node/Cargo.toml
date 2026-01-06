@@ -87,9 +87,6 @@ moka = { version = "0.12.7", features = ["future"] }
 mpl-token-metadata = "1.2.10"
 num_cpus = { version = "1.16.0" }
 openssl = { version = "0.10.71" }
-opentelemetry = { version = "0.24" }
-opentelemetry_sdk = { version = "0.24" }
-opentelemetry-semantic-conventions = "0.15.0"
 rand.workspace = true
 rand_chacha.workspace = true
 rand_core.workspace = true

@@ -434,6 +434,7 @@ async fn one_node_conflicting_networking_info(test_case: usize) {
     // Start the node collection
     let mut testnet = Testnet::builder()
         .num_staked_and_joined_validators(num_nodes)
+        .force_deploy(true)
         .staker_account_setup_mapper(Box::new(move |args: (usize, NodeAccount, Contracts)| {
             let random_node_idx_to_be_kicked_clone = random_node_idx_to_be_kicked;
             let new_staked_port_of_node_to_be_kicked_clone =

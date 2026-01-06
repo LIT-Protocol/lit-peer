@@ -1368,10 +1368,17 @@ impl Node {
     pub async fn wait_for_node_awake(port: usize, require_valid_handshake: bool) -> Result<()> {
         // loop until the node is awake
         let mut node_awake = false;
+        let mut require_valid_handshake = require_valid_handshake;
+        let mut attempts = 0;
         while !node_awake {
             node_awake = Self::check_node_awake(port, require_valid_handshake).await?;
             if !node_awake {
                 tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
+                attempts += 1;
+                if attempts > 5 && require_valid_handshake {
+                    info!("Node {} is not responding, but we've tried 5 times. Any handshake response will be accepted.", port);
+                    require_valid_handshake = false;
+                }
             }
         }
         info!("Node {} is responding", port);

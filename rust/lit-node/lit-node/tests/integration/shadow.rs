@@ -36,6 +36,11 @@ async fn shadow_splicing_sign_encrypt() {
 
     info!("New realm ID: {}", new_realm_id);
 
+    actions
+        .set_default_keyset_id(new_realm_id, DEFAULT_KEY_SET_NAME)
+        .await
+        .unwrap();
+
     let inactive_validators = validator_collection
         .get_inactive_validators()
         .await
@@ -263,6 +268,11 @@ async fn shadow_splicing_epoch() {
     let pubkey = end_user.first_pkp().pubkey.clone();
     let realm_id = 1u64;
     let new_realm_id = actions.add_realm().await.unwrap();
+
+    actions
+        .set_default_keyset_id(new_realm_id, DEFAULT_KEY_SET_NAME)
+        .await
+        .unwrap();
 
     let inactive_validators = validator_collection
         .get_inactive_validators()
