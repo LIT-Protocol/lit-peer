@@ -1376,7 +1376,10 @@ impl Node {
                 tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
                 attempts += 1;
                 if attempts > 5 && require_valid_handshake {
-                    info!("Node {} is not responding, but we've tried 5 times. Any handshake response will be accepted.", port);
+                    info!(
+                        "Node {} is not responding, but we've tried 5 times. Any handshake response will be accepted.",
+                        port
+                    );
                     require_valid_handshake = false;
                 }
             }
