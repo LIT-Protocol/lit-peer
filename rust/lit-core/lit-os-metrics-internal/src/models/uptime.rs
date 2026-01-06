@@ -1,4 +1,5 @@
-use crate::models::OsMetric;
+use crate::models::{GaugeMetric, OsMetric};
+use lit_observability::opentelemetry::KeyValue;
 use serde::Serialize;
 use std::collections::BTreeMap;
 
@@ -13,6 +14,16 @@ pub struct Uptime {
 
 impl OsMetric for Uptime {
     const NAME: &'static str = "uptime";
+}
+
+impl GaugeMetric for Uptime {
+    fn gauge_value(&self) -> Option<f64> {
+        self.total_seconds.parse::<f64>().ok()
+    }
+
+    fn gauge_labels(&self) -> Vec<KeyValue> {
+        vec![] // Uptime is global, no labels needed
+    }
 }
 
 impl TryFrom<&BTreeMap<String, String>> for Uptime {
