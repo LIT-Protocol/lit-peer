@@ -22,7 +22,7 @@ pub struct Pkp {
 }
 
 impl Pkp {
-    pub async fn new(end_user: &EndUser) -> Result<Self, anyhow::Error> {
+    pub async fn new(end_user: &EndUser, key_set_id: &str) -> Result<Self, anyhow::Error> {
         let key_type: U256 = U256::from(2); // 2 is ECDSA key type
 
         let pkpnft_address = end_user.actions().contracts().pkpnft.address();
@@ -39,7 +39,7 @@ impl Pkp {
         info!("Mint cost: {:}", mint_cost);
 
         let mint_tx = pkpnft
-            .mint_next(key_type, "naga-keyset1".to_string())
+            .mint_next(key_type, key_set_id.to_string())
             .value(mint_cost);
 
         let receipt = mint_tx

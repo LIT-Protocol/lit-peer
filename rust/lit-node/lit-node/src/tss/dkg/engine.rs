@@ -152,7 +152,7 @@ impl DkgEngine {
             self.dkgs.len(),
             self.current_peers.debug_addresses(),
             self.next_peers.debug_addresses(),
-            self.next_dkg_after_restore,
+            self.next_dkg_after_restore.value(),
         );
 
         let self_peer = self.next_peers.peer_at_address(&self.tss_state.addr)?;
@@ -349,8 +349,10 @@ impl DkgEngine {
                 let output_generator = match dkg_data.run() {
                     Ok(generator) => generator,
                     Err(e) => {
-                        error!("Dkg round failed: {:?}, realm_id: {}", e, realm_id);
-                        break;
+                        return Err(unexpected_err(
+                            format!("Dkg round failed: {:?}, realm_id: {}", e, realm_id),
+                            None,
+                        ));
                     }
                 };
                 for output in output_generator.iter() {
@@ -662,6 +664,45 @@ impl DkgEngine {
                 (Some(pubkey), save_commitments, self.epoch.saturating_sub(2))
             }
         };
+
+        if self.next_dkg_after_restore.value() {
+            // if we're doing a next dkg after restore, we should write the keyshare
+            // with the current epoch, incase there are also existing or new DKGs
+            // that need to be run for this epoch, and one or both of them fail.
+            let pubkey = key_state
+                .write_key(
+                    write_key_pubkey.clone(),
+                    pk,
+                    share,
+                    &args.peer_id,
+                    args.dkg_id,
+                    next_epoch - 1,
+                    &active_peers,
+                    staker_address,
+                    args.realm_id,
+                    self.threshold,
+                    &self.tss_state.key_cache,
+                )
+                .await?;
+            debug!(
+                "Saved key share to disk for public key {}, epoch {}, realm {}",
+                pubkey,
+                next_epoch - 1,
+                args.realm_id
+            );
+
+            write_key_share_commitments_to_disk(
+                args.curve_type,
+                &pubkey,
+                staker_address,
+                &args.peer_id,
+                next_epoch - 1,
+                args.realm_id,
+                &self.tss_state.key_cache,
+                &save_commitments,
+            )
+            .await?;
+        }
 
         let pubkey = key_state
             .write_key(
@@ -978,6 +1019,7 @@ impl DkgEngine {
                             .collect::<Vec<_>>()
                     }
                 };
+
                 Ok(Box::new(
                     SecretParticipant::<G>::with_secret(id, &old_share, &parameters, &old_ids)
                         .map_err(|e| {

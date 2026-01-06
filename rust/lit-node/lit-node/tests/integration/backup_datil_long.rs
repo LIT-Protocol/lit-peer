@@ -9,10 +9,11 @@ use lit_node::auth::auth_material::JsonAuthSigExtended;
 use lit_node::endpoints::auth_sig::LITNODE_ADMIN_RES;
 use lit_node::peers::peer_state::models::NetworkState;
 use lit_node::tss::common::restore::NodeRecoveryStatus;
-use lit_node::tss::util::DEFAULT_KEY_SET_NAME;
-use lit_node_core::JsonAuthSig;
+
+use lit_node_core::{CurveType, JsonAuthSig};
 use lit_node_testnet::TestSetupBuilder;
 use lit_node_testnet::testnet::Testnet;
+use lit_node_testnet::testnet::actions::RootKeyConfig;
 use lit_node_testnet::validator::ValidatorCollection;
 use lit_rust_crypto::k256::ecdsa::{SigningKey, VerifyingKey};
 use reqwest::Client;
@@ -24,6 +25,13 @@ use tokio::task::JoinSet;
 use tracing::info;
 
 const TARBALL_NAME: &str = "lit_backup_encrypted_keys.tar.gz";
+
+// Notes:
+// This test is designed to test the recovery of a Datil backup into a Naga network.
+// The datil based lit-recovery binary is used to recover the keyset from the datilbackup and upload the keyset to the nodes.
+// This is not the same as the lit-recovery project that exists in this repository.
+// This binary can be found at https://github.com/LIT-Protocol/lit-recovery/pull/60
+// which is the branch "Introduce staker_address_to_url_map"
 
 #[tokio::test]
 async fn recover_datil_into_naga_test() {
@@ -71,125 +79,47 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
         .await;
 
     testnet.actions().sleep_millis(5000).await;
+
+    let (realm_id, identifier, description) = (
+        U256::from(1),
+        "datil-keyset".to_string(),
+        "Datil Key ".to_string(),
+    );
+    let keyset_id = identifier.clone();
+    let root_key_configs = vec![
+        RootKeyConfig {
+            curve_type: CurveType::BLS,
+            count: 1,
+        },
+        RootKeyConfig {
+            curve_type: CurveType::K256,
+            count: 10,
+        },
+    ];
+    let result = validator_collection
+        .actions()
+        .add_keyset(realm_id, identifier, description, root_key_configs)
+        .await;
+    assert!(result.is_ok(), "Failed to add keyset `{}`", keyset_id);
+
     let tx = validator_collection
         .actions()
         .contracts()
         .pubkey_router
         .admin_reset_root_keys(
             testnet.actions().contracts().staking.address(),
-            DEFAULT_KEY_SET_NAME.to_string(),
+            keyset_id.clone(),
         );
-    tx.send().await.unwrap();
-    let tx = validator_collection.actions().contracts().pubkey_router.admin_set_root_keys(
-        testnet.actions().contracts().staking.address(),
-        DEFAULT_KEY_SET_NAME.to_string(),
-        vec![
-            RootKey {
-                key_type: U256::from(1),
-                pubkey: ethers::types::Bytes::from_hex("0xb500ba119f643feb1981d26ffe7235288fdd39c36d6ebd35aebea7a5f92a812798513c1ae710461a6d229c59a782e375").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x02a11f8d29fabb49b5bbcd92159698afe4f136bab8b4a33f8606a71bd03bd6dc27").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x02cd471f410f17f1e932886a90effbb522a7841d9107d256c034cfa04020ba64c6").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x02d63650585b90ae80acde8fc4c638c4db0a00945f9b1c40024c92064cd99bdbbe").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x03a9e669a6f3b662a6b91fcb3cfa08608ab705e83b9b01bbf4fc4c2fcac3163b23").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x03d16416e913ba7adc1ccd58c36ff9f2130fa64d36e510551af70fb1be2174bb74").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x022e26c96cdeabee0930344a08cf3ee290c9efb3344fc8d50e460706ef7b55c518").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x027b98e8d099788fae7d9dc79865f28d4ddc0f630c6c593e5e8d7ef94c0285d729").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x033c8c0840302669019a6d0d12108caa6b0581a1d96022d4ea87ab203fba94cf1e").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x039af7bc7d673c899cc45ec5e30ba518be438931e9acb916fef7a336b9954687e9").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x023403362ef1a693967858606e0cd9c5a67b30d5bd3a1a70a960c1286c15c8f68a").unwrap(),
-            },
-        ],
-    );
     tx.send().await.unwrap();
     let tx = validator_collection
         .actions()
         .contracts()
         .pubkey_router
-        .admin_reset_root_keys(
+        .admin_set_root_keys(
             testnet.actions().contracts().staking.address(),
-            "naga-keyset1".to_string(),
+            keyset_id.clone(),
+            datil_root_keys(),
         );
-    tx.send().await.unwrap();
-    let tx = validator_collection.actions().contracts().pubkey_router.admin_set_root_keys(
-        testnet.actions().contracts().staking.address(),
-        "naga-keyset1".to_string(),
-        vec![
-            RootKey {
-                key_type: U256::from(1),
-                pubkey: ethers::types::Bytes::from_hex("0xb500ba119f643feb1981d26ffe7235288fdd39c36d6ebd35aebea7a5f92a812798513c1ae710461a6d229c59a782e375").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x02a11f8d29fabb49b5bbcd92159698afe4f136bab8b4a33f8606a71bd03bd6dc27").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x02cd471f410f17f1e932886a90effbb522a7841d9107d256c034cfa04020ba64c6").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x02d63650585b90ae80acde8fc4c638c4db0a00945f9b1c40024c92064cd99bdbbe").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x03a9e669a6f3b662a6b91fcb3cfa08608ab705e83b9b01bbf4fc4c2fcac3163b23").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x03d16416e913ba7adc1ccd58c36ff9f2130fa64d36e510551af70fb1be2174bb74").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x022e26c96cdeabee0930344a08cf3ee290c9efb3344fc8d50e460706ef7b55c518").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x027b98e8d099788fae7d9dc79865f28d4ddc0f630c6c593e5e8d7ef94c0285d729").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x033c8c0840302669019a6d0d12108caa6b0581a1d96022d4ea87ab203fba94cf1e").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x039af7bc7d673c899cc45ec5e30ba518be438931e9acb916fef7a336b9954687e9").unwrap(),
-            },
-            RootKey {
-                key_type: U256::from(2),
-                pubkey: ethers::types::Bytes::from_hex("0x023403362ef1a693967858606e0cd9c5a67b30d5bd3a1a70a960c1286c15c8f68a").unwrap(),
-            },
-        ],
-    );
     tx.send().await.unwrap();
 
     // stop old nodes but leave the test net up. Setting the network to restore state
@@ -218,6 +148,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
 
     // nodes start in restore mode and reuse the same testnet
     info!("Restarting the nodes");
+
     let validator_collection2 = ValidatorCollection::builder()
         .num_staked_nodes(number_of_nodes)
         .pause_network_while_building(false)
@@ -225,6 +156,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
         .await
         .expect("Failed to build validator collection");
 
+    let actions = validator_collection2.actions();
     actions.sleep_millis(5000).await;
 
     // Use the admin endpoint to upload the backup and blinders
@@ -266,8 +198,68 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
         .wait_for_recovery_status(NodeRecoveryStatus::AllKeysAreRestored as u8)
         .await;
     info!("All the nodes restored all the keys!");
+
+    actions
+        .set_epoch_state(realm_id, NetworkState::Active as u8)
+        .await
+        .unwrap();
+
+    let seconds_to_increase = 300;
+    let epoch = actions.get_current_epoch(realm_id).await;
+    actions
+        .increase_blockchain_timestamp(seconds_to_increase)
+        .await;
+    actions.wait_for_epoch(realm_id, epoch + 1).await;
 }
 
+fn datil_root_keys() -> Vec<RootKey> {
+    vec![
+            RootKey {
+                key_type: U256::from(1),
+                pubkey: ethers::types::Bytes::from_hex("0xb500ba119f643feb1981d26ffe7235288fdd39c36d6ebd35aebea7a5f92a812798513c1ae710461a6d229c59a782e375").unwrap(),
+            },
+            RootKey {
+                key_type: U256::from(2),
+                pubkey: ethers::types::Bytes::from_hex("0x02a11f8d29fabb49b5bbcd92159698afe4f136bab8b4a33f8606a71bd03bd6dc27").unwrap(),
+            },
+            RootKey {
+                key_type: U256::from(2),
+                pubkey: ethers::types::Bytes::from_hex("0x02cd471f410f17f1e932886a90effbb522a7841d9107d256c034cfa04020ba64c6").unwrap(),
+            },
+            RootKey {
+                key_type: U256::from(2),
+                pubkey: ethers::types::Bytes::from_hex("0x02d63650585b90ae80acde8fc4c638c4db0a00945f9b1c40024c92064cd99bdbbe").unwrap(),
+            },
+            RootKey {
+                key_type: U256::from(2),
+                pubkey: ethers::types::Bytes::from_hex("0x03a9e669a6f3b662a6b91fcb3cfa08608ab705e83b9b01bbf4fc4c2fcac3163b23").unwrap(),
+            },
+            RootKey {
+                key_type: U256::from(2),
+                pubkey: ethers::types::Bytes::from_hex("0x03d16416e913ba7adc1ccd58c36ff9f2130fa64d36e510551af70fb1be2174bb74").unwrap(),
+            },
+            RootKey {
+                key_type: U256::from(2),
+                pubkey: ethers::types::Bytes::from_hex("0x022e26c96cdeabee0930344a08cf3ee290c9efb3344fc8d50e460706ef7b55c518").unwrap(),
+            },
+            RootKey {
+                key_type: U256::from(2),
+                pubkey: ethers::types::Bytes::from_hex("0x027b98e8d099788fae7d9dc79865f28d4ddc0f630c6c593e5e8d7ef94c0285d729").unwrap(),
+            },
+            RootKey {
+                key_type: U256::from(2),
+                pubkey: ethers::types::Bytes::from_hex("0x033c8c0840302669019a6d0d12108caa6b0581a1d96022d4ea87ab203fba94cf1e").unwrap(),
+            },
+            RootKey {
+                key_type: U256::from(2),
+                pubkey: ethers::types::Bytes::from_hex("0x039af7bc7d673c899cc45ec5e30ba518be438931e9acb916fef7a336b9954687e9").unwrap(),
+            },
+            RootKey {
+                key_type: U256::from(2),
+                pubkey: ethers::types::Bytes::from_hex("0x023403362ef1a693967858606e0cd9c5a67b30d5bd3a1a70a960c1286c15c8f68a").unwrap(),
+            },
+        ]
+}
 async fn upload_decryption_shares_to_nodes(recovery_party_size: usize) {
     use tokio::process::Command;
 

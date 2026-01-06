@@ -37,7 +37,7 @@ pub async fn node_fsm_worker(
     is_shadow: bool,
     restore_state: Arc<RestoreState>,
     client_state: Arc<ClientState>,
-    recovery_dkg_manager: DkgManager,
+    mut recovery_dkg_manager: DkgManager,
     mut standard_dkg_manager: DkgManager,
     fsm_worker_metadata: Arc<dyn FSMWorkerMetadata<LifecycleId = u64, ShadowLifecycleId = u64>>,
 ) {
@@ -225,7 +225,7 @@ pub async fn node_fsm_worker(
                 if !check_recovery_dkg_complete(
                     &peer_state,
                     epoch_number,
-                    &recovery_dkg_manager,
+                    &mut recovery_dkg_manager,
                     fsm_worker_metadata.clone(),
                     is_shadow,
                     realm_id,
@@ -242,7 +242,7 @@ pub async fn node_fsm_worker(
 
                 // Attempt to perform the epoch change
                 let epoch_change_results = perform_epoch_change(
-                    &standard_dkg_manager,
+                    &mut standard_dkg_manager,
                     fsm_worker_metadata.clone(),
                     realm_id,
                     is_shadow,
@@ -613,7 +613,7 @@ pub async fn handle_not_part_of_validators_union(
 async fn check_recovery_dkg_complete(
     peer_state: &Arc<PeerState>,
     epoch_number: U256,
-    recovery_dkg_manager: &DkgManager,
+    recovery_dkg_manager: &mut DkgManager,
     fsm_worker_metadata: Arc<dyn FSMWorkerMetadata<LifecycleId = u64, ShadowLifecycleId = u64>>,
     is_shadow: bool,
     realm_id: u64,

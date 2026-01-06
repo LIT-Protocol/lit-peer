@@ -112,6 +112,21 @@ where
     }
 
     pub fn original_peer_id(&self) -> Option<U256> {
+        if self
+            .eks_and_ds
+            .first()
+            .map(|x| x.encrypted_key_share.share_index)
+            .is_some()
+        {
+            let share_index = self
+                .eks_and_ds
+                .first()
+                .map(|x| x.encrypted_key_share.share_index);
+            if let Some(Some(share_index)) = share_index {
+                return Some(U256::from(share_index + 1));
+            }
+        };
+
         self.eks_and_ds
             .first()
             .map(|x| x.encrypted_key_share.peer_id)

@@ -7,6 +7,7 @@ use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::dkg_type::DkgType;
 use crate::tss::common::key_persistence::RECOVERY_DKG_EPOCH;
 use crate::tss::common::traits::fsm_worker_metadata::FSMWorkerMetadata;
+use crate::tss::dkg::engine::DkgAfterRestore;
 use crate::tss::dkg::manager::DkgManager;
 use crate::version::DataVersionReader;
 use ethers::types::U256;
@@ -66,15 +67,15 @@ impl ShadowOptions {
     }
 }
 
-struct EpochChangeResOrUpdateNeeded {
-    pub epoch_change_res: Option<Option<HashMap<String, Vec<CachedRootKey>>>>,
+struct EpochChangeStatus {
+    pub change_result: Option<Option<HashMap<String, Vec<CachedRootKey>>>>,
     pub update_req: Option<u64>,
 }
 
 // only log the epoch number field
 #[instrument(level = "debug", skip(dkg_manager, fsm_worker_metadata))]
 pub(crate) async fn perform_epoch_change(
-    dkg_manager: &DkgManager,
+    dkg_manager: &mut DkgManager,
     fsm_worker_metadata: Arc<dyn FSMWorkerMetadata<LifecycleId = u64, ShadowLifecycleId = u64>>,
     realm_id: u64,
     is_shadow: bool,
@@ -85,6 +86,7 @@ pub(crate) async fn perform_epoch_change(
     let mut latest_dkg_id = "".to_string();
     // We keep looping until we get a result from a completed epoch change operation.
     let mut abort_and_restart_count = 0;
+    // let mut next_dkg_after_restore_data = None;
 
     // We currently set the limit of aborts and restarts to be a high number to avoid infinite loops. This should never happen,
     // in theory, but we want to be safe. This will be removed as soon as we have implemented an improved strategy to synchronize
@@ -121,26 +123,8 @@ pub(crate) async fn perform_epoch_change(
 
         let current_epoch = epoch_number.as_u64();
 
-        // If we are going to generate a new keyset, we need to ensure that the threshold of an existing keyset is not changed.
-        // The exception to this is when the current peer set is not yet populated, in which case we can create one or more new keysets.
-        // If the current peer set is not empty and not equivalent to the new peer set, we need to skip the DKG creation for this epoch.
-        // let (key_sets_to_use, current_peers_to_use) = if empty_key_sets.is_empty() {
-        //     (keysets, current_peers)
-        // } else {
-        //     if current_peers != new_peers && !current_peers.is_empty() {
-        //         warn!(
-        //             "When creating a new set of root keys, current peers should be empty or equivalent to new peers.  Skipping the DKG creation for this epoch."
-        //         );
-        //         (full_key_sets, current_peers)
-        //     } else {
-        //         (empty_key_sets, SimplePeerCollection(vec![]))
-        //     }
-        // };
-
-        let (existing_key_sets, new_key_sets) = match get_existing_and_new_key_sets(
-            peer_state.clone(),
-        )
-        .await
+        let (mut existing_key_sets, new_key_sets) = match get_key_sets_to_update(peer_state.clone())
+            .await
         {
             Ok((existing_key_sets, new_key_sets)) => (existing_key_sets, new_key_sets),
             Err(e) => {
@@ -152,8 +136,23 @@ pub(crate) async fn perform_epoch_change(
             }
         };
 
+        let restore_key_sets = if dkg_manager.next_dkg_after_restore.value() {
+            let mut restore_key_sets: Vec<KeySetConfig> = existing_key_sets.clone();
+            restore_key_sets.retain(|ks| ks.identifier.to_lowercase().contains("datil")); // this will need to be updated to use the actual keyset identifier.
+            if !restore_key_sets.is_empty() {
+                existing_key_sets.retain(|ks| !restore_key_sets.contains(ks));
+            }
+            restore_key_sets
+        } else {
+            Vec::new()
+        };
+
         trace!(
-            "New/existing key sets: {:?} / {:?}",
+            "Restore/new/existing key sets: {:?} / {:?} / {:?}",
+            restore_key_sets
+                .iter()
+                .map(|ks| ks.identifier.clone())
+                .collect::<Vec<_>>(),
             new_key_sets
                 .iter()
                 .map(|ks| ks.identifier.clone())
@@ -164,10 +163,45 @@ pub(crate) async fn perform_epoch_change(
                 .collect::<Vec<_>>()
         );
 
+        let mut epoch_change_status = None;
+
+        if !restore_key_sets.is_empty() {
+            epoch_change_status = match process_epoch_for_key_set(
+                dkg_manager,
+                fsm_worker_metadata.clone(),
+                realm_id,
+                is_shadow,
+                &restore_key_sets,
+                &latest_dkg_id,
+                current_epoch,
+                &shadow_key_opts,
+                &current_peers,
+                &new_peers,
+                None,
+            )
+            .await
+            {
+                Ok(result) => {
+                    // next_dkg_after_restore_data = dkg_manager.next_dkg_after_restore.take();
+                    if result.update_req.is_none() {
+                        dkg_manager.next_dkg_after_restore = DkgAfterRestore::False;
+                    }
+                    // if we restart, we need to set this back to the DKG manager.
+                    Some(result)
+                }
+                Err(e) => {
+                    warn!(
+                        "Unable to process epoch change for restore key sets when performing epoch change in realm {}: {}",
+                        realm_id, e
+                    );
+                    return None;
+                }
+            };
+        }
         // start by processing the epoch change for the new key sets
-        let mut epoch_change_res_or_update_needed_for_new_keys = None;
         if !new_key_sets.is_empty() {
             trace!("Processing epoch change for new key sets");
+            // this check looks strange, but the empty peer check is necessary to avoid network startup conditions!
             if current_peers != new_peers && !current_peers.is_empty() {
                 warn!(
                     "When creating a new set of root keys, current peers should be empty or equivalent to new peers.  DKG will not be performed until the keyset is removed or the current peer set is equivalent to the new peer set."
@@ -175,7 +209,7 @@ pub(crate) async fn perform_epoch_change(
                 return None;
             }
             let empty_peers = SimplePeerCollection(vec![]);
-            epoch_change_res_or_update_needed_for_new_keys = match process_epoch_for_key_set(
+            epoch_change_status = match process_epoch_for_key_set(
                 dkg_manager,
                 fsm_worker_metadata.clone(),
                 realm_id,
@@ -186,7 +220,7 @@ pub(crate) async fn perform_epoch_change(
                 &shadow_key_opts,
                 &empty_peers,
                 &new_peers,
-                None,
+                epoch_change_status,
             )
             .await
             {
@@ -201,31 +235,34 @@ pub(crate) async fn perform_epoch_change(
             };
         }
 
-        trace!("Processing epoch change for existing key sets");
-        let epoch_change_res_or_update_needed = match process_epoch_for_key_set(
-            dkg_manager,
-            fsm_worker_metadata.clone(),
-            realm_id,
-            is_shadow,
-            &existing_key_sets,
-            &latest_dkg_id,
-            current_epoch,
-            &shadow_key_opts,
-            &current_peers,
-            &new_peers,
-            epoch_change_res_or_update_needed_for_new_keys,
-        )
-        .await
-        {
-            Ok(result) => result,
-            Err(e) => {
-                warn!(
-                    "Unable to process epoch change for existing key sets when performing epoch change in realm {}: {}",
-                    realm_id, e
-                );
-                return None;
-            }
-        };
+        // create an error dkg id for the case where the epoch change fails.
+        if !existing_key_sets.is_empty() {
+            trace!("Processing epoch change for existing key sets");
+            epoch_change_status = match process_epoch_for_key_set(
+                dkg_manager,
+                fsm_worker_metadata.clone(),
+                realm_id,
+                is_shadow,
+                &existing_key_sets,
+                &latest_dkg_id,
+                current_epoch,
+                &shadow_key_opts,
+                &current_peers,
+                &new_peers,
+                epoch_change_status,
+            )
+            .await
+            {
+                Ok(result) => Some(result),
+                Err(e) => {
+                    warn!(
+                        "Unable to process epoch change for existing key sets when performing epoch change in realm {}: {}",
+                        realm_id, e
+                    );
+                    return None;
+                }
+            };
+        }
 
         let (post_current_peers, post_new_peers) =
             match get_dkg_peers_and_keysets(dkg_manager, realm_id, is_shadow).await {
@@ -250,16 +287,27 @@ pub(crate) async fn perform_epoch_change(
                 &post_new_peers.debug_addresses(),
             );
         }
+
+        let epoch_change_status = match epoch_change_status {
+            Some(epoch_change_status) => epoch_change_status,
+            None => {
+                warn!(
+                    "Epoch change status is None - this would indicate that no epoch changes were attempted."
+                );
+                return None;
+            }
+        };
+
         // If there is a result, we immediately return the result.
-        if let Some(res) = epoch_change_res_or_update_needed.epoch_change_res {
+        if let Some(res) = epoch_change_status.change_result {
             return res;
         }
 
         // If we are here, that means that we need to update the lifecycle ID and restart the epoch change.
-        let new_lifecycle_id = match epoch_change_res_or_update_needed.update_req {
+        let new_lifecycle_id = match epoch_change_status.update_req {
             Some(new_lifecycle_id) => new_lifecycle_id,
             None => {
-                error!("epoch_change_res_or_update_needed.update_req is None");
+                warn!("epoch_change_res_or_update_needed.update_req is None");
                 return None;
             }
         };
@@ -269,7 +317,7 @@ pub(crate) async fn perform_epoch_change(
         let existing_epoch_number = match parse_epoch_number_from_dkg_id(&dkg_id) {
             Ok(existing_epoch_number) => existing_epoch_number,
             Err(e) => {
-                error!("Error in parse_epoch_number_from_dkg_id: {}", e);
+                warn!("Error in parse_epoch_number_from_dkg_id: {}", e);
                 return None;
             }
         };
@@ -296,7 +344,7 @@ pub(crate) async fn perform_epoch_change(
     }
 
     // If we are here, that means that we have aborted and restarted the epoch change too many times. Just return a failure.
-    error!("Aborted and restarted the epoch change too many times. Aborting the epoch change.");
+    warn!("Aborted and restarted the epoch change too many times. Aborting the epoch change.");
     None
 }
 
@@ -312,11 +360,11 @@ async fn process_epoch_for_key_set(
     shadow_key_opts: &ShadowOptions,
     current_peers: &SimplePeerCollection,
     new_peers: &SimplePeerCollection,
-    existing_epoch_change_res_or_update_needed: Option<EpochChangeResOrUpdateNeeded>,
-) -> Result<EpochChangeResOrUpdateNeeded> {
-    let existing_keys = match existing_epoch_change_res_or_update_needed {
-        Some(EpochChangeResOrUpdateNeeded {
-            epoch_change_res: Some(existing_keys),
+    previously_processed_data: Option<EpochChangeStatus>,
+) -> Result<EpochChangeStatus> {
+    let existing_keys = match previously_processed_data {
+        Some(EpochChangeStatus {
+            change_result: Some(existing_keys),
             update_req: None,
         }) => existing_keys,
         _ => None,
@@ -328,13 +376,14 @@ async fn process_epoch_for_key_set(
         new_lifecycle_id = fsm_worker_metadata.yield_until_update(realm_id) => {
             let existing_lifecycle_id = fsm_worker_metadata.get_lifecycle_id(realm_id);
             info!("FSMWorkerMetadata is outdated, updating the lifecycle id from {} to {} in realm {}, aborting the current epoch change and restarting with the new updated lifecycle id", existing_lifecycle_id, new_lifecycle_id, realm_id);
-            EpochChangeResOrUpdateNeeded {
-                epoch_change_res: None,
+            EpochChangeStatus {
+                change_result: None,
                 update_req: Some(new_lifecycle_id),
             }
-        }
+        },
 
         res = dkg_manager.change_epoch(latest_dkg_id, current_epoch, shadow_key_opts, realm_id, current_peers, new_peers, key_sets) => {
+            info!("DKG manager.change_epoch result: {:?}", res);
             match res {
                 Ok(res) => {
                 let epoch = match dkg_manager.dkg_type {
@@ -359,8 +408,8 @@ async fn process_epoch_for_key_set(
                     res.extend(existing_keys);
                 }
 
-                EpochChangeResOrUpdateNeeded {
-                    epoch_change_res: Some(Some(res)),
+                EpochChangeStatus {
+                    change_result: Some(Some(res)),
                     update_req: None,
                 }
                 }
@@ -447,7 +496,7 @@ pub fn derive_dkg_id(
     )
 }
 
-pub async fn get_existing_and_new_key_sets(
+pub async fn get_key_sets_to_update(
     peer_state: Arc<PeerState>,
 ) -> Result<(Vec<KeySetConfig>, Vec<KeySetConfig>)> {
     // if there are any key sets that are empty, we need to generate new root keys for them.
@@ -485,20 +534,6 @@ pub async fn get_existing_and_new_key_sets(
         }
     }
 
-    trace!(
-        "Full key sets: {:?}",
-        existing_key_sets
-            .iter()
-            .map(|ks| ks.identifier.clone())
-            .collect::<Vec<_>>()
-    );
-    trace!(
-        "Empty key sets: {:?}",
-        new_key_sets
-            .iter()
-            .map(|ks| ks.identifier.clone())
-            .collect::<Vec<_>>()
-    );
     Ok((existing_key_sets, new_key_sets))
 }
 
