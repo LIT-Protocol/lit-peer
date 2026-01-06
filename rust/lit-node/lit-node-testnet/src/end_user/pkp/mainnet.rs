@@ -1,4 +1,5 @@
-use crate::end_user::EndUser;
+use crate::DEFAULT_KEY_SET_NAME;
+use crate::{end_user::EndUser, testnet::actions::Actions};
 use ethers::middleware::SignerMiddleware;
 use ethers::types::{Address, Bytes, H160, U256};
 use lit_blockchain::contracts::pkp_permissions::{AuthMethod, PKPPermissions};
@@ -338,13 +339,65 @@ impl Pkp {
             actions: Arc::new(end_user.actions().clone()),
             pubkey,
             token_id,
-            key_set_id: key_set_id.to_string(),
+            key_set_id: key_set_id.to_string(), 
             eth_address: eth_address.into(),
             is_datil: false,
         })
     }
-
+ 
     pub async fn burn_pkp_mainnet(&self) -> Result<bool, anyhow::Error> {
+        let pkpnft_address = self.actions.contracts().pkpnft.address();
+        let pkpnft = PKPNFT::new(pkpnft_address, self.signing_provider.clone());
+
+        let cc = pkpnft.burn(self.token_id);
+        let tx = cc.send().await;
+        if tx.is_err() {
+            error!("Error burning PKP: {:?}", tx.unwrap_err());
+            return Err(anyhow::anyhow!("Error burning PKP - sending tx"));
+        }
+        let tx = tx.unwrap();
+
+        let tr = tx.await;
+        if tr.is_err() {
+            error!("Error burning PKP: {:?}", tr.unwrap_err());
+            return Err(anyhow::anyhow!("Error burning PKP - waiting for tx"));
+        }
+        let tr = tr.unwrap();
+        if tr.is_none() {
+            error!("Error burning PKP: No transaction receipt?");
+            return Err(anyhow::anyhow!("Error burning PKP - no tx receipt"));
+        }
+
+        Ok(true)
+    }
+
+    pub async fn burn_pkp(&self) -> Result<bool, anyhow::Error> {
+        let pkpnft_address = self.actions.contracts().pkpnft.address();
+        let pkpnft = PKPNFT::new(pkpnft_address, self.signing_provider.clone());
+
+        let cc = pkpnft.burn(self.token_id);
+        let tx = cc.send().await;
+        if tx.is_err() {
+            error!("Error burning PKP: {:?}", tx.unwrap_err());
+            return Err(anyhow::anyhow!("Error burning PKP - sending tx"));
+        }
+        let tx = tx.unwrap();
+
+        let tr = tx.await;
+        if tr.is_err() {
+            error!("Error burning PKP: {:?}", tr.unwrap_err());
+            return Err(anyhow::anyhow!("Error burning PKP - waiting for tx"));
+        }
+        let tr = tr.unwrap();
+        if tr.is_none() {
+            error!("Error burning PKP: No transaction receipt?");
+            return Err(anyhow::anyhow!("Error burning PKP - no tx receipt"));
+        }
+
+        Ok(true)
+    }
+
+    pub async fn burn_pkp(&self) -> Result<bool, anyhow::Error> {
         let pkpnft_address = self.actions.contracts().pkpnft.address();
         let pkpnft = PKPNFT::new(pkpnft_address, self.signing_provider.clone());
 

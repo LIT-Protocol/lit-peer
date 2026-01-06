@@ -1,5 +1,5 @@
 use crate::common::auth_sig::get_session_sigs_for_auth;
-use crate::common::pkp::sign_with_pkp_request;
+use crate::common::pkp::sign_with_pkp_request; 
 use crate::common::recovery_party::SiweSignature;
 use crate::common::web_user_tests::{
     assert_decrypted, prepare_test_encryption_parameters,
@@ -89,6 +89,27 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
         .await;
 
     let backup_directory = create_recovery_directory();
+    let actions = validator_collection.actions().clone();
+    actions.wait_for_epoch(realm_id, U256::from(2)).await;
+
+    let (realm_id, identifier, description) = (
+        U256::from(1),
+        DEFAULT_DATIL_KEY_SET_NAME.to_string(),
+        "Datil Key Set".to_string(),
+    );
+    let keyset_id = identifier.clone();
+    let root_key_configs = vec![
+        RootKeyConfig {
+            curve_type: CurveType::BLS,
+            count: 1,
+        },
+        RootKeyConfig {
+            curve_type: CurveType::K256,
+            count: 10,
+        },
+    ];
+    let result = actions
+        .add_keyset(realm_id, identifier, description, root_key_configs)
     let actions = validator_collection.actions().clone();
     actions.wait_for_epoch(realm_id, U256::from(2)).await;
 

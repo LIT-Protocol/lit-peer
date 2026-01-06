@@ -5,6 +5,7 @@ use ethers::core::k256::ecdsa::SigningKey;
 use ethers::core::types::U256;
 use ethers::signers::Wallet;
 use lit_core::utils::binary::hex_to_bytes;
+use lit_node::tss::util::DEFAULT_KEY_SET_NAME;
 use lit_node_core::{
     AuthSigItem, LitAbility, LitResourceAbilityRequest, LitResourceAbilityRequestResource,
     LitResourcePrefix, NodeSet, SigningScheme,

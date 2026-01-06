@@ -10,6 +10,7 @@ use self::testnet::node_config::CustomNodeRuntimeConfig;
 use self::validator::ValidatorCollection;
 use crate::testnet::contracts::StakingContractRealmConfig;
 use crate::{end_user::EndUser, validator::default_datil_keyset_config};
+use crate::{end_user::EndUser, validator::default_datil_keyset_config};
 use ethers::types::U256;
 use lit_core::config::{ENV_LIT_CONFIG_FILE, LitConfigBuilder, ReloadableLitConfig};
 
@@ -236,6 +237,48 @@ impl TestSetupBuilder {
                 .await
             {
                 error!("Error extending epoch end time: {:?}", e);
+            }
+        } else {
+            if self.include_datil_testnet == DatilTestnetType::Default {
+                let key_set_config = default_datil_keyset_config();
+                testnet
+                    .actions()
+                    .add_keyset_config(key_set_config)
+                    .await
+                    .expect("Failed to add keyset config");
+            }
+        } 
+
+        // for a standard datil testnet, we'll need to setup a new set of root keys that where generated in the Naga setup.
+        // This saves us from doing a restore from datil->naga.
+        // We may be faced with a situation where the caced data already has Datil keys, or it might only have naga keys.
+        // If Datil keys are NOT present, we'll need to add them.
+
+        if self.include_datil_testnet == DatilTestnetType::Default {
+            info!("Checking for existing Datil root keys in our cached NAGA chain data.");
+            let keyset_id = DEFAULT_DATIL_KEY_SET_NAME;
+            let existing_datil_root_keys = testnet
+                .actions()
+                .get_all_root_keys(keyset_id)
+                .await
+                .unwrap_or_default();
+
+            if existing_datil_root_keys.is_empty() {
+                info!(
+                    "No existing Datil root keys found in our cached NAGA chain data. Adding keyset config and root keys now."
+                );
+                let datil_testnet = testnet.datil_testnet.as_ref().unwrap();
+                let chain_name = datil_testnet.datil_chain.chain_name();
+                let hex_contract_resolver_address =
+                    &format!("{:x}", datil_testnet.contracts.contract_resolver.address());
+                let key_set_config =
+                    default_datil_keyset_config(chain_name, hex_contract_resolver_address);
+                info!("Adding keyset config: {:?}", key_set_config);
+                testnet
+                    .actions()
+                    .add_keyset_config(key_set_config)
+                    .await
+                    .expect("Failed to add keyset config");
             }
         }
 
