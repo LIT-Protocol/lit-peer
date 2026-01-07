@@ -427,8 +427,13 @@ pub fn assert_decrypted(
         &identity_param,
         ciphertext,
         &serialized_decryption_shares,
-    )
-    .expect("Unable to decrypt");
+    );
+    let decrypted = match decrypted {
+        Ok(decrypted) => decrypted,
+        Err(e) => {
+            panic!("Failed to decrypt and combine: {e:?}");
+        }
+    };
     assert_eq!(
         decrypted,
         *expected_plaintext.as_bytes(),

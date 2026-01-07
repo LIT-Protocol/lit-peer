@@ -26,8 +26,8 @@ use crate::utils::encoding;
 use crate::utils::keysets::get_default_keyset_id;
 use crate::utils::rocket::guards::RequestHeaders;
 use crate::utils::web::{
-    check_condition_count, get_auth_context, get_bls_root_pubkey, get_default_bls_root_pubkey,
-    get_ipfs_file, hash_access_control_conditions,
+    check_condition_count, get_auth_context, get_default_bls_root_pubkey, get_ipfs_file,
+    hash_access_control_conditions,
 };
 use crate::utils::web::{get_auth_context_from_session_sigs, get_signed_message};
 use crate::version::DataVersionReader;
@@ -40,6 +40,7 @@ use lit_api_core::context::{SdkVersion, TracingRequired};
 use lit_api_core::error::ApiError;
 use lit_blockchain::resolver::rpc::{ENDPOINT_MANAGER, RpcHealthcheckPoller};
 use lit_core::config::{LitConfig, ReloadableLitConfig};
+use lit_core::utils::binary::bytes_to_hex;
 use lit_node_common::{client_state::ClientState, config::LitNodeConfig};
 use lit_node_core::CurveType;
 use lit_node_core::SigningScheme;
@@ -151,7 +152,7 @@ pub(crate) async fn encryption_sign(
     let before = std::time::Instant::now();
     // Validate auth sig item
     let key_set_id = encryption_sign_request.key_set_id.clone();
-    let bls_root_pubkey = match get_bls_root_pubkey(session, &key_set_id) {
+    let bls_root_pubkey = match get_default_bls_root_pubkey(session) {
         Ok(bls_root_pubkey) => bls_root_pubkey,
         Err(e) => {
             return client_session.json_encrypt_err_custom_response("no bls root key", e.handle());
@@ -303,7 +304,10 @@ pub(crate) async fn encryption_sign(
 
     // Get the identity parameter to be signed.
     let identity_parameter = lit_acc_resource.get_resource_key().into_bytes();
-    trace!("identity_parameter: {:?}", identity_parameter);
+    trace!(
+        "identity_parameter: {:?}",
+        bytes_to_hex(&identity_parameter)
+    );
 
     let before = std::time::Instant::now();
     // Load the BLS secret key share as a blsful key for signing.
