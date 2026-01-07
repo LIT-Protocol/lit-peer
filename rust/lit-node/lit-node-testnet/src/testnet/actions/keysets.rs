@@ -41,7 +41,6 @@ impl Actions {
             .unwrap();
 
         if !root_keys.is_empty() {
-            info!("Got root keys!");
             tracing::trace!("Root keys: {:?}", root_keys);
             return Some(root_keys);
         } else {

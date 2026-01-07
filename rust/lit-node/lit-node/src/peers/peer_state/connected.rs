@@ -72,6 +72,12 @@ impl PeerState {
                 version: version::get_version().to_string(),
             }
         } else {
+            // this represents "us", but if we're not in any of the current/next epochs, we shouldn't be able to complain anyway!
+            let complainer = self
+                .peers_in_next_epoch_current_union_including_shadow()
+                .peer_at_address(self.addr.as_str())
+                .map_err(|e| unexpected_err(e, Some("Failed to get complainer peer".into())))?;
+
             let cfg = self.lit_config.load_full();
             let noonce_bytes = OsRng.r#gen::<[u8; 32]>();
             let noonce = hex::encode(noonce_bytes);
@@ -128,14 +134,12 @@ impl PeerState {
                                     | Code::Unavailable => {
                                         self.client_grpc_channels.remove_connection(addr).await;
                                         warn!("Peer {:?} is unresponsive. Complaining.", addr);
-                                        let complainer = self.addr.clone();
                                         let complaint_channel = self.complaint_channel.clone();
                                         if let Err(e) = complaint_channel
                                             .send_async(PeerComplaint {
                                                 complainer,
                                                 issue: Issue::Unresponsive,
-                                                peer_node_staker_address: peer.staker_address,
-                                                peer_node_socket_address: peer.socket_addr.clone(),
+                                                against_peer: (&peer).into(),
                                             })
                                             .await
                                         {
@@ -172,14 +176,12 @@ impl PeerState {
 
                                 trace!("Connecting to peer {:?} has failed, {:?}", &addr, e);
                                 warn!("Peer {:?} is unresponsive. Complaining.", addr);
-                                let complainer = self.addr.clone();
                                 let complaint_channel = self.complaint_channel.clone();
                                 if let Err(e) = complaint_channel
                                     .send_async(PeerComplaint {
                                         complainer,
                                         issue: Issue::Unresponsive,
-                                        peer_node_staker_address: peer.staker_address,
-                                        peer_node_socket_address: peer.socket_addr.clone(),
+                                        against_peer: (&peer).into(),
                                     })
                                     .await
                                 {
@@ -225,14 +227,12 @@ impl PeerState {
                         "{:?}: {:?}. Err: {:?}. Complaining.",
                         err_msg, addr, verify_err
                     );
-                    let complainer = self.addr.clone();
                     let complaint_channel = self.complaint_channel.clone();
                     if let Err(e) = complaint_channel
                         .send_async(PeerComplaint {
                             complainer,
                             issue: Issue::IncorrectInfo,
-                            peer_node_staker_address: peer.staker_address,
-                            peer_node_socket_address: peer.socket_addr.clone(),
+                            against_peer: (&peer).into(),
                         })
                         .await
                     {

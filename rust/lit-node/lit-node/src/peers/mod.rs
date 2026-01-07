@@ -392,6 +392,12 @@ impl PeerState {
             .collect::<Vec<SimplePeer>>()
             .into()
     }
+
+    pub fn self_peer(&self) -> Result<SimplePeer> {
+        self.peers_in_next_epoch_current_union_including_shadow()
+            .peer_at_address(&self.addr)
+            .map_err(|e| unexpected_err(e, Some("Failed to get self peer".into())))
+    }
     // get a single Validator struct
     pub fn get_validator_from_node_address(&self, node_address: Address) -> Result<PeerValidator> {
         self.get_current_and_next_validators()

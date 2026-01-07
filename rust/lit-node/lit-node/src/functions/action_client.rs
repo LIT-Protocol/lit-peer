@@ -23,7 +23,7 @@ use crate::tss::common::tss_state::TssState;
 use crate::tss::util::DEFAULT_KEY_SET_NAME;
 use crate::utils::encoding;
 use crate::utils::tracing::inject_tracing_metadata;
-use crate::utils::web::{get_bls_root_pubkey, hash_access_control_conditions};
+use crate::utils::web::{get_default_bls_root_pubkey, hash_access_control_conditions};
 use anyhow::{Context as _, Result, bail};
 use base64_light::base64_decode;
 use derive_builder::Builder;
@@ -925,7 +925,7 @@ impl Client {
 
                 shares.push((PeerId::ONE, signature_share)); // lazy - it's not zero, but we don't seem to care!
 
-                let network_pubkey = get_bls_root_pubkey(&tss_state, DEFAULT_KEY_SET_NAME)?;
+                let network_pubkey = get_default_bls_root_pubkey(&tss_state)?;
                 let network_pubkey = blsful::PublicKey::try_from(&hex::decode(&network_pubkey)?)?;
 
                 let serialized_decryption_shares =
@@ -1049,7 +1049,7 @@ impl Client {
 
                         shares.push((PeerId::ONE, signature_share)); // lazy - it's not zero, but we don't seem to care!
 
-                        let network_pubkey = get_bls_root_pubkey(&tss_state, DEFAULT_KEY_SET_NAME)?;
+                        let network_pubkey = get_default_bls_root_pubkey(&tss_state)?;
                         let network_pubkey =
                             blsful::PublicKey::try_from(&hex::decode(&network_pubkey)?)?;
 
@@ -1376,7 +1376,7 @@ impl Client {
             }) => {
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
                 let tss_state = Arc::new(tss_state);
-                let network_pubkey = get_bls_root_pubkey(&tss_state, DEFAULT_KEY_SET_NAME)?;
+                let network_pubkey = get_default_bls_root_pubkey(&tss_state)?;
                 let network_pubkey = blsful::PublicKey::try_from(&hex::decode(&network_pubkey)?)?;
 
                 use sha2::{Digest, Sha256};
@@ -1654,7 +1654,13 @@ impl Client {
             sig_name
         );
 
-        let bls_root_pubkey = self.get_bls_root_pubkey().await?;
+        let tss_state = self
+            .js_env
+            .tss_state
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("No TSS state found"))?;
+        let tss_state = Arc::new(tss_state.clone());
+        let bls_root_pubkey = get_default_bls_root_pubkey(&tss_state)?;
 
         // accept pubkey with and without 0x prefix
         let pubkey = pubkey.replace("0x", "");
@@ -1775,7 +1781,7 @@ impl Client {
                 return Err(anyhow::anyhow!("No TSS state found"));
             }
         };
-        get_bls_root_pubkey(&tss_state, DEFAULT_KEY_SET_NAME)
+        get_default_bls_root_pubkey(&tss_state)
             .map_err(|e| anyhow::anyhow!(format!("Error getting BLS root pubkey: {e:?}")))
     }
 

@@ -146,6 +146,7 @@ pub(crate) async fn key_share_proofs_check(
     epoch: u64,
     lifecycle_id: u64,
 ) -> Result<()> {
+    let complainer = tss_state.peer_state.self_peer()?;
     if !peers.contains_address(&tss_state.addr) {
         trace!("Peer not in next epoch, skipping key share proofs check");
         return Ok(()); // no need to compute key share proofs
@@ -243,10 +244,9 @@ pub(crate) async fn key_share_proofs_check(
                             .peer_state
                             .complaint_channel
                             .send_async(PeerComplaint {
-                                complainer: tss_state.peer_state.addr.clone(),
+                                complainer: complainer.clone(),
                                 issue: Issue::KeyShareValidationFailure(curve),
-                                peer_node_staker_address: peer.staker_address,
-                                peer_node_socket_address: peer.socket_address.clone(),
+                                against_peer: peer.clone(),
                             })
                             .await
                             .map_err(|e| {
