@@ -599,7 +599,7 @@ pub async fn handshake_v0(
         return status::Custom(
             Status::Ok,
             json!(GenericResponse::ok(SDKHandshakeResponseV0 {
-                server_public_key: "".to_string(),
+                server_public_key: bls_root_key.to_string(),
                 subnet_public_key: bls_root_key.clone(),
                 network_public_key: bls_root_key.clone(),
                 network_public_key_set: bls_root_key.clone(),

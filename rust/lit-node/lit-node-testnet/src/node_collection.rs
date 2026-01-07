@@ -340,6 +340,10 @@ where
     responses
 }
 
+pub fn choose_random_indices_as_vec(array_size: usize, num_random_indices: usize) -> Vec<usize> {
+    choose_random_indices(array_size, num_random_indices).iter().cloned().collect::<Vec<usize>>()
+}
+ 
 pub fn choose_random_indices(array_size: usize, num_random_indices: usize) -> HashSet<usize> {
     let mut indices = HashSet::new();
     for _ in 0..num_random_indices {

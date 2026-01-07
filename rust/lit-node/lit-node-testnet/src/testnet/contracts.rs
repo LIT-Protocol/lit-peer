@@ -416,7 +416,6 @@ impl Contracts {
         );
 
         // Loop through each staker account to execute each of their setup.
-        #[cfg(feature = "testing")]
         if let Some(staker_account_setup_mapper) = testnet.staker_account_setup_mapper.as_mut() {
             for (idx, node_account) in testnet.node_accounts.iter().enumerate() {
                 info!(

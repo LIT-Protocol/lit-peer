@@ -53,12 +53,12 @@ async fn shadow_splicing_sign_encrypt() {
             .await
             .unwrap()
             .iter()
-            .map(|v| v.node_address())
+            .map(|v| v.socket_address())
     );
     info!(
         "Validators in Realm {}: {:?}",
         new_realm_id,
-        inactive_validators.iter().map(|v| v.node_address())
+        inactive_validators.iter().map(|v| v.socket_address())
     );
 
     let target_validators = inactive_validators

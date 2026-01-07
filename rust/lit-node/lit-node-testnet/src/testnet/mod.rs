@@ -167,14 +167,11 @@ impl TestnetBuilder {
     #[cfg(feature = "testing")]
     pub fn staker_account_setup_mapper(
         self,
-        staker_account_setup_mapper: Box<
+        staker_account_setup_mapper: Option<Box<
             dyn StakerAccountSetupMapper<Future = BoxFuture<'static, Result<(), anyhow::Error>>>,
-        >,
+        >>,
     ) -> Self {
-        Self {
-            staker_account_setup_mapper: Some(staker_account_setup_mapper),
-            ..self
-        }
+        Self { staker_account_setup_mapper, ..self }
     }
 
     pub fn realm_id(self, realm_id: u8) -> Self {
@@ -354,6 +351,7 @@ pub struct Testnet {
     pub num_staked_only_validators: usize,
     /// Number of validators that have staked and joined, exclusive of those already accounted for in `num_staked_only_validators`.
     pub num_staked_and_joined_validators: usize,
+
     #[cfg(feature = "testing")]
     staker_account_setup_mapper: Option<
         Box<dyn StakerAccountSetupMapper<Future = BoxFuture<'static, Result<(), anyhow::Error>>>>,
@@ -366,11 +364,6 @@ pub struct Testnet {
 impl Testnet {
     pub fn builder() -> TestnetBuilder {
         TestnetBuilder::default()
-    }
-
-    #[cfg(feature = "testing")]
-    pub fn has_staker_account_setup_mapper(&self) -> bool {
-        self.staker_account_setup_mapper.is_some()
     }
 
     pub fn total_num_validators(&self) -> usize {

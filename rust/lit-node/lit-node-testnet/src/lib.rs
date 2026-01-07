@@ -8,9 +8,11 @@ pub mod validator;
 use self::testnet::Testnet;
 use self::testnet::node_config::CustomNodeRuntimeConfig;
 use self::validator::ValidatorCollection;
+use crate::testnet:: StakerAccountSetupMapper;
 use crate::testnet::contracts::StakingContractRealmConfig;
 use crate::{end_user::EndUser, validator::default_datil_keyset_config};
 use ethers::types::U256;
+use futures::future::BoxFuture;
 use lit_core::config::{ENV_LIT_CONFIG_FILE, LitConfigBuilder, ReloadableLitConfig};
 
 use lit_observability::logging::simple_logging_subscriber;
@@ -50,8 +52,12 @@ pub struct TestSetupBuilder {
     fund_ledger_for_wallet: bool,
     custom_binary_path: Option<String>,
     start_staked_only_validators: bool,
+    low_kick_tolerance: bool,
     include_datil_testnet: DatilTestnetType,
     asleep_initially_override: Option<Vec<usize>>,
+    staker_account_setup_mapper: Option<Box<
+            dyn StakerAccountSetupMapper<Future = BoxFuture<'static, Result<(), anyhow::Error>>>,
+        >>,
 }
 
 impl Default for TestSetupBuilder {
@@ -76,6 +82,8 @@ impl Default for TestSetupBuilder {
             start_staked_only_validators: true,
             include_datil_testnet: DatilTestnetType::None,
             asleep_initially_override: None,
+            staker_account_setup_mapper: None,
+            low_kick_tolerance: false,
         }
     }
 }
@@ -144,6 +152,11 @@ impl TestSetupBuilder {
         self
     }
 
+    pub fn low_kick_tolerance(mut self, low_kick_tolerance: bool) -> Self {
+        self.low_kick_tolerance = low_kick_tolerance;
+        self
+    }
+
     pub fn wait_initial_epoch(mut self, wait_initial_epoch: bool) -> Self {
         self.wait_initial_epoch = wait_initial_epoch;
         self
@@ -166,6 +179,13 @@ impl TestSetupBuilder {
 
     pub fn custom_binary_path(mut self, custom_binary_path: Option<String>) -> Self {
         self.custom_binary_path = custom_binary_path;
+        self
+    }
+
+    pub fn staker_account_setup_mapper(mut self, staker_account_setup_mapper: Option<Box<
+            dyn StakerAccountSetupMapper<Future = BoxFuture<'static, Result<(), anyhow::Error>>>,
+        >>) -> Self {
+        self.staker_account_setup_mapper = staker_account_setup_mapper;
         self
     }
 
@@ -202,6 +222,7 @@ impl TestSetupBuilder {
             .is_fault_test(self.is_fault_test)
             .custom_node_runtime_config(custom_node_runtime_config)
             .force_deploy(self.force_deploy)
+            .staker_account_setup_mapper(self.staker_account_setup_mapper)
             .include_datil_testnet(self.include_datil_testnet.clone())
             .build()
             .await;
@@ -222,6 +243,14 @@ impl TestSetupBuilder {
             .set_default_keyset_id(1, DEFAULT_KEY_SET_NAME)
             .await
             .expect("Failed to set default keyset id");
+
+        if self.low_kick_tolerance {
+            testnet
+                .actions()
+                .update_all_complaint_configs(Some(5), Some(3), Some(1), Some(10))
+                .await
+                .expect("Failed to update complaint configs");
+        }
 
         // if this is a cached testnet, we're not sure about timestamps, blocks, etc,... reset!
         if testnet.is_from_cache {

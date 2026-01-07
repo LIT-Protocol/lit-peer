@@ -27,6 +27,7 @@ use lit_core::utils::binary::bytes_to_hex;
 use lit_core::utils::toml::SimpleToml;
 use lit_logging::config::ENV_LOGGING_TIMESTAMP;
 use lit_node_core::NodeSet;
+use lit_node_core::response::GenericResponse;
 use url::Url;
 // use lit_node::p2p_comms::web::chatter_server::chatter::chatter_service_client::ChatterServiceClient;
 use rand::Rng;
@@ -442,6 +443,10 @@ impl ValidatorCollection {
         self.validators.iter().find(|v| v.node.port == port)
     }
 
+    pub fn get_by_staker_address(&self, staker_address: &H160) -> Option<&Validator> {
+        self.validators.iter().find(|v| v.account.staker_address == *staker_address)
+    }
+
     pub async fn get_validator_epochs(&self) -> Result<Vec<(H160, u64)>> {
         let mut epochs = Vec::new();
         for validator in &self.validators {
@@ -803,7 +808,7 @@ impl ValidatorCollection {
             .unwrap()
             .into_iter()
             .filter(|f| ports.contains(&f.node.port))
-            .map(|v| v.node_address())
+            .map(|v| v.socket_address())
             .collect();
 
         let nodes_for_epoch2 = nodes_for_epoch.clone();
@@ -829,11 +834,11 @@ impl ValidatorCollection {
         // add the specific validators to the node set - this is generally used for fault tests, and remove from the list to choose the remaining nodes
         for validator in validators_to_include {
             node_set.push(NodeSet {
-                socket_address: validator.node_address(),
+                socket_address: validator.socket_address(),
                 value: 1,
             });
 
-            nodes_for_epoch.retain(|node| node != &validator.node_address());
+            nodes_for_epoch.retain(|node| node != &validator.socket_address());
         }
 
         for _ in 0..validators_to_add {
@@ -984,7 +989,7 @@ impl Validator {
         self.node.ip.to_string() + ":" + &self.node.port.to_string()
     }
 
-    pub fn node_address(&self) -> String {
+    pub fn socket_address(&self) -> String {
         self.node.ip.to_string() + ":" + &self.node.port.to_string()
     }
 
@@ -1453,9 +1458,12 @@ impl Node {
         let response = Self::handshake(port).await?;
         let response_text = response.text().await?;
 
-        let handshake_json = serde_json::from_str::<SDKHandshakeResponseV0>(&response_text)?;
-
-        Ok(handshake_json.epoch)
+        let handshake_json = serde_json::from_str::<GenericResponse<SDKHandshakeResponseV0>>(&response_text)?;
+        let handshake_data = match handshake_json.data {
+            Some(data) => data,
+            None => return Err(anyhow::anyhow!("Failed to get handshake data")),
+        };
+        Ok(handshake_data.epoch)
     }
 
     fn get_node_config_from_file(config_file: &str) -> Result<SimpleToml> {

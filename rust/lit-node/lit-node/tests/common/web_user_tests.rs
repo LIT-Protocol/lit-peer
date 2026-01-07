@@ -251,15 +251,6 @@ pub async fn test_encryption_decryption_session_sigs(
     // Encrypt.
     let network_pubkey = get_network_pubkey(validator_collection.actions()).await;
     let message_bytes = test_encryption_parameters.to_encrypt.as_bytes();
-    let hashed_access_control_conditions = hash_access_control_conditions(RequestConditions {
-        access_control_conditions: test_encryption_parameters.access_control_conditions.clone(),
-        evm_contract_conditions: test_encryption_parameters.evm_contract_conditions.clone(),
-        sol_rpc_conditions: test_encryption_parameters.sol_rpc_conditions.clone(),
-        unified_access_control_conditions: test_encryption_parameters
-            .unified_access_control_conditions
-            .clone(),
-    })
-    .unwrap();
     let identity_param = AccessControlConditionResource::new(format!(
         "{}/{}",
         hashed_access_control_conditions, test_encryption_parameters.data_to_encrypt_hash
@@ -423,6 +414,9 @@ pub fn assert_decrypted(
     let serialized_decryption_shares = decryption_resp
         .into_iter()
         .map(|resp| {
+            if !resp.ok {
+                warn!("Resp: {:?}", resp);
+            }
             assert!(resp.ok);
             let parsed_resp = resp.data.unwrap();
             parsed_resp.signature_share

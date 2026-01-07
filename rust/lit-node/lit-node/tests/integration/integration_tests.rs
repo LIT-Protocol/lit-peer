@@ -18,14 +18,14 @@ use lit_node::{
     utils::consensus::get_threshold_count,
 };
 use lit_node_testnet::DEFAULT_KEY_SET_NAME;
+use lit_node_testnet::TestSetupBuilder;
+use lit_node_testnet::node_collection::choose_random_indices_as_vec;
+use lit_node_testnet::testnet::StakerAccountSetupMapper;
 use lit_node_testnet::validator::remove_node_keys;
-use lit_node_testnet::{TestSetupBuilder, end_user::EndUser};
 use lit_node_testnet::{
-    node_collection::choose_random_indices,
     testnet::{
         NodeAccount, Testnet,
         contracts::{ComplaintConfig, Contracts, StakingContractRealmConfig},
-        contracts_repo::default_staker_ip_addresses,
     },
     validator::ValidatorCollection,
 };
@@ -400,175 +400,92 @@ async fn one_node_conflicting_networking_info(test_case: usize) {
     info!("TEST: one_node_conflicting_networking_info");
 
     let num_nodes = 6;
-    let (random_node_idx_to_be_kicked, new_staked_port_of_node_to_be_kicked) = match test_case {
-        1 => {
-            // Choose a random node index to stake with an invalid port.
-            let random_node_idx = choose_random_indices(num_nodes, 1)
-                .iter()
-                .cloned()
-                .collect::<Vec<usize>>()[0];
 
-            (random_node_idx, "5555".to_owned())
-        }
-        2 => {
-            // Randomly choose an impersonator and a victim.
-            let random_node_indices: Vec<usize> = choose_random_indices(num_nodes, 2)
-                .iter()
-                .cloned()
-                .collect();
-            let random_node_idx_impersonater = random_node_indices[0];
-            let random_node_idx_impersonated = random_node_indices[1];
-            let default_ip_addresses = default_staker_ip_addresses(7470, num_nodes);
-            let new_port_of_impersonator = default_ip_addresses[random_node_idx_impersonated]
-                .split(':')
-                .collect::<Vec<&str>>()[1];
+    let port_function = get_port_mangling_function(test_case, num_nodes);
+    let realm_id = U256::from(1);
 
-            (
-                random_node_idx_impersonater,
-                new_port_of_impersonator.to_owned(),
-            )
-        }
-        _ => panic!("Invalid test case"),
-    };
-
-    // Start the node collection
-    let mut testnet = Testnet::builder()
+    let (testnet, validator_collection, end_user) = TestSetupBuilder::default()
         .num_staked_and_joined_validators(num_nodes)
         .force_deploy(true)
-        .staker_account_setup_mapper(Box::new(move |args: (usize, NodeAccount, Contracts)| {
-            let random_node_idx_to_be_kicked_clone = random_node_idx_to_be_kicked;
-            let new_staked_port_of_node_to_be_kicked_clone =
-                new_staked_port_of_node_to_be_kicked.clone();
-
-            Box::pin(async move {
-                if args.0 == random_node_idx_to_be_kicked_clone {
-                    // Send a TX to chain to update the staker information with an invalid port.
-                    let staker_provider = args.1.signing_provider;
-                    let staking = Staking::<
-                        SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>,
-                    >::new(
-                        args.2.staking.address(), staker_provider.clone()
-                    );
-
-                    let validator: Validator = staking
-                        .validators(args.1.staker_address)
-                        .call()
-                        .await
-                        .expect("Failed to get staker config");
-                    let new_staked_port = new_staked_port_of_node_to_be_kicked_clone
-                        .parse::<u32>()
-                        .expect("Failed to parse port");
-                    let update_cc = staking.set_ip_port_node_address(
-                        validator.ip,
-                        validator.ipv_6,
-                        new_staked_port,
-                        validator.node_address,
-                    );
-
-                    Contracts::process_contract_call(
-                        update_cc,
-                        "setting staker port to invalid port",
-                    )
-                    .await;
-
-                    info!(
-                        "Successfully updated staker ({}) {:?}: port {:?} -> {:?}",
-                        args.0, args.1.staker_address, validator.port, new_staked_port
-                    );
-                }
-
-                Ok(())
-            }) as BoxFuture<'static, Result<(), anyhow::Error>>
-        }))
+        .low_kick_tolerance(true)
+        .staker_account_setup_mapper(Some(port_function))
         .build()
         .await;
 
-    let _testnet_contracts = Testnet::setup_contracts(&mut testnet, None, None)
-        .await
-        .expect("Failed to setup contracts");
-
-    testnet
-        .actions()
-        .set_default_keyset_id(1, DEFAULT_KEY_SET_NAME)
-        .await
-        .expect("Failed to set default keyset id");
-
-    let validator_collection = ValidatorCollection::builder()
-        .num_staked_nodes(num_nodes)
-        .wait_for_root_keys(false)
-        .wait_initial_epoch(false)
-        .build(&testnet)
-        .await
-        .expect("Failed to build validator collection");
-
     let actions = testnet.actions();
-
-    // Update complaint config to be 3 to speed up test.
-    // This is intentionally not set before the validator collection is built since only 1 vote is
-    // needed to kick a node in the genesis epoch, and we don't want complaints due to each node being
-    // spun up during building the validator collection.
-    info!("Updating complaint config to be 3 to speed up test.");
-    let mut complaint_reason_to_config = HashMap::<U256, ComplaintConfig>::new();
-    complaint_reason_to_config.insert(
-        U256::from(Issue::Unresponsive.value()),
-        ComplaintConfig::builder().tolerance(U256::from(3)).build(),
-    );
-    complaint_reason_to_config.insert(
-        U256::from(Issue::IncorrectInfo.value()),
-        ComplaintConfig::builder().tolerance(U256::from(3)).build(),
-    );
-
-    let realm_id = U256::from(1);
-
-    assert!(
-        actions
-            .update_staking_realm_config(
-                StakingContractRealmConfig::builder()
-                    .complaint_reason_to_config(complaint_reason_to_config)
-                    .realm_id(realm_id)
-                    .build()
-            )
-            .await
-            .is_ok()
-    );
-
-    info!(
-        "Waiting for node {} to be kicked",
-        random_node_idx_to_be_kicked
-    );
-    let staker_address_to_kick = testnet.node_accounts[random_node_idx_to_be_kicked].staker_address;
-    let epoch_number = actions.get_current_epoch(realm_id).await;
-    let voting_status = actions
-        .wait_for_voting_status_to_kick_validator(
-            realm_id,
-            epoch_number,
-            staker_address_to_kick,
-            H160::random(), // For simplicity, we only care about asserting the number of votes.
-            1, // In the genesis epoch, the number of votes required to kick a node is 1.
-            true,
-        )
-        .await;
-    assert!(voting_status.is_ok());
-
-    // After the node is kicked, wait for the DKG to complete
-    let epoch_number = actions.get_current_epoch(realm_id).await;
-    actions.wait_for_epoch(realm_id, epoch_number + 1).await;
 
     // Assert that the current validator set is 1 less.
     let current_validators = actions.get_current_validators(realm_id).await;
     info!("Current validators: {:?}", current_validators);
     assert_eq!(current_validators.len(), num_nodes - 1);
 
-    let validator_epochs = validator_collection.get_validator_epochs().await;
-    info!("Validator epochs: {:?}", validator_epochs);
-
-    let mut end_user = EndUser::new(&testnet);
-    end_user.fund_wallet_default_amount().await;
-    let _pkp_info = end_user.new_pkp().await;
-
-    // Run network checks
+    // // Run network checks
     let network_checker = NetworkIntegrityChecker::new(&end_user, &testnet.actions()).await;
     network_checker.check(&validator_collection, &vec![]).await;
+}
+
+fn get_port_mangling_function(
+    test_case: usize,
+    num_nodes: usize,
+) -> Box<dyn StakerAccountSetupMapper<Future = BoxFuture<'static, Result<(), anyhow::Error>>>> {
+    let (random_node_idx_to_be_kicked, invalid_port) = match test_case {
+        1 => {
+            // Choose a random node index to stake with an invalid port.
+            let random_node_idx = choose_random_indices_as_vec(num_nodes, 1)[0];
+            (random_node_idx, 5555 as u32)
+        }
+        2 => {
+            // Randomly choose an impersonator and a victim.
+            let random_node_indices = choose_random_indices_as_vec(num_nodes, 2);
+            (random_node_indices[0], 7470 + random_node_indices[1] as u32)
+        }
+        _ => panic!("Invalid test case"),
+    };
+
+    info!(
+        "Node to be kicked: {:?}. Invalid port setting: {:?}",
+        random_node_idx_to_be_kicked, invalid_port
+    );
+
+    let fut = Box::new(move |args: (usize, NodeAccount, Contracts)| {
+        let random_node_idx_to_be_kicked_clone = random_node_idx_to_be_kicked;
+        let new_staked_port = invalid_port;
+
+        Box::pin(async move {
+            if args.0 == random_node_idx_to_be_kicked_clone {
+                // Send a TX to chain to update the staker information with an invalid port.
+                let staker_provider = args.1.signing_provider;
+                let staking =
+                    Staking::<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>::new(
+                        args.2.staking.address(),
+                        staker_provider.clone(),
+                    );
+
+                let validator: Validator = staking
+                    .validators(args.1.staker_address)
+                    .call()
+                    .await
+                    .expect("Failed to get staker config");
+                let update_cc = staking.set_ip_port_node_address(
+                    validator.ip,
+                    validator.ipv_6,
+                    new_staked_port,
+                    validator.node_address,
+                );
+
+                Contracts::process_contract_call(update_cc, "setting staker port to invalid port")
+                    .await;
+
+                info!(
+                    "Successfully updated staker ({}) {:?}: port {:?} -> {:?}",
+                    args.0, args.1.staker_address, validator.port, new_staked_port
+                );
+            }
+
+            Ok(())
+        }) as BoxFuture<'static, Result<(), anyhow::Error>>
+    });
+    fut
 }
 
 #[tokio::test]
