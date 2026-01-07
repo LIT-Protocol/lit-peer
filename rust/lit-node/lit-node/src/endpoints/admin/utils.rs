@@ -1597,4 +1597,67 @@ mod test {
         restore_state.mark_keys_restored(&restored_key_shares).await;
         assert!(restore_state.are_all_keys_restored().await);
     }
+
+    #[tokio::test]
+    async fn test_untar_keys_stream_fails_if_keyset_config_missing() {
+        use crate::LitConfig;
+        use crate::tss::common::restore::RestoreState;
+        use std::collections::BTreeMap;
+
+        // Mocks
+        let cfg = LitConfig::for_tests();
+        let restore_state = Arc::new(RestoreState::default());
+        // Simulate no keysets by passing empty map
+        let current_key_sets = BTreeMap::<String, KeySetConfig>::new();
+
+        // Prepare a valid, but minimal tar file containing basic backup files.
+        // The test can use a byte stream that skips key file entries, so the curve
+        // keysets the function looks for to restore are missing.
+        use tokio::io::AsyncReadExt;
+        use tokio::io::BufReader;
+        let data: Vec<u8> = {
+            use std::io::Cursor;
+            use tar::Builder;
+
+            let mut archive_data = Vec::new();
+            {
+                let mut builder = Builder::new(&mut archive_data);
+                builder
+                    .append_data(
+                        &mut tar::Header::new_gnu(),
+                        super::RECOVERY_PARTY_WALLET_ADDRESSES_FN,
+                        Cursor::new(r#"["0x123456"]"#),
+                    )
+                    .unwrap();
+                builder
+                    .append_data(
+                        &mut tar::Header::new_gnu(),
+                        super::RECOVERY_PARTY_THRESHOLD_FN,
+                        Cursor::new("1"),
+                    )
+                    .unwrap();
+                builder
+                    .append_data(
+                        &mut tar::Header::new_gnu(),
+                        super::SESSION_ID_FN,
+                        Cursor::new("abc"),
+                    )
+                    .unwrap();
+                // Do NOT add any files for keysets -- this simulates missing keyset backup.
+                builder.finish().unwrap();
+            }
+            archive_data
+        };
+        let cursor = std::io::Cursor::new(data.clone());
+        let stream = BufReader::new(tokio_util::io::StreamReader::new(futures::stream::once(
+            async move { Ok::<_, std::io::Error>(data) },
+        )));
+
+        // We expect untar_keys_stream to fail because there are no keyset entries
+        let result = untar_keys_stream(&cfg, &restore_state, &current_key_sets, stream).await;
+        assert!(
+            result.is_err(),
+            "untar_keys_stream should fail if keysets are missing or empty"
+        );
+    }
 }
