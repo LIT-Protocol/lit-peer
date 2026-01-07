@@ -27,13 +27,11 @@ use ethers::providers::Http;
 use ethers::providers::Provider;
 use ethers::signers::Wallet;
 use ethers::types::Address;
-#[cfg(feature = "testing")]
 use futures::future::BoxFuture;
 use lit_blockchain::resolver::rpc::{ENDPOINT_MANAGER, RpcHealthcheckPoller};
 use lit_core::utils::binary::hex_to_bytes;
 use lit_core::utils::toml::SimpleToml;
 use lit_node_common::coms_keys::ComsKeys;
-#[cfg(feature = "testing")]
 use std::future::Future;
 use std::sync::Arc;
 use std::time::Duration;
@@ -82,7 +80,6 @@ pub struct TestnetBuilder {
     num_staked_only_validators: usize,
     num_staked_and_joined_validators: usize,
     force_deploy: bool,
-    #[cfg(feature = "testing")]
     staker_account_setup_mapper: Option<
         Box<dyn StakerAccountSetupMapper<Future = BoxFuture<'static, Result<(), anyhow::Error>>>>,
     >,
@@ -104,7 +101,6 @@ impl Default for TestnetBuilder {
             num_staked_only_validators: 0,
             num_staked_and_joined_validators: 10,
             force_deploy: false,
-            #[cfg(feature = "testing")]
             staker_account_setup_mapper: None,
             realm_id: 1,
             custom_node_runtime_config: None,
@@ -164,14 +160,20 @@ impl TestnetBuilder {
         }
     }
 
-    #[cfg(feature = "testing")]
     pub fn staker_account_setup_mapper(
         self,
-        staker_account_setup_mapper: Option<Box<
-            dyn StakerAccountSetupMapper<Future = BoxFuture<'static, Result<(), anyhow::Error>>>,
-        >>,
+        staker_account_setup_mapper: Option<
+            Box<
+                dyn StakerAccountSetupMapper<
+                    Future = BoxFuture<'static, Result<(), anyhow::Error>>,
+                >,
+            >,
+        >,
     ) -> Self {
-        Self { staker_account_setup_mapper, ..self }
+        Self {
+            staker_account_setup_mapper,
+            ..self
+        }
     }
 
     pub fn realm_id(self, realm_id: u8) -> Self {
@@ -309,7 +311,6 @@ impl TestnetBuilder {
             existing_config_path,
             num_staked_only_validators: self.num_staked_only_validators,
             num_staked_and_joined_validators: self.num_staked_and_joined_validators,
-            #[cfg(feature = "testing")]
             staker_account_setup_mapper: self.staker_account_setup_mapper,
             register_inactive_validators: self.register_inactive_validators,
             contracts: None,
@@ -352,7 +353,6 @@ pub struct Testnet {
     /// Number of validators that have staked and joined, exclusive of those already accounted for in `num_staked_only_validators`.
     pub num_staked_and_joined_validators: usize,
 
-    #[cfg(feature = "testing")]
     staker_account_setup_mapper: Option<
         Box<dyn StakerAccountSetupMapper<Future = BoxFuture<'static, Result<(), anyhow::Error>>>>,
     >,
@@ -468,14 +468,11 @@ impl Testnet {
     }
 }
 
-#[cfg(feature = "testing")]
 pub trait StakerAccountSetupMapper {
     type Future: Future<Output = Result<(), anyhow::Error>>;
 
     fn run(&mut self, args: (usize, NodeAccount, Contracts)) -> Self::Future;
 }
-
-#[cfg(feature = "testing")]
 
 impl<T: Future<Output = Result<(), anyhow::Error>>, F: FnMut((usize, NodeAccount, Contracts)) -> T>
     StakerAccountSetupMapper for F

@@ -8,7 +8,7 @@ pub mod validator;
 use self::testnet::Testnet;
 use self::testnet::node_config::CustomNodeRuntimeConfig;
 use self::validator::ValidatorCollection;
-use crate::testnet:: StakerAccountSetupMapper;
+use crate::testnet::StakerAccountSetupMapper;
 use crate::testnet::contracts::StakingContractRealmConfig;
 use crate::{end_user::EndUser, validator::default_datil_keyset_config};
 use ethers::types::U256;
@@ -55,9 +55,9 @@ pub struct TestSetupBuilder {
     low_kick_tolerance: bool,
     include_datil_testnet: DatilTestnetType,
     asleep_initially_override: Option<Vec<usize>>,
-    staker_account_setup_mapper: Option<Box<
-            dyn StakerAccountSetupMapper<Future = BoxFuture<'static, Result<(), anyhow::Error>>>,
-        >>,
+    staker_account_setup_mapper: Option<
+        Box<dyn StakerAccountSetupMapper<Future = BoxFuture<'static, Result<(), anyhow::Error>>>>,
+    >,
 }
 
 impl Default for TestSetupBuilder {
@@ -182,9 +182,16 @@ impl TestSetupBuilder {
         self
     }
 
-    pub fn staker_account_setup_mapper(mut self, staker_account_setup_mapper: Option<Box<
-            dyn StakerAccountSetupMapper<Future = BoxFuture<'static, Result<(), anyhow::Error>>>,
-        >>) -> Self {
+    pub fn staker_account_setup_mapper(
+        mut self,
+        staker_account_setup_mapper: Option<
+            Box<
+                dyn StakerAccountSetupMapper<
+                    Future = BoxFuture<'static, Result<(), anyhow::Error>>,
+                >,
+            >,
+        >,
+    ) -> Self {
         self.staker_account_setup_mapper = staker_account_setup_mapper;
         self
     }

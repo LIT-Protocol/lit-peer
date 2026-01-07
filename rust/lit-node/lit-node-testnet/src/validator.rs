@@ -444,7 +444,9 @@ impl ValidatorCollection {
     }
 
     pub fn get_by_staker_address(&self, staker_address: &H160) -> Option<&Validator> {
-        self.validators.iter().find(|v| v.account.staker_address == *staker_address)
+        self.validators
+            .iter()
+            .find(|v| v.account.staker_address == *staker_address)
     }
 
     pub async fn get_validator_epochs(&self) -> Result<Vec<(H160, u64)>> {
@@ -1458,7 +1460,8 @@ impl Node {
         let response = Self::handshake(port).await?;
         let response_text = response.text().await?;
 
-        let handshake_json = serde_json::from_str::<GenericResponse<SDKHandshakeResponseV0>>(&response_text)?;
+        let handshake_json =
+            serde_json::from_str::<GenericResponse<SDKHandshakeResponseV0>>(&response_text)?;
         let handshake_data = match handshake_json.data {
             Some(data) => data,
             None => return Err(anyhow::anyhow!("Failed to get handshake data")),
