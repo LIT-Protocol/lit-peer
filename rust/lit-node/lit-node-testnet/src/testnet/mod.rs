@@ -468,7 +468,7 @@ impl Testnet {
     }
 }
 
-pub trait StakerAccountSetupMapper {
+pub trait StakerAccountSetupMapper: Send + Sync {
     type Future: Future<Output = Result<(), anyhow::Error>>;
 
     fn run(&mut self, args: (usize, NodeAccount, Contracts)) -> Self::Future;
@@ -476,6 +476,8 @@ pub trait StakerAccountSetupMapper {
 
 impl<T: Future<Output = Result<(), anyhow::Error>>, F: FnMut((usize, NodeAccount, Contracts)) -> T>
     StakerAccountSetupMapper for F
+where
+    F: Send + Sync,
 {
     type Future = T;
 
