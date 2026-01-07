@@ -1372,6 +1372,139 @@ mod test {
         assert!(restore_state.are_all_keys_restored().await);
     }
 
+    #[tokio::test]
+    async fn test_untar_backup_keys_with_missing_keysets() {
+        let cfg = Arc::new(crate::tests::common::get_backup_config());
+        let staker_address = &crate::endpoints::recovery::get_staker_address(&cfg)
+            .expect("Failed to get staker address");
+        let bls_key_helper = KeyPersistence::<G1Projective>::new(CurveType::BLS);
+        let k256_key_helper = KeyPersistence::<ProjectivePoint>::new(CurveType::K256);
+        let recovery_party = get_test_recovery_party_with_encryption_keys();
+
+        // Make sure that there is at least one ECDSA and one BLS key share.
+        let bls_key: KeyShare = serde_json::from_str(TEST_BLS_KEY_SHARE).unwrap();
+        let k256_key: KeyShare = serde_json::from_str(TEST_ECDSA_KEY_SHARE).unwrap();
+
+        // Use the actual public keys from the key shares as root keys
+        let key_set_root_keys = maplit::hashmap! {
+            CurveType::BLS => vec![bls_key.hex_public_key.clone()],
+            CurveType::K256 => vec![k256_key.hex_public_key.clone()],
+        };
+        let bls_key_share_commitments: KeyShareCommitments<<InnerBls12381G1 as BCA>::Point> =
+            serde_json::from_str(TEST_BLS_KEY_SHARE_COMMITMENT).unwrap();
+        let k256_key_share_commitments: KeyShareCommitments<ProjectivePoint> =
+            serde_json::from_str(TEST_ECDSA_KEY_SHARE_COMMITMENT).unwrap();
+
+        // Make sure the key shares and key share commitments match
+        verify_decrypted_key_share::<InnerBls12381G1>(
+            bls_key_helper
+                .secret_from_hex(&bls_key.hex_private_share)
+                .unwrap(),
+            &bls_key_share_commitments,
+            bls_key.peer_id,
+        )
+        .unwrap();
+
+        verify_decrypted_key_share::<Secp256k1>(
+            k256_key_helper
+                .secret_from_hex(&k256_key.hex_private_share)
+                .unwrap(),
+            &k256_key_share_commitments,
+            k256_key.peer_id,
+        )
+        .unwrap();
+
+        let key_cache = KeyCache::default();
+
+        write_key_share_to_disk(
+            CurveType::BLS,
+            &bls_key.hex_public_key,
+            staker_address,
+            &bls_key.peer_id,
+            333,
+            1,
+            &key_cache,
+            &bls_key,
+        )
+        .await
+        .unwrap();
+        write_key_share_to_disk(
+            CurveType::K256,
+            &k256_key.hex_public_key,
+            staker_address,
+            &k256_key.peer_id,
+            333,
+            1,
+            &key_cache,
+            &k256_key,
+        )
+        .await
+        .unwrap();
+
+        write_key_share_commitments_to_disk(
+            CurveType::BLS,
+            &bls_key.hex_public_key,
+            staker_address,
+            &bls_key.peer_id,
+            333,
+            1,
+            &key_cache,
+            &bls_key_share_commitments,
+        )
+        .await
+        .unwrap();
+        write_key_share_commitments_to_disk(
+            CurveType::K256,
+            &k256_key.hex_public_key,
+            staker_address,
+            &k256_key.peer_id,
+            333,
+            1,
+            &key_cache,
+            &k256_key_share_commitments,
+        )
+        .await
+        .unwrap();
+
+        // Call the function to be tested
+        let blinders = RestoreState::generate_blinders();
+        let peers = SimplePeerCollection(vec![SimplePeer {
+            socket_address: "127.0.0.1".to_string(),
+            peer_id: bls_key.peer_id,
+            staker_address: ethers::types::H160::from_slice(&hex::decode(staker_address).unwrap()),
+            key_hash: 0,
+            kicked: false,
+            version: Version::new(1, 0, 0),
+            realm_id: ethers::prelude::U256::from(1),
+        }]);
+
+        let child = encrypt_and_tar_backup_keys(
+            cfg.clone(),
+            bls_key.peer_id,
+            &key_set_root_keys,
+            &blinders,
+            &recovery_party,
+            &peers,
+            333,
+        )
+        .await
+        .unwrap();
+
+        let restore_state = Arc::new(RestoreState::new());
+        restore_state.set_blinders(blinders);
+        restore_state.set_actively_restoring(true);
+        let key_sets = std::collections::BTreeMap::new();
+        let res = untar_keys_stream(&cfg, &restore_state, &key_sets, child.as_slice()).await;
+        assert!(res.is_err());
+        let e = res.unwrap_err();
+        assert_eq!(
+            e.to_string(),
+            "unexpected error: No matching key set found for the backup's root keys/curves",
+            "Expected error message about missing key set, got: {}",
+            e.to_string()
+        );
+    }
+
     // Helper function
     fn get_bls_decryption_shares(
         vb: &EncryptedKeyShare<InnerBls12381G1>,
@@ -1596,68 +1729,5 @@ mod test {
 
         restore_state.mark_keys_restored(&restored_key_shares).await;
         assert!(restore_state.are_all_keys_restored().await);
-    }
-
-    #[tokio::test]
-    async fn test_untar_keys_stream_fails_if_keyset_config_missing() {
-        use crate::LitConfig;
-        use crate::tss::common::restore::RestoreState;
-        use std::collections::BTreeMap;
-
-        // Mocks
-        let cfg = LitConfig::for_tests();
-        let restore_state = Arc::new(RestoreState::default());
-        // Simulate no keysets by passing empty map
-        let current_key_sets = BTreeMap::<String, KeySetConfig>::new();
-
-        // Prepare a valid, but minimal tar file containing basic backup files.
-        // The test can use a byte stream that skips key file entries, so the curve
-        // keysets the function looks for to restore are missing.
-        use tokio::io::AsyncReadExt;
-        use tokio::io::BufReader;
-        let data: Vec<u8> = {
-            use std::io::Cursor;
-            use tar::Builder;
-
-            let mut archive_data = Vec::new();
-            {
-                let mut builder = Builder::new(&mut archive_data);
-                builder
-                    .append_data(
-                        &mut tar::Header::new_gnu(),
-                        super::RECOVERY_PARTY_WALLET_ADDRESSES_FN,
-                        Cursor::new(r#"["0x123456"]"#),
-                    )
-                    .unwrap();
-                builder
-                    .append_data(
-                        &mut tar::Header::new_gnu(),
-                        super::RECOVERY_PARTY_THRESHOLD_FN,
-                        Cursor::new("1"),
-                    )
-                    .unwrap();
-                builder
-                    .append_data(
-                        &mut tar::Header::new_gnu(),
-                        super::SESSION_ID_FN,
-                        Cursor::new("abc"),
-                    )
-                    .unwrap();
-                // Do NOT add any files for keysets -- this simulates missing keyset backup.
-                builder.finish().unwrap();
-            }
-            archive_data
-        };
-        let cursor = std::io::Cursor::new(data.clone());
-        let stream = BufReader::new(tokio_util::io::StreamReader::new(futures::stream::once(
-            async move { Ok::<_, std::io::Error>(data) },
-        )));
-
-        // We expect untar_keys_stream to fail because there are no keyset entries
-        let result = untar_keys_stream(&cfg, &restore_state, &current_key_sets, stream).await;
-        assert!(
-            result.is_err(),
-            "untar_keys_stream should fail if keysets are missing or empty"
-        );
     }
 }
