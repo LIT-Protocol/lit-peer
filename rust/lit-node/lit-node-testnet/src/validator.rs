@@ -979,6 +979,10 @@ impl Validator {
         self.node.ip.to_string() + ":" + &self.node.port.to_string()
     }
 
+    pub fn port(&self) -> usize {
+        self.node.port
+    }
+
     pub fn set_binary_path(&mut self, binary_path: String) {
         self.node.binary_path = binary_path;
     }

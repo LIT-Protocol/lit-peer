@@ -1,18 +1,12 @@
 use crate::common::{
-    ecdsa::{sign_with_hd_key, simple_single_sign_with_hd_key},
-    web_user_tests::{
-        test_encryption_decryption_auth_sig, test_encryption_decryption_session_sigs,
-    },
+    ecdsa::simple_single_sign_with_hd_key, web_user_tests::test_encryption_decryption_session_sigs,
 };
-use tracing::{debug, info};
-
 use lit_node_core::SigningScheme;
-use lit_node_testnet::{
-    end_user::EndUser, node_collection::get_identity_pubkeys_from_node_set, validator::Validator,
-};
+use lit_node_testnet::{end_user::EndUser, validator::Validator};
 use lit_node_testnet::{
     node_collection::get_network_pubkey, testnet::actions::Actions, validator::ValidatorCollection,
 };
+use tracing::info;
 
 /// This checker is intended to be used for checking the integrity of the network after notable network-wide
 /// events such as epoch advancements.
