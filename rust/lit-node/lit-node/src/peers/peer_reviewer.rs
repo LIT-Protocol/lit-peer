@@ -293,8 +293,9 @@ impl PeerReviewer {
         {
             Ok(_) => {
                 warn!(
-                    "Voted to kick peer {}. Final complaint was: {:?}",
+                    "Voted to kick peer {}, with staker address {}. Final complaint was: {:?}",
                     complaint.against_peer.debug_address(),
+                    complaint.against_peer.staker_address,
                     complaint.issue
                 );
                 metrics::counter::add_one(

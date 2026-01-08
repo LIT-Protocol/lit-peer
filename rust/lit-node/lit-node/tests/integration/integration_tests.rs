@@ -400,8 +400,8 @@ async fn one_node_conflicting_networking_info(test_case: usize) {
     info!("TEST: one_node_conflicting_networking_info");
 
     let num_nodes = 6;
-
-    let port_function = get_port_mangling_function(test_case, num_nodes);
+    let random_node_indices = choose_random_indices_as_vec(num_nodes, 2);
+    let port_function = get_port_mangling_function(test_case, &random_node_indices);
     let realm_id = U256::from(1);
 
     let (testnet, validator_collection, end_user) = TestSetupBuilder::default()
@@ -421,22 +421,19 @@ async fn one_node_conflicting_networking_info(test_case: usize) {
 
     // // Run network checks
     let network_checker = NetworkIntegrityChecker::new(&end_user, &testnet.actions()).await;
+    
     network_checker.check(&validator_collection, &vec![]).await;
 }
 
 fn get_port_mangling_function(
     test_case: usize,
-    num_nodes: usize,
+    random_node_indices: &Vec<usize>,
 ) -> Box<dyn StakerAccountSetupMapper<Future = BoxFuture<'static, Result<(), anyhow::Error>>>> {
     let (random_node_idx_to_be_kicked, invalid_port) = match test_case {
-        1 => {
-            // Choose a random node index to stake with an invalid port.
-            let random_node_idx = choose_random_indices_as_vec(num_nodes, 1)[0];
-            (random_node_idx, 5555 as u32)
+        1 => {            // Choose a random node index to stake with an invalid port.            
+            (random_node_indices[0], 5555 as u32)
         }
-        2 => {
-            // Randomly choose an impersonator and a victim.
-            let random_node_indices = choose_random_indices_as_vec(num_nodes, 2);
+        2 => {            // Randomly choose an impersonator and a victim.
             (random_node_indices[0], 7470 + random_node_indices[1] as u32)
         }
         _ => panic!("Invalid test case"),

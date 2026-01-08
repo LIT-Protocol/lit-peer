@@ -394,9 +394,30 @@ impl PeerState {
     }
 
     pub fn self_peer(&self) -> Result<SimplePeer> {
-        self.peers_in_next_epoch_current_union_including_shadow()
+        if let Ok(p) = self
+            .peers_in_next_epoch_current_union_including_shadow()
             .peer_at_address(&self.addr)
-            .map_err(|e| unexpected_err(e, Some("Failed to get self peer".into())))
+        {
+            Ok(p)
+        } else {
+            let peer_id =
+                match PeerId::from_slice(&self.wallet_keys.verifying_key().to_sec1_bytes()) {
+                    Ok(p) => p,
+                    Err(e) => {
+                        warn!("Failed to convert verifying key to peer id: {:?}", e);
+                        PeerId::NOT_ASSIGNED
+                    }
+                };
+            Ok(SimplePeer {
+                socket_address: self.addr.clone(),
+                peer_id,
+                staker_address: self.staker_address,
+                key_hash: 0,
+                kicked: false,
+                version: crate::version::get_version(),
+                realm_id: U256::zero(),
+            })
+        }
     }
     // get a single Validator struct
     pub fn get_validator_from_node_address(&self, node_address: Address) -> Result<PeerValidator> {

@@ -995,6 +995,10 @@ impl Validator {
         self.node.ip.to_string() + ":" + &self.node.port.to_string()
     }
 
+    pub fn port(&self) -> usize {
+        self.node.port
+    }
+
     pub async fn start_node(&mut self, clean_slate: bool, wait_for_node_awake: bool) -> Result<()> {
         self.start_node_with_option(clean_slate, wait_for_node_awake, true)
             .await

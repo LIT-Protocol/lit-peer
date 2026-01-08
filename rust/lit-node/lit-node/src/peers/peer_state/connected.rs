@@ -73,10 +73,7 @@ impl PeerState {
             }
         } else {
             // this represents "us", but if we're not in any of the current/next epochs, we shouldn't be able to complain anyway!
-            let complainer = self
-                .peers_in_next_epoch_current_union_including_shadow()
-                .peer_at_address(self.addr.as_str())
-                .map_err(|e| unexpected_err(e, Some("Failed to get complainer peer".into())))?;
+            let complainer = self.self_peer()?;
 
             let cfg = self.lit_config.load_full();
             let noonce_bytes = OsRng.r#gen::<[u8; 32]>();
