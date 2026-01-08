@@ -203,7 +203,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
 
     info!("Making sure that {} nodes are offline", number_of_nodes);
     for i in 0..number_of_nodes {
-        let validator = validator_collection.get_validator_by_idx_mut(i);
+        let validator = validator_collection.get_validator_by_index_as_mut(i);
         assert!(validator.is_node_offline());
     }
 

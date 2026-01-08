@@ -53,6 +53,7 @@ contract Staking {
         // Most of this is related to staking / delegation
         s.globalConfig[0] = LibStakingStorage.GlobalConfig({
             tokenRewardPerTokenPerEpoch: (10 ** 18) / 20, // 18 decimal places in token
+            keyTypes_deprecated: new uint256[](0),
             rewardEpochDuration: 1 hours,
             maxTimeLock: 4 * 365 days,
             minTimeLock: 90 days,

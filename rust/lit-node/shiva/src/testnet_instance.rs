@@ -179,7 +179,7 @@ impl TestnetInstance {
         for i in 0..self.validators.size() {
             if self
                 .validators
-                .get_validator_by_idx(i)
+                .get_validator_by_index(i)
                 .account()
                 .node_address
                 .to_string()

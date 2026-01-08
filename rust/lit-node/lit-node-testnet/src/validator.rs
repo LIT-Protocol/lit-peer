@@ -320,6 +320,7 @@ impl ValidatorCollectionBuilder {
     }
 }
 
+#[derive(Clone)]
 pub struct ValidatorCollection {
     validators: Vec<Validator>,
     actions: Actions,
@@ -416,11 +417,11 @@ impl ValidatorCollection {
         std::cmp::max(3, (port_count * 2) / 3)
     }
 
-    pub fn get_validator_by_idx(&self, idx: usize) -> &Validator {
+    pub fn get_validator_by_index(&self, idx: usize) -> &Validator {
         &self.validators[idx]
     }
 
-    pub fn get_validator_by_idx_mut(&mut self, idx: usize) -> &mut Validator {
+    pub fn get_validator_by_index_as_mut(&mut self, idx: usize) -> &mut Validator {
         &mut self.validators[idx]
     }
 
@@ -944,7 +945,7 @@ impl ValidatorBuilder {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Validator {
     node: Node,
     account: NodeAccount,
@@ -976,6 +977,10 @@ impl Validator {
 
     pub fn node_address(&self) -> String {
         self.node.ip.to_string() + ":" + &self.node.port.to_string()
+    }
+
+    pub fn set_binary_path(&mut self, binary_path: String) {
+        self.node.binary_path = binary_path;
     }
 
     pub async fn start_node(&mut self, clean_slate: bool, wait_for_node_awake: bool) -> Result<()> {
@@ -1256,6 +1261,24 @@ impl std::fmt::Debug for Node {
             .field("ip", &self.ip)
             .field("realm_id", &self.realm_id)
             .finish()
+    }
+}
+
+impl Clone for Node {
+    fn clone(&self) -> Self {
+        tracing::warn!(
+            "Partially cloning a node - the process for the node is not cloned; it can not be stopped or started through this clone."
+        );
+        Self {
+            process: None,
+            config_file: self.config_file.clone(),
+            binary_path: self.binary_path.clone(),
+            log_mode: self.log_mode.clone(),
+            extra_env_vars: self.extra_env_vars.clone(),
+            port: self.port,
+            ip: self.ip,
+            realm_id: self.realm_id,
+        }
     }
 }
 

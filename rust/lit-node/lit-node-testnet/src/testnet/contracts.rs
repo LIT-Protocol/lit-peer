@@ -742,6 +742,7 @@ impl Contracts {
 
         let cc = staking.set_config(GlobalConfig {
             token_reward_per_token_per_epoch: global_config.token_reward_per_token_per_epoch,
+            key_types_deprecated: global_config.key_types_deprecated,
             reward_epoch_duration: U256::from(86400), // 1 day
             max_time_lock: U256::from(31536000),      // 1 year
             min_time_lock: U256::from(86400 * 100),   // 100 days
