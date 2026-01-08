@@ -42,7 +42,7 @@ jobs:
           rm -rf ../../lit-assets
           mkdir -p ${{ github.workspace }}
       - name: Checkout lit-assets
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - uses: de-vri-es/setup-git-credentials@v2
         with:
           credentials: https://glitch003:${{secrets.READ_ONLY_PAT}}@github.com/

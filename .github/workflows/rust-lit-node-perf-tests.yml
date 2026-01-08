@@ -66,7 +66,7 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: sudo apt-get update && sudo apt-get install -y zstd
       - name: Checkout lit-assets
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: recursive
       - name: Use Node.js
