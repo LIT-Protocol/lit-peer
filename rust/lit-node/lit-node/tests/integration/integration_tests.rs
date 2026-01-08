@@ -421,7 +421,7 @@ async fn one_node_conflicting_networking_info(test_case: usize) {
 
     // // Run network checks
     let network_checker = NetworkIntegrityChecker::new(&end_user, &testnet.actions()).await;
-    
+
     network_checker.check(&validator_collection, &vec![]).await;
 }
 
@@ -430,10 +430,12 @@ fn get_port_mangling_function(
     random_node_indices: &Vec<usize>,
 ) -> Box<dyn StakerAccountSetupMapper<Future = BoxFuture<'static, Result<(), anyhow::Error>>>> {
     let (random_node_idx_to_be_kicked, invalid_port) = match test_case {
-        1 => {            // Choose a random node index to stake with an invalid port.            
+        1 => {
+            // Choose a random node index to stake with an invalid port.
             (random_node_indices[0], 5555 as u32)
         }
-        2 => {            // Randomly choose an impersonator and a victim.
+        2 => {
+            // Randomly choose an impersonator and a victim.
             (random_node_indices[0], 7470 + random_node_indices[1] as u32)
         }
         _ => panic!("Invalid test case"),

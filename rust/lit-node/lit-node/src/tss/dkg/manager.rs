@@ -77,9 +77,9 @@ impl DkgManager {
                     DkgType::RecoveryParty => 1,
                     DkgType::Standard => hd_root_key_count,
                 };
-                // this is temporary code, while we upgrade from 2.1.5->2.1.6
-                let epoch_dkg_id = if new_peers.has_version_lower_than("2.1.7")
-                    || current_peers.has_version_lower_than("2.1.7")
+                // this is temporary code, while we upgrade from 2.1.5->2.1.8
+                let epoch_dkg_id = if new_peers.has_version_lower_than("2.1.8")
+                    || current_peers.has_version_lower_than("2.1.8")
                 {
                     format!("{}.{}.{}", dkg_id, curve_type, self.dkg_type)
                 } else {
@@ -88,6 +88,8 @@ impl DkgManager {
                         dkg_id, &key_set_config.identifier, curve_type, self.dkg_type
                     )
                 };
+
+                warn!("epoch_dkg_id: {}", epoch_dkg_id);
 
                 let existing_root_keys = key_set_config
                     .root_keys_by_curve
