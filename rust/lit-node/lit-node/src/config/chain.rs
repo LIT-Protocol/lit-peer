@@ -306,7 +306,7 @@ impl ChainDataConfigManager {
                     let revert = decode_revert(&e, contract.abi());
                     blockchain_err(
                         e,
-                        Some(format!("Unable to get root keys from contract: {}", revert)),
+                        Some(format!("Unable to get root keys from contract: {revert}")),
                     )
                 })?;
             let mut key_set = KeySetConfig::try_from(key_set_config)?;
@@ -374,7 +374,7 @@ impl ChainDataConfigManager {
                 .map_err(|e| {
                     blockchain_err(
                         decode_revert(&e, staking.abi()),
-                        Some(format!("Unable to contact chain to get realm id for node with staker {:?} in the current/next epoch", my_staker_address)),
+                        Some(format!("Unable to contact chain to get realm id for node with staker {my_staker_address:?} in the current/next epoch")),
                     )
                 })?;
 
@@ -571,10 +571,7 @@ impl ChainDataConfigManager {
             .collect::<Result<Vec<String>>>()?
             .join(",");
 
-        let to_hash = format!(
-            "{}-{}-{}",
-            all_validator_addresses, epoch_number, epoch_retries
-        );
+        let to_hash = format!("{all_validator_addresses}-{epoch_number}-{epoch_retries}");
         trace!(
             "{} Epoch id contents to be hashed: {}",
             config.internal_port()?,
@@ -601,7 +598,7 @@ impl ChainDataConfigManager {
         let mut peers_for_next_epoch =
             DataVersionWriter::new_unchecked(&peers_by_realm.peers_for_next_epoch);
         peers_for_next_epoch.validators = next_validators;
-        peers_for_next_epoch.epoch_id = format!("{}-next", epoch_id);
+        peers_for_next_epoch.epoch_id = format!("{epoch_id}-next");
 
         if peers_for_next_epoch.epoch_number < epoch_number + 1 {
             // this isn't super meaningful at this point.
@@ -693,7 +690,7 @@ impl ChainDataConfigManager {
                 .map_err(|e| {
                     blockchain_err(
                         e,
-                        Some(format!("Unable to get complaint config for reason {}", i)),
+                        Some(format!("Unable to get complaint config for reason {i}")),
                     )
                 })?;
 

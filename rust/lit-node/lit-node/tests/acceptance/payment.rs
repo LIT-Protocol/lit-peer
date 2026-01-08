@@ -459,7 +459,7 @@ async fn test_all_payment_methods_for_user() {
     let delegation_auth_sig = get_auth_sig_with_payment_resources(
         &delegation_payer.wallet,
         &bytes_to_hex(delegation_user.wallet.address()),
-        U256::from(delegation_max_price),
+        delegation_max_price,
         vec![PayedEndpoint::EncryptionSign],
     );
 
@@ -717,8 +717,7 @@ async fn test_all_payment_methods_for_user() {
 
     assert!(
         request_count > 2 && request_count < MAX_TEST_REQUESTS,
-        "PaymentDB should work for at least the first 3 requests and at most the next 3 requests but it also passed at request {}",
-        request_count
+        "PaymentDB should work for at least the first 3 requests and at most the next 3 requests but it also passed at request {request_count}"
     );
 
     // We have a 10 second period, so, after 10 seconds we should be able to make 3 more requests.
@@ -774,8 +773,7 @@ async fn test_all_payment_methods_for_user() {
 
     assert!(
         request_count > 2 && request_count < MAX_TEST_REQUESTS,
-        "PaymentDB should work for at least the first 3 requests and at most the next 3 requests but it also passed at request {}",
-        request_count
+        "PaymentDB should work for at least the first 3 requests and at most the next 3 requests but it also passed at request {request_count}"
     );
 
     tokio::time::sleep(tokio::time::Duration::from_secs(
@@ -1148,8 +1146,7 @@ async fn test_all_payment_methods_for_pkp() {
 
     assert!(
         request_count > 2 && request_count < MAX_TEST_REQUESTS,
-        "PaymentDB should work for at least the first 3 requests and at most the next 3 requests but it also passed at request {}",
-        request_count
+        "PaymentDB should work for at least the first 3 requests and at most the next 3 requests but it also passed at request {request_count}"
     );
 
     // We have a 10 second period, so, after 10 seconds we should be able to make at least 3 more requests.
@@ -1203,8 +1200,7 @@ async fn test_all_payment_methods_for_pkp() {
 
     assert!(
         request_count > 2 && request_count < MAX_TEST_REQUESTS,
-        "PaymentDB should work for at least the first 3 requests and at most the next 3 requests but it also passed at request {}",
-        request_count
+        "PaymentDB should work for at least the first 3 requests and at most the next 3 requests but it also passed at request {request_count}"
     );
 
     tokio::time::sleep(tokio::time::Duration::from_secs(

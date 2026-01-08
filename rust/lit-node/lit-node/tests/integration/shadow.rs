@@ -36,6 +36,11 @@ async fn shadow_splicing_sign_encrypt() {
 
     info!("New realm ID: {}", new_realm_id);
 
+    actions
+        .set_default_keyset_id(new_realm_id, DEFAULT_KEY_SET_NAME)
+        .await
+        .unwrap();
+
     let inactive_validators = validator_collection
         .get_inactive_validators()
         .await
@@ -48,12 +53,12 @@ async fn shadow_splicing_sign_encrypt() {
             .await
             .unwrap()
             .iter()
-            .map(|v| v.node_address())
+            .map(|v| v.socket_address())
     );
     info!(
         "Validators in Realm {}: {:?}",
         new_realm_id,
-        inactive_validators.iter().map(|v| v.node_address())
+        inactive_validators.iter().map(|v| v.socket_address())
     );
 
     let target_validators = inactive_validators
@@ -84,13 +89,13 @@ async fn shadow_splicing_sign_encrypt() {
         target_validators.len()
     );
 
-    let _result = actions
+    actions
         .setup_shadow_splicing(realm_id, new_realm_id, target_validators.clone())
         .await
         .unwrap();
     info!("Shadow splicing has started.");
 
-    let _result = actions
+    actions
         .wait_for_shadow_splicing_to_complete(new_realm_id, target_validators)
         .await
         .unwrap();
@@ -264,6 +269,11 @@ async fn shadow_splicing_epoch() {
     let realm_id = 1u64;
     let new_realm_id = actions.add_realm().await.unwrap();
 
+    actions
+        .set_default_keyset_id(new_realm_id, DEFAULT_KEY_SET_NAME)
+        .await
+        .unwrap();
+
     let inactive_validators = validator_collection
         .get_inactive_validators()
         .await
@@ -297,13 +307,13 @@ async fn shadow_splicing_epoch() {
         target_validators.len()
     );
 
-    let _result = actions
+    actions
         .setup_shadow_splicing(realm_id, new_realm_id, target_validators.clone())
         .await
         .unwrap();
     info!("Shadow splicing has started.");
 
-    let _result = actions
+    actions
         .wait_for_shadow_splicing_to_complete(new_realm_id, target_validators)
         .await
         .unwrap();
@@ -353,6 +363,11 @@ async fn signature_from_realm(
     let realm_node_set = get_identity_pubkeys_from_node_set(&realm_nodes).await;
 
     let expected_responses = realm_node_set.len();
+    let key_set_id = validator_collection
+        .actions()
+        .get_keyset_id_for_pkp(&pubkey)
+        .await
+        .expect("Couldn't get key set id from pubkey");
 
     let endpoint_responses = generate_session_sigs_and_send_signing_requests(
         &realm_node_set,
@@ -361,7 +376,7 @@ async fn signature_from_realm(
         pubkey.clone(),
         epoch,
         scheme,
-        DEFAULT_KEY_SET_NAME,
+        &key_set_id,
     )
     .await;
     assert!(endpoint_responses.len() >= expected_responses);

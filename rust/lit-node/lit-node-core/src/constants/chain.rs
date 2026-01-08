@@ -33,18 +33,18 @@ pub enum Chain {
 impl fmt::Display for Chain {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Chain::Ethereum => write!(f, "{}", CHAIN_ETHEREUM),
-            Chain::Solana => write!(f, "{}", CHAIN_SOLANA),
-            Chain::Cosmos => write!(f, "{}", CHAIN_COSMOS),
-            Chain::Kyve => write!(f, "{}", CHAIN_KYVE),
-            Chain::Cheqd => write!(f, "{}", CHAIN_CHEQD),
-            Chain::CheqdMainnet => write!(f, "{}", CHAIN_CHEQD_MAINNET),
-            Chain::CheqdTestnet => write!(f, "{}", CHAIN_CHEQD_TESTNET),
-            Chain::Juno => write!(f, "{}", CHAIN_JUNO),
-            Chain::Evmos => write!(f, "{}", CHAIN_EVMOS),
-            Chain::Localchain => write!(f, "{}", CHAIN_LOCALCHAIN),
-            Chain::EvmosCosmos => write!(f, "{}", CHAIN_EVMOS_COSMOS),
-            Chain::EvmosCosmosTestnet => write!(f, "{}", CHAIN_EVMOS_COSMOS_TESTNET),
+            Chain::Ethereum => write!(f, "{CHAIN_ETHEREUM}"),
+            Chain::Solana => write!(f, "{CHAIN_SOLANA}"),
+            Chain::Cosmos => write!(f, "{CHAIN_COSMOS}"),
+            Chain::Kyve => write!(f, "{CHAIN_KYVE}"),
+            Chain::Cheqd => write!(f, "{CHAIN_CHEQD}"),
+            Chain::CheqdMainnet => write!(f, "{CHAIN_CHEQD_MAINNET}"),
+            Chain::CheqdTestnet => write!(f, "{CHAIN_CHEQD_TESTNET}"),
+            Chain::Juno => write!(f, "{CHAIN_JUNO}"),
+            Chain::Evmos => write!(f, "{CHAIN_EVMOS}"),
+            Chain::Localchain => write!(f, "{CHAIN_LOCALCHAIN}"),
+            Chain::EvmosCosmos => write!(f, "{CHAIN_EVMOS_COSMOS}"),
+            Chain::EvmosCosmosTestnet => write!(f, "{CHAIN_EVMOS_COSMOS_TESTNET}"),
         }
     }
 }

@@ -210,7 +210,7 @@ pub fn inject_fault(fault_type: &FaultType, source_url: &Url, target_url: &Url) 
                 source_url.clone(),
                 target_url.clone(),
                 // 2s because 10 requests sent serially in node_share_direct must not exceed 30s ecdsa round timeout
-                Duration::seconds(i64::try_from(2).unwrap())
+                Duration::seconds(i64::from(2))
                     .num_milliseconds()
                     .try_into()
                     .unwrap(),
@@ -223,7 +223,7 @@ pub fn inject_fault(fault_type: &FaultType, source_url: &Url, target_url: &Url) 
                 source_url.clone(),
                 target_url.clone(),
                 // 3s for each of the 10 requests with 3s jitter to simulate semi-faulty behavior
-                Duration::seconds(i64::try_from(3).unwrap())
+                Duration::seconds(i64::from(3))
                     .num_milliseconds()
                     .try_into()
                     .unwrap(),
@@ -263,7 +263,7 @@ pub fn inject_fault(fault_type: &FaultType, source_url: &Url, target_url: &Url) 
                 source_url.clone(),
                 target_url.clone(),
                 // 2s because 10 requests sent serially in node_share_direct must not exceed 30s ecdsa round timeout
-                Duration::seconds(i64::try_from(2).unwrap())
+                Duration::seconds(i64::from(2))
                     .num_milliseconds()
                     .try_into()
                     .unwrap(),

@@ -595,6 +595,6 @@ pub fn get_lit_action_public_key(
     action_ipfs_id: &str,
     root_keys: &[String],
 ) -> SdkResult<String> {
-    let key_id = keccak256(format!("lit_action_{}", action_ipfs_id));
+    let key_id = keccak256(format!("lit_action_{action_ipfs_id}"));
     get_derived_public_key(signing_scheme, &key_id, root_keys)
 }

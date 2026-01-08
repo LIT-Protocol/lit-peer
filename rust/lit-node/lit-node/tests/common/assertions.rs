@@ -25,7 +25,7 @@ pub struct NetworkIntegrityChecker {
 
 impl NetworkIntegrityChecker {
     pub async fn new(end_user: &EndUser, actions: &Actions) -> Self {
-        let initial_bls_pubkey = get_network_pubkey(&actions).await;
+        let initial_bls_pubkey = get_network_pubkey(actions).await;
 
         // Use the first PKP for the network integrity check.
         let (pubkey, token_id, _, _) = end_user.first_pkp().info();
@@ -58,13 +58,13 @@ impl NetworkIntegrityChecker {
 
         info!("Success:Initial BLS pubkey and latest BLS pubkey match.");
         // Decryption check.
-        test_encryption_decryption_session_sigs(validator_collection, &self.end_user).await;
+        test_encryption_decryption_session_sigs(validator_collection, validators_to_include,&self.end_user).await;
 
         info!("Success: Decryption checks passed");
         // Signing operation.
         assert!(
             simple_single_sign_with_hd_key(
-                &validator_collection,
+                validator_collection,
                 &self.end_user,
                 self.minted_pkp_pubkey.clone(),
                 SigningScheme::EcdsaK256Sha256,
@@ -77,7 +77,7 @@ impl NetworkIntegrityChecker {
         info!("Success: ECDSA Signing checks passed");
         assert!(
             simple_single_sign_with_hd_key(
-                &validator_collection,
+                validator_collection,
                 &self.end_user,
                 self.minted_pkp_pubkey.clone(),
                 SigningScheme::SchnorrEd25519Sha512,
@@ -105,6 +105,12 @@ impl NetworkIntegrityChecker {
         let latest_bls_pubkey = get_network_pubkey(validator_collection.actions()).await;
         assert_eq!(self.initial_bls_pubkey, latest_bls_pubkey);
 
+        let key_set_id = validator_collection
+            .actions()
+            .get_keyset_id_for_root_key(&latest_bls_pubkey)
+            .await
+            .unwrap();
+
         // Decryption check.
         info!("Running decryption checks");
         let node_set = &validator_collection.random_threshold_nodeset().await;
@@ -114,14 +120,14 @@ impl NetworkIntegrityChecker {
             .get_current_epoch(realm_id)
             .await
             .as_u64();
-        let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
-        test_encryption_decryption_auth_sig(&node_set, epoch).await;
+        let node_set = get_identity_pubkeys_from_node_set(node_set).await;
+        test_encryption_decryption_auth_sig(&node_set, epoch, &key_set_id).await;
 
         // Signing check.
         info!("Running signing checks");
         for idx in 0..MAX_TRIES {
             if sign_with_hd_key(
-                &validator_collection,
+                validator_collection,
                 &self.end_user,
                 self.minted_pkp_pubkey.clone(),
                 false,

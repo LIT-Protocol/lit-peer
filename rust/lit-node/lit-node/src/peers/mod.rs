@@ -115,7 +115,7 @@ impl PeerState {
                     .decode_contract_revert::<staking::StakingErrors>()
                     .expect_or_err("Could not decode staking contract error")?;
                 return Err(unexpected_err_code(
-                    format!("{:?}", decoded_err),
+                    format!("{decoded_err:?}"),
                     EC::NodeBlockchainError,
                     Some("Could not register attested wallet".to_string()),
                 ));
@@ -391,6 +391,33 @@ impl PeerState {
             .map(SimplePeer::from)
             .collect::<Vec<SimplePeer>>()
             .into()
+    }
+
+    pub fn self_peer(&self) -> Result<SimplePeer> {
+        if let Ok(p) = self
+            .peers_in_next_epoch_current_union_including_shadow()
+            .peer_at_address(&self.addr)
+        {
+            Ok(p)
+        } else {
+            let peer_id =
+                match PeerId::from_slice(&self.wallet_keys.verifying_key().to_sec1_bytes()) {
+                    Ok(p) => p,
+                    Err(e) => {
+                        warn!("Failed to convert verifying key to peer id: {:?}", e);
+                        PeerId::NOT_ASSIGNED
+                    }
+                };
+            Ok(SimplePeer {
+                socket_address: self.addr.clone(),
+                peer_id,
+                staker_address: self.staker_address,
+                key_hash: 0,
+                kicked: false,
+                version: crate::version::get_version(),
+                realm_id: U256::zero(),
+            })
+        }
     }
     // get a single Validator struct
     pub fn get_validator_from_node_address(&self, node_address: Address) -> Result<PeerValidator> {

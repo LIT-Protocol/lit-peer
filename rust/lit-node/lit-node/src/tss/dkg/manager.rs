@@ -87,13 +87,12 @@ impl DkgManager {
                     .expect("expected existing root keys but got none")
                     .clone();
                 for i in 0..hd_root_key_count {
-                    let dkg_id = format!("{}_key_{}", epoch_dkg_id, i);
+                    let dkg_id = format!("{epoch_dkg_id}_key_{i}");
                     if current_peers.is_empty() {
                         dkg_engine.add_dkg(&dkg_id, &key_set_config.identifier, curve_type, None);
                     } else {
                         let root_key = existing_root_keys.get(i).expect_or_err(format!(
-                            "root key missing at index {} for curve: {}",
-                            i, curve_type
+                            "root key missing at index {i} for curve: {curve_type}"
                         ))?;
                         let key = Some(root_key.clone());
                         dkg_engine.add_dkg(&dkg_id, &key_set_config.identifier, curve_type, key);

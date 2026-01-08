@@ -125,7 +125,7 @@ impl PresignManager {
             }
         };
 
-        let share_ending = format! {"{}-H.cbor", peer_id};
+        let share_ending = format! {"{peer_id}-H.cbor"};
         if filename.ends_with(share_ending.as_str()) {
             let presign =
                 match read_presign_from_disk_direct::<Presign>(filename, &self.tss_state.key_cache)

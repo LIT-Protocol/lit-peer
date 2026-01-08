@@ -1,13 +1,21 @@
+pub mod contracts;
+
+use crate::testnet::NodeAccount;
 use crate::testnet::chain::ChainTrait;
-use crate::testnet::{NodeAccount, chain::anvil::Anvil};
+use crate::testnet::chain::anvil::Anvil;
 use command_group::GroupChild;
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::middleware::SignerMiddleware;
-use ethers::prelude::*;
+use ethers::providers::Http;
 use ethers::providers::Provider;
+use ethers::signers::LocalWallet;
+use ethers::signers::Signer;
 use ethers::signers::Wallet;
 use ethers::types::Address;
-use lit_blockchain::resolver::rpc::{ENDPOINT_MANAGER, RpcHealthcheckPoller};
+use lit_blockchain::resolver::rpc::ENDPOINT_MANAGER;
+use lit_blockchain::resolver::rpc::RpcHealthcheckPoller;
+use lit_blockchain_lite::contracts::pubkey_router::PubkeyRouter;
+use lit_blockchain_lite::contracts::pubkey_router::RootKey;
 use lit_node_common::coms_keys::ComsKeys;
 use serde::Deserialize;
 use std::path::Path;
@@ -17,13 +25,7 @@ use tokio::fs::File;
 use tokio::io::AsyncReadExt;
 use tracing::info;
 
-use lit_blockchain_lite::contracts::{
-    contract_resolver::ContractResolver,
-    pubkey_router::{PubkeyRouter, RootKey},
-    staking::Staking,
-};
-
-use ethers::providers::Http;
+use crate::testnet::datil::contracts::DatilContracts;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct DatilNodeAccount {
@@ -38,10 +40,7 @@ pub struct DatilTestnet {
     pub provider: Arc<Provider<Http>>,
     pub node_accounts: Arc<Vec<NodeAccount>>,
     pub deployer_signing_provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-    pub contract_resolver:
-        ContractResolver<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-    pub staking: Staking<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-    pub pubkey_router: PubkeyRouter<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
+    pub contracts: DatilContracts,
 }
 
 impl DatilTestnet {
@@ -51,10 +50,8 @@ impl DatilTestnet {
         contract_resolver_address: Address,
     ) -> Self {
         let datil_chain = Box::new(Anvil::new(total_num_validators, true)) as Box<dyn ChainTrait>;
-
-        info!("Starting Datil chain. ");
-
         let process = datil_chain.start_chain().await;
+
         Self::load_state_cache(
             state_cache_path.clone(),
             datil_chain.chain_name(),
@@ -73,45 +70,8 @@ impl DatilTestnet {
         let provider = Arc::new(provider_mut.set_interval(Duration::from_millis(10)).clone());
         let deployer_signing_provider = datil_chain.deployer().signing_provider.clone();
 
-        // let params: Vec<String> = vec![];
-        // let res: String = provider.request("anvil_dumpState", params).await.unwrap();
-        // let filename = "datil_anvil_state.hex".to_string();
-        // let dir = std::path::Path::new(&"./");
-        // let path = dir.join(&filename);
-        // let mut file = tokio::fs::File::create(&path).await.unwrap();
-        // tokio::io::AsyncWriteExt::write_all(&mut file, res.as_bytes())
-        //     .await
-        //     .unwrap();
-        // file.sync_all().await.unwrap();
-
-        let contract_resolver =
-            ContractResolver::new(contract_resolver_address, deployer_signing_provider.clone());
-        let env: u8 = 0;
-
-        let staking_address = contract_resolver
-            .get_contract(
-                contract_resolver.staking_contract().call().await.unwrap(),
-                env,
-            )
-            .call()
-            .await
-            .unwrap();
-        let pubkey_router_address = contract_resolver
-            .get_contract(
-                contract_resolver
-                    .pub_key_router_contract()
-                    .call()
-                    .await
-                    .unwrap(),
-                env,
-            )
-            .call()
-            .await
-            .unwrap();
-
-        let staking = Staking::new(staking_address, deployer_signing_provider.clone());
-        let pubkey_router =
-            PubkeyRouter::new(pubkey_router_address, deployer_signing_provider.clone());
+        let contracts =
+            DatilContracts::new(deployer_signing_provider.clone(), contract_resolver_address).await;
 
         let node_accounts =
             Self::load_node_accounts(datil_chain.chain_name(), datil_chain.chain_id()).await;
@@ -122,9 +82,7 @@ impl DatilTestnet {
             provider,
             node_accounts,
             deployer_signing_provider,
-            contract_resolver,
-            staking,
-            pubkey_router,
+            contracts,
         }
     }
 
@@ -181,8 +139,11 @@ impl DatilTestnet {
         &self,
         src_root_keys: Vec<lit_blockchain::contracts::pubkey_router::RootKey>,
     ) {
-        let staking_address = self.staking.address();
-        let func = self.pubkey_router.admin_reset_root_keys(staking_address);
+        let staking_address = self.contracts.staking.address();
+        let func = self
+            .contracts
+            .pubkey_router
+            .admin_reset_root_keys(staking_address);
         let tx = func.send().await.unwrap();
         let _receipt = tx.await.unwrap();
         info!("Called admin_reset_root_keys on the Datil chain to clear root keys");
@@ -195,7 +156,7 @@ impl DatilTestnet {
             })
             .collect();
 
-        let address = self.pubkey_router.address();
+        let pubkey_router_address = self.contracts.pubkey_router.address();
         info!(
             "Voting for {} root keys on the Datil chain",
             root_keys.len()
@@ -208,7 +169,7 @@ impl DatilTestnet {
             let node_wallet = LocalWallet::from(sk).with_chain_id(self.datil_chain.chain_id());
             let client = Arc::new(SignerMiddleware::new(self.provider.clone(), node_wallet));
 
-            let local_pubkey_router = PubkeyRouter::new(address, client);
+            let local_pubkey_router = PubkeyRouter::new(pubkey_router_address, client);
             let func = local_pubkey_router.vote_for_root_keys(staking_address, root_keys.clone());
             let tx = func.send().await.unwrap();
             let _receipt = tx.await.unwrap();
@@ -219,7 +180,7 @@ impl DatilTestnet {
         }
     }
 
-    pub async fn load_state_cache(state_cache_path: String, chain_name: &str, rpc_url: &str) {
+    async fn load_state_cache(state_cache_path: String, chain_name: &str, rpc_url: &str) {
         let filename = state_cache_path.clone();
         info!("Loading chain state from cache: {}", filename);
 

@@ -41,8 +41,7 @@ pub fn check_block_timestamp_validity(block_timestamp: &str) -> Result<()> {
     if timestamp_date < oldest_valid_timestamp {
         return Err(validation_err_code(
             format!(
-                "Blocktime {} is beyond the max expiry timestamp of {}",
-                timestamp_date, oldest_valid_timestamp
+                "Blocktime {timestamp_date} is beyond the max expiry timestamp of {oldest_valid_timestamp}"
             ),
             EC::NodeSIWEMessageError,
             None,
@@ -60,8 +59,7 @@ pub fn check_expiration_validity(
     if expiration > max_expiry_time {
         return Err(validation_err_code(
             format!(
-                "Session key expiration {} is beyond the max expiry timestamp of {} (issued_at is {})",
-                expiration, max_expiry_time, issued_at
+                "Session key expiration {expiration} is beyond the max expiry timestamp of {max_expiry_time} (issued_at is {issued_at})"
             ),
             EC::NodeSIWEMessageError,
             None,
