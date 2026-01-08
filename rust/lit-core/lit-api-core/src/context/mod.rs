@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::fmt;
 use std::future::Future;
 
-use opentelemetry::propagation::{Extractor, Injector, TextMapPropagator};
-use opentelemetry_sdk::propagation::TraceContextPropagator;
+use lit_observability::logging::set_request_context;
+use opentelemetry::propagation::Injector;
 use rocket::Request;
 use rocket::request::{FromRequest, Outcome};
 use semver::Version;
@@ -11,11 +11,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use tokio::task::futures::TaskLocalFuture;
 use tokio::task_local;
-use tracing::{Span, info_span};
-use tracing_opentelemetry::OpenTelemetrySpanExt;
-use uuid::Uuid;
-
-use lit_observability::logging::set_request_context;
 
 use crate::error::{EC, Error, Result, conversion_err_code, validation_err_code};
 
@@ -27,77 +22,6 @@ pub const TRACKING_LOG_KEY_LIT_SDK_VERSION: &str = "lit_sdk_version";
 
 task_local! {
     pub static TRACING: Box<dyn Tracer>;
-}
-
-/// The TracingSpan request guard creates a new tracing span for the request. If the request
-/// contains a parent span ID, it will be used as the parent of this new span. Otherwise, a new
-/// root span will be created.
-#[allow(dead_code)]
-#[derive(Clone, Debug)]
-pub struct TracingSpan {
-    span: Span,
-}
-
-impl TracingSpan {
-    pub fn new(span: Span) -> Self {
-        Self { span }
-    }
-
-    pub fn span(&self) -> &Span {
-        &self.span
-    }
-}
-
-#[rocket::async_trait]
-impl<'r> FromRequest<'r> for TracingSpan {
-    type Error = crate::error::Error;
-
-    async fn from_request(
-        req: &'r rocket::Request<'_>,
-    ) -> rocket::request::Outcome<Self, Self::Error> {
-        // Extract the propagated context
-        let propagator = TraceContextPropagator::new();
-        // Initialize some container to hold the header information.
-        let mut carrier = HashMap::new();
-        // Transfer header information from request to carrier.
-        for header in req.headers().iter() {
-            carrier.insert(header.name().to_string(), header.value().to_string());
-        }
-        // Extract the context from the carrier
-        let context = propagator.extract(&HeaderExtractor::from(&carrier));
-
-        // Initialize a new span with the propagated context as the parent
-        let req_method = req.method();
-        let req_path = req.uri().path();
-        let new_span = info_span!(
-            "handle_request",
-            method = req_method.as_str(),
-            path = req_path.to_string(),
-        );
-        new_span.set_parent(context);
-
-        Outcome::Success(TracingSpan { span: new_span })
-    }
-}
-
-pub struct HeaderExtractor<'a> {
-    headers: &'a HashMap<String, String>,
-}
-
-impl<'a> From<&'a HashMap<String, String>> for HeaderExtractor<'a> {
-    fn from(headers: &'a HashMap<String, String>) -> Self {
-        HeaderExtractor { headers }
-    }
-}
-
-impl<'a> Extractor for HeaderExtractor<'a> {
-    fn get(&self, key: &str) -> Option<&'a str> {
-        self.headers.get(key).map(|v| v.as_str())
-    }
-
-    fn keys(&self) -> Vec<&str> {
-        self.headers.keys().map(|v| v.as_str()).collect()
-    }
 }
 
 pub struct HeaderInjector<'a> {
@@ -171,19 +95,11 @@ impl<'r> FromRequest<'r> for Tracing {
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         let (request_id, correlation_id) = extract_request_and_correlation_ids(req);
 
-        // Generate fallback ID only if BOTH headers are missing
-        let fallback_id = || format!("LD-{}", Uuid::new_v4());
-        let correlation_id = correlation_id.unwrap_or_else(&fallback_id);
-        let request_id = request_id.unwrap_or_else(|| correlation_id.clone());
+        // Set request context for log injection; no fallback IDs.
+        set_request_context(request_id, correlation_id.clone());
 
-        // Set request context on the current span. This centralizes context storage:
-        // 1. Span extensions (RequestContext) - for log injection in OTLP and stdout
-        // 2. OTel span attributes - for distributed tracing correlation
-        // This ensures other components (like set_request_id_on_span) can find
-        // this context via get_request_context() and avoid generating duplicate IDs.
-        set_request_context(Some(request_id), Some(correlation_id.clone()));
-
-        let mut tracing = Self::new(correlation_id);
+        // For the Tracing struct, use empty string if no correlation_id was provided.
+        let mut tracing = Self::new(correlation_id.unwrap_or_default());
         apply_req_tracing_fields(req, &mut tracing);
 
         Outcome::Success(tracing)

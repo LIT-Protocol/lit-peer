@@ -278,54 +278,63 @@ where
             write!(writer, "{} ", fmt_level)?;
         }
 
-        // Display request context (request_id, correlation_id) from span extensions
+        // Display request context (request_id, correlation_id) from span extensions or task-local
         if self.display_request_context {
+            // Try span extensions first
+            let mut request_ctx = None;
             if let Some(scope) = ctx.event_scope() {
-                // Walk up the span hierarchy to find RequestContext
                 for span in scope.from_root() {
                     let ext = span.extensions();
-                    if let Some(request_ctx) = ext.get::<RequestContext>() {
-                        if request_ctx.has_context() {
-                            let bracket_style = Style::new().dimmed();
-
-                            write!(writer, "{}", bracket_style.paint("["))?;
-                            let mut first = true;
-                            if let Some(ref req_id) = request_ctx.request_id {
-                                #[cfg(feature = "ansi")]
-                                {
-                                    if writer.has_ansi_escapes() {
-                                        write!(writer, "req:{}", Color::Cyan.paint(req_id))?;
-                                    } else {
-                                        write!(writer, "req:{}", req_id)?;
-                                    }
-                                }
-                                #[cfg(not(feature = "ansi"))]
-                                write!(writer, "req:{}", req_id)?;
-                                first = false;
-                            }
-                            if let Some(ref corr_id) = request_ctx.correlation_id {
-                                // Only show correlation_id if different from request_id
-                                if request_ctx.request_id.as_ref() != Some(corr_id) {
-                                    if !first {
-                                        writer.write_char(' ')?;
-                                    }
-                                    #[cfg(feature = "ansi")]
-                                    {
-                                        if writer.has_ansi_escapes() {
-                                            write!(writer, "corr:{}", Color::Cyan.paint(corr_id))?;
-                                        } else {
-                                            write!(writer, "corr:{}", corr_id)?;
-                                        }
-                                    }
-                                    #[cfg(not(feature = "ansi"))]
-                                    write!(writer, "corr:{}", corr_id)?;
-                                }
-                            }
-                            write!(writer, "{} ", bracket_style.paint("]"))?;
-                            break; // Found context, stop walking
+                    if let Some(ctx) = ext.get::<RequestContext>() {
+                        if ctx.has_context() {
+                            request_ctx = Some(ctx.clone());
+                            break;
                         }
                     }
                 }
+            }
+            // Fall back to task-local storage
+            if request_ctx.is_none() {
+                request_ctx = super::context_layer::get_task_request_context();
+            }
+
+            if let Some(request_ctx) = request_ctx {
+                let bracket_style = Style::new().dimmed();
+
+                write!(writer, "{}", bracket_style.paint("["))?;
+                let mut first = true;
+                if let Some(ref req_id) = request_ctx.request_id {
+                    #[cfg(feature = "ansi")]
+                    {
+                        if writer.has_ansi_escapes() {
+                            write!(writer, "req:{}", Color::Cyan.paint(req_id))?;
+                        } else {
+                            write!(writer, "req:{}", req_id)?;
+                        }
+                    }
+                    #[cfg(not(feature = "ansi"))]
+                    write!(writer, "req:{}", req_id)?;
+                    first = false;
+                }
+                if let Some(ref corr_id) = request_ctx.correlation_id {
+                    // Only show correlation_id if different from request_id
+                    if request_ctx.request_id.as_ref() != Some(corr_id) {
+                        if !first {
+                            writer.write_char(' ')?;
+                        }
+                        #[cfg(feature = "ansi")]
+                        {
+                            if writer.has_ansi_escapes() {
+                                write!(writer, "corr:{}", Color::Cyan.paint(corr_id))?;
+                            } else {
+                                write!(writer, "corr:{}", corr_id)?;
+                            }
+                        }
+                        #[cfg(not(feature = "ansi"))]
+                        write!(writer, "corr:{}", corr_id)?;
+                    }
+                }
+                write!(writer, "{} ", bracket_style.paint("]"))?;
             }
         }
 

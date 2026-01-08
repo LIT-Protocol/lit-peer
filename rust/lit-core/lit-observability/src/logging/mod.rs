@@ -14,7 +14,7 @@ mod event_format;
 
 // Re-export context layer components for use by lit-node
 pub use context_layer::{
-    ContextAwareOtelLogLayer, RequestContext, clear_request_context, get_request_context,
+    ContextAwareOtelLogLayer, RequestContext, clear_task_request_context, get_request_context,
     set_request_context,
 };
 pub use event_format::CustomEventFormatter;

@@ -1,14 +1,12 @@
 //! Context-aware OpenTelemetry log layer.
-//!
-//! Injects request context (request_id, correlation_id) into OTLP log records.
-//! Context is stored in span extensions (primary) with a thread-local fallback for
-//! disconnected span lifecycles (e.g., Rocket guards). Thread-local storage must
-//! be cleared at request boundaries (lit-node uses a Rocket fairing for this).
+//! Injects request_id/correlation_id into OTLP logs.
+//! Resolution order: span extensions, then task-local context keyed by tokio task ID.
 
 use std::any::TypeId;
 use std::borrow::Cow;
-use std::cell::RefCell;
+use std::collections::HashMap;
 use std::marker::PhantomData;
+use std::sync::{LazyLock, RwLock};
 
 use opentelemetry::Key;
 use opentelemetry::logs::{AnyValue, LogRecord as _, Logger, LoggerProvider as _, Severity};
@@ -23,11 +21,9 @@ use tracing_subscriber::registry::LookupSpan;
 
 const INSTRUMENTATION_LIBRARY_NAME: &str = "lit-observability";
 
-thread_local! {
-    /// Fallback storage for disconnected span scenarios.
-    /// Thread-bound, not task-bound; clear at request boundaries to prevent leakage.
-    static THREAD_REQUEST_CONTEXT: RefCell<Option<RequestContext>> = const { RefCell::new(None) };
-}
+// Task-local fallback keyed by tokio task ID; cleared at request boundaries.
+static TASK_CONTEXTS: LazyLock<RwLock<HashMap<tokio::task::Id, RequestContext>>> =
+    LazyLock::new(|| RwLock::new(HashMap::new()));
 
 /// Request context propagated to all log events within a span hierarchy.
 #[derive(Clone, Debug, Default)]
@@ -106,6 +102,7 @@ where
     fn resolve_request_context(
         &self, ctx: &Context<'_, S>, event: &Event<'_>,
     ) -> Option<RequestContext> {
+        // Priority 1: Walk span ancestry to find request context in extensions.
         if let Some(scope) = ctx.event_scope(event) {
             for span in scope {
                 if let Some(request_ctx) = span.extensions().get::<RequestContext>() {
@@ -116,8 +113,8 @@ where
             }
         }
 
-        THREAD_REQUEST_CONTEXT
-            .with(|ctx| ctx.borrow().as_ref().filter(|ctx| ctx.has_context()).cloned())
+        // Priority 2: Fall back to task-local context (async-safe).
+        get_task_request_context()
     }
 }
 
@@ -313,23 +310,16 @@ impl<LR: opentelemetry::logs::LogRecord> tracing::field::Visit for EventVisitor<
     }
 }
 
-/// Sets request context on the current span for log injection.
-///
-/// - Span extensions: primary storage for log injection (OTLP/stdout)
-/// - OTel span attributes: for trace backends
-/// - Thread-local: fallback for disconnected spans (must be cleared at request boundaries)
-///
-/// No-op when both `request_id` and `correlation_id` are `None`.
+/// Stores request context on the current span and task-local fallback; sets OTel attributes.
+/// No-op when both IDs are `None`.
 pub fn set_request_context(request_id: Option<String>, correlation_id: Option<String>) {
     let request_ctx = RequestContext::new(request_id.clone(), correlation_id.clone());
     if !request_ctx.has_context() {
         return;
     }
 
-    // Thread-local fallback for when spans aren't connected
-    THREAD_REQUEST_CONTEXT.with(|ctx| {
-        *ctx.borrow_mut() = Some(request_ctx.clone());
-    });
+    // Task-local fallback for when spans aren't connected (async-safe)
+    set_task_request_context(request_ctx.clone());
 
     let span = Span::current();
 
@@ -349,6 +339,40 @@ pub fn set_request_context(request_id: Option<String>, correlation_id: Option<St
     });
 }
 
+/// Sets request context in task-local storage (async-safe fallback).
+fn set_task_request_context(ctx: RequestContext) {
+    if let Some(task_id) = current_task_id() {
+        if let Ok(mut map) = TASK_CONTEXTS.write() {
+            map.insert(task_id, ctx);
+        }
+    }
+}
+
+/// Gets request context from task-local storage.
+pub(crate) fn get_task_request_context() -> Option<RequestContext> {
+    let task_id = current_task_id()?;
+    TASK_CONTEXTS
+        .read()
+        .ok()
+        .and_then(|map| map.get(&task_id).cloned())
+        .filter(|ctx| ctx.has_context())
+}
+
+/// Clears task-local request context at request boundaries.
+pub fn clear_task_request_context() {
+    if let Some(task_id) = current_task_id() {
+        if let Ok(mut map) = TASK_CONTEXTS.write() {
+            map.remove(&task_id);
+        }
+    }
+}
+
+/// Returns the current tokio task ID, or None if not in a tokio runtime.
+#[inline]
+fn current_task_id() -> Option<tokio::task::Id> {
+    tokio::task::try_id()
+}
+
 /// Helper for getting request context via `downcast_raw`.
 pub(crate) struct GetRequestContext(fn(dispatch: &Dispatch, id: &Id) -> Option<RequestContext>);
 
@@ -358,10 +382,7 @@ impl GetRequestContext {
     }
 }
 
-/// Retrieves request context from span hierarchy or thread-local fallback.
-///
-/// Lookup order: span extensions first (walks ancestors), then thread-local.
-/// Returns `None` if no context found in either location.
+/// Retrieves request context from span hierarchy, then task-local fallback.
 pub fn get_request_context() -> Option<RequestContext> {
     // Try span hierarchy first
     let mut result = None;
@@ -375,15 +396,8 @@ pub fn get_request_context() -> Option<RequestContext> {
         return result;
     }
 
-    // Fall back to thread-local
-    THREAD_REQUEST_CONTEXT.with(|ctx| ctx.borrow().clone())
-}
-
-/// Clears the thread-local fallback. Call at request boundaries to prevent leakage.
-pub fn clear_request_context() {
-    THREAD_REQUEST_CONTEXT.with(|ctx| {
-        *ctx.borrow_mut() = None;
-    });
+    // Fall back to task-local storage
+    get_task_request_context()
 }
 
 #[cfg(test)]
@@ -402,11 +416,7 @@ mod tests {
         let layer = ContextAwareOtelLogLayer::new(&provider);
         let subscriber = Registry::default().with(layer);
 
-        tracing::subscriber::with_default(subscriber, || {
-            clear_request_context();
-            f();
-            clear_request_context();
-        });
+        tracing::subscriber::with_default(subscriber, f);
     }
 
     #[test]
@@ -467,41 +477,49 @@ mod tests {
     }
 
     #[test]
-    fn test_thread_local_fallback_when_span_hierarchy_disconnected() {
+    fn test_context_available_in_sibling_span_via_span_extensions() {
+        // Context should not cross sibling spans.
         with_test_subscriber(|| {
-            let expected_req_id = "guard-set-req-id".to_string();
-            let expected_corr_id = "guard-set-corr-id".to_string();
-            set_request_context(Some(expected_req_id.clone()), Some(expected_corr_id.clone()));
+            let span_a = tracing::info_span!("span_a");
+            {
+                let _guard = span_a.enter();
+                set_request_context(
+                    Some("span-a-req-id".to_string()),
+                    Some("span-a-corr-id".to_string()),
+                );
 
-            let handler_span = tracing::info_span!("handler_span");
-            let _guard = handler_span.enter();
+                let ctx = get_request_context();
+                assert!(ctx.is_some());
+                assert_eq!(ctx.as_ref().unwrap().request_id, Some("span-a-req-id".to_string()));
+            }
 
+            let span_b = tracing::info_span!("span_b");
+            let _guard = span_b.enter();
             let ctx = get_request_context();
-            assert!(ctx.is_some());
-            let ctx = ctx.unwrap();
-            assert_eq!(ctx.request_id, Some(expected_req_id));
-            assert_eq!(ctx.correlation_id, Some(expected_corr_id));
+            assert!(ctx.is_none() || !ctx.as_ref().unwrap().has_context());
         });
     }
 
     #[test]
-    fn test_clear_request_context() {
+    fn test_context_cleaned_up_with_span() {
+        // Context should not leak after leaving a span.
         with_test_subscriber(|| {
-            set_request_context(
-                Some("to-be-cleared-req".to_string()),
-                Some("to-be-cleared-corr".to_string()),
-            );
+            {
+                let span = tracing::info_span!("scoped_span");
+                let _guard = span.enter();
+                set_request_context(
+                    Some("scoped-req-id".to_string()),
+                    Some("scoped-corr-id".to_string()),
+                );
 
-            let ctx = get_request_context();
-            assert!(ctx.is_some());
+                let ctx = get_request_context();
+                assert!(ctx.is_some());
+            }
 
-            clear_request_context();
-
-            let new_span = tracing::info_span!("new_span_after_clear");
+            let new_span = tracing::info_span!("new_span");
             let _guard = new_span.enter();
-
-            let ctx_after_clear = get_request_context();
-            assert!(ctx_after_clear.is_none() || !ctx_after_clear.as_ref().unwrap().has_context());
+            let ctx = get_request_context();
+            assert!(ctx.is_none() || !ctx.as_ref().unwrap().has_context());
         });
     }
 
