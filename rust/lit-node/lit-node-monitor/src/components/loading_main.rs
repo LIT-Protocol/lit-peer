@@ -4,9 +4,9 @@ use leptos::prelude::*;
 #[component]
 pub fn LoadingMain(network_status_signal: RwSignal<String>) -> impl IntoView {
     view! {
-
+        <div class="container">
             <div class="row p-5 mt-20">
-                <div class="col-4 offset-4">
+                <div class="col-12 col-md-4 offset-md-4">
                     <div class="card text-center">
                         <div class="card-header">
                             <image class="d-inline" src=make_nav_url("/images/lit-logo-black.svg") height="36" />
@@ -19,6 +19,7 @@ pub fn LoadingMain(network_status_signal: RwSignal<String>) -> impl IntoView {
                     </div>
                 </div>
             </div>
+        </div>
 
     }
 }

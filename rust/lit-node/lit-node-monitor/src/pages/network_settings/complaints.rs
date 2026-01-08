@@ -1,16 +1,20 @@
 use std::fmt::Display;
 
-use crate::utils::{get_address, get_lit_config};
+use crate::utils::{get_address, get_lit_config, table_classes::TailwindClassesPreset};
 use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_struct_table::{ColumnSort, *};
 use lit_blockchain_lite::contracts::staking::Staking;
 use serde::{Deserialize, Serialize};
+use thaw::{Card, CardHeader, CardPreview};
+
+use leptos_use::{use_breakpoints, breakpoints_tailwind, BreakpointsTailwind};
+
 
 #[derive(TableRow, Clone, Serialize, Deserialize)]
 #[table(
     sortable,
-    classes_provider = "BootstrapClassesPreset",
+    classes_provider = "TailwindClassesPreset",
     // thead_cell_renderer = "CustomTableHeaderCellRenderer",
     impl_vec_data_provider
 )]
@@ -23,33 +27,38 @@ pub struct ComplaintConfig {
     pub kick_penalty_demerits: u128,
 }
 
+
+
 #[component]
 pub fn Complaints() -> impl IntoView {
-    let data = LocalResource::new(|| async move { get_complaint_configs().await });
+    
+    let data = LocalResource::new( || async move { 
+        if use_breakpoints(breakpoints_tailwind()).is_gt(BreakpointsTailwind::Md) { get_complaint_configs().await } else { vec![] } });
+
+    
 
     crate::utils::set_header("Complaints");
     view! {
         <Title text="Complaints"/>
-        <div class="card" >
-            <div class="card-header">
+        <Card class="min-w-full">
+            <CardHeader>
                 <b class="card-title">Complaint Configurations</b>
-            </div>
-            <div class="card-body">
+            </CardHeader>
+            <CardPreview class="p-3">
           {move || match data.get().as_deref() {
                     None => view! { <p>"Loading..."</p> }.into_any(),
                     Some(rows) => view! {
-                        <table class="table">
+                        <table class="table w-full">
                             <TableContent rows = rows.clone() scroll_container="html"  />
                         </table>
                         }.into_any()
                 }}
-            </div>
-        </div>
+            </CardPreview>
+        </Card>
     }
 }
 
 pub async fn get_complaint_configs() -> Vec<ComplaintConfig> {
-
     let staking_contract_address = get_address(crate::contracts::STAKING_CONTRACT)
         .await
         .unwrap();
@@ -72,9 +81,7 @@ pub async fn get_complaint_configs() -> Vec<ComplaintConfig> {
         });
     }
     complaint_configs
-
 }
-
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ComplaintReason {
@@ -97,6 +104,7 @@ impl ComplaintReason {
             ComplaintReason::NonParticipation,
             ComplaintReason::IncorrectInfo,
             ComplaintReason::KeyShareValidationFailure,
-        ].into_iter()
+        ]
+        .into_iter()
     }
 }

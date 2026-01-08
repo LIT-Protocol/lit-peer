@@ -2,17 +2,18 @@ use std::net::Ipv4Addr;
 
 use crate::models::GlobalState;
 use crate::utils::datetime::{format_timelock, format_timestamp};
-use crate::utils::{get_address, get_lit_config};
+use crate::utils::{get_address, get_lit_config, table_classes::TailwindClassesPreset};
 use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_struct_table::*;
 use lit_blockchain_lite::contracts::staking::Staking;
 use serde::{Deserialize, Serialize};
+use thaw::{Card, CardHeader, CardPreview};
 
 #[derive(TableRow, Clone, Serialize, Deserialize)]
 #[table(
     sortable,
-    classes_provider = "BootstrapClassesPreset",
+    classes_provider = "TailwindClassesPreset",
     impl_vec_data_provider
 )]
 pub struct StakeRecord {
@@ -42,23 +43,23 @@ pub fn StakingDetails() -> impl IntoView {
     crate::utils::set_header("Staking Details");
     view! {
         <Title text="Staking Details"/>
-        <div class="card" >
-            <div class="card-header">
+        <Card class="min-w-full">
+            <CardHeader>
                 <b class="card-title">Node Operator Staking Overview</b>
-            </div>
-            <div class="card-body">
+            </CardHeader>
+            <CardPreview class="p-3">
                 {move || match data.get().as_deref() {
                     None => view! { <p>"Loading..."</p> }.into_any(),
                     Some(rows) => view! {
 
-                        <table class="table">
+                        <table class="table w-full">
                             <TableContent rows = rows.clone() scroll_container="html"  />
                         </table>
 
                         }.into_any()
                 }}
-            </div>
-        </div>
+            </CardPreview>
+        </Card>
 
     }
 }

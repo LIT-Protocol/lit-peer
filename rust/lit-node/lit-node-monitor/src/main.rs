@@ -70,7 +70,7 @@ pub fn App() -> impl IntoView {
 
     <Ethereum>
     <Router base=base_path()>
-        <ConfigProvider theme>
+        <ConfigProvider theme class="w-screen p-2">
             <ToasterProvider>
                 {
                     let _listener = LocalResource::new(move || async move {
@@ -78,27 +78,22 @@ pub fn App() -> impl IntoView {
                         let _r = listener::listen_for_events(&ctx).await;
                     });
                 }
-                <div class="container-fluid min-vh-100 d-flex flex-column p-2">
-                        <div class="row align-items-center pb-2">
-                            <div class="col-2">
-                                <image class="d-inline" src="images/lit-logo-black.svg" height="36" />
-                                <h5 class="text-center align-center p-2 d-inline"> Network Explorer</h5>
-                            </div>
-                            <div class="col-5">
-                                { move || page_name_signal.get() }
-                            </div>
-                            <div class="col text-end align-text-top">
-                                <ConnectWeb3 />
-                            </div>
+                <div class="flex">
+                        <div class="w-160 ">
+                            <img class="size-10" src="images/lit-logo-black.svg" />
+                            <div class=""> Network Explorer</div>
+                            <div class="text-sm">{ move || page_name_signal.get() }</div>
                         </div>
+                        <div class="flex-1 justify-items-end">
+                            <ConnectWeb3 />
+                        </div>
+                    </div>
 
-
-                    <div class="row">
-                        <div class="col-2" style="min-width: 260px;">
+                    <div class="flex">
+                        <div class="w-80 ">
                             <NavMenu page_name_signal />
                         </div>
-                        <div class="col">
-                            <main>
+                            <main class="flex-1">
                                 <Routes fallback=|| "Not found.">
                                     <Route path=path!("/") view=pages::home::Home />
                                     <Route path=path!("/home") view=pages::home::Home />
@@ -126,9 +121,7 @@ pub fn App() -> impl IntoView {
                                     <Route path=path!("/pricing") view=pages::network_settings::pricing::Pricing />
                                 </Routes>
                             </main>
-                        </div>
-                    </div>
-                    </div>
+                            </div>
                 </ToasterProvider>
             </ConfigProvider>
         </Router>

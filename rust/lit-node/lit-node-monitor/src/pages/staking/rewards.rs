@@ -1,5 +1,5 @@
 use crate::utils::datetime::{format_duration, format_timestamp};
-use crate::utils::{get_address, get_lit_config};
+use crate::utils::{get_address, get_lit_config, table_classes::TailwindClassesPreset};
 use ethers_providers::{Http, Provider};
 use leptos::prelude::*;
 use leptos_meta::*;
@@ -7,11 +7,12 @@ use leptos_struct_table::*;
 use lit_blockchain_lite::contracts::staking::RewardEpoch;
 use lit_blockchain_lite::contracts::staking::Staking;
 use serde::{Deserialize, Serialize};
+use thaw::{Card, CardHeader, CardPreview};
 
 #[derive(TableRow, Clone, Serialize, Deserialize)]
 #[table(
     sortable,
-    classes_provider = "BootstrapClassesPreset",
+    classes_provider = "TailwindClassesPreset",
     impl_vec_data_provider
 )]
 pub struct EpochDetails {
@@ -22,7 +23,7 @@ pub struct EpochDetails {
 #[derive(TableRow, Clone, Serialize, Deserialize)]
 #[table(
     sortable,
-    classes_provider = "BootstrapClassesPreset",
+    classes_provider = "TailwindClassesPreset",
     impl_vec_data_provider
 )]
 pub struct RewardDetails {
@@ -49,43 +50,44 @@ pub fn Rewards() -> impl IntoView {
 
     view! {
         <Title text="Current Reward Details"/>
-        <div class="card" >
-            <div class="card-header">
+        <Card class="min-w-full">
+            <CardHeader>
                 <b class="card-title">Realm #1 Epoch Details</b>
-            </div>
-            <div class="card-body">
+            </CardHeader>
+            <CardPreview class="p-3">
 
                 {move || match data.get().as_deref() {
                     None => view! { <p>"Loading..."</p> }.into_any(),
                     Some(rows) => view! {
-                        <table class="table">
+                        <table class="table w-full">
                             <TableContent rows = rows.clone() scroll_container="html"  />
                         </table>
                         }.into_any()
                 }}
-            </div>
-        </div>
+            </CardPreview>
+        </Card>
         <br/>
-        {
-            move || match reward_data.get().as_deref() {
-                None => view! { <p>"Loading..."</p> }.into_any(),
-                Some(staker_rewards) => staker_rewards.iter().map(|staker| {
+        {move || match reward_data.get().as_deref() {
+            None => view! { <p>"Loading..."</p> }.into_any(),
+            Some(staker_rewards) => {
+                let staker_rewards = staker_rewards.to_vec();
+                staker_rewards.into_iter().map(|staker| {
                     view! {
-                        <div class="card" >
-                            <div class="card-header">
+                        <Card class="min-w-full">
+                            <CardHeader>
                                 <b class="card-title">Rewards for : {staker.staker_address.clone()}</b>
-                            </div>
-                            <div class="card-body">
-                                    <table class="table">
+                            </CardHeader>
+                            <CardPreview class="p-3">
+                                    <table class="table w-full">
                                         <TableContent rows = staker.reward_details.clone() scroll_container="html"  />
                                     </table>
-                            </div>
-                        </div>
+                            </CardPreview>
+                        </Card>
                         <br/>
                     }
                 }).collect_view().into_any()
             }
-        }
+        }}
     }
 }
 

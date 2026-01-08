@@ -94,6 +94,7 @@ async fn handshake_node(row: RwSignal<Validator>) -> JsonSDKHandshakeResponse {
 
     let row_data = row.get_untracked();
     let updated_row = Validator {
+        validator_type: row_data.validator_type,
         id: row_data.id,
         host_name: row_data.host_name,
         status: "Up".to_string(),
@@ -106,6 +107,8 @@ async fn handshake_node(row: RwSignal<Validator>) -> JsonSDKHandshakeResponse {
         network_public_key: handshake_result.network_public_key.clone(),
         node_identity_key: handshake_result.node_identity_key.clone(),
         epoch: handshake_result.epoch,
+        last_realm_id: row_data.last_realm_id,
+        last_epoch: row_data.last_epoch,
     };
     row.set(updated_row);
 

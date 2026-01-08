@@ -5,6 +5,7 @@ use crate::models::GlobalState;
 use crate::utils::get_address;
 use crate::utils::get_lit_config;
 use crate::utils::rpc_calls;
+use crate::utils::table_classes::TailwindClassesPreset;
 use chrono::Days;
 use chrono::Local;
 use chrono::NaiveDate;
@@ -14,17 +15,19 @@ use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_struct_table::*;
 use lit_blockchain_lite::contracts::{
-    contract_resolver, ledger, lit_token, pkp_helper, pkpnft, price_feed, pubkey_router, staking, payment_delegation,
+    contract_resolver, ledger, lit_token, payment_delegation, pkp_helper, pkpnft, price_feed,
+    pubkey_router, staking,
 };
 use serde::{Deserialize, Serialize};
 use thaw::DatePicker;
 use thaw::TimePicker;
+use thaw::{Card, CardHeader, CardPreview};
 use thaw::{Checkbox, Label, Pagination, Select};
 
 #[derive(TableRow, Clone, Serialize, Deserialize, Debug)]
 #[table(
     sortable,
-    classes_provider = "BootstrapClassesPreset",
+    classes_provider = "TailwindClassesPreset",
     impl_vec_data_provider
 )]
 pub struct ChainHistoryRow {
@@ -79,7 +82,7 @@ fn DescriptionRenderer(
 
     let row = row.get_untracked();
     let value = row.value;
-    
+
     let decimal_val = match i128::from_str_radix(&value.replace("0x", ""), 16) {
         Ok(val) => val,
         Err(e) => {
@@ -87,18 +90,18 @@ fn DescriptionRenderer(
             0
         }
     };
-// 1000000000000000000
-// 8091994000000000000
+    // 1000000000000000000
+    // 8091994000000000000
     view! {
         <td class=class>
-            {name}<Label>"("</Label> <i class="text-muted">{details}</i> <Label>")"</Label> 
+            {name}<Label>"("</Label> <i class="text-muted">{details}</i> <Label>")"</Label>
             { if decimal_val > 0 {
                 view! { <br/> <Label>Value: {decimal_val}</Label> }.into_any()
-            } 
+            }
             else {
                 view! { <br/> }.into_any()
-            } 
-            } 
+            }
+            }
         </td>
     }
 }
@@ -222,22 +225,22 @@ pub fn History() -> impl IntoView {
 
     view! {
            <Title text="History"/>
-           <div class="card" >
-               <div class="card-header">
-                   <div class="row">
+           <Card class="min-w-full">
+               <CardHeader>
+                   <div class="grid grid-cols-2 w-full">
                        <div class="col">
                            <b class="mb-0"> Network History </b>
                        </div>
-                       <div class="col text-end">
+                       <div class="col justify-self-end">
                            <Label on:click={move |_| filter_open.set(true)}> {move || filter_text.get()} </Label>
                        </div>
                    </div>
-               </div>
-               <div class="card-body">
+               </CardHeader>
+               <CardPreview class="p-3">
                     {move || match data.get().as_deref() {
                        None => view! { <p>"Loading..."</p> }.into_any(),
                        Some(rows) => view! {
-                           <table class="table">
+                           <table class="table w-full">
                                <TableContent
                                 selection=Selection::Single(selected_index)
                                    on_selection_change={move |evt: SelectionChangeEvent<ChainHistoryRow>| {
@@ -250,18 +253,18 @@ pub fn History() -> impl IntoView {
                            </table>
                            }.into_any()
                    }}
-               </div>
-    <div class="card-footer">
-                   <div class="row">
-                       <div class="col-6">
+               </CardPreview>
+                <div class="card-footer">
+                   <div class="grid grid-cols-12">
+                       <div class="col-span-6">
                        <Pagination page page_count=pagination_pages />
                        </div>
-                       <div class="col-5 text-end">
+                       <div class="col-span-5 text-end">
                            <Checkbox checked=include_internal_transactions />
                            "Include Internal Transactions  |  Page Size: "
 
                        </div>
-                       <div class="col-1">
+                       <div class="col-span-1">
                        <Select value=page_size  >
                            <option value=10>10</option>
                            <option value=20>20</option>
@@ -271,7 +274,7 @@ pub fn History() -> impl IntoView {
                        </Select> </div>
                    </div>
                </div>
-           </div>
+           </Card>
            <br />
 
               { move || sel_row_read.get().map(|selected_row| {
@@ -597,7 +600,7 @@ fn get_abi_function(short_signature: &str) -> (&str, &ethers::abi::Function) {
     if let Some(abi_function) = abi_function {
         return ("PriceFeed", abi_function);
     }
-// payment_delegation
+    // payment_delegation
 
     let abi_function = payment_delegation::PAYMENTDELEGATION_ABI
         .functions()

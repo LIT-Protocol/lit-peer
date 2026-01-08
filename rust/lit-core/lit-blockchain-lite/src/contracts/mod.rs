@@ -167,8 +167,7 @@ impl Ledger<Provider<Http>> {
 impl Ledger<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>> {
     pub fn node_monitor_load_with_signer(
         cfg: &NodeMonitorLitConfig, address: H160, wallet_key: Option<&str>,
-    ) -> Result<Ledger<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>, Box<dyn Error>>
-    {
+    ) -> Result<Ledger<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>, Box<dyn Error>> {
         Ok(Ledger::new(address, default_local_client(cfg, wallet_key)?))
     }
 }

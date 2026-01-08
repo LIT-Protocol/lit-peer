@@ -14,17 +14,14 @@ pub fn ConnectWeb3() -> impl IntoView {
 
     let ec2 = ec.clone();
     view! {
-        <div class="row">
-            <div class="col-9 mt-1">
-                { move || format!("Connected to {} at block # {}",  gs.active_network().chain_name, gs.block.get()) }
-            </div>
-            <div class="col-3 text-end">
-                <Button on:click=move |_| { ec2.connect(WalletType::Injected); }>
-                    { move || if ec.is_connected() {
-                        format!("{:?}", &ec.accounts().unwrap()[0]) }
-                        else { "Connect".to_string() }      }
-                </Button>
-            </div>
-         </div>
+        <div>
+            { move || format!("{} : block # {} ",  gs.active_network().chain_name, gs.block.get()) }
+        
+            <Button on:click=move |_| { ec2.connect(WalletType::Injected); }>
+                { move || if ec.is_connected() {
+                    format!("{:?}", &ec.accounts().unwrap()[0]) }
+                    else { "Connect".to_string() }      }
+            </Button>
+        </div>
     }
 }

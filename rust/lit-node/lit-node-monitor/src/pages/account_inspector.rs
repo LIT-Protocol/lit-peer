@@ -1,6 +1,5 @@
 use crate::components::right_drawer::RightDrawer;
-use crate::utils::get_address;
-use crate::utils::get_lit_config;
+use crate::utils::{get_address, get_lit_config};
 use chrono::Days;
 use chrono::Local;
 use chrono::NaiveTime;
@@ -11,7 +10,7 @@ use lit_blockchain_lite::contracts::ledger::Ledger;
 use lit_blockchain_lite::contracts::ledger::WithdrawRequest;
 use thaw::DatePicker;
 use thaw::TimePicker;
-use thaw::{Button, Checkbox, Input, Label, Pagination, Select};
+use thaw::{Button, Checkbox, Input, Label, Pagination, Select, Card, CardHeader, CardPreview};
 
 use super::history::ChainHistoryRow;
 use super::history::fetch_chain_tx_rows;
@@ -86,8 +85,8 @@ pub fn AccountInspector() -> impl IntoView {
 
     view! {
            <Title text="Account Inspector"/>
-           <div class="card" >
-               <div class="card-header">
+           <Card class="min-w-full">
+               <CardHeader>
                    <div class="row">
                        <div class="col">
                            <b class="mb-0"> Wallet Account Inspector </b>
@@ -96,11 +95,11 @@ pub fn AccountInspector() -> impl IntoView {
                            <Label on:click={move |_| filter_open.set(true)}> {move || filter_text.get()} </Label>
                        </div>
                    </div>
-               </div>
+               </CardHeader>
 
 
                // thaw text input for address
-               <div class="card-body">
+               <CardPreview class="p-3">
                    <Input value=address_input_value input_size=45 />
                    <Button on:click={move |_| alt_address.set(Some(address_input_value.get().to_string()))}> "Search" </Button>
                    <br/><br/>
@@ -108,22 +107,23 @@ pub fn AccountInspector() -> impl IntoView {
                        None => view! { <p>"Loading..."</p> }.into_any(),
                        Some(balance) => view! { <p>"Balance for address: "    {balance.to_string()} </p> }.into_any()
                    }}
-               </div>
+               </CardPreview>
+           </Card>
 
-               <div class="card m-3" >
-               <div class="card-header">
+               <Card class="m-3 min-w-full">
+               <CardHeader>
                    <div class="row">
                        <div class="col">
                            <b class="mb-0"> Ledger Transactions for address: {address_input_value.get()}</b>
                        </div>                     
                    </div>
-               </div>
+               </CardHeader>
 
-                <div class="card-body">
+                <CardPreview class="p-3">
                     {move || match data.get().as_deref() {
                        None => view! { <p>"Loading..."</p> }.into_any(),
                        Some(rows) => view! {
-                           <table class="table">
+                           <table class="table w-full">
                                <TableContent
                                 selection=Selection::Single(selected_index)
                                    on_selection_change={move |evt: SelectionChangeEvent<ChainHistoryRow>| {
@@ -136,7 +136,7 @@ pub fn AccountInspector() -> impl IntoView {
                            </table>
                            }.into_any()
                    }}
-                </div>
+                </CardPreview>
                 <div class="card-footer">
                    <div class="row">
                        <div class="col-6">
@@ -157,10 +157,7 @@ pub fn AccountInspector() -> impl IntoView {
                        </Select> </div>
                    </div>
                </div>
-               </div>
-
-
-           </div>
+               </Card>
            <br />
 
 

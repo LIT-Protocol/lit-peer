@@ -1,13 +1,14 @@
-use crate::utils::{get_address, get_lit_config};
+use crate::utils::{get_address, get_lit_config, table_classes::TailwindClassesPreset};
 use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_struct_table::*;
 use lit_blockchain_lite::contracts::{pubkey_router::PubkeyRouter, staking::Staking};
 use serde::{Deserialize, Serialize};
+use thaw::{Card, CardHeader, CardPreview};
 #[derive(TableRow, Clone, Serialize, Deserialize)]
 #[table(
     sortable,
-    classes_provider = "BootstrapClassesPreset",
+    classes_provider = "TailwindClassesPreset",
     impl_vec_data_provider
 )]
 pub struct RootKeys {
@@ -21,26 +22,26 @@ pub fn RootKeys() -> impl IntoView {
     crate::utils::set_header("Root Keys");
     view! {
         <Title text="Root Keys"/>
-        <div class="card" >
-           {   move || match data.get().as_deref() {
-                    None => view! { <p>"Loading..."</p> }.into_any(),
-                    Some(rows) =>
-                    rows.iter().map(|key_set|
-                        view! {
-                            <div class="card" >
-                                <div class="card-header">
-                                    <b class="card-title">Root Keys - {key_set.0.clone()}</b>
-                                </div>
-                                <div class="card-body">
-                                    <table class="table">
+        {move || match data.get().as_deref() {
+            None => view! { <p>"Loading..."</p> }.into_any(),
+            Some(rows) => {
+                let rows = rows.to_vec();
+                rows.into_iter().map(|key_set|
+                    view! {
+                        <Card class="min-w-full">
+                            <CardHeader>
+                                <b class="card-title">Root Keys - {key_set.0.clone()}</b>
+                            </CardHeader>
+                            <CardPreview class="p-3">
+                                    <table class="table w-full">
                                         <TableContent rows = key_set.1.clone() scroll_container="html"  />
                                     </table>
-                                </div>
-                            </div>
-                        }).collect_view().into_any()
-                }
-        }
-        </div>
+                            </CardPreview>
+                        </Card>
+                    }
+                ).collect_view().into_any()
+            }
+        }}
     }
 }
 

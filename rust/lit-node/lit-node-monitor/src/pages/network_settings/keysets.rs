@@ -35,7 +35,7 @@ pub fn Keysets() -> impl IntoView {
                                     <b class="card-title">KeySet - {identifier.clone()}</b>
                                 </div>
                                 <div class="card-body">
-                                    <table class="table">
+                                    <table class="table w-full">
                                         <tr>
                                             <td>Identifier</td>
                                             <td>{identifier.clone()}</td>

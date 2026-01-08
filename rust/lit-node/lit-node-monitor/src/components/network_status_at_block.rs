@@ -25,7 +25,7 @@ pub fn NetWorkStatusAtBlock(realm_id: u64, block_number: u64, block_time: String
         match data.get().as_deref() {
         Some(d) => view! {
             <div class="row">
-                <table class="table">
+                <table class="table w-full">
                     <tbody>
                         <tr>
                             <td>Network Status</td>

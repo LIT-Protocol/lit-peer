@@ -1,7 +1,7 @@
 use crate::components::bottom_modal::BottomModal;
 use crate::components::validator_details::ValidatorDetails;
 use crate::components::validator_handshake::ValidatorHandshake;
-use crate::utils::table_classes::BootstrapClassesPreset;
+use crate::utils::table_classes::TailwindClassesPreset;
 use crate::{
     components::network_status::NetworkStatus,
     models::GlobalState,
@@ -17,13 +17,24 @@ use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_struct_table::*;
 use lit_blockchain_lite::contracts::staking::Staking;
+use thaw::{Card, CardHeader, CardPreview};
 // use lit_sdk::models::response::JsonSDKHandshakeResponse;
 use serde::{Deserialize, Serialize};
 use std::net::Ipv4Addr;
+
+#[derive(Clone, Copy, Debug)]
+pub enum ValidatorType {
+    Current = 1,
+    Next = 2,
+    Available = 3,
+}
+
 #[derive(TableRow, Clone, Serialize, Deserialize, Debug)]
 #[table(impl_vec_data_provider)]
-#[table(classes_provider = "BootstrapClassesPreset")]
+#[table(classes_provider = "TailwindClassesPreset")]
 pub struct Validator {
+    #[table(skip)]
+    pub validator_type: u8,
     #[table(title = "#")]
     pub id: u32,
     #[table(title = "Host Name")]
@@ -47,6 +58,11 @@ pub struct Validator {
     pub node_identity_key: String,
     #[table(skip)]
     pub epoch: u64,
+
+    #[table(skip)]
+    pub last_realm_id: u64,
+    #[table(skip)]
+    pub last_epoch: u64,
 }
 
 #[derive(Clone)]
@@ -112,19 +128,20 @@ pub fn Validators() -> impl IntoView {
         {
         move || match realms.get().as_deref() {
             None => view! { <p>{ move || handshake_state.get() }</p> }.into_any(),
-            Some(realms) =>
-                realms.iter().map(|realm|
+            Some(realms) => {
+                let realms2 = realms.clone();
+                realms2.iter().map(|realm|
                     view! {
                         <div class="col-12"><h4>Realm: {realm.id}</h4></div>
                         <div class="col-12"><NetworkStatus realm_id=realm.id as u64 /></div>
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="card" >
-                                    <div class="card-header">
-                                        <b class="card-title">Current Nodes</b>
-                                    </div>
-                                    <div class="card-body">
-                                        <table class="table">
+                            <div class="col-12 col-sm-6">
+                                // <Card>
+                                //     <CardHeader>
+                                //         <b class="card-title">Current Nodes</b>
+                                //     </CardHeader>
+                                //     <CardPreview>
+                                        <table class="table w-full">
                                             <TableContent
                                                 selection=Selection::Single(selected_index)
                                                     on_selection_change={move |evt: SelectionChangeEvent<Validator>| {
@@ -134,16 +151,16 @@ pub fn Validators() -> impl IntoView {
                                                     }}
                                                 rows = realm.current_validators.clone() scroll_container="html" />
                                         </table>
-                                    </div>
-                                </div>
+                                //     </CardPreview>
+                                // </Card>
                             </div>
                             <div class="col-md-6">
-                                <div class="card" >
-                                    <div class="card-header">
-                                        <b class="card-title">Next Nodes</b>
-                                    </div>
-                                    <div class="card-body">
-                                        <table class="table">
+                                // <Card>
+                                //     <CardHeader>
+                                //         <b class="card-title">Next Nodes</b>
+                                //     </CardHeader>
+                                //     <CardPreview>
+                                        <table class="table w-full">
                                             <TableContent
                                                 selection=Selection::Single(selected_index)
                                                     on_selection_change={move |evt: SelectionChangeEvent<Validator>| {
@@ -153,26 +170,27 @@ pub fn Validators() -> impl IntoView {
                                                     }}
                                                 rows = realm.next_validators.clone() scroll_container="html" />
                                         </table>
-                                    </div>
-                                </div>
+                                    // </CardPreview>
+                                // </Card>
                             </div>
                         </div>
                         <br />
                     }).collect_view().into_any()
-                }
+                }}
             }
 
 
 
-        <h4>Staked Inactive</h4>
-        <div class="card" >
-            <div class="card-body">
-            <h5 class="card-title">Nodes awaiting deployment</h5>
-
+        <h4>Available</h4>
+        <Card class="min-w-full">
+            <CardHeader>
+                <b class="card-title">Not assigned to any realm</b>
+            </CardHeader>
+            <CardPreview class="p-3">
             {move || match floaters.get().as_deref() {
                 None => view! { <p>"Loading..."</p> }.into_any(),
                 Some(rows) => view! {
-                    <table class="table">
+                    <table class="table w-full">
                         <TableContent
                             selection=Selection::Single(selected_index)
                                 on_selection_change={move |evt: SelectionChangeEvent<Validator>| {
@@ -185,8 +203,8 @@ pub fn Validators() -> impl IntoView {
                 }.into_any()
             }}
 
-            </div>
-        </div>
+            </CardPreview>
+        </Card>
         <br />
 
 
@@ -243,29 +261,40 @@ pub async fn get_validators(
         }
     };
 
-    let validators = match is_current {
+    let (validator_type, validators) = match is_current {
         true => match realm_id.as_u64() {
             0 => {
                 let reserve_addresses = staking.get_all_reserve_validators().call().await;
-                let reserve_addresses = reserve_addresses.unwrap();
-                staking
-                    .get_validators_structs(reserve_addresses)
-                    .call()
-                    .await
+                let reserve_addresses = match reserve_addresses {
+                    Ok(addresses) => addresses,
+                    Err(e) => {
+                        log::error!("Error getting reserve validators: {:?}", e);
+                        vec![]
+                    }
+                };
+                (
+                    ValidatorType::Available,
+                    staking
+                        .get_validators_structs(reserve_addresses)
+                        .call()
+                        .await,
+                )
             }
-            _ => {
+            _ => (
+                ValidatorType::Current,
                 staking
                     .get_validators_structs_in_current_epoch(realm_id)
                     .call()
-                    .await
-            }
+                    .await,
+            ),
         },
-        false => {
+        false => (
+            ValidatorType::Next,
             staking
                 .get_validators_structs_in_next_epoch(realm_id)
                 .call()
-                .await
-        }
+                .await,
+        ),
     };
 
     if validators.is_err() {
@@ -344,6 +373,7 @@ pub async fn get_validators(
             .staker_address;
 
         rows.push(Validator {
+            validator_type: validator_type.clone() as u8,
             id: count,
             status: match kicked.contains(&v.node_address) {
                 true => "K".to_string(),
@@ -359,6 +389,8 @@ pub async fn get_validators(
             network_public_key: "".to_string(),
             node_identity_key: "".to_string(),
             epoch: 0,
+            last_realm_id: v.last_realm_id.as_u64(),
+            last_epoch: v.last_active_epoch.as_u64(),
         });
     }
 

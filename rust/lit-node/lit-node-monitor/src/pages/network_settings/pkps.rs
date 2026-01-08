@@ -1,6 +1,6 @@
 use crate::{
     pages::history::simple_hex,
-    utils::{get_address, get_lit_config},
+    utils::{get_address, get_lit_config, table_classes::TailwindClassesPreset},
 };
 use ethers::types::U256;
 use leptos::prelude::*;
@@ -8,11 +8,12 @@ use leptos_meta::*;
 use leptos_struct_table::{ColumnSort, *};
 use lit_blockchain_lite::contracts::pubkey_router::PubkeyRouter;
 use serde::{Deserialize, Serialize};
+use thaw::{Card, CardHeader, CardPreview};
 
 #[derive(TableRow, Clone, Serialize, Deserialize)]
 #[table(
     sortable,
-    classes_provider = "BootstrapClassesPreset",
+    classes_provider = "TailwindClassesPreset",
     // thead_cell_renderer = "CustomTableHeaderCellRenderer",
     impl_vec_data_provider
 )]
@@ -61,22 +62,22 @@ pub fn PKPs() -> impl IntoView {
 
     view! {
         <Title text="PKPs"/>
-        <div class="card" >
-            <div class="card-header">
+        <Card class="min-w-full">
+            <CardHeader>
                 <b class="card-title">First 10 PKPs</b>
-            </div>
-            <div class="card-body">
+            </CardHeader>
+            <CardPreview class="p-3">
 
                 {move || match data.get().as_deref() {
                     None => view! { <p>"Loading..."</p> }.into_any(),
                     Some(rows) => view! {
-                        <table class="table">
+                        <table class="table w-full">
                             <TableContent rows = rows.clone() scroll_container="html"  />
                         </table>
                         }.into_any()
                 }}
-            </div>
-        </div>
+            </CardPreview>
+        </Card>
     }
 }
 

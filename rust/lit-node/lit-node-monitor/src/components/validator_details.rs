@@ -10,7 +10,7 @@ pub fn ValidatorDetails(validator: Validator) -> impl IntoView {
     // yellowstone-explorer.litprotocol.com
     view! {
         <div class="row">
-            <table class="table">
+            <table class="table w-full">
                 <tbody>
                     <tr>
                         <td>Host Name</td>
@@ -36,6 +36,13 @@ pub fn ValidatorDetails(validator: Validator) -> impl IntoView {
                     <tr>
                         <td>Node Identity Key</td>
                         <td colspan="3">{validator.node_identity_key.clone()}</td>
+                    </tr>
+                    <tr>
+                        <td>{if validator.validator_type > 1 { "Last Realm Id"} else {" Current Realm Id "}} </td>
+                        <td>{validator.last_realm_id.clone()}</td>
+                        <td></td>
+                        <td>{if validator.validator_type > 1 { "Last Epoch"} else {" Current Epoch "}} </td>
+                        <td>{validator.last_epoch.clone()} </td>
                     </tr>
                     <tr>
                         <td>Commit Hash</td>

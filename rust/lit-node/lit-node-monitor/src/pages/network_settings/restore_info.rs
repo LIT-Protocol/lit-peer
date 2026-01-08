@@ -1,16 +1,15 @@
-use crate::utils::{get_address, get_lit_config};
+use crate::utils::{get_address, get_lit_config, table_classes::TailwindClassesPreset};
 use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_struct_table::*;
-use lit_blockchain_lite::contracts::{
-    backup_recovery::{BackupRecovery, RecoveredPeerId},
-};
+use lit_blockchain_lite::contracts::backup_recovery::{BackupRecovery, RecoveredPeerId};
 use serde::{Deserialize, Serialize};
+use thaw::{Card, CardHeader, CardPreview};
 
 #[derive(TableRow, Clone, Serialize, Deserialize)]
 #[table(
     sortable,
-    classes_provider = "BootstrapClassesPreset",
+    classes_provider = "TailwindClassesPreset",
     impl_vec_data_provider
 )]
 pub struct BackupRecoverParty {
@@ -21,27 +20,26 @@ pub struct BackupRecoverParty {
 
 #[component]
 pub fn BackupRecovery() -> impl IntoView {
-
     let data = LocalResource::new(|| async move { get_backup_recover_parties().await });
 
     crate::utils::set_header("Backup Recovery");
     view! {
         <Title text="Backup Recovery"/>
-        <div class="card" >
-            <div class="card-header">
+        <Card class="min-w-full">
+            <CardHeader>
                 <b class="card-title">Backup Recovery Parties</b>
-            </div>
-            <div class="card-body">
+            </CardHeader>
+            <CardPreview class="p-3">
                 {move || match data.get().as_deref() {
                     None => view! { <p>"Loading..."</p> }.into_any(),
                     Some(rows) => view! {
-                        <table class="table">
+                        <table class="table w-full">
                             <TableContent rows = rows.clone() scroll_container="html"  />
                         </table>
                         }.into_any()
                 }}
-            </div>
-        </div>
+            </CardPreview>
+        </Card>
     }
 }
 pub async fn get_backup_recover_parties() -> Vec<BackupRecoverParty> {

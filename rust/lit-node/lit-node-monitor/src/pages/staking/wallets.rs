@@ -2,6 +2,7 @@ use super::super::validators::get_validators;
 use crate::utils::{
     context::{WebCallBackContext, get_web_callback_context},
     contract_helper::{get_lit_token, get_staking},
+    table_classes::TailwindClassesPreset,
 };
 use ethers::types::H160;
 use ethers_providers::{Http, Middleware, Provider};
@@ -10,11 +11,12 @@ use leptos_meta::*;
 use leptos_struct_table::*;
 use lit_blockchain_lite::contracts::lit_token::LITToken;
 use serde::{Deserialize, Serialize};
+use thaw::{Card, CardHeader, CardPreview};
 
 #[derive(TableRow, Clone, Serialize, Deserialize)]
 #[table(
     sortable,
-    classes_provider = "BootstrapClassesPreset",
+    classes_provider = "TailwindClassesPreset",
     impl_vec_data_provider
 )]
 pub struct ContractBalance {
@@ -26,7 +28,7 @@ pub struct ContractBalance {
 #[derive(TableRow, Clone, Serialize, Deserialize, PartialEq)]
 #[table(
     sortable,
-    classes_provider = "BootstrapClassesPreset",
+    classes_provider = "TailwindClassesPreset",
     impl_vec_data_provider
 )]
 pub struct WalletBalance {
@@ -46,23 +48,23 @@ pub fn Wallets() -> impl IntoView {
 
     view! {
         <Title text="Balance Details"/>
-        <div class="card" >
-            <div class="card-header">
+        <Card class="min-w-full">
+            <CardHeader>
                 <b class="card-title">Node / NodeOp / EOA Wallets</b>
-            </div>
-            <div class="card-body">
+            </CardHeader>
+            <CardPreview class="p-3">
 
                 {move || match data.get().as_deref() {
                     None => view! { <p>"Loading..."</p> }.into_any(),
                     Some(rows) => view! {
-                        <table class="table">
+                        <table class="table w-full">
                             <TableContent rows = rows.clone() scroll_container="html"  />
                         </table>
                     }.into_any()
 
                 }}
-            </div>
-        </div>
+            </CardPreview>
+        </Card>
     }
 }
 

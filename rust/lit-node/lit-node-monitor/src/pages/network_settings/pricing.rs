@@ -1,4 +1,4 @@
-use crate::utils::{get_address, get_lit_config};
+use crate::utils::{get_address, get_lit_config, table_classes::TailwindClassesPreset};
 use ethers::providers::Provider;
 use ethers::types::U256;
 use ethers_providers::Http;
@@ -7,10 +7,11 @@ use leptos_meta::*;
 use leptos_struct_table::*;
 use lit_blockchain_lite::contracts::price_feed::{LitActionPriceConfig, PriceFeed};
 use serde::{Deserialize, Serialize};
+use thaw::{Card, CardHeader, CardPreview};
 #[derive(TableRow, Clone, Serialize, Deserialize)]
 #[table(
     sortable,
-    classes_provider = "BootstrapClassesPreset",
+    classes_provider = "TailwindClassesPreset",
     impl_vec_data_provider
 )]
 pub struct PricingConfig {
@@ -29,40 +30,40 @@ pub fn Pricing() -> impl IntoView {
 
     view! {
         <Title text="Pricing"/>
-        <div class="card" >
-            <div class="card-header">
+        <Card class="min-w-full">
+            <CardHeader>
                 <b class="card-title">Base Network Prices</b>
-            </div>
+            </CardHeader>
 
-            <div class="card-body">
+            <CardPreview class="p-3">
                 {move || match price_feed_data.get().as_deref() {
                     None => view! { <p>"Loading..."</p> }.into_any(),
                     Some(rows) => view! {
-                        <table class="table">
+                        <table class="table w-full">
                             <TableContent rows = rows.0.clone() scroll_container="html"  />
                         </table>
                         }.into_any()
                 }}
-            </div>
-        </div>
+            </CardPreview>
+        </Card>
         <br />
-        <div class="card" >
-            <div class="card-header">
+        <Card class="min-w-full">
+            <CardHeader>
                 <b class="card-title">Lit Action Individual Prices</b>
-            </div>
+            </CardHeader>
 
-            <div class="card-body">
+            <CardPreview class="p-3">
                 {move || match price_feed_data.get().as_deref() {
                     None => view! { <p>"Loading..."</p> }.into_any(),
                     Some(rows) => view! {
-                        <table class="table">
+                        <table class="table w-full">
                             <TableContent rows = rows.1.clone() scroll_container="html"  />
                         </table>
                         }.into_any()
                 }}
-            </div>
+            </CardPreview>
 
-        </div>
+        </Card>
         <br />
         ** Note: the Lit Action price in Base Network Prices is the price reported to the client for transaction estimation purposes. The actual price is the sum of the individual prices ( and their frequency ) calculated during the run of the Lit Action.
     }
