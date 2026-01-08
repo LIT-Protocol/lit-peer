@@ -51,7 +51,7 @@ pub(crate) async fn check_access_control_conditions(
                         endpoint_version,
                     )
                     .await?;
-                MultipleAuthSigs::populate_by_chain(&chain, single_auth_sig)
+                MultipleAuthSigs::populate_by_chain(&chain, &valid_auth_sig)
             }
         }
     };
