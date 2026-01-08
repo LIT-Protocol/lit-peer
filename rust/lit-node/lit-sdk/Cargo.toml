@@ -16,7 +16,7 @@ elliptic-curve-tools = "0.1.2"
 futures = "0.3"
 hex = { version = "0.4", features = ["serde"] }
 ipfs-hasher = "0.13"
-lit-node-core = { version = "2.0.1" }
+lit-node-core = { path = "../lit-node-core", version = "2.0.1" }
 lit-frost.workspace = true
 rand = "0.8"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }

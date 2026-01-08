@@ -9595,7 +9595,7 @@ dependencies = [
  "lit-blockchain",
  "lit-core",
  "lit-core-derive",
- "lit-node-core 2.0.1",
+ "lit-node-core",
  "moka 0.11.3",
  "once_cell",
  "serde",
@@ -10024,23 +10024,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lit-node-core"
-version = "2.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "312cc450eeda2befd3baae151ef49642de3eee34e9b893cac34c1b1219d9b72e"
-dependencies = [
- "ed25519-dalek 2.2.0",
- "ethabi 16.0.0",
- "ethers",
- "hd-keys-curves-wasm 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
- "hex",
- "lit-rust-crypto 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde",
- "serde_json",
- "thiserror 2.0.16",
-]
-
-[[package]]
 name = "lit-node-testnet"
 version = "0.1.0"
 dependencies = [
@@ -10060,7 +10043,7 @@ dependencies = [
  "lit-core",
  "lit-logging",
  "lit-node-common",
- "lit-node-core 2.0.1",
+ "lit-node-core",
  "lit-observability",
  "lit-sdk",
  "once_cell",
@@ -10154,7 +10137,7 @@ dependencies = [
  "hex",
  "lit-blockchain",
  "lit-core",
- "lit-node-core 2.0.1",
+ "lit-node-core",
  "lit-rust-crypto 0.6.0 (git+https://github.com/LIT-Protocol/lit-rust-crypto?tag=0.6.0)",
  "path-clean 1.0.1",
  "rand 0.8.5",
@@ -10227,7 +10210,7 @@ dependencies = [
  "hex",
  "ipfs-hasher",
  "lit-frost",
- "lit-node-core 2.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lit-node-core",
  "rand 0.8.5",
  "reqwest 0.12.23",
  "serde",
@@ -10308,7 +10291,7 @@ dependencies = [
  "lit-frost",
  "lit-logging",
  "lit-node-common",
- "lit-node-core 2.0.1",
+ "lit-node-core",
  "lit-node-testnet",
  "lit-observability",
  "lit-recovery",
