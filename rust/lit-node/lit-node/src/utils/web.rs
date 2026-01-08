@@ -10,6 +10,7 @@ use crate::models::auth::SessionKeySignedMessageV2;
 use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::tss_state::TssState;
 use crate::utils::encoding;
+use crate::utils::keysets::get_default_keyset_id;
 use ethers::utils::keccak256;
 use ipfs_hasher::IpfsHasher;
 use iri_string::spec::UriSpec;
@@ -465,10 +466,7 @@ pub fn check_condition_count(
         let count = recursive_access_control_condition_count(conditions);
         if count > MAX_CONDITION_COUNT {
             return Err(validation_err_code(
-                format!(
-                    "Too many conditions, max is {}, got {}",
-                    MAX_CONDITION_COUNT, count
-                ),
+                format!("Too many conditions, max is {MAX_CONDITION_COUNT}, got {count}"),
                 EC::NodeTooManyConditions,
                 None,
             ));
@@ -479,10 +477,7 @@ pub fn check_condition_count(
         let count = recursive_evm_contract_condition_count(conditions);
         if count > MAX_CONDITION_COUNT {
             return Err(validation_err_code(
-                format!(
-                    "Too many conditions, max is {}, got {}",
-                    MAX_CONDITION_COUNT, count
-                ),
+                format!("Too many conditions, max is {MAX_CONDITION_COUNT}, got {count}"),
                 EC::NodeTooManyConditions,
                 None,
             ));
@@ -493,10 +488,7 @@ pub fn check_condition_count(
         let count = recursive_sol_rpc_condition_count(conditions);
         if count > MAX_CONDITION_COUNT {
             return Err(validation_err_code(
-                format!(
-                    "Too many conditions, max is {}, got {}",
-                    MAX_CONDITION_COUNT, count
-                ),
+                format!("Too many conditions, max is {MAX_CONDITION_COUNT}, got {count}"),
                 EC::NodeTooManyConditions,
                 None,
             ));
@@ -507,10 +499,7 @@ pub fn check_condition_count(
         let count = recursive_unified_access_control_condition_count(conditions);
         if count > MAX_CONDITION_COUNT {
             return Err(validation_err_code(
-                format!(
-                    "Too many conditions, max is {}, got {}",
-                    MAX_CONDITION_COUNT, count
-                ),
+                format!("Too many conditions, max is {MAX_CONDITION_COUNT}, got {count}"),
                 EC::NodeTooManyConditions,
                 None,
             ));
@@ -604,7 +593,7 @@ async fn retrieve_from_ipfs(
                     .add_detail(format!("Timeout error getting code from ipfs. Try getting it yourself in a browser and see if it works: {url}"))
             } else {
                 ipfs_err(e, Some("Error getting ipfs file".into()))
-                    .add_detail(format!("Error getting ipfs file: {}", ipfs_id))
+                    .add_detail(format!("Error getting ipfs file: {ipfs_id}"))
             }
         })?;
 
@@ -616,7 +605,7 @@ async fn retrieve_from_ipfs(
             ),
             None,
         )
-        .add_detail(format!("Error getting ipfs file: {}", ipfs_id)));
+        .add_detail(format!("Error getting ipfs file: {ipfs_id}")));
     }
     let text_result = req.text().await.map_err(|e| {
         conversion_err(
@@ -641,8 +630,7 @@ async fn retrieve_from_ipfs(
     if cid != ipfs_id.clone() {
         return Err(ipfs_err(
             format!(
-                "Error getting code from ipfs url.  Hash mismatch.  Expected: {}  Actual: {}",
-                ipfs_id, cid
+                "Error getting code from ipfs url.  Hash mismatch.  Expected: {ipfs_id}  Actual: {cid}"
             ),
             None,
         ));
@@ -801,12 +789,23 @@ pub fn pubkey_to_token_id(pubkey: &str) -> Result<String> {
     Ok(token_id)
 }
 
-pub fn get_bls_root_pubkey(tss_state: &Arc<TssState>, key_set_id: Option<&str>) -> Result<String> {
-    let curve_state = CurveState::new(
-        tss_state.peer_state.clone(),
-        CurveType::BLS,
-        key_set_id.map(|k| k.to_string()),
-    );
+pub fn get_default_bls_root_pubkey(tss_state: &Arc<TssState>) -> Result<String> {
+    let cdm = &tss_state.chain_data_config_manager;
+    let default_keyset = match get_default_keyset_id(cdm) {
+        Ok(keyset) => keyset.clone(),
+        Err(e) => {
+            return Err(unexpected_err_code(
+                "No default keyset found",
+                EC::NodeBLSRootKeyNotFound,
+                None,
+            ));
+        }
+    };
+    get_bls_root_pubkey(tss_state, &default_keyset)
+}
+
+pub fn get_bls_root_pubkey(tss_state: &Arc<TssState>, key_set_id: &str) -> Result<String> {
+    let curve_state = CurveState::new(tss_state.peer_state.clone(), CurveType::BLS, key_set_id);
     match curve_state.root_keys()?.first() {
         Some(bls_root_key) => Ok(bls_root_key.clone()),
         None => Err(unexpected_err_code(

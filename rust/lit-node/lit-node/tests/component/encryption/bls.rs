@@ -1,6 +1,7 @@
 use crate::component::{dkg::dkg, utils::virtual_node_collection::VirtualNodeCollection};
 use core::panic;
 use lit_node::peers::peer_state::models::SimplePeerCollection;
+use lit_node::tss::util::DEFAULT_KEY_SET_NAME;
 use lit_node_core::{CurveType, SigningScheme};
 use lit_rust_crypto::blsful::{Bls12381G2Impl, PublicKey, Signature};
 use tracing::info;
@@ -39,9 +40,10 @@ pub async fn sign_min_threshold() {
             }
         };
 
+        let key_set_id = DEFAULT_KEY_SET_NAME;
         // Sign the message using the blsful secret key share.
         let (signature_share, _share_index) = match cipher_state
-            .sign_with_pubkey(&message_bytes.clone(), &pubkey, None, None)
+            .sign_with_pubkey(&message_bytes.clone(), &pubkey, key_set_id, None)
             .await
         {
             Ok(signature_share) => signature_share,
@@ -92,9 +94,10 @@ pub async fn sign_with_pubkey() {
             }
         };
 
+        let key_set_id = DEFAULT_KEY_SET_NAME;
         // Sign the message using the blsful secret key share.
         let (signature_share, _share_index) = match cipher_state
-            .sign_with_pubkey(&message_bytes.clone(), &pubkey, None, None)
+            .sign_with_pubkey(&message_bytes.clone(), &pubkey, key_set_id, None)
             .await
         {
             Ok(signature_share) => signature_share,

@@ -47,6 +47,7 @@ where
     pub encryption_key: C::Point,
     pub blinder: C::Scalar,
     pub eks_and_ds: Vec<EksAndDs<C>>,
+    pub encrypted_key_shares: Vec<EncryptedKeyShare<C>>,
 }
 
 impl<C> Debug for CurveRecoveryData<C>
@@ -60,6 +61,7 @@ where
             .field("encryption_key", &self.encryption_key)
             .field("blinder.len()", &self.blinder.to_compressed().len())
             .field("eks_and_ds", &self.eks_and_ds)
+            .field("encrypted_key_shares", &self.encrypted_key_shares)
             .finish()
     }
 }
@@ -112,9 +114,24 @@ where
     }
 
     pub fn original_peer_id(&self) -> Option<U256> {
+        if let Some(Some(share_index)) = self
+            .eks_and_ds
+            .first()
+            .map(|x| x.encrypted_key_share.share_index)
+        {
+            return Some(U256::from(share_index + 1));
+        }
+
         self.eks_and_ds
             .first()
             .map(|x| x.encrypted_key_share.peer_id)
+    }
+
+    pub fn get_root_keys(&self) -> Vec<String> {
+        self.encrypted_key_shares
+            .iter()
+            .map(|ek| ek.public_key.clone())
+            .collect()
     }
 }
 

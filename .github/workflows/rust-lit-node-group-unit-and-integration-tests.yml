@@ -1,7 +1,12 @@
 # This workflow groups up the unit tests, the standard node build, and the tests that use the standard node build (integration tests, version upgrade tests)
 name: rust-lit-node-group-unit-and-integration-tests
 on:
-  workflow_dispatch: {}
+  workflow_dispatch: 
+    inputs:
+        enable_version_upgrade_tests:
+          description: 'Enable version upgrade tests?'
+          type: boolean
+          default: false
   workflow_call:
   push:
     paths:
@@ -56,6 +61,7 @@ jobs:
         image: litptcl/anvil-lit:latest
         ports:
           - 8545:8545
+          - 8549:8549
         credentials:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -106,6 +112,7 @@ jobs:
         image: litptcl/anvil-lit:latest
         ports:
           - 8545:8545
+          - 8549:8549
         credentials:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}

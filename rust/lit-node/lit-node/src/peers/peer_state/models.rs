@@ -219,7 +219,8 @@ impl SimplePeerCollection {
             }
             addresses.push_str(&p.debug_address());
         }
-        addresses
+        // for local testing, we don't want to show the local address
+        addresses.replace("127.0.0.1", "")
     }
 
     pub fn peer_at_address(&self, address: &str) -> Result<SimplePeer> {
@@ -228,7 +229,11 @@ impl SimplePeerCollection {
                 return Ok(p.clone());
             }
         }
-        let msg = format!("Peer / Peers: {} / {}", address, self.debug_addresses());
+        let msg = format!(
+            "Peer {} not found int : {}",
+            address,
+            self.debug_addresses()
+        );
         Err(unexpected_err(
             "Peer not found in peer list (peer_at_address)",
             Some(msg),
@@ -243,7 +248,7 @@ impl SimplePeerCollection {
             .ok_or_else(|| {
                 unexpected_err(
                     "Peer not found in peer list (peer_by_id)",
-                    Some(format!("Peer: {}", peer_id)),
+                    Some(format!("Peer: {peer_id}")),
                 )
             })
     }

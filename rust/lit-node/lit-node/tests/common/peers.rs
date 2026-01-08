@@ -14,7 +14,7 @@ pub async fn get_random_peer_within_deterministic_subset(actions: &Actions) -> R
     // Get the sorted peers from chain.
     let sorted_validators = get_sorted_peers(actions, U256::from(1))
         .await
-        .map_err(|e| anyhow::anyhow!("failed to get sorted peers: {:?}", e))?;
+        .map_err(|e| anyhow::anyhow!("failed to get sorted peers: {e:?}"))?;
 
     // Get a random address within the deterministic subset.
     let mut rng = rand::thread_rng();
@@ -43,7 +43,7 @@ pub async fn get_sorted_peers(actions: &Actions, realm_id: U256) -> Result<Vec<S
         .staking
         .get_kicked_validators(realm_id)
         .await
-        .map_err(|e| anyhow::anyhow!("failed to get kicked validators: {:?}", e))?;
+        .map_err(|e| anyhow::anyhow!("failed to get kicked validators: {e:?}"))?;
 
     // Get the address mapping.
     let address_mapping = actions

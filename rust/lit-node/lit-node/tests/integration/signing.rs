@@ -6,8 +6,8 @@ use ethers::types::Address;
 use ethers::types::{H160, TransactionRequest, U256};
 use ethers::{providers::Middleware, signers::to_eip155_v};
 use lit_blockchain::contracts::pkpnft::PKPNFT;
-use lit_node_testnet::TestSetupBuilder;
 use lit_node_testnet::end_user::EndUser;
+use lit_node_testnet::{DatilTestnetType, TestSetupBuilder};
 
 use lit_node_core::SigningScheme;
 use lit_node_testnet::node_collection::get_identity_pubkeys_from_node_set;
@@ -48,7 +48,7 @@ async fn test_pkp_permissions_get_address_registered() {
 
     let permitted_pubkey = "0x5aaeC3Bd77f1F05f7B1C36927CDc4DB24Ec95bFc";
     let permitted_pubkey_h160 =
-        H160::from_str(&permitted_pubkey).expect("Could not convert pubkey string to bytes");
+        H160::from_str(permitted_pubkey).expect("Could not convert pubkey string to bytes");
 
     let token_id = end_user.first_pkp().token_id;
     let res = end_user
@@ -84,6 +84,7 @@ pub async fn test_pkp_hd_sign_and_submit_eth_txn() {
     let pubkey = end_user.first_pkp().pubkey.clone();
     let token_id = end_user.first_pkp().token_id;
     let pkp_address = end_user.first_pkp().eth_address;
+    let key_set_id = end_user.first_pkp().key_set_id.clone();
 
     let dest_wallet = LocalWallet::new(&mut OsRng).with_chain_id(testnet.chain_id);
 
@@ -151,6 +152,7 @@ pub async fn test_pkp_hd_sign_and_submit_eth_txn() {
         pubkey.clone(),
         epoch,
         SigningScheme::EcdsaK256Sha256,
+        &key_set_id,
     )
     .await
     .unwrap();
@@ -235,6 +237,7 @@ pub async fn test_pkp_hd_sign_and_submit_eth_txn() {
         pubkey,
         epoch,
         SigningScheme::EcdsaK256Sha256,
+        &key_set_id,
     )
     .await;
 
@@ -259,10 +262,40 @@ pub async fn test_pkp_hd_sign_and_submit_eth_txn() {
 pub async fn test_pkp_hd_sign_generic_key() {
     crate::common::setup_logging();
     info!("Starting test: test_hd_pkp_sign");
-    let (testnet, validator_collection, end_user) = TestSetupBuilder::default().build().await;
+    let (testnet, validator_collection, end_user) = TestSetupBuilder::default()
+        .num_staked_and_joined_validators(3)
+        .build()
+        .await;
     let pubkey = end_user.first_pkp().pubkey.clone();
 
     sign_with_each_curve_type(&validator_collection, &end_user, pubkey.clone()).await;
+
+    drop(testnet);
+}
+
+#[tokio::test]
+#[doc = "Primary test to ensure that the network can sign with a Datil PKP key.  It goes through the process of spinning up the network, minting a new Datil PKP, and then signing with it."]
+#[ignore] // we can run this locally, but epoch change tests below already implement this test.
+pub async fn test_pkp_hd_sign_generic_key_datil() {
+    crate::common::setup_logging();
+    info!("Starting test: test_hd_pkp_sign");
+    let (testnet, validator_collection, mut end_user) = TestSetupBuilder::default()
+        .include_datil_testnet(DatilTestnetType::Default)
+        .build()
+        .await;
+    let (pubkey, _, _) = end_user.new_datil_pkp().await.unwrap();
+
+    let scheme = SigningScheme::EcdsaK256Sha256;
+    let result = simple_single_sign_with_hd_key(
+        &validator_collection,
+        &end_user,
+        pubkey.clone(),
+        scheme,
+        &vec![],
+    )
+    .await;
+
+    assert!(result, "Failed to sign with Datil PKP");
 
     drop(testnet);
 }
@@ -370,8 +403,8 @@ pub async fn sign_with_each_curve_type(
     for scheme in ALL_SIGNING_SCHEMES {
         info!("Signing with scheme: {:?}", scheme);
         let result = simple_single_sign_with_hd_key(
-            &validator_collection,
-            &end_user,
+            validator_collection,
+            end_user,
             pubkey.clone(),
             scheme,
             &vec![],
@@ -443,7 +476,7 @@ pub async fn test_presign(signing_scheme: SigningScheme) {
     let start = std::time::Instant::now();
     for i in 0..messages_to_sign {
         info!("Starting sig #{}", i);
-        let message_to_sign = Some(format!("Test message #{}", i));
+        let message_to_sign = Some(format!("Test message #{i}"));
         let start_1 = std::time::Instant::now();
         let validation = sign_with_hd_key(
             &validator_collection,
@@ -537,8 +570,7 @@ pub async fn test_presign(signing_scheme: SigningScheme) {
 
     assert_eq!(
         sign_success, messages_to_sign,
-        "Sign success: {}, messages_to_sign: {}",
-        sign_success, messages_to_sign
+        "Sign success: {sign_success}, messages_to_sign: {messages_to_sign}"
     );
 }
 
@@ -590,6 +622,7 @@ pub async fn eoa_session_sig_with_mgb_pkp_signing() {
     pkp.add_permitted_address_to_pkp(non_owner_wallet.address(), &[U256::from(1)])
         .await
         .expect("Could not add permitted address to pkp");
+    let key_set_id = pkp.key_set_id.clone();
 
     // Burn the PKP
     let pkpnft_address = validator_collection.actions().contracts().pkpnft.address();
@@ -634,6 +667,7 @@ pub async fn eoa_session_sig_with_mgb_pkp_signing() {
         pubkey.clone(),
         epoch,
         SigningScheme::EcdsaK256Sha256,
+        &key_set_id,
     )
     .await;
 
@@ -652,6 +686,7 @@ pub async fn eoa_session_sig_with_mgb_pkp_signing() {
         pubkey.clone(),
         epoch,
         SigningScheme::EcdsaK256Sha256,
+        &key_set_id,
     )
     .await
     .unwrap();

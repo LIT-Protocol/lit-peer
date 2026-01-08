@@ -31,8 +31,7 @@ impl FromStr for AttestationType {
             "AMD_SEV_SNP" => Ok(AttestationType::AmdSevSnp),
             "ADMIN_SIGNED" => Ok(AttestationType::AdminSigned),
             _ => Err(Error::InvalidType(format!(
-                "{} is not a valid AttestationType",
-                s
+                "{s} is not a valid AttestationType",
             ))),
         }
     }

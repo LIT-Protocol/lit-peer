@@ -34,7 +34,6 @@ use lit_node_core::{
         CHAIN_LOCALCHAIN,
     },
 };
-use lit_rust_crypto::blsful::PublicKey;
 
 use lit_node::models::RequestConditions;
 
@@ -142,19 +141,25 @@ async fn test_encryption_decryption_eip1271(
     let network_pubkey = get_network_pubkey(validator_collection.actions()).await;
     let message_bytes = to_encrypt.as_bytes();
     let identity_param = AccessControlConditionResource::new(format!(
-        "{}/{}",
-        hashed_access_control_conditions, data_to_encrypt_hash
+        "{hashed_access_control_conditions}/{data_to_encrypt_hash}"
     ))
     .get_resource_key()
     .into_bytes();
-    let pubkey = PublicKey::try_from(&hex::decode(&network_pubkey).unwrap()).unwrap();
+    let pubkey =
+        lit_rust_crypto::blsful::PublicKey::try_from(&hex::decode(&network_pubkey).unwrap())
+            .unwrap();
+    let key_set_id = testnet
+        .actions()
+        .get_keyset_id_for_root_key(&network_pubkey)
+        .await
+        .unwrap();
     let ciphertext =
         lit_sdk::encryption::encrypt_time_lock(&pubkey, message_bytes, &identity_param)
             .expect("Unable to encrypt");
     info!("ciphertext: {:?}", ciphertext);
 
     let node_set = &validator_collection.random_threshold_nodeset().await;
-    let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
+    let node_set = get_identity_pubkeys_from_node_set(node_set).await;
     let realm_id = ethers::types::U256::from(1);
     let epoch = actions.get_current_epoch(realm_id).await.as_u64();
 
@@ -170,7 +175,7 @@ async fn test_encryption_decryption_eip1271(
     let sig_bytes: Bytes = signature.to_vec().into();
 
     let is_valid = contract
-        .is_valid_signature(hashed_message.into(), sig_bytes.clone())
+        .is_valid_signature(hashed_message, sig_bytes.clone())
         .call()
         .await
         .unwrap();
@@ -204,8 +209,14 @@ async fn test_encryption_decryption_eip1271(
         identity_param,
     };
 
-    let decryption_resp =
-        retrieve_decryption_key(&node_set, test_encryption_params.clone(), &auth_sig, epoch).await;
+    let decryption_resp = retrieve_decryption_key(
+        &node_set,
+        test_encryption_params.clone(),
+        &auth_sig,
+        epoch,
+        &key_set_id,
+    )
+    .await;
 
     for response in &decryption_resp {
         debug!("response- {:?}", response);
@@ -231,7 +242,7 @@ async fn test_encryption_decryption_eip1271(
     // validate that the contract works not for the non-permitted wallet's SIWE hash signature
     let siwe_sig_bytes: Bytes = siwe_signature.to_vec().into();
     let is_valid = contract
-        .is_valid_signature(siwe_message_hash.into(), siwe_sig_bytes.clone())
+        .is_valid_signature(siwe_message_hash, siwe_sig_bytes.clone())
         .call()
         .await
         .unwrap();
@@ -253,8 +264,14 @@ async fn test_encryption_decryption_eip1271(
     );
 
     info!("2.2. Non-permitted SIWE auth_sig: {:?}", auth_sig);
-    let decryption_resp =
-        retrieve_decryption_key(&node_set, test_encryption_params.clone(), &auth_sig, epoch).await;
+    let decryption_resp = retrieve_decryption_key(
+        &node_set,
+        test_encryption_params.clone(),
+        &auth_sig,
+        epoch,
+        &key_set_id,
+    )
+    .await;
 
     for response in &decryption_resp {
         debug!("response- {:?}", response);
@@ -277,7 +294,7 @@ async fn test_encryption_decryption_eip1271(
     // validate that the contract works for the SIWE hash signature
     let siwe_sig_bytes: Bytes = siwe_signature.to_vec().into();
     let is_valid = contract
-        .is_valid_signature(siwe_message_hash.into(), siwe_sig_bytes.clone())
+        .is_valid_signature(siwe_message_hash, siwe_sig_bytes.clone())
         .call()
         .await
         .unwrap();
@@ -297,8 +314,14 @@ async fn test_encryption_decryption_eip1271(
     );
 
     info!("3.2. Valid SIWE auth_sig: {:?}", auth_sig);
-    let decryption_resp =
-        retrieve_decryption_key(&node_set, test_encryption_params.clone(), &auth_sig, epoch).await;
+    let decryption_resp = retrieve_decryption_key(
+        &node_set,
+        test_encryption_params.clone(),
+        &auth_sig,
+        epoch,
+        &key_set_id,
+    )
+    .await;
     debug!("decryption_resp: {:?}", decryption_resp);
 
     assert_decrypted(
@@ -359,17 +382,16 @@ fn get_siwe_message(wallet: &Wallet<SigningKey>) -> String {
         .to_rfc3339_opts(SecondsFormat::Millis, true);
     let message = format!(
         "localhost wants you to sign in with your Ethereum account:
-{}
+{address}
 
 This is a key for a Lit Action Test.
 
 URI: https://localhost/
 Version: 1
-Chain ID: {}
+Chain ID: {chain_id}
 Nonce: 1LF00rraLO4f7ZSIt
-Issued At: {}
-Expiration Time: {}",
-        address, chain_id, issue_datetime, expiration_datetime
+Issued At: {issue_datetime}
+Expiration Time: {expiration_datetime}"
     );
 
     message

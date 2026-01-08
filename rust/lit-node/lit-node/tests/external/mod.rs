@@ -101,7 +101,7 @@ async fn publish_pkp_to_rocket(end_user: &EndUser) {
 
     let cors = rocket_cors::CorsOptions {
         allowed_origins: AllowedOrigins::all(),
-        allowed_methods: allowed_methods,
+        allowed_methods,
         allow_credentials: true,
         ..Default::default()
     }
