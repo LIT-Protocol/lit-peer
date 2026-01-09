@@ -18,11 +18,15 @@ use crate::payment::dynamic::DynamicPayment;
 use crate::peers::{grpc_client_pool::GrpcClientPool, peer_state::models::SimplePeerCollection};
 use crate::pkp;
 use crate::tasks::utils::generate_hash;
+use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::hd_keys::get_derived_keyshare;
 use crate::tss::common::tss_state::TssState;
 use crate::utils::encoding;
+use crate::utils::keysets::get_default_keyset_id;
 use crate::utils::tracing::inject_tracing_metadata;
-use crate::utils::web::{get_bls_root_pubkey, get_default_bls_root_pubkey, hash_access_control_conditions};
+use crate::utils::web::{
+    get_bls_root_pubkey, get_default_bls_root_pubkey, hash_access_control_conditions,
+};
 use anyhow::{Context as _, Result, bail};
 use base64_light::base64_decode;
 use derive_builder::Builder;
@@ -38,12 +42,6 @@ use lit_blockchain::resolver::rpc::{ENDPOINT_MANAGER, RpcHealthcheckPoller};
 use lit_core::config::LitConfig;
 use lit_core::error::Unexpected;
 use lit_core::utils::binary::bytes_to_hex;
-use moka::future::Cache;
-use serde::{Deserialize, Serialize};
-use tokio::time::Duration;
-use tracing::{debug, instrument};
-use crate::utils::keysets::get_default_keyset_id;
-use crate::tss::common::curve_state::CurveState;
 use lit_node_common::config::LitNodeConfig as _;
 use lit_node_core::{
     AccessControlConditionResource, AuthSigItem, BeHex, CompressedBytes, EndpointVersion,
@@ -60,6 +58,10 @@ use lit_rust_crypto::{
     jubjub, k256, p256, p384, vsss_rs,
 };
 use lit_sdk::signature::{SignedDataOutput, combine_and_verify_signature_shares};
+use moka::future::Cache;
+use serde::{Deserialize, Serialize};
+use tokio::time::Duration;
+use tracing::{debug, instrument};
 
 const DEFAULT_TIMEOUT_MS: u64 = 30_000; // 30s
 const DEFAULT_ASYNC_TIMEOUT_MS: u64 = 300_000; // 5m
@@ -578,7 +580,7 @@ impl Client {
                 PkpPermissionsIsPermittedAuthMethodRequest {
                     token_id,
                     method,
-                    user_id,    
+                    user_id,
                     key_set_id,
                 },
             ) => {
@@ -594,7 +596,10 @@ impl Client {
                 .await?;
                 PkpPermissionsIsPermittedAuthMethodResponse { is_permitted }.into()
             }
-            UnionResponse::PubkeyToTokenId(PubkeyToTokenIdRequest { public_key, key_set_id }) => {
+            UnionResponse::PubkeyToTokenId(PubkeyToTokenIdRequest {
+                public_key,
+                key_set_id,
+            }) => {
                 let bytes = encoding::hex_to_bytes(public_key)?;
                 let token_id = format!("0x{}", bytes_to_hex(keccak256(bytes).as_slice()));
                 PubkeyToTokenIdResponse { token_id }.into()
@@ -1499,7 +1504,6 @@ impl Client {
                     )));
                 }
 
-
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
 
                 let cdm = &tss_state.chain_data_config_manager;
@@ -1508,11 +1512,8 @@ impl Client {
                 let txn_prefix = format!("{txn_prefix}_signasaction_{scheme}");
                 let tss_state = Arc::new(tss_state);
                 let curve_type = scheme.curve_type();
-                let curve_state = CurveState::new(
-                    tss_state.peer_state.clone(),
-                    curve_type,
-                    &key_set_id,
-                );
+                let curve_state =
+                    CurveState::new(tss_state.peer_state.clone(), curve_type, &key_set_id);
                 let root_keys = curve_state.root_keys()?;
                 let pubkey = lit_sdk::signature::get_lit_action_public_key(
                     scheme,
@@ -1552,11 +1553,8 @@ impl Client {
                 let key_set_id = get_default_keyset_id(cdm)?;
                 let txn_prefix = format!("{txn_prefix}_signasaction_{scheme}");
                 let tss_state = Arc::new(tss_state);
-                let curve_state = CurveState::new(
-                    tss_state.peer_state.clone(),
-                    curve_type,
-                    &key_set_id,
-                );
+                let curve_state =
+                    CurveState::new(tss_state.peer_state.clone(), curve_type, &key_set_id);
                 let root_keys = curve_state.root_keys()?;
                 let pubkey = lit_sdk::signature::get_lit_action_public_key(
                     scheme,
@@ -1665,10 +1663,8 @@ impl Client {
         }
 
         debug!(
-            "sign_helper() called with to_sign: {:?}, pubkey: {}, sig_name: {}",
+            "sign_helper() called with to_sign: {:?}, pubkey: {pubkey}, sig_name: {sig_name}, key_set_id: {key_set_id}",
             bytes_to_hex(to_sign.clone()),
-            pubkey,
-            sig_name
         );
 
         let tss_state = self
@@ -1841,11 +1837,7 @@ impl Client {
 
         let curve_type = signing_scheme.curve_type();
         let mut sign_state = tss_state.get_signing_state(signing_scheme)?;
-        let curve_state = CurveState::new(
-            tss_state.peer_state.clone(),
-            curve_type,
-            &key_set_id,
-        );
+        let curve_state = CurveState::new(tss_state.peer_state.clone(), curve_type, &key_set_id);
         let key_id = keccak256(format!("lit_action_{action_ipfs_id}"));
         let epoch = tss_state.get_keyshare_epoch().await;
         let pubkey = self

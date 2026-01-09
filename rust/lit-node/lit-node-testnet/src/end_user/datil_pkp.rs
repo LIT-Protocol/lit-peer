@@ -1,3 +1,4 @@
+use crate::DEFAULT_DATIL_KEY_SET_NAME;
 use crate::end_user::EndUser;
 use ethers::middleware::SignerMiddleware;
 use ethers::types::{Address, Bytes, H160, U256};
@@ -84,7 +85,7 @@ impl Pkp {
             pubkey: pubkey.clone(),
             token_id,
             eth_address,
-            key_set_id: "".to_string(),
+            key_set_id: DEFAULT_DATIL_KEY_SET_NAME.to_string(),
             is_datil: true,
         })
     }

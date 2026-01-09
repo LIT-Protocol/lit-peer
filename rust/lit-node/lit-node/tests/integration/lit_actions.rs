@@ -19,6 +19,7 @@ pub mod litactions {
         LitResourcePrefix, SigningScheme, UnifiedAccessControlCondition,
         UnifiedAccessControlConditionItem, constants::CHAIN_LOCALCHAIN,
     };
+    use lit_node_testnet::DatilTestnetType;
     use lit_node_testnet::end_user::EndUser;
     use lit_node_testnet::testnet::Testnet;
     use lit_node_testnet::validator::ValidatorCollection;
@@ -52,31 +53,37 @@ pub mod litactions {
         &[LaPC::Broadcasts, LaPC::Decrypts, LaPC::ContractCalls];
     const LAPC_BC: &[LitActionPriceComponent] = &[LaPC::Broadcasts, LaPC::ContractCalls];
     const LAPC_SB: &[LitActionPriceComponent] = &[LaPC::Signatures, LaPC::Broadcasts];
+    const LA_DATIL: DatilTestnetType = DatilTestnetType::Default;
+    const LA_NAGA: DatilTestnetType = DatilTestnetType::None;
     // Notes:
     // - The 2 tests inside test_pkp_permissions_is_cid_registered_and_can_it_sign, is covered by "sign_child_lit_action" & "fail_sign_non_hashed_message".
     // - The original encrypt test wasn't a good integration test - it attempted to compare against a known pubkey, but integration tests generate new keys each time.  encrypt & decrypt tests cover this functionality.
 
-    #[test_case("broadcast_and_collect", &[LaPC::Broadcasts], &all_response_match, &standard_acc, true, "*", true)] /* Success */
-    #[test_case("check_conditions_with_auth_sig", &[LaPC::ContractCalls], &all_response_match, &standard_acc, true, "true", true)] /* Success */
-    #[test_case("check_conditions_without_auth_sig", &[LaPC::ContractCalls], &all_response_match, &standard_acc, false,  "true", true)] /* Success <<< BUT CHECK */
-    #[test_case("current_ipfs_id_substitution", LAPC_DBC, &all_response_match, &ipfs_acc, true, "hello this is a test", true)] /* Success */
-    #[test_case("decrypt_and_combine_with_access_denied",LAPC_BC, &action_failed_with_error, &impossible_acc, true, "Access control conditions check failed", false)] /* Success */
-    #[test_case("decrypt_and_combine_with_auth_sig", LAPC_DBC, &all_response_match, &standard_acc, true, "hello this is a test", true)] /* Success */
-    #[test_case("decrypt_and_combine_without_auth_sig", LAPC_DBC, &all_response_match, &standard_acc, false, "*", true)]
-    #[test_case("decrypt_to_single_node", LAPC_DBC, &single_valid, &standard_acc, true, "hello this is a test", true)]
-    #[test_case("get_rpc_url", &[], &all_response_match, &standard_acc,true, "https://api.node.glif.io/rpc/v1", true)] /* local rpc config */
-    #[test_case("multiple_sign_and_combine_ecdsa", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
-    #[test_case("multiple_sign_and_combine_ed25519", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
-    #[test_case("multiple_sign_and_combine_blsg1", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
-    #[test_case("run_once_and_collect_responses", &[LaPC::Broadcasts, LaPC::Fetches], &all_response_match, &standard_acc,true, "*", true)]
-    #[test_case("run_once", &[LaPC::Fetches], &all_response_match, &standard_acc,true, "*", true)]
-    #[test_case("sign_and_combine_ecdsa", LAPC_SB, &all_response_match, &standard_acc,true, "*", true)]
-    #[test_case("sign_hello_world", &[LaPC::Signatures], &valid_sign_no_combine, &standard_acc, true, "", false)]
-    #[test_case("sign_child_lit_action", &[LaPC::Signatures, LaPC::CallDepth], &valid_sign_no_combine, &standard_acc, true, "", false)]
-    #[test_case("fail_sign_non_hashed_message", &[LaPC::Signatures], &action_failed_with_error, &standard_acc, true, "Message length to be signed is not 32 bytes", false)]
+    #[test_case(LA_NAGA,"broadcast_and_collect", &[LaPC::Broadcasts], &all_response_match, &standard_acc, true, "*", true)]
+    #[test_case(LA_NAGA,"check_conditions_with_auth_sig", &[LaPC::ContractCalls], &all_response_match, &standard_acc, true, "true", true)]
+    #[test_case(LA_NAGA,"check_conditions_without_auth_sig", &[LaPC::ContractCalls], &all_response_match, &standard_acc, false,  "true", true)]
+    #[test_case(LA_NAGA,"current_ipfs_id_substitution", LAPC_DBC, &all_response_match, &ipfs_acc, true, "hello this is a test", true)]
+    #[test_case(LA_NAGA,"decrypt_and_combine_with_access_denied",LAPC_BC, &action_failed_with_error, &impossible_acc, true, "Access control conditions check failed", false)]
+    #[test_case(LA_NAGA,"decrypt_and_combine_with_auth_sig", LAPC_DBC, &all_response_match, &standard_acc, true, "hello this is a test", true)]
+    #[test_case(LA_NAGA,"decrypt_and_combine_without_auth_sig", LAPC_DBC, &all_response_match, &standard_acc, false, "*", true)]
+    #[test_case(LA_NAGA,"decrypt_to_single_node", LAPC_DBC, &single_valid, &standard_acc, true, "hello this is a test", true)]
+    #[test_case(LA_NAGA,"get_rpc_url", &[], &all_response_match, &standard_acc,true, "https://api.node.glif.io/rpc/v1", true)]
+    #[test_case(LA_NAGA,"multiple_sign_and_combine_ecdsa", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
+    #[test_case(LA_DATIL,"multiple_sign_and_combine_ecdsa", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
+    #[test_case(LA_NAGA,"multiple_sign_and_combine_ed25519", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
+    #[test_case(LA_NAGA,"multiple_sign_and_combine_blsg1", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
+    #[test_case(LA_NAGA,"run_once_and_collect_responses", &[LaPC::Broadcasts, LaPC::Fetches], &all_response_match, &standard_acc,true, "*", true)]
+    #[test_case(LA_NAGA,"run_once", &[LaPC::Fetches], &all_response_match, &standard_acc,true, "*", true)]
+    #[test_case(LA_NAGA,"sign_and_combine_ecdsa", LAPC_SB, &all_response_match, &standard_acc,true, "*", true)]
+    #[test_case(LA_DATIL,"sign_and_combine_ecdsa", LAPC_SB, &all_response_match, &standard_acc,true, "*", true)]
+    #[test_case(LA_NAGA,"sign_hello_world", &[LaPC::Signatures], &valid_sign_no_combine, &standard_acc, true, "", false)]
+    #[test_case(LA_DATIL,"sign_hello_world", &[LaPC::Signatures], &valid_sign_no_combine, &standard_acc, true, "", false)]
+    #[test_case(LA_NAGA,"sign_child_lit_action", &[LaPC::Signatures, LaPC::CallDepth], &valid_sign_no_combine, &standard_acc, true, "", false)]
+    #[test_case(LA_NAGA,"fail_sign_non_hashed_message", &[LaPC::Signatures], &action_failed_with_error, &standard_acc, true, "Message length to be signed is not 32 bytes", false)]
     #[tokio::test]
     // #[ignore]
     pub async fn lit_action_from_file(
+        datil_testnet_type: DatilTestnetType,
         file_name: &str,
         price_components: &[LitActionPriceComponent],
         fn_assertion: &dyn Fn(
@@ -90,9 +97,20 @@ pub mod litactions {
         wrap_in_quotes: bool,
     ) {
         setup_logging();
-        let (testnet, validator_collection, mut end_user) =
-            TestSetupBuilder::default().build().await;
+
+        let is_datil = match datil_testnet_type.clone() {
+            DatilTestnetType::Default => true,
+            DatilTestnetType::None => false,
+            DatilTestnetType::NoKeyOverride => true,
+        };
+
+        let (testnet, validator_collection, mut end_user) = TestSetupBuilder::default()
+            .include_datil_testnet(datil_testnet_type)
+            .build()
+            .await;
+
         lit_action_from_file_preloaded(
+            is_datil,
             price_components,
             &validator_collection,
             &testnet,
@@ -108,6 +126,7 @@ pub mod litactions {
     }
 
     pub async fn lit_action_from_file_preloaded(
+        is_datil: bool,
         price_components: &[LitActionPriceComponent],
         validator_collection: &ValidatorCollection,
         _testnet: &Testnet,
@@ -149,9 +168,16 @@ pub mod litactions {
             )
             .await;
 
-        let (pubkey, _token_id, _eth_address, key_set_id) = end_user.first_pkp().info();
+        let (pubkey, _token_id, _eth_address, key_set_id) = match is_datil {
+            true => {
+                let pubkey = end_user.new_datil_pkp().await.unwrap().0;
 
-        // let (pubkey, _token_id, _eth_address) = end_user.new_datil_pkp().await.unwrap();
+                end_user.pkp_by_pubkey(pubkey).info()
+            }
+            false => end_user.first_pkp().info(),
+        };
+
+        info!("key_set_id: {}", key_set_id);
 
         let lit_action_code = data_encoding::BASE64.encode(lit_action_code.as_bytes());
         // per above, there are more params than needed for some actions, but they are ignored

@@ -12,9 +12,12 @@ const datilKeySetId = 'datil-keyset';
  * @returns {Promise<boolean>} A boolean indicating whether the IPFS ID is permitted to sign using the PKP tokenId
  */
 function isPermittedAction({ tokenId, ipfsId, keySetId = datilKeySetId }) {
-  return ops.op_pkp_permissions_is_permitted('isPermittedAction', tokenId, [
-    ipfsId,
-  ], keySetId);
+  return ops.op_pkp_permissions_is_permitted(
+    'isPermittedAction',
+    tokenId,
+    [ipfsId],
+    keySetId
+  );
 }
 
 /**
@@ -28,9 +31,12 @@ function isPermittedAction({ tokenId, ipfsId, keySetId = datilKeySetId }) {
  * @returns {Promise<boolean>} A boolean indicating whether the wallet address is permitted to sign using the PKP tokenId
  */
 function isPermittedAddress({ tokenId, address, keySetId = datilKeySetId }) {
-  return ops.op_pkp_permissions_is_permitted('isPermittedAddress', tokenId, [
-    address,
-  ], keySetId);
+  return ops.op_pkp_permissions_is_permitted(
+    'isPermittedAddress',
+    tokenId,
+    [address],
+    keySetId
+  );
 }
 
 /**
@@ -42,9 +48,14 @@ function isPermittedAddress({ tokenId, address, keySetId = datilKeySetId }) {
  * @param {number} params.authMethodType The auth method type.  This is an integer.  This mapping shows the initial set but this set may be expanded over time without updating this contract: https://github.com/LIT-Protocol/LitNodeContracts/blob/main/contracts/PKPPermissions.sol#L25
  * @param {Uint8Array} params.userId The id of the auth method to check expressed as an array of unsigned 8-bit integers (a Uint8Array)
  * @param {string} params.keySetId The key set id to use
-* @returns {Promise<boolean>} A boolean indicating whether the auth method is permitted to sign using the PKP tokenId
+ * @returns {Promise<boolean>} A boolean indicating whether the auth method is permitted to sign using the PKP tokenId
  */
-function isPermittedAuthMethod({ tokenId, authMethodType, userId, keySetId = datilKeySetId   }) {
+function isPermittedAuthMethod({
+  tokenId,
+  authMethodType,
+  userId,
+  keySetId = datilKeySetId,
+}) {
   return ops.op_pkp_permissions_is_permitted_auth_method(
     tokenId,
     authMethodType,
@@ -63,7 +74,11 @@ function isPermittedAuthMethod({ tokenId, authMethodType, userId, keySetId = dat
  * @returns {Promise<Array<string>>} An array of IPFS IDs of lit actions that are permitted to sign using the PKP tokenId
  */
 function getPermittedActions({ tokenId, keySetId = datilKeySetId }) {
-  return ops.op_pkp_permissions_get_permitted('getPermittedActions', tokenId, keySetId);
+  return ops.op_pkp_permissions_get_permitted(
+    'getPermittedActions',
+    tokenId,
+    keySetId
+  );
 }
 
 /**
@@ -76,7 +91,11 @@ function getPermittedActions({ tokenId, keySetId = datilKeySetId }) {
  * @returns {Promise<Array<string>>} An array of addresses that are permitted to sign using the PKP tokenId
  */
 function getPermittedAddresses({ tokenId, keySetId = datilKeySetId }) {
-  return ops.op_pkp_permissions_get_permitted('getPermittedAddresses', tokenId, keySetId);
+  return ops.op_pkp_permissions_get_permitted(
+    'getPermittedAddresses',
+    tokenId,
+    keySetId
+  );
 }
 
 /**
@@ -162,7 +181,12 @@ function getLatestNonce({ address, chain }) {
  * @returns {Promise<string>} This function will return the string "success" if it works.  The signature share is returned behind the scenes to the Lit JS SDK which will automatically combine the shares and give you the full signature to use.
  */
 function signEcdsa({ toSign, publicKey, sigName, keySetId = datilKeySetId }) {
-  return ops.op_sign_ecdsa(new Uint8Array(toSign), publicKey, sigName, keySetId);
+  return ops.op_sign_ecdsa(
+    new Uint8Array(toSign),
+    publicKey,
+    sigName,
+    keySetId
+  );
 }
 
 /**
@@ -190,18 +214,24 @@ function signEcdsa({ toSign, publicKey, sigName, keySetId = datilKeySetId }) {
  * @function sign
  * @returns {Uint8array} The resulting signature share
  */
-function sign({ toSign, publicKey, sigName, signingScheme, keySetId  }) {
-  return ops.op_sign(new Uint8Array(toSign), publicKey, sigName, signingScheme, keySetId);
+function sign({ toSign, publicKey, sigName, signingScheme, keySetId }) {
+  return ops.op_sign(
+    new Uint8Array(toSign),
+    publicKey,
+    sigName,
+    signingScheme,
+    keySetId
+  );
 }
 
 /**
  * Sign data using the Lit Action's own cryptographic identity derived from its IPFS CID.
  * This allows actions to sign as themselves (not as a PKP), enabling autonomous agent behavior,
  * action-to-action authentication, and verifiable computation results.
- * 
+ *
  * The action's keypair is deterministically derived from: keccak256("lit_action_" + actionIpfsCid)
  * The same action IPFS CID always generates the same keypair across all nodes.
- * 
+ *
  * @name Lit.Actions.signAsAction
  * @function signAsAction
  * @param {Object} params
@@ -223,10 +253,10 @@ function signAsAction({ toSign, sigName, signingScheme }) {
  * Get the public key for a Lit Action's cryptographic identity.
  * This can be used to verify signatures created by signAsAction, or to get the public key
  * of any action (including actions you didn't create) for verification purposes.
- * 
+ *
  * The public key is deterministically derived from: keccak256("lit_action_" + actionIpfsCid)
  * and will always be the same for a given action IPFS CID and signing scheme.
- * 
+ *
  * @name Lit.Actions.getActionPublicKey
  * @function getActionPublicKey
  * @param {Object} params
@@ -247,7 +277,7 @@ function getActionPublicKey({ signingScheme, actionIpfsCid }) {
  * Verify that a signature was created by a specific Lit Action using signAsAction.
  * This enables action-to-action authentication, verifiable computation, and building trust chains
  * between actions without requiring PKP ownership.
- * 
+ *
  * @name Lit.Actions.verifyActionSignature
  * @function verifyActionSignature
  * @param {Object} params
@@ -262,8 +292,18 @@ function getActionPublicKey({ signingScheme, actionIpfsCid }) {
  * @param {string} params.signOutput The signature output from signAsAction (as a string)
  * @returns {Promise<boolean>} true if the signature was created by the specified action, false otherwise
  */
-function verifyActionSignature({ signingScheme, actionIpfsCid, toSign, signOutput }) {
-  return ops.op_verify_action_signature(signingScheme, actionIpfsCid, new Uint8Array(toSign), signOutput);
+function verifyActionSignature({
+  signingScheme,
+  actionIpfsCid,
+  toSign,
+  signOutput,
+}) {
+  return ops.op_verify_action_signature(
+    signingScheme,
+    actionIpfsCid,
+    new Uint8Array(toSign),
+    signOutput
+  );
 }
 
 /**
@@ -275,9 +315,14 @@ function verifyActionSignature({ signingScheme, actionIpfsCid, toSign, signOutpu
  * @param {string} params.publicKey The public key of the PKP you wish to sign with
  * @param {string} params.sigName You can put any string here.  This is used to identify the signature in the response by the Lit JS SDK.  This is useful if you are signing multiple messages at once.  When you get the final signature out, it will be in an object with this signature name as the key.
  * @param {string} params.keySetId The key set id to use
-* @returns {Promise<string>} This function will return the string "success" if it works.  The signature share is returned behind the scenes to the Lit JS SDK which will automatically combine the shares and give you the full signature to use.
+ * @returns {Promise<string>} This function will return the string "success" if it works.  The signature share is returned behind the scenes to the Lit JS SDK which will automatically combine the shares and give you the full signature to use.
  */
-function ethPersonalSignMessageEcdsa({ message, publicKey, sigName, keySetId = datilKeySetId }) {
+function ethPersonalSignMessageEcdsa({
+  message,
+  publicKey,
+  sigName,
+  keySetId = datilKeySetId,
+}) {
   return ops.op_sign_ecdsa_eth_personal_sign_message(
     uint8arrayFromString(message),
     publicKey,
@@ -482,11 +527,17 @@ function decryptToSingleNode({
  * @param {string} params.keySetId The key set id to use
  * @returns {Promise<Uint8Array>} The resulting combined signature
  */
-function signAndCombineEcdsa({ toSign, publicKey, sigName, keySetId = datilKeySetId }) {
+function signAndCombineEcdsa({
+  toSign,
+  publicKey,
+  sigName,
+  keySetId = datilKeySetId,
+}) {
   return ops.op_sign_and_combine_ecdsa(
     new Uint8Array(toSign),
     publicKey,
-    sigName
+    sigName,
+    keySetId
   );
 }
 
@@ -507,14 +558,20 @@ function signAndCombineEcdsa({ toSign, publicKey, sigName, keySetId = datilKeySe
  *   "Bls12381G1ProofOfPossession"
  * @returns {Promise<Uint8Array>} The resulting combined signature
  */
-function signAndCombine({ toSign, publicKey, sigName, signingScheme, keySetId = datilKeySetId }) {
+function signAndCombine({
+  toSign,
+  publicKey,
+  sigName,
+  signingScheme,
+  keySetId = datilKeySetId,
+}) {
   return ops.op_sign_and_combine(
     new Uint8Array(toSign),
     publicKey,
     sigName,
     signingScheme,
     keySetId
-  )
+  );
 }
 
 /**
@@ -547,7 +604,6 @@ async function runOnce({ waitForResponse, name }, async_fn) {
       console.error('Error converting response to string:', e);
       response = '';
     }
-
 
     if (waitForResponse) {
       ops.op_p2p_broadcast(bc_id, response);
@@ -585,7 +641,11 @@ function getRpcUrl({ chain }) {
  * @param {string} params.keySetId The key set id to use
  * @returns {Promise<{ciphertext: string, dataToEncryptHash: string}>} An object containing the ciphertext and the hash of the data that was encrypted
  */
-function encrypt({ accessControlConditions, to_encrypt, keySetId = datilKeySetId }) {
+function encrypt({
+  accessControlConditions,
+  to_encrypt,
+  keySetId = datilKeySetId,
+}) {
   return ops.op_encrypt_bls(accessControlConditions, to_encrypt, keySetId);
 }
 globalThis.LitActions = {

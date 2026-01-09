@@ -58,7 +58,12 @@ impl NetworkIntegrityChecker {
 
         info!("Success:Initial BLS pubkey and latest BLS pubkey match.");
         // Decryption check.
-        test_encryption_decryption_session_sigs(validator_collection, validators_to_include,&self.end_user).await;
+        test_encryption_decryption_session_sigs(
+            validator_collection,
+            validators_to_include,
+            &self.end_user,
+        )
+        .await;
 
         info!("Success: Decryption checks passed");
         // Signing operation.
