@@ -171,10 +171,36 @@ impl SimplePeerCollection {
     }
 
     pub fn peer_id_by_address(&self, address: &str) -> Result<PeerId> {
-        self.0
+        let matches: Vec<_> = self
+            .0
             .iter()
-            .find(|p| p.socket_address == address)
-            .map(|p| p.peer_id)
+            .filter(|p| p.socket_address == address)
+            .collect();
+
+        if matches.len() > 1 {
+            error!(
+                "Multiple peers found with same address: {}. Matches: {:?}",
+                address,
+                matches
+                    .iter()
+                    .map(|p| (
+                        p.socket_address.clone(),
+                        p.peer_id.to_string(),
+                        p.staker_address.to_string()
+                    ))
+                    .collect::<Vec<_>>()
+            );
+        }
+
+        matches
+            .first()
+            .map(|p| {
+                debug!(
+                    "Found peer_id: {} for address: {} (staker_address: {})",
+                    p.peer_id, address, p.staker_address
+                );
+                p.peer_id
+            })
             .ok_or_else(|| {
                 unexpected_err(
                     "Peer not found in peer list (peer_id)",

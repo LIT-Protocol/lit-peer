@@ -210,6 +210,10 @@ impl PeerState {
                 )
                 .await;
             if let Err(verify_err) = verify_res {
+                error!(
+                    "Verification failed for addr: {:?}, expected validator staker_address: {:?}, peer_item staker_address: {:?}, error: {:?}",
+                    addr, peer.staker_address, peer_item.staker_address, verify_err
+                );
                 // If the error is EC::NodeRpcError, log error and rethrow Error without complaining Peer.
                 // Rethrowing Error will cause this code path to be run again at some later time by the caller.
                 return if verify_err.is_code(EC::NodeRpcError, true)
@@ -223,6 +227,10 @@ impl PeerState {
                     warn!(
                         "{:?}: {:?}. Err: {:?}. Complaining.",
                         err_msg, addr, verify_err
+                    );
+                    warn!(
+                        "Sending IncorrectInfo complaint for peer at addr: {:?}, staker_address: {:?}",
+                        addr, peer.staker_address
                     );
                     let complaint_channel = self.complaint_channel.clone();
                     if let Err(e) = complaint_channel
@@ -271,12 +279,19 @@ impl PeerState {
         }
 
         // verify web address
-        if peer_item_to_verify.addr != get_web_addr_from_chain_info(validator.ip, validator.port) {
+        let expected_addr = get_web_addr_from_chain_info(validator.ip, validator.port);
+        if peer_item_to_verify.addr != expected_addr {
+            error!(
+                "IP/Port mismatch detected! Peer item addr: {:?}, chain expected addr: {:?}, staker_address: {:?}, node_address: {:?}",
+                peer_item_to_verify.addr,
+                expected_addr,
+                peer_item_to_verify.staker_address,
+                peer_item_to_verify.node_address
+            );
             return Err(unexpected_err(
                 format!(
                     "addr different from chain.  Peer item addr: {:?}, chain addr: {:?}",
-                    peer_item_to_verify.addr,
-                    get_web_addr_from_chain_info(validator.ip, validator.port)
+                    peer_item_to_verify.addr, expected_addr
                 ),
                 None,
             ));
@@ -313,6 +328,13 @@ impl PeerState {
 
         // verify staker address
         if peer_item_to_verify.staker_address != registered_staker_address {
+            error!(
+                "Staker address mismatch detected! Peer item staker_address: {:?}, chain registered_staker_address: {:?}, node_address: {:?}, addr: {:?}",
+                peer_item_to_verify.staker_address,
+                registered_staker_address,
+                peer_item_to_verify.node_address,
+                peer_item_to_verify.addr
+            );
             tracing::debug!("Peer item: {:?}", peer_item_to_verify);
             tracing::debug!("Validator from chain: {:?}", validator);
 

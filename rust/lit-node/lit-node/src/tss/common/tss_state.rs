@@ -10,6 +10,7 @@ use crate::tss::blsful::models::BlsState;
 use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::key_share::KeyShare;
 use crate::tss::common::storage::read_key_share_from_disk;
+use crate::tss::common::utils::validate_and_get_self_peer;
 use crate::tss::ecdsa_damfast::DamFastState;
 use crate::tss::frost::FrostState;
 use crate::utils::keysets::get_default_keyset_id;
@@ -17,7 +18,6 @@ use crate::version::DataVersionReader;
 use flume::Receiver;
 use lit_core::config::ReloadableLitConfig;
 use lit_core::error::Unexpected;
-use lit_core::utils::binary::bytes_to_hex;
 use lit_node_common::config::LitNodeConfig;
 use lit_node_core::{CurveType, EcdsaSignedMessageShare, SigningScheme};
 use lit_observability::channels::{TracedReceiver, TracedSender, new_traced_unbounded_channel};
@@ -195,7 +195,8 @@ impl TssState {
         epoch: Option<u64>,
         key_set_id: &str,
     ) -> Result<usize> {
-        let self_peer = peers.peer_at_address(&self.addr)?;
+        let own_staker_address = self.peer_state.hex_staker_address();
+        let self_peer = validate_and_get_self_peer(peers, &self.addr, &own_staker_address)?;
 
         // Shouldn't matter which key set is used, all the keys on this
         // node should have the same threshold
@@ -209,7 +210,7 @@ impl TssState {
             ));
         }
 
-        let staker_address = &bytes_to_hex(self_peer.staker_address.as_bytes());
+        let staker_address = &own_staker_address;
         let realm_id = self.peer_state.realm_id();
         let epoch = epoch.unwrap_or_else(|| self.peer_state.epoch());
 
