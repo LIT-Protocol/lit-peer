@@ -214,7 +214,7 @@ function signEcdsa({ toSign, publicKey, sigName, keySetId = datilKeySetId }) {
  * @function sign
  * @returns {Uint8array} The resulting signature share
  */
-function sign({ toSign, publicKey, sigName, signingScheme, keySetId }) {
+function sign({ toSign, publicKey, sigName, signingScheme, keySetId = datilKeySetId }) {
   return ops.op_sign(
     new Uint8Array(toSign),
     publicKey,
