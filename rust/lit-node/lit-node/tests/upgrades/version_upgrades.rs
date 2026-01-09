@@ -129,7 +129,6 @@ async fn test_version_upgrade_against_old_version(
     }
 
     network_checker.check(&vc, &vec![]).await;
-    
 }
 
 async fn advance_and_validate_step(
