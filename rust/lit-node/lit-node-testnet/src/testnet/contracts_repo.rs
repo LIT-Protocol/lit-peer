@@ -769,7 +769,7 @@ pub async fn save_to_test_state_cache(
         "./tests/test_state_cache/{}_{}_{}.tar.gz",
         num_staked_and_joined_validators,
         num_staked_only_validators,
-        network_state.to_string()
+        network_state
     );
 
     let dir = Path::new(&temp_dir_name);

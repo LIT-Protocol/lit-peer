@@ -118,8 +118,8 @@ Ask the Lit Node to sign a message using the eth\_personalSign algorithm.  The r
     *   `params.message` **[string][84]** The message to sign.  Should be a string.
     *   `params.publicKey` **[string][84]** The public key of the PKP you wish to sign with
     *   `params.sigName` **[string][84]** You can put any string here.  This is used to identify the signature in the response by the 
-    *   `keySetId` **[string][84]** the key set identifier for the given public key
     Lit JS SDK.  This is useful if you are signing multiple messages at once.  When you get the final signature out, it will be in an object with this signature name as the key.
+    *   `keySetId` **[string][84]** the key set identifier for the given public key
 
 Returns **[Promise][85]<[string][84]>** This function will return the string "success" if it works.  The signature share is returned behind the scenes to the Lit JS SDK which will automatically combine the shares and give you the full signature to use.
 
