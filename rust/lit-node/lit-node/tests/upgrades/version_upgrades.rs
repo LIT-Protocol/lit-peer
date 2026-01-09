@@ -127,6 +127,9 @@ async fn test_version_upgrade_against_old_version(
         // test that we can advance and validate the step
         advance_and_validate_step(&actions, &network_checker, &vc, &upgrade_step_data, 0).await;
     }
+
+    network_checker.check(&vc, &vec![]).await;
+    
 }
 
 async fn advance_and_validate_step(
