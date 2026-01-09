@@ -754,7 +754,7 @@ pub async fn save_to_test_state_cache(
     network_state: &NetworkState,
 ) {
 
-    let network_state= match network_state {
+    let network_state = match network_state {
         NetworkState::Restore => "restore",
         _ => "active",
     };
