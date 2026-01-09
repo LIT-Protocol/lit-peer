@@ -328,6 +328,6 @@ impl SimplePeerCollection {
                 }
             }
         }
-        return false;
+        false
     }
 }
