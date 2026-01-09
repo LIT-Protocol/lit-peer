@@ -14,11 +14,11 @@ use lit_node_core::{
     AccessControlConditionResource, LitAbility, LitResource, LitResourceAbilityRequest,
     LitResourceAbilityRequestResource, SigningScheme, response::JsonPKPSigningResponse,
 };
-use lit_node_testnet::TestSetupBuilder;
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::{get_identity_pubkeys_from_node_set, get_network_pubkey};
 use lit_node_testnet::testnet::Testnet;
 use lit_node_testnet::validator::ValidatorCollection;
+use lit_node_testnet::{DEFAULT_KEY_SET_NAME, TestSetupBuilder};
 use lit_sdk::signature::combine_and_verify_signature_shares;
 const INITIAL_VALIDATORS: usize = 5;
 const MAX_VALIDATORS: usize = 10;
@@ -36,6 +36,11 @@ async fn shadow_splicing_sign_encrypt() {
 
     info!("New realm ID: {}", new_realm_id);
 
+    actions
+        .set_default_keyset_id(new_realm_id, DEFAULT_KEY_SET_NAME)
+        .await
+        .unwrap();
+
     let inactive_validators = validator_collection
         .get_inactive_validators()
         .await
@@ -48,12 +53,12 @@ async fn shadow_splicing_sign_encrypt() {
             .await
             .unwrap()
             .iter()
-            .map(|v| v.node_address())
+            .map(|v| v.socket_address())
     );
     info!(
         "Validators in Realm {}: {:?}",
         new_realm_id,
-        inactive_validators.iter().map(|v| v.node_address())
+        inactive_validators.iter().map(|v| v.socket_address())
     );
 
     let target_validators = inactive_validators
@@ -84,13 +89,13 @@ async fn shadow_splicing_sign_encrypt() {
         target_validators.len()
     );
 
-    let _result = actions
+    actions
         .setup_shadow_splicing(realm_id, new_realm_id, target_validators.clone())
         .await
         .unwrap();
     info!("Shadow splicing has started.");
 
-    let _result = actions
+    actions
         .wait_for_shadow_splicing_to_complete(new_realm_id, target_validators)
         .await
         .unwrap();
@@ -221,6 +226,7 @@ async fn shadow_splicing_sign_encrypt() {
         test_encryption_parameters.clone(),
         &session_sigs_realm_1,
         epoch,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -233,6 +239,7 @@ async fn shadow_splicing_sign_encrypt() {
         test_encryption_parameters.clone(),
         &session_sigs_realm_2,
         epoch,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
     assert_decrypted(
@@ -261,6 +268,11 @@ async fn shadow_splicing_epoch() {
     let pubkey = end_user.first_pkp().pubkey.clone();
     let realm_id = 1u64;
     let new_realm_id = actions.add_realm().await.unwrap();
+
+    actions
+        .set_default_keyset_id(new_realm_id, DEFAULT_KEY_SET_NAME)
+        .await
+        .unwrap();
 
     let inactive_validators = validator_collection
         .get_inactive_validators()
@@ -295,13 +307,13 @@ async fn shadow_splicing_epoch() {
         target_validators.len()
     );
 
-    let _result = actions
+    actions
         .setup_shadow_splicing(realm_id, new_realm_id, target_validators.clone())
         .await
         .unwrap();
     info!("Shadow splicing has started.");
 
-    let _result = actions
+    actions
         .wait_for_shadow_splicing_to_complete(new_realm_id, target_validators)
         .await
         .unwrap();
@@ -351,6 +363,11 @@ async fn signature_from_realm(
     let realm_node_set = get_identity_pubkeys_from_node_set(&realm_nodes).await;
 
     let expected_responses = realm_node_set.len();
+    let key_set_id = validator_collection
+        .actions()
+        .get_keyset_id_for_pkp(&pubkey)
+        .await
+        .expect("Couldn't get key set id from pubkey");
 
     let endpoint_responses = generate_session_sigs_and_send_signing_requests(
         &realm_node_set,
@@ -359,6 +376,7 @@ async fn signature_from_realm(
         pubkey.clone(),
         epoch,
         scheme,
+        &key_set_id,
     )
     .await;
     assert!(endpoint_responses.len() >= expected_responses);

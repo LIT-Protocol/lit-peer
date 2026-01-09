@@ -223,11 +223,10 @@ async fn test_version_upgrade_against_old_version(target_branch: &str) {
 
     info!("Old build commit hash: {}", old_build_commit_hash);
     // First check if we have the build.
-    let old_build_path = format!("./target/test-run/debug/lit_node_{}", old_build_commit_hash);
+    let old_build_path = format!("./target/test-run/debug/lit_node_{old_build_commit_hash}");
     assert!(
         fs::metadata(&old_build_path).is_ok(),
-        "Build does not exist at {}",
-        old_build_path
+        "Build does not exist at {old_build_path}"
     );
 
     // Set up a network of nodes running the old build.
@@ -251,7 +250,7 @@ async fn test_version_upgrade_against_old_version(target_branch: &str) {
 
     // Keep track of the node versions.
     let complete_node_set = &validator_collection.complete_node_set();
-    let initial_node_versions = get_node_versions(&complete_node_set).await;
+    let initial_node_versions = get_node_versions(complete_node_set).await;
     info!("Initial node versions: {:?}", initial_node_versions);
     // Assert all node versions are the same.
     assert!(
@@ -314,7 +313,7 @@ async fn test_version_upgrade_against_old_version(target_branch: &str) {
 
         // Assert node versions.
         let complete_node_set = &validator_collection.complete_node_set();
-        let mut node_versions = get_node_versions(&complete_node_set).await;
+        let mut node_versions = get_node_versions(complete_node_set).await;
         // Sort the node versions to make it easier to compare.
         node_versions.sort();
         info!(
@@ -403,11 +402,10 @@ async fn test_version_upgrade_against_old_version_with_new_stakers(target_branch
 
     info!("Old build commit hash: {}", old_build_commit_hash);
     // First check if we have the build.
-    let old_build_path = format!("./target/test-run/debug/lit_node_{}", old_build_commit_hash);
+    let old_build_path = format!("./target/test-run/debug/lit_node_{old_build_commit_hash}");
     assert!(
         fs::metadata(&old_build_path).is_ok(),
-        "Build does not exist at {}",
-        old_build_path
+        "Build does not exist at {old_build_path}"
     );
 
     let num_nodes = 5;
@@ -437,7 +435,7 @@ async fn test_version_upgrade_against_old_version_with_new_stakers(target_branch
 
     // Keep track of the node versions.
     let complete_node_set = &validator_collection.complete_node_set();
-    let initial_node_versions = get_node_versions(&complete_node_set).await;
+    let initial_node_versions = get_node_versions(complete_node_set).await;
     info!("Initial node versions: {:?}", initial_node_versions);
     // Assert all node versions are the same.
     assert!(

@@ -82,7 +82,7 @@ mod group {
             let mut elems = vec![G::default(); points.len()];
             for (i, point) in points.iter().enumerate() {
                 elems[i] = bytes_to_group::<G, D>(&hex::decode(point).map_err(|e| {
-                    serde::de::Error::custom(format!("Unable to decode hex: {:?}", e))
+                    serde::de::Error::custom(format!("Unable to decode hex: {e:?}"))
                 })?)?;
             }
             Ok(elems)

@@ -663,8 +663,7 @@ async fn check_condition_via_lit_action(
     let params = format!("\"{}\"", subbed_params.clone().join("\",\""));
 
     let code_to_run = format!(
-        "{}\nconst litAsyncWrapper = async () => {{const actionTestResponse = await {}({}); Lit.Actions.setResponse({{response: actionTestResponse.toString()}});}}\n litAsyncWrapper();",
-        code_from_ipfs, method_to_run, params
+        "{code_from_ipfs}\nconst litAsyncWrapper = async () => {{const actionTestResponse = await {method_to_run}({params}); Lit.Actions.setResponse({{response: actionTestResponse.toString()}});}}\n litAsyncWrapper();"
     );
 
     debug!("Running code: {}", code_to_run);
@@ -1404,7 +1403,7 @@ pub async fn substitute_special_params(
             debug!("resource_name: {:?}", resource_name);
             debug!("param: {:?}", param);
             if resource_name == param[1..] {
-                let resource_name_with_colon = format!("{}:", resource_name);
+                let resource_name_with_colon = format!("{resource_name}:");
 
                 let param_to_sub = resource_as_string
                     .strip_prefix(resource_name_with_colon.as_str())

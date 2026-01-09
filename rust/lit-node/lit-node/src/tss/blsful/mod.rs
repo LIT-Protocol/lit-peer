@@ -15,7 +15,8 @@ use lit_node_core::{
 };
 use lit_rust_crypto::{
     blsful::{
-        Bls12381G1Impl, Bls12381G2Impl, Pairing, SecretKeyShare, SignatureSchemes, SignatureShare,
+        self, Bls12381G1Impl, Bls12381G2Impl, Pairing, SecretKeyShare, SignatureSchemes,
+        SignatureShare,
         inner_types::{G1Projective, Scalar},
     },
     group::Group,
@@ -29,7 +30,7 @@ impl Cipherable for BlsState {
     async fn sign(
         &self,
         message_bytes: &[u8],
-        key_set_id: Option<&str>,
+        key_set_id: &str,
         epoch: Option<u64>,
     ) -> Result<(SignatureShare<Bls12381G2Impl>, PeerId)> {
         let bls_root_pubkey = get_bls_root_pubkey(&self.state, key_set_id)?;
@@ -42,7 +43,7 @@ impl Cipherable for BlsState {
         &self,
         message_bytes: &[u8],
         pub_key: &str,
-        key_set_id: Option<&str>,
+        key_set_id: &str,
         epoch: Option<u64>,
     ) -> Result<(SignatureShare<Bls12381G2Impl>, PeerId)> {
         trace!(
@@ -52,8 +53,8 @@ impl Cipherable for BlsState {
         let (secret_key_share, share_peer_id) = self.get_keyshare(pub_key, epoch).await?;
 
         let sks = secret_key_share
-            .sign(SignatureSchemes::ProofOfPossession, &message_bytes)
-            .map_err(|e| unexpected_err(format!("Failed to sign message: {:?}", e), None))?;
+            .sign(blsful::SignatureSchemes::ProofOfPossession, &message_bytes)
+            .map_err(|e| unexpected_err(format!("Failed to sign message: {e:?}"), None))?;
 
         Ok((sks, share_peer_id))
     }
@@ -66,7 +67,7 @@ impl Signable for BlsState {
         public_key: Vec<u8>,
         tweak_preimage: Option<Vec<u8>>,
         request_id: Vec<u8>,
-        key_set_id: Option<&str>,
+        key_set_id: &str,
         epoch: Option<u64>,
         nodeset: &[NodeSet],
     ) -> Result<SignableOutput> {
@@ -84,6 +85,7 @@ impl Signable for BlsState {
                     &peers,
                     CurveType::BLS,
                     Some(epoch),
+                    key_set_id,
                 )
                 .await?
         };
@@ -107,7 +109,7 @@ impl Signable for BlsState {
         let curve_state = CurveState::new(
             self.state.peer_state.clone(),
             CurveType::BLS12381G1,
-            key_set_id.map(String::from),
+            key_set_id,
         );
         let root_keys = curve_state.root_keys()?;
         if root_keys.len() < 2 {

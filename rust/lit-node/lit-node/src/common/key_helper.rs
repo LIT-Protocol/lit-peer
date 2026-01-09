@@ -69,7 +69,7 @@ impl Debug for KeyCache {
             entries.push(key.clone());
             true
         });
-        write!(f, "KeyCache {{ {:#?} }}", entries)
+        write!(f, "KeyCache {{ {entries:#?} }}")
     }
 }
 

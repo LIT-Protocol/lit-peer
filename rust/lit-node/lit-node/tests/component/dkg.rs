@@ -143,7 +143,7 @@ pub async fn dkg_and_key_share_proofs(curve_type: CurveType) {
                 &vnc.nodes[i].tss_state.addr,
                 &vnc.nodes[i].addr,
                 &vnc.nodes[i].tss_state.peer_state.hex_staker_address(),
-                &key_share_proofs,
+                key_share_proofs,
                 &current_peers,
                 epoch,
                 1,
@@ -375,7 +375,7 @@ pub async fn dkg_after_restore<G>(
     for i in 0..num_nodes_after {
         let port = (7470 + num_nodes_before + i) as u16;
         // the key hash must be unique, so if we're using 0 as the staker address, we generate a random one
-        let staker_address = staker_addresses.get(i).unwrap().clone();
+        let staker_address = *staker_addresses.get(i).unwrap();
         vnc_after.add_node_internal(port, staker_address).await;
     }
     // setup all the background channels
@@ -489,7 +489,7 @@ pub async fn dkg_after_restore_datil<G>(
     let realm_id = 1;
     let threshold = next_peers.threshold_for_set_testing_only();
 
-    let initial_secrets = vec![
+    let initial_secrets = [
         G::Scalar::random(rand::rngs::OsRng),
         G::Scalar::random(rand::rngs::OsRng),
     ];
@@ -704,7 +704,7 @@ pub async fn initial_dkg(
 
     info!(
         "Initial interpolated secret: {:?}",
-        bytes_to_hex(&initial_secret.to_bytes())
+        bytes_to_hex(initial_secret.to_bytes())
     );
 
     (vnc, pubkey, epoch, peers)
@@ -736,8 +736,8 @@ where
 
     let msg = format!(
         "Interpolated Secret (pre/post): {:?} / {:?}",
-        bytes_to_hex(&initial_secret.to_bytes()),
-        bytes_to_hex(&refresh_secret.to_bytes())
+        bytes_to_hex(initial_secret.to_bytes()),
+        bytes_to_hex(refresh_secret.to_bytes())
     );
     match initial_secret == refresh_secret {
         true => info!("{}", msg),
@@ -781,8 +781,8 @@ where
 
     let msg = format!(
         "Interpolated Secret (pre/post): {:?} / {:?}",
-        bytes_to_hex(&initial_secret.to_bytes()),
-        bytes_to_hex(&reshare_secret.to_bytes())
+        bytes_to_hex(initial_secret.to_bytes()),
+        bytes_to_hex(reshare_secret.to_bytes())
     );
     match initial_secret == reshare_secret {
         true => info!("{}", msg),
@@ -904,7 +904,7 @@ pub async fn dkg_all_curves(
         );
         for curve_type in CurveType::into_iter() {
             for i in 0..2 {
-                let dkg_id = format!("{}{}_key_{}", dkg_id, curve_type, i);
+                let dkg_id = format!("{dkg_id}{curve_type}_key_{i}");
                 dkg_engine.add_dkg(&dkg_id, DEFAULT_KEY_SET_NAME, curve_type, None);
             }
         }

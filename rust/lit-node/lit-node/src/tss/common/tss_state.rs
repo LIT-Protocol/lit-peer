@@ -12,6 +12,7 @@ use crate::tss::common::key_share::KeyShare;
 use crate::tss::common::storage::read_key_share_from_disk;
 use crate::tss::ecdsa_damfast::DamFastState;
 use crate::tss::frost::FrostState;
+use crate::utils::keysets::get_default_keyset_id;
 use crate::version::DataVersionReader;
 use flume::Receiver;
 use lit_core::config::ReloadableLitConfig;
@@ -192,17 +193,18 @@ impl TssState {
         peers: &SimplePeerCollection,
         curve_type: CurveType,
         epoch: Option<u64>,
+        key_set_id: &str,
     ) -> Result<usize> {
         let self_peer = peers.peer_at_address(&self.addr)?;
 
         // Shouldn't matter which key set is used, all the keys on this
         // node should have the same threshold
-        let curve_state = CurveState::new(self.peer_state.clone(), curve_type, None);
+        let curve_state = CurveState::new(self.peer_state.clone(), curve_type, key_set_id);
         let root_keys = curve_state.root_keys()?;
 
         if root_keys.is_empty() {
             return Err(unexpected_err(
-                format!("No root keys exist for curve: {}", curve_type),
+                format!("No root keys exist for curve: {curve_type}"),
                 None,
             ));
         }
@@ -287,11 +289,21 @@ impl TssState {
 
         let curve_type = CurveType::K256;
         let epoch = self.get_keyshare_epoch().await;
+        let cdm = &self.chain_data_config_manager;
+
+        let key_set_id = match get_default_keyset_id(cdm) {
+            Ok(keyset) => keyset.clone(),
+            Err(e) => {
+                warn!("No default keyset found. Returning 0 threshold.");
+                return 0;
+            }
+        };
         let rt = match self
             .get_threshold_using_current_epoch_realm_peers_for_curve(
                 &peers,
                 curve_type,
                 Some(epoch),
+                &key_set_id,
             )
             .await
         {

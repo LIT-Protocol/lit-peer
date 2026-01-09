@@ -1,4 +1,5 @@
-use super::OsMetric;
+use super::{GaugeMetric, OsMetric};
+use lit_observability::opentelemetry::KeyValue;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -119,4 +120,25 @@ impl From<&CpuInfo> for BTreeMap<String, String> {
 
 impl OsMetric for CpuInfo {
     const NAME: &'static str = "os.cpu_info";
+}
+
+impl GaugeMetric for CpuInfo {
+    fn gauge_value(&self) -> Option<f64> {
+        self.load_percentage.map(|v| v as f64)
+    }
+
+    fn gauge_labels(&self) -> Vec<KeyValue> {
+        vec![
+            KeyValue::new("device_id", self.device_id.clone()),
+            KeyValue::new("model", self.model.clone()),
+            KeyValue::new("manufacturer", self.manufacturer.clone()),
+            KeyValue::new("processor_type", self.processor_type.clone()),
+            KeyValue::new("number_of_cores", self.number_of_cores.clone()),
+            KeyValue::new(
+                "logical_processors",
+                self.logical_processors.map(|v| v.to_string()).unwrap_or_default(),
+            ),
+            KeyValue::new("socket_designation", self.socket_designation.clone()),
+        ]
+    }
 }

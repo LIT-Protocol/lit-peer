@@ -6,6 +6,7 @@ use command_group::{CommandGroup, GroupChild}; // node/anvil launches many proce
 use ethers::core::k256::SecretKey;
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::prelude::*;
+use lit_blockchain::resolver::rpc::{ENDPOINT_MANAGER, RpcHealthcheckPoller};
 use lit_core::utils::binary::hex_to_bytes;
 use lit_node_common::coms_keys::ComsKeys;
 
@@ -17,21 +18,26 @@ use tracing::{debug, info};
 
 pub struct Anvil {
     num_nodes: usize,
+    port: u16,
+    is_datil_testnet: bool,
     // num_staked: usize,
 }
 
 impl Anvil {
     // pub fn new(num_nodes: usize, num_staked: usize) -> impl ChainTrait {
-    pub fn new(num_nodes: usize) -> impl ChainTrait {
+    pub fn new(num_nodes: usize, is_datil_testnet: bool) -> impl ChainTrait {
+        let port = if is_datil_testnet { 8549 } else { 8545 };
+
         Anvil {
             num_nodes,
             // num_staked,
+            port,
+            is_datil_testnet,
         }
     }
 }
 
 use async_trait::async_trait;
-use lit_blockchain::resolver::rpc::RpcHealthcheckPoller;
 // impl chain for Anvil
 #[async_trait]
 impl ChainTrait for Anvil {
@@ -44,11 +50,15 @@ impl ChainTrait for Anvil {
     }
 
     fn rpc_url(&self) -> String {
-        "127.0.0.1:8545".to_string()
+        format!("127.0.0.1:{}", self.port)
     }
 
     fn chain_name(&self) -> &'static str {
-        "anvil"
+        if self.is_datil_testnet {
+            "anvilDatil"
+        } else {
+            "anvil"
+        }
     }
 
     async fn start_chain(&self) -> GroupChild {
@@ -58,46 +68,15 @@ impl ChainTrait for Anvil {
         // we run echo 'hi' as a dummy process instead.
         let in_github_ci = std::env::var("IN_GITHUB_CI").unwrap_or("0".to_string());
         if in_github_ci == "1" {
-            info!("Not starting chain in CI");
-            if !is_anvil_running(&self.rpc_url()).await {
+            info!("Not starting chain in CI.");
+            if is_anvil_running(&self.rpc_url()).await {
+                info!("Anvil is running in CI at {}. ", self.rpc_url());
+            } else {
                 panic!(
-                    "anvil is not running in CI.  It should have been loaded by the docker container."
+                    "Anvil is not running in CI at {}.  It should have been loaded by the docker container.",
+                    self.rpc_url()
                 );
             }
-            // let in_container = std::env::var("IN_CONTAINER").unwrap_or("0".to_string());
-            // if in_container == "1" {
-            //     info!("Skipping docker restart in container env")
-            // } else {
-            //     // restart docker to reset chain since anvil_reset isn't working for non-forked chains right now https://github.com/foundry-rs/foundry/issues/6018
-            //     let docker_ps = Command::new("docker")
-            //         .args(["ps"])
-            //         .output()
-            //         .expect("failed to get docker ps");
-            //     let output = String::from_utf8_lossy(&docker_ps.stdout);
-            //     info!("Docker ps output: {}", output);
-            //     let lines: Vec<&str> = output.split('\n').collect();
-            //     let mut container_id = String::new();
-            //     for line in lines {
-            //         if line.contains("litptcl/anvil-lit:latest") {
-            //             let parts: Vec<&str> = line.split_whitespace().collect();
-            //             container_id = parts[0].to_string();
-            //             break;
-            //         }
-            //     }
-            //     if container_id.is_empty() {
-            //         panic!("Failed to find container id for litptcl/anvil-lit:latest");
-            //     }
-
-            //     let restart_result = Command::new("docker")
-            //         .args(["restart", &container_id])
-            //         .output()
-            //         .expect("failed to restart anvil docker container");
-            //     let output = String::from_utf8_lossy(&restart_result.stdout);
-            //     info!("Docker restart output: {}", output);
-
-            //     // give docker a few secs to come up
-            //     tokio::time::sleep(Duration::from_secs(5)).await;
-            // }
 
             return Command::new("/bin/bash")
                 .args(["-c", "echo '*** anvil is already running in CI ***'"])
@@ -134,7 +113,10 @@ impl ChainTrait for Anvil {
         }
         debug!("found path for anvil: {}", &command_path);
 
-        let rv = Command::new(command_path)
+        let mut command = Command::new(command_path);
+        command.arg("--port").arg(self.port.to_string());
+
+        let rv = command
             // .env("RUST_LOG", "trace") // if you need to debug anvil you can uncomment this.
             // .env("RUST_LOG", "info") // if you just need to see console.log from the contract uncomment this instead
             .env("ETHERNAL_API_TOKEN", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmaXJlYmFzZVVzZXJJZCI6IlQ5Sk1xZjgwMUVoUk9XSTNaTVRTM2dQRTRrdjIiLCJhcGlLZXkiOiJBRFlSRUVOLVhSRE1DVEgtSjNXTUdIWC1IQ1haSE0yXHUwMDAxIiwiaWF0IjoxNjkxMDk0NDczfQ.Rpc_oExqnwCl-iRKLQbQCN7P7nUIuucJtoiE46xVn3g") // localhost
@@ -147,7 +129,7 @@ impl ChainTrait for Anvil {
                 "anvil has not come up.  Aborting test.  You may comment out the stdout/stderr lines above to see what's going on."
             );
         }
-        info!("Anvil has started");
+        info!("Anvil has started on port {}", self.port);
         rv
     }
 
@@ -161,9 +143,7 @@ impl ChainTrait for Anvil {
 
         let wallet = LocalWallet::from(sk).with_chain_id(self.chain_id());
         let address = wallet.address();
-        let provider = lit_blockchain::resolver::rpc::ENDPOINT_MANAGER
-            .get_provider(self.chain_name())
-            .unwrap();
+        let provider = ENDPOINT_MANAGER.get_provider(self.chain_name()).unwrap();
 
         let signing_provider = Arc::new(SignerMiddleware::new(provider, wallet));
 

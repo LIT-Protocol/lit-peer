@@ -306,13 +306,11 @@ impl StakingContractRealmConfig {
 }
 
 impl Contracts {
-    pub async fn new(
+    /// Loads contracts from contract addresses without applying any global or realm configs.
+    pub async fn new_contracts(
         ca: &ContractAddresses,
-        testnet: &mut Testnet,
         provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-        staking_contract_global_config: Option<StakingContractGlobalConfig>,
-        staking_contract_realm_config: Option<StakingContractRealmConfig>,
-    ) -> Result<Contracts> {
+    ) -> Contracts {
         let lit_token = LITToken::<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>::new(
             ca.lit_token,
             provider.clone(),
@@ -368,24 +366,7 @@ impl Contracts {
                 provider.clone(),
             );
 
-        if testnet.which != WhichTestnet::NoChain {
-            if let Some(staking_contract_global_config) = staking_contract_global_config {
-                Self::update_staking_global_config(staking.clone(), staking_contract_global_config)
-                    .await?;
-            }
-
-            if let Some(staking_contract_realm_config) = staking_contract_realm_config {
-                Self::update_staking_realm_config(staking.clone(), staking_contract_realm_config)
-                    .await?;
-            }
-        }
-
-        info!(
-            "Resolver contract in staking contract {:?}",
-            staking.contract_resolver().await.unwrap()
-        );
-
-        let contracts = Contracts {
+        Contracts {
             lit_token,
             erc20,
             backup_recovery,
@@ -398,15 +379,48 @@ impl Contracts {
             payment_delegation,
             ledger,
             price_feed,
-        };
+        }
+    }
+
+    /// Loads contracts and applies any global or realm configs.
+    pub async fn new(
+        ca: &ContractAddresses,
+        testnet: &mut Testnet,
+        provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
+        staking_contract_global_config: Option<StakingContractGlobalConfig>,
+        staking_contract_realm_config: Option<StakingContractRealmConfig>,
+    ) -> Result<Contracts> {
+        let contracts = Self::new_contracts(ca, provider.clone()).await;
+
+        if testnet.which != WhichTestnet::NoChain {
+            if let Some(staking_contract_global_config) = staking_contract_global_config {
+                Self::update_staking_global_config(
+                    contracts.staking.clone(),
+                    staking_contract_global_config,
+                )
+                .await?;
+            }
+
+            if let Some(staking_contract_realm_config) = staking_contract_realm_config {
+                Self::update_staking_realm_config(
+                    contracts.staking.clone(),
+                    staking_contract_realm_config,
+                )
+                .await?;
+            }
+        }
+
+        info!(
+            "Resolver contract in staking contract {:?}",
+            contracts.staking.contract_resolver().await.unwrap()
+        );
 
         // Loop through each staker account to execute each of their setup.
-        #[cfg(feature = "testing")]
         if let Some(staker_account_setup_mapper) = testnet.staker_account_setup_mapper.as_mut() {
             for (idx, node_account) in testnet.node_accounts.iter().enumerate() {
                 info!(
-                    "Running custom setup function for account {:?}",
-                    node_account
+                    "Running custom setup function for account with staker address: {:?}",
+                    node_account.staker_address
                 );
 
                 if let Err(e) = staker_account_setup_mapper
@@ -461,28 +475,10 @@ impl Contracts {
     }
 
     pub async fn contract_addresses_from_resolver(
-        config_path: String,
+        contract_resolver: Address,
         provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
     ) -> ContractAddresses {
-        let config_path = format!("./{}/lit_config0.toml", config_path); // fix me
-        let path = std::path::Path::new(&config_path);
-        let cfg = SimpleToml::try_from(path).unwrap();
-
-        info!(
-            "Reusing earlier deployment.  Loading contract addresses from '{:?}'",
-            config_path
-        );
-
-        // get the staking contract address from the config file - it's the subnetid
-        let staking = cfg
-            .get_address("subnet", "id")
-            .expect("couldn't load staking address");
-
-        // get the resolver contract address from the staking contract
-        let staking_contract = Staking::new(staking, provider.clone());
-        let contract_resolver = staking_contract.contract_resolver().call().await.unwrap();
         let resolver = ContractResolver::new(contract_resolver, provider.clone());
-
         let env: u8 = 0;
 
         // get contract addresses from resolver contract
@@ -576,6 +572,30 @@ impl Contracts {
             ledger,
             price_feed,
         }
+    }
+
+    pub async fn contract_addresses_from_resolver_cfg(
+        config_path: String,
+        provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
+    ) -> ContractAddresses {
+        let config_path = format!("./{}/lit_config0.toml", config_path); // fix me
+        let path = std::path::Path::new(&config_path);
+        let cfg = SimpleToml::try_from(path).unwrap();
+
+        info!(
+            "Reusing earlier deployment.  Loading contract addresses from '{:?}'",
+            config_path
+        );
+
+        // get the staking contract address from the config file - it's the subnetid
+        let staking = cfg
+            .get_address("subnet", "id")
+            .expect("couldn't load staking address");
+
+        // get the resolver contract address from the staking contract
+        let staking_contract = Staking::new(staking, provider.clone());
+        let contract_resolver = staking_contract.contract_resolver().call().await.unwrap();
+        Self::contract_addresses_from_resolver(contract_resolver, provider).await
     }
 
     pub async fn new_blank(

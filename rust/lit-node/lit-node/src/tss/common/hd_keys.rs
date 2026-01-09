@@ -45,8 +45,7 @@ where
             unexpected_err(
                 e,
                 Some(format!(
-                    "Could not read key share (index/epoch) {}/{} from disk",
-                    peer_id, epoch,
+                    "Could not read key share (index/epoch) {peer_id}/{epoch} from disk",
                 )),
             )
         })?;
