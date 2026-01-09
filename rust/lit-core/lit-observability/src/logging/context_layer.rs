@@ -4,9 +4,10 @@
 
 use std::any::TypeId;
 use std::borrow::Cow;
-use std::collections::HashMap;
 use std::marker::PhantomData;
-use std::sync::{LazyLock, RwLock};
+use std::sync::LazyLock;
+
+use dashmap::DashMap;
 
 use opentelemetry::Key;
 use opentelemetry::logs::{AnyValue, LogRecord as _, Logger, LoggerProvider as _, Severity};
@@ -22,8 +23,9 @@ use tracing_subscriber::registry::LookupSpan;
 const INSTRUMENTATION_LIBRARY_NAME: &str = "lit-observability";
 
 // Task-local fallback keyed by tokio task ID; cleared at request boundaries.
-static TASK_CONTEXTS: LazyLock<RwLock<HashMap<tokio::task::Id, RequestContext>>> =
-    LazyLock::new(|| RwLock::new(HashMap::new()));
+// Uses DashMap for sharded locking to reduce contention under high concurrency.
+static TASK_CONTEXTS: LazyLock<DashMap<tokio::task::Id, RequestContext>> =
+    LazyLock::new(DashMap::new);
 
 /// Request context propagated to all log events within a span hierarchy.
 #[derive(Clone, Debug, Default)]
@@ -342,28 +344,20 @@ pub fn set_request_context(request_id: Option<String>, correlation_id: Option<St
 /// Sets request context in task-local storage (async-safe fallback).
 fn set_task_request_context(ctx: RequestContext) {
     if let Some(task_id) = current_task_id() {
-        if let Ok(mut map) = TASK_CONTEXTS.write() {
-            map.insert(task_id, ctx);
-        }
+        TASK_CONTEXTS.insert(task_id, ctx);
     }
 }
 
 /// Gets request context from task-local storage.
 pub(crate) fn get_task_request_context() -> Option<RequestContext> {
     let task_id = current_task_id()?;
-    TASK_CONTEXTS
-        .read()
-        .ok()
-        .and_then(|map| map.get(&task_id).cloned())
-        .filter(|ctx| ctx.has_context())
+    TASK_CONTEXTS.get(&task_id).map(|entry| entry.value().clone()).filter(|ctx| ctx.has_context())
 }
 
 /// Clears task-local request context at request boundaries.
 pub fn clear_task_request_context() {
     if let Some(task_id) = current_task_id() {
-        if let Ok(mut map) = TASK_CONTEXTS.write() {
-            map.remove(&task_id);
-        }
+        TASK_CONTEXTS.remove(&task_id);
     }
 }
 
