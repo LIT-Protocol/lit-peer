@@ -923,6 +923,15 @@ impl Client {
                     )
                     .await?;
 
+                debug!(
+                    "Collected {} decryption shares with peer_ids: {:?}",
+                    shares.len(),
+                    shares
+                        .iter()
+                        .map(|(pid, _)| pid.to_string())
+                        .collect::<Vec<_>>()
+                );
+
                 shares.push((PeerId::ONE, signature_share)); // lazy - it's not zero, but we don't seem to care!
 
                 let network_pubkey = get_default_bls_root_pubkey(&tss_state)?;
@@ -930,6 +939,12 @@ impl Client {
 
                 let serialized_decryption_shares =
                     shares.iter().map(|(_, share)| *share).collect::<Vec<_>>();
+
+                debug!(
+                    "Extracted {} signature shares for decryption",
+                    serialized_decryption_shares.len()
+                );
+
                 let ciphertext = serde_bare::from_slice(&base64_decode(&ciphertext))?;
 
                 let decrypted = lit_sdk::encryption::verify_and_decrypt_with_signatures_shares(

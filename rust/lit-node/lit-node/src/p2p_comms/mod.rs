@@ -164,7 +164,27 @@ impl CommsManager {
     where
         C: serde::de::DeserializeOwned,
     {
+        debug!(
+            "collect_from called with {} expected peers: {:?}",
+            expected_peers.0.len(),
+            expected_peers
+                .0
+                .iter()
+                .map(|p| (
+                    p.socket_address.clone(),
+                    p.peer_id.to_string(),
+                    p.staker_address.to_string()
+                ))
+                .collect::<Vec<_>>()
+        );
         let data = self.await_bytes_from(expected_peers, None).await?;
+        debug!(
+            "Received {} responses with peer IDs: {:?}",
+            data.len(),
+            data.iter()
+                .map(|(pid, _)| pid.to_string())
+                .collect::<Vec<_>>()
+        );
         let data = data
             .into_iter()
             .map(|(index, data)| {
@@ -172,6 +192,7 @@ impl CommsManager {
                 let data: C = serde_json::from_str(data).map_err(|e| {
                     unexpected_err(e, Some("Error while deserializing data".into()))
                 })?;
+                trace!("Mapped response to peer_id: {}", index);
                 Ok((index, data))
             })
             .collect::<Result<Vec<(PeerId, C)>>>()?;
