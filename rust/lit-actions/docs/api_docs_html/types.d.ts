@@ -67,7 +67,7 @@ export declare namespace Lit {
      * @param {Object} params
      * @param {string} params.tokenId The tokenId to check
      * @param {string} params.keySetId The key set id to use
-    * @returns {Promise<Array<string>>} An array of IPFS IDs of lit actions that are permitted to sign using the PKP tokenId
+     * @returns {Promise<Array<string>>} An array of IPFS IDs of lit actions that are permitted to sign using the PKP tokenId
      */
     function getPermittedActions({
       tokenId,
@@ -117,8 +117,8 @@ export declare namespace Lit {
      * @param {string} params.authMethodType The auth method type to look up
      * @param {Uint8Array} params.userId The id of the auth method to check expressed as an array of unsigned 8-bit integers (a Uint8Array)
      * @param {number} params.maxScopeId The maximum scope id to check.  This is an integer.
-    * @param {string} params.keySetId The key set id to use
-    * @returns {Promise<Array<boolean>>} An array of booleans that define if a given scope id is turned on.  The index of the array is the scope id.  For example, if the array is [true, false, true], then scope ids 0 and 2 are turned on, but scope id 1 is turned off.
+     * @param {string} params.keySetId The key set id to use
+     * @returns {Promise<Array<boolean>>} An array of booleans that define if a given scope id is turned on.  The index of the array is the scope id.  For example, if the array is [true, false, true], then scope ids 0 and 2 are turned on, but scope id 1 is turned off.
      */
     function getPermittedAuthMethodScopes({
       tokenId,
@@ -173,8 +173,8 @@ export declare namespace Lit {
      * @param {Uint8Array} params.toSign The data to sign.  Should be an array of 8-bit integers.
      * @param {string} params.publicKey The public key of the PKP you wish to sign with
      * @param {string} params.sigName You can put any string here.  This is used to identify the signature in the response by the Lit JS SDK.  This is useful if you are signing multiple messages at once.  When you get the final signature out, it will be in an object with this signature name as the key.
-    * @param {string} params.keySetId The key set id to use
-    * @returns {Promise<string>} This function will return the string "success" if it works.  The signature share is returned behind the scenes to the Lit JS SDK which will automatically combine the shares and give you the full signature to use.
+     * @param {string} params.keySetId The key set id to use
+     * @returns {Promise<string>} This function will return the string "success" if it works.  The signature share is returned behind the scenes to the Lit JS SDK which will automatically combine the shares and give you the full signature to use.
      */
     function signEcdsa({
       toSign,
@@ -238,19 +238,16 @@ export declare namespace Lit {
      *   "SchnorrRistretto25519Sha512", "SchnorrEd448Shake256", "SchnorrRedJubjubBlake2b512",
      *   "SchnorrK256Taproot", "SchnorrRedDecaf377Blake2b512", "SchnorrkelSubstrate",
      *   "Bls12381G1ProofOfPossession"
-     * @param {string} params.keySetId The key set id to use
      * @returns {Promise<Uint8Array>} The resulting signature that can be verified using verifyActionSignature
      */
     function signAsAction({
       toSign,
       sigName,
       signingScheme,
-      keySetId,
     }: {
       toSign: Uint8Array;
       sigName: string;
       signingScheme: string;
-      keySetId: string;
     }): Promise<Uint8Array>;
     /**
      * Get the public key for a Lit Action's cryptographic identity.
@@ -317,8 +314,8 @@ export declare namespace Lit {
      * @param {string} params.message The message to sign.  Should be a string.
      * @param {string} params.publicKey The public key of the PKP you wish to sign with
      * @param {string} params.sigName You can put any string here.  This is used to identify the signature in the response by the Lit JS SDK.  This is useful if you are signing multiple messages at once.  When you get the final signature out, it will be in an object with this signature name as the key.
-    * @param {string} params.keySetId The key set id to use
-    * @returns {Promise<string>} This function will return the string "success" if it works.  The signature share is returned behind the scenes to the Lit JS SDK which will automatically combine the shares and give you the full signature to use.
+     * @param {string} params.keySetId The key set id to use
+     * @returns {Promise<string>} This function will return the string "success" if it works.  The signature share is returned behind the scenes to the Lit JS SDK which will automatically combine the shares and give you the full signature to use.
      */
     function ethPersonalSignMessageEcdsa({
       message,
@@ -466,8 +463,8 @@ export declare namespace Lit {
      * @param {string} params.dataToEncryptHash The hash of the data to encrypt
      * @param {Object} params.authSig The auth signature
      * @param {string} params.chain The chain
-    * @param {string} params.keySetId The key set id to use
-    * @returns {Promise<string>} The decrypted and combined data
+     * @param {string} params.keySetId The key set id to use
+     * @returns {Promise<string>} The decrypted and combined data
      */
     function decryptAndCombine({
       accessControlConditions,
@@ -482,6 +479,7 @@ export declare namespace Lit {
       dataToEncryptHash: string;
       authSig: any;
       chain: string;
+      keySetId: string;
     }): Promise<string>;
     /**
      * Decrypt to a single node
@@ -493,8 +491,8 @@ export declare namespace Lit {
      * @param {string} params.dataToEncryptHash The hash of the data to encrypt
      * @param {Object} params.authSig The auth signature
      * @param {string} params.chain The chain
-    * @param {string} params.keySetId The key set id to use
-    * @returns {Promise<string>} The decrypted data
+     * @param {string} params.keySetId The key set id to use
+     * @returns {Promise<string>} The decrypted data
      */
     function decryptToSingleNode({
       accessControlConditions,
@@ -519,6 +517,7 @@ export declare namespace Lit {
      * @param {Uint8Array} params.toSign The message to sign
      * @param {string} params.publicKey The public key of the PKP
      * @param {string} params.sigName The name of the signature
+     * @param {string} params.keySetId The key set id to use
      * @returns {Promise<Uint8Array>} The resulting combined signature
      */
     function signAndCombineEcdsa({
@@ -541,13 +540,13 @@ export declare namespace Lit {
      * @param {string} params.publicKey The public key of the PKP
      * @param {string} params.sigName The name of the signature
      * @param {string} params.signingScheme The signing scheme. Must be one of:
+     * @param {string} params.keySetId The key set id to use
      *   "EcdsaK256Sha256", "EcdsaP256Sha256", "EcdsaP384Sha384",
      *   "SchnorrEd25519Sha512", "SchnorrK256Sha256", "SchnorrP256Sha256", "SchnorrP384Sha384",
      *   "SchnorrRistretto25519Sha512", "SchnorrEd448Shake256", "SchnorrRedJubjubBlake2b512",
      *   "SchnorrK256Taproot", "SchnorrRedDecaf377Blake2b512", "SchnorrkelSubstrate",
      *   "Bls12381G1ProofOfPossession"
-    * @param {string} params.keySetId The key set id to use
-    * @returns {Promise<Uint8Array>} The resulting combined signature
+     * @returns {Promise<Uint8Array>} The resulting combined signature
      */
     function signAndCombine({
       toSign,
@@ -580,7 +579,7 @@ export declare namespace Lit {
         waitForResponse: boolean;
         name: string;
       },
-      async_fn: Function,
+      async_fn: Function
     ): Promise<string>;
     /**
      * Get the RPC URL for a given blockchain
@@ -598,18 +597,22 @@ export declare namespace Lit {
      * @param {Object} params
      * @param {Array<Object>} params.accessControlConditions The access control conditions that must be met to decrypt
      * @param {string} params.to_encrypt The message to encrypt
+     * @param {string} params.keySetId The key set id to use
      * @returns {Promise<{ciphertext: string, dataToEncryptHash: string}>} An object containing the ciphertext and the hash of the data that was encrypted
      */
     function encrypt({
       accessControlConditions,
       to_encrypt,
+      keySetId,
     }: {
       accessControlConditions: Array<any>;
       to_encrypt: string;
+      keySetId: string;
     }): Promise<{
       ciphertext: string;
       dataToEncryptHash: string;
     }>;
+    const datilKeySetId: "datil-keyset";
   }
 
   export namespace Auth {
@@ -693,11 +696,11 @@ declare const jwt: {
   verify: (
     token: string,
     secretOrPublicKey: string | Buffer,
-    options?: any,
+    options?: any
   ) => any;
   sign: (
     payload: string | object | Buffer,
     secretOrPrivateKey: string | Buffer,
-    options?: any,
+    options?: any
   ) => string;
 };
