@@ -3,10 +3,11 @@ use crate::metrics;
 use crate::p2p_comms::CommsManager;
 use crate::tasks::presign_manager::models::{Presign, PresignMessage, PresignRequest};
 use crate::tss::common::hd_keys::get_derived_keyshare;
+use crate::tss::common::utils::validate_and_get_self_peer;
 use crate::version::DataVersionReader;
 use crate::{
     error::Result,
-    peers::peer_state::models::SimplePeerCollection,
+    peers::peer_state::models::{SimplePeer, SimplePeerCollection},
     tss::common::{dkg_type::DkgType, tss_state::TssState},
 };
 use lit_core::error::Unexpected;
@@ -76,10 +77,23 @@ impl DamFastState {
         C::Scalar: HDDeriver + From<PeerId> + CompressedBytes,
         <FieldBytesSize<C> as Add>::Output: ArrayLength<u8>,
     {
-        let self_peer = peers.peer_at_address(&self.state.addr)?;
-        let mut participants = Vec::with_capacity(peers.0.len());
+        // Get our own peer info and validate it matches our staker_address
+        // This is critical: if there's an IP/port conflict, peer_at_address might return
+        // the wrong peer's info, which would lead to using the wrong peer_id.
+        let own_staker_address = self.state.peer_state.hex_staker_address();
+        let self_peer = validate_and_get_self_peer(peers, &self.state.addr, &own_staker_address)?;
+
+        // CRITICAL: Sort peers by peer_id to ensure consistent participant list ordering
+        // between presignature creation and signing. This is necessary because
+        // Lagrange coefficients depend on the participant list order, and if the
+        // peer list order changes (e.g., due to network updates or IP/port conflicts),
+        // the coefficients would be wrong, causing signature verification to fail.
+        let mut sorted_peers: Vec<SimplePeer> = peers.0.to_vec();
+        sorted_peers.sort_by(|a, b| a.peer_id.cmp(&b.peer_id));
+
+        let mut participants = Vec::with_capacity(sorted_peers.len());
         let mut self_peer_ordinal = 0;
-        for (i, peer) in peers.0.iter().enumerate() {
+        for (i, peer) in sorted_peers.iter().enumerate() {
             if self_peer.peer_id == peer.peer_id {
                 self_peer_ordinal = i;
             }
@@ -87,7 +101,11 @@ impl DamFastState {
             participants.push(id);
         }
 
-        trace!("Participants [{}], {:?}", participants.len(), participants);
+        trace!(
+            "Participants [{}] (sorted by peer_id), {:?}",
+            participants.len(),
+            participants
+        );
 
         let participant_list = ParticipantList::new(participants.as_slice())
             .map_err(|e| unexpected_err(e, Some("Error creating participant list".to_owned())))?;
@@ -134,7 +152,9 @@ impl DamFastState {
                     continue;
                 }
                 trace!("Sending from {} to {}", self_participant_id, payload.id);
-                let dest_peer = &peers.0[payload.ordinal];
+                // CRITICAL: Use sorted_peers to match the participant list ordering
+                // payload.ordinal is the index in the sorted participant list, not the original peers list
+                let dest_peer = &sorted_peers[payload.ordinal];
 
                 match cm
                     .send_direct::<RoundPayload<C>>(dest_peer, payload.round_payload.clone())
@@ -287,7 +307,11 @@ impl DamFastState {
             "Successfully signed message with public key: {}",
             pk.to_compressed_hex(),
         );
-        let self_peer = peers.peer_at_address(&self.state.addr)?;
+
+        // Get our own peer info and validate it matches our staker_address
+        // This ensures we use the correct peer_id in the response
+        let own_staker_address = self.state.peer_state.hex_staker_address();
+        let self_peer = validate_and_get_self_peer(&peers, &self.state.addr, &own_staker_address)?;
 
         let signature_share = EcdsaSignedMessageShare {
             digest: hex::encode(message_bytes),
@@ -328,14 +352,23 @@ impl DamFastState {
         <FieldBytesSize<C> as Add>::Output: ArrayLength<u8>,
     {
         let nonce = generate_hash(request_id).to_be_bytes();
-        let self_peer = peers.peer_at_address(&self.state.addr)?;
-        let staker_address = &bytes_to_hex(self_peer.staker_address.as_bytes());
+
+        let own_staker_address = self.state.peer_state.hex_staker_address();
+        let self_peer = validate_and_get_self_peer(peers, &self.state.addr, &own_staker_address)?;
+
+        let staker_address = &own_staker_address;
         let realm_id = self.state.peer_state.realm_id();
         let epoch = self.state.peer_state.epoch();
         let deriver = C::Scalar::create(key_id, self.signing_scheme.id_sign_ctx());
         // participant list -> pulled from working presignature code.
-        let mut participants = Vec::with_capacity(peers.0.len());
-        for peer in peers.0.iter() {
+        // CRITICAL: Must use the same ordering as during presignature creation!
+        // We sort peers by peer_id to ensure consistent ordering, which is necessary
+        // because Lagrange coefficients depend on the participant list order.
+        let mut sorted_peers: Vec<_> = peers.0.iter().collect();
+        sorted_peers.sort_by(|a, b| a.peer_id.cmp(&b.peer_id));
+
+        let mut participants = Vec::with_capacity(sorted_peers.len());
+        for peer in sorted_peers.iter() {
             let id = C::Scalar::from(peer.peer_id);
             trace!(
                 "signing with peer id: {:?} which maps to scalar: {:?}",
@@ -343,7 +376,14 @@ impl DamFastState {
             );
             participants.push(id);
         }
-        debug!("Participants: {:?}", participants);
+
+        debug!("Participants (sorted by peer_id): {:?}", participants);
+        debug!(
+            "Building participant list during signing with {} participants (sorted). presig.id (from presignature): {:?}, presig.threshold: {}",
+            participants.len(),
+            presig.id.as_ref(),
+            presig.threshold
+        );
         let participant_list = ParticipantList::new(participants.as_slice())
             .map_err(|e| unexpected_err(e, Some("Error creating participant list".to_owned())))?;
 
@@ -379,10 +419,45 @@ impl DamFastState {
         })?;
         let msg_digest = C::Scalar::from(scalar_primitive);
 
-        let peer_id = Option::<NonZeroScalar<C>>::from(NonZeroScalar::<C>::new(C::Scalar::from(
-            self_peer.peer_id,
-        )))
-        .ok_or(unexpected_err("Could not convert peer id", None))?;
+        // CRITICAL: Use the participant ID from the presignature (presig.id) instead of deriving it
+        // from self_peer.peer_id. The presig.id is the authoritative participant ID that was used
+        // during presignature creation. If we derive it again, there could be a mismatch if the
+        // peer list has changed or if there's an IP/port conflict causing wrong peer lookups.
+        let derived_peer_id_scalar = C::Scalar::from(self_peer.peer_id);
+        let presig_id_scalar = *presig.id.as_ref();
+
+        // Validate that presig.id matches what we would derive from self_peer.peer_id
+        // This ensures consistency and detects peer list corruption
+        if derived_peer_id_scalar != presig_id_scalar {
+            error!(
+                "Participant ID mismatch! presig.id from presignature creation: {:?}, derived from self_peer.peer_id: {:?}, self_peer.peer_id: {}, addr: {}, staker_address: {}",
+                presig_id_scalar,
+                derived_peer_id_scalar,
+                self_peer.peer_id,
+                self.state.addr,
+                own_staker_address
+            );
+            return Err(unexpected_err(
+                format!(
+                    "Participant ID divergence: presignature was created with participant ID {:?}, but current peer_id maps to {:?}. This indicates peer list corruption or inconsistent peer lookups between presignature creation and signing. addr: {}, staker_address: {}",
+                    presig_id_scalar, derived_peer_id_scalar, self.state.addr, own_staker_address
+                ),
+                None,
+            ));
+        }
+
+        // Use presig.id as the authoritative participant ID (it should match derived_peer_id_scalar after validation)
+        let peer_id =
+            Option::<NonZeroScalar<C>>::from(NonZeroScalar::<C>::new(presig_id_scalar)).ok_or(
+                unexpected_err("Could not convert presig.id to NonZeroScalar", None),
+            )?;
+
+        tracing::debug!(
+            "Using participant ID from presignature: {:?} (matches derived peer_id: {:?})",
+            presig_id_scalar,
+            derived_peer_id_scalar
+        );
+
         let sig_share = SignatureShare::<C>::new_scalar(
             presig,
             &participant_list,

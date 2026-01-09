@@ -5,7 +5,10 @@ use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::hd_keys::get_derived_keyshare;
 use crate::tss::common::key_share::KeyShare;
 use crate::tss::common::traits::signable::Signable;
-use crate::tss::common::{storage::read_key_share_from_disk, traits::cipherable::Cipherable};
+use crate::tss::common::{
+    storage::read_key_share_from_disk, traits::cipherable::Cipherable,
+    utils::validate_and_get_self_peer,
+};
 use crate::utils::web::get_bls_root_pubkey;
 use lit_core::error::Unexpected;
 use lit_core::utils::binary::bytes_to_hex;
@@ -148,6 +151,13 @@ impl Signable for BlsState {
                 let verifying_share = secret_key_share.public_key().map_err(|e| {
                     unexpected_err(e, Some("unable to generate verifying share".to_string()))
                 })?;
+
+                debug!(
+                    "Generated BLS signature share for peer_id: {}, staker_address: {}",
+                    self_peer.peer_id,
+                    bytes_to_hex(self_peer.staker_address.as_bytes())
+                );
+
                 Ok(BlsSignedMessageShare {
                     message: hex::encode(message_bytes),
                     result: "success".to_string(),
@@ -198,11 +208,19 @@ impl BlsState {
             _ => (self_epoch, self.state.peer_state.peers()),
         };
 
-        let peer_id = peers.peer_id_by_address(&self.state.addr)?;
+        let own_staker_address = self.state.peer_state.hex_staker_address();
+        let self_peer = validate_and_get_self_peer(&peers, &self.state.addr, &own_staker_address)?;
 
-        let staker_address = &self.state.peer_state.hex_staker_address();
+        let peer_id = self_peer.peer_id;
+        let staker_address = &own_staker_address;
+
+        debug!(
+            "Getting BLS keyshare for addr: {}, validated peer_id: {}, own staker_address: {}, epoch: {}, pubkey: {}",
+            self.state.addr, peer_id, staker_address, epoch, pubkey
+        );
+
         let realm_id = self.state.peer_state.realm_id();
-        let bls_key_share = read_key_share_from_disk::<KeyShare>(
+        let bls_key_share = match read_key_share_from_disk::<KeyShare>(
             CurveType::BLS,
             pubkey,
             staker_address,
@@ -211,7 +229,23 @@ impl BlsState {
             realm_id,
             &self.state.key_cache,
         )
-        .await?;
+        .await
+        {
+            Ok(ks) => {
+                debug!(
+                    "Retrieved BLS keyshare with peer_id: {}, share peer_id: {}",
+                    peer_id, ks.peer_id
+                );
+                ks
+            }
+            Err(e) => {
+                error!(
+                    "Failed to read BLS keyshare! addr: {}, peer_id: {}, staker_address: {}, epoch: {}, error: {:?}",
+                    self.state.addr, peer_id, staker_address, epoch, e
+                );
+                return Err(e);
+            }
+        };
 
         let identifier =
             <<Bls12381G2Impl as Pairing>::PublicKey as Group>::Scalar::from(bls_key_share.peer_id);
