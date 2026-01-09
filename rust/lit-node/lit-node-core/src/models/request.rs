@@ -75,7 +75,6 @@ pub struct JsonExecutionRequest {
     pub node_set: Vec<NodeSet>,
     #[serde(default)]
     pub invocation: Invocation,
-    pub key_set_id: String,
 }
 
 impl JsonExecutionRequest {
@@ -109,7 +108,6 @@ impl std::fmt::Debug for JsonExecutionRequest {
             .field("epoch", &self.epoch)
             .field("node_set", &self.node_set)
             .field("invocation", &self.invocation)
-            .field("key_set_id", &self.key_set_id)
             .finish()
     }
 }

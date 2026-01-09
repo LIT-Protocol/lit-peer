@@ -611,12 +611,14 @@ async fn op_encrypt_bls(
     state: Rc<RefCell<OpState>>,
     #[serde] access_control_conditions: Vec<serde_json::Value>, // Vec<UnifiedAccessControlConditionItem>
     #[buffer(copy)] to_encrypt: Vec<u8>,
+    #[string] key_set_id: String,
 ) -> Result<serde_json::Value, JsErrorBox> {
     remote_op_async!(op_encrypt_bls,
         state,
         EncryptBlsRequest {
             access_control_conditions: serde_json::to_vec(&access_control_conditions).map_err(JsErrorBox::from_err)?,
             to_encrypt,
+            key_set_id,
         },
         UnionRequest::EncryptBls(resp) => Ok(json!({"ciphertext": resp.ciphertext, "dataToEncryptHash": resp.data_to_encrypt_hash}))
     )

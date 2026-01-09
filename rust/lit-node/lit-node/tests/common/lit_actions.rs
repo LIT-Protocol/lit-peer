@@ -95,20 +95,19 @@ pub async fn lit_action_params(
     Option<String>,
     Option<serde_json::Value>,
     Option<Vec<AuthMethod>>,
-    String,
 )> {
     let lit_action_code = data_encoding::BASE64.encode(lit_action_code.as_bytes());
 
     let mut js_params = serde_json::Map::new();
     js_params.insert("publicKey".to_string(), pubkey.into());
     js_params.insert("sigName".to_string(), "sig1".into());
+    js_params.insert("keySetId".to_string(), key_set_id.clone().into());
 
     Ok((
         lit_action_code,
         None,
         Some(serde_json::Value::Object(js_params)),
         None,
-        key_set_id,
     ))
 }
 
@@ -124,7 +123,7 @@ pub async fn sign_using_child_lit_action(
 
     let (pubkey, _token_id, _eth_address, key_set_id) = end_user.first_pkp().info();
 
-    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) =
+    let (lit_action_code, ipfs_id, js_params, auth_methods) =
         lit_action_params(lit_action_code, pubkey, key_set_id.clone()).await?;
 
     let node_set = validator_collection.random_threshold_nodeset().await;
@@ -140,7 +139,6 @@ pub async fn sign_using_child_lit_action(
         js_params,
         auth_methods,
         epoch,
-        &key_set_id,
     )
     .await?;
 
@@ -171,7 +169,7 @@ pub async fn sign_from_file_system(
     let node_set = get_identity_pubkeys_from_node_set(node_set).await;
     // let node_set = &validator_collection.complete_node_set();
 
-    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) =
+    let (lit_action_code, ipfs_id, js_params, auth_methods) =
         prepare_sign_from_file_parameters(end_user, file_name).await?;
 
     let wallet = testnet.deploy_account.signing_provider.signer();
@@ -184,7 +182,6 @@ pub async fn sign_from_file_system(
         js_params,
         auth_methods,
         epoch,
-        &key_set_id,
     )
     .await?;
 
@@ -202,7 +199,6 @@ pub async fn generate_session_sigs_and_execute_lit_action(
     js_params: Option<serde_json::Value>,
     auth_methods: Option<Vec<AuthMethod>>,
     epoch: u64,
-    key_set_id: &str,
 ) -> Result<Vec<GenericResponse<JsonExecutionResponse>>> {
     info!("lit_action_code: {:?}", lit_action_code);
     let session_sigs_and_node_set = get_session_sigs_for_auth(
@@ -226,7 +222,6 @@ pub async fn generate_session_sigs_and_execute_lit_action(
         auth_methods,
         &session_sigs_and_node_set,
         epoch,
-        key_set_id,
     )
     .await;
     debug!("execute_resps: {:?}", execute_resp);
@@ -240,7 +235,6 @@ pub async fn execute_lit_action_session_sigs(
     auth_methods: Option<Vec<AuthMethod>>,
     session_sigs_and_node_set: &[SessionSigAndNodeSet],
     epoch: u64,
-    key_set_id: &str,
 ) -> Result<Vec<GenericResponse<JsonExecutionResponse>>> {
     info!("executing lit action with session sigs");
     // Generate JSON body for each port
@@ -264,7 +258,6 @@ pub async fn execute_lit_action_session_sigs(
                         epoch,
                         node_set: nodes.clone(),
                         invocation: Invocation::Sync,
-                        key_set_id: key_set_id.to_string(),
                     };
                     lit_sdk::EndpointRequest {
                         node_set: sig_and_nodeset.node.clone(),
@@ -288,7 +281,6 @@ pub async fn prepare_sign_from_file_parameters(
     Option<String>,
     Option<serde_json::Value>,
     Option<Vec<AuthMethod>>,
-    String,
 )> {
     info!("Attempting to run lit action from file: {}", file_name);
     let lit_action_code = std::fs::read_to_string(file_name)?;
@@ -306,7 +298,6 @@ pub async fn execute_lit_action_auth_sig(
     auth_methods: Option<Vec<AuthMethod>>,
     auth_sig_item: AuthSigItem,
     epoch: u64,
-    key_set_id: &str,
 ) -> Vec<GenericResponse<JsonExecutionResponse>> {
     let execute_request = JsonExecutionRequest {
         auth_sig: auth_sig_item,
@@ -317,7 +308,6 @@ pub async fn execute_lit_action_auth_sig(
         epoch,
         node_set: node_set.keys().cloned().collect(),
         invocation: Invocation::Sync,
-        key_set_id: key_set_id.to_string(),
     };
     let my_private_key = OsRng.r#gen();
     let response = lit_sdk::ExecuteFunctionRequest::new()

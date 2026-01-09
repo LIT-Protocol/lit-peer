@@ -357,6 +357,7 @@ message ExecuteJsResponse {
   message EncryptBlsRequest {
     bytes access_control_conditions = 1;
     bytes to_encrypt = 2;
+    string key_set_id = 3;
   }
 
   message UpdateResourceUsageRequest {

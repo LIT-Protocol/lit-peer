@@ -621,11 +621,18 @@ pub async fn check_and_load_test_state_cache(
     custom_node_runtime_config: &CustomNodeRuntimeConfig,
     is_fault_test: bool,
 ) -> bool {
+
+    
+    let network_state= match network_state {
+        NetworkState::Restore => "restore",
+        _ => "active",
+    };
+
     let tar_name = format!(
         "./tests/test_state_cache/{}_{}_{}.tar.gz",
         num_staked,
         num_nodes,
-        network_state.to_string()
+        network_state
     );
     if !Path::new(&tar_name).exists() {
         info!(
@@ -639,10 +646,9 @@ pub async fn check_and_load_test_state_cache(
     trace!("Block number before loading chain state: {}", block_number);
 
     let root = "./tests/test_state_cache";
-    let tar_name = format!("./{}/{}_{}.tar.gz", root, num_staked, num_nodes);
 
     lit_core::utils::tar::read_tar_gz_file(&tar_name, &root).expect("Failed to read tar.gz file");
-    let dir_name = format!("./tests/test_state_cache/{}_{}", num_staked, num_nodes);
+    let dir_name = format!("./tests/test_state_cache/{}_{}_{}", num_staked, num_nodes, network_state);
     let dir = Path::new(&dir_name);
 
     info!("Loading test state from cache: {:?}", dir);
@@ -747,11 +753,17 @@ pub async fn save_to_test_state_cache(
     num_staked_only_validators: usize,
     network_state: &NetworkState,
 ) {
+
+    let network_state= match network_state {
+        NetworkState::Restore => "restore",
+        _ => "active",
+    };
+
     let temp_dir_name = format!(
         "./tests/test_state_cache/{}_{}_{}",
         num_staked_and_joined_validators,
         num_staked_only_validators,
-        network_state.to_string()
+        network_state
     );
 
     let tar_name = format!(

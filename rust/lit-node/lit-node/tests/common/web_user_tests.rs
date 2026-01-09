@@ -285,13 +285,13 @@ pub async fn test_encryption_decryption_session_sigs(
     )
     .await;
 
-    // assert_decrypted(
-    //     &pubkey,
-    //     identity_param,
-    //     &test_encryption_parameters.to_encrypt,
-    //     &ciphertext,
-    //     decryption_resp,
-    // );
+    assert_decrypted(
+        &pubkey,
+        identity_param,
+        &test_encryption_parameters.to_encrypt,
+        &ciphertext,
+        decryption_resp,
+    );
 
     info!("Decryption checks passed");
 }
@@ -501,7 +501,7 @@ pub async fn generate_session_sigs_execute_lit_action(
     .expect("Could not get session sigs");
 
     // run
-    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) =
+    let (lit_action_code, ipfs_id, js_params, auth_methods) =
         lit_action_params(lit_action_code.to_string(), pubkey, key_set_id.clone())
             .await
             .expect("Could not get lit action params");
@@ -513,7 +513,6 @@ pub async fn generate_session_sigs_execute_lit_action(
         auth_methods,
         &session_sigs_and_node_set,
         2,
-        &key_set_id,
     )
     .await
 }

@@ -160,6 +160,7 @@ pub mod litactions {
         js_params.insert("sigName".to_string(), "sig1".into());
         js_params.insert("ciphertext".to_string(), ciphertext.into());
         js_params.insert("dataToEncryptHash".to_string(), data_to_encrypt_hash.into());
+        js_params.insert("keySetId".to_string(), key_set_id.into());
         js_params.insert(
             "accessControlConditions".to_string(),
             serde_json::to_value(access_control_conditions.unwrap()).unwrap(),
@@ -186,7 +187,6 @@ pub mod litactions {
             js_params,
             auth_methods,
             epoch,
-            &key_set_id,
         )
         .await;
 
@@ -707,6 +707,7 @@ pub mod litactions {
         );
         js_params.insert("publicKey".to_string(), mgb_pubkey.into());
         js_params.insert("sigName".to_string(), "sig1".into());
+        js_params.insert("keySetId".to_string(), key_set_id.into());
 
         let params = js_params.clone();
         let js_params = Some(serde_json::Value::Object(js_params));
@@ -794,7 +795,6 @@ pub mod litactions {
             None,
             &session_sigs_and_node_set,
             2,
-            &key_set_id,
         )
         .await
         .expect("Could not execute lit action");
@@ -817,7 +817,7 @@ pub mod litactions {
         let auth_sig = generate_authsig(&end_user.wallet)
             .await
             .expect("Couldn't generate auth sig");
-        let (pubkey, _token_id, _eth_address, key_set_id) = end_user.first_pkp().info();
+        let (pubkey, _token_id, _eth_address, _key_set_id) = end_user.first_pkp().info();
         let lit_action_code = data_encoding::BASE64.encode(lit_action_code.as_bytes());
 
         let mut js_params = serde_json::Map::new();
@@ -879,7 +879,6 @@ pub mod litactions {
                 js_params,
                 None,
                 epoch.as_u64(),
-                &key_set_id,
             )
             .await
             .unwrap();
@@ -952,7 +951,6 @@ pub mod litactions {
                 pk_params,
                 None,
                 epoch.as_u64(),
-                &key_set_id,
             )
             .await
             .unwrap();
@@ -1000,7 +998,6 @@ pub mod litactions {
                 pk_params,
                 None,
                 epoch.as_u64(),
-                &key_set_id,
             )
             .await
             .unwrap();

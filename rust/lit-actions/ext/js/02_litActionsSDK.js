@@ -582,10 +582,11 @@ function getRpcUrl({ chain }) {
  * @param {Object} params
  * @param {Array<Object>} params.accessControlConditions The access control conditions that must be met to decrypt
  * @param {string} params.to_encrypt The message to encrypt
+ * @param {string} params.keySetId The key set id to use
  * @returns {Promise<{ciphertext: string, dataToEncryptHash: string}>} An object containing the ciphertext and the hash of the data that was encrypted
  */
-function encrypt({ accessControlConditions, to_encrypt }) {
-  return ops.op_encrypt_bls(accessControlConditions, to_encrypt);
+function encrypt({ accessControlConditions, to_encrypt, keySetId = datilKeySetId }) {
+  return ops.op_encrypt_bls(accessControlConditions, to_encrypt, keySetId);
 }
 globalThis.LitActions = {
   isPermittedAction,

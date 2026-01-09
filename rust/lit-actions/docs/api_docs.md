@@ -502,6 +502,8 @@ Encrypt data using BLS encryption with access control conditions
 
     *   `params.accessControlConditions` **[Array][89]<[Object][82]>** The access control conditions that must be met to decrypt
     *   `params.to_encrypt` **[string][84]** The message to encrypt
+    *   `keySetId` **[string][84]** the key set identifier for the given public key
+
 
 Returns **[Promise][85]<{ciphertext: [string][84], dataToEncryptHash: [string][84]}>** An object containing the ciphertext and the hash of the data that was encrypted
 
@@ -526,6 +528,7 @@ Important Considerations:
     *   `params.authSig` **[Object][82]** The auth signature
     *   `params.chain` **[string][84]** The chain
     *   `keySetId` **[string][84]** the key set identifier for the given public key
+    
 
 Returns **[Promise][85]<[string][84]>** The decrypted and combined data
 
