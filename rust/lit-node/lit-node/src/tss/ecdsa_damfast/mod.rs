@@ -7,7 +7,7 @@ use crate::tss::common::utils::validate_and_get_self_peer;
 use crate::version::DataVersionReader;
 use crate::{
     error::Result,
-    peers::peer_state::models::SimplePeerCollection,
+    peers::peer_state::models::{SimplePeer, SimplePeerCollection},
     tss::common::{dkg_type::DkgType, tss_state::TssState},
 };
 use lit_core::error::Unexpected;
@@ -88,7 +88,7 @@ impl DamFastState {
         // Lagrange coefficients depend on the participant list order, and if the
         // peer list order changes (e.g., due to network updates or IP/port conflicts),
         // the coefficients would be wrong, causing signature verification to fail.
-        let mut sorted_peers: Vec<_> = peers.0.iter().collect();
+        let mut sorted_peers: Vec<SimplePeer> = peers.0.to_vec();
         sorted_peers.sort_by(|a, b| a.peer_id.cmp(&b.peer_id));
 
         let mut participants = Vec::with_capacity(sorted_peers.len());
@@ -152,7 +152,9 @@ impl DamFastState {
                     continue;
                 }
                 trace!("Sending from {} to {}", self_participant_id, payload.id);
-                let dest_peer = &peers.0[payload.ordinal];
+                // CRITICAL: Use sorted_peers to match the participant list ordering
+                // payload.ordinal is the index in the sorted participant list, not the original peers list
+                let dest_peer = &sorted_peers[payload.ordinal];
 
                 match cm
                     .send_direct::<RoundPayload<C>>(dest_peer, payload.round_payload.clone())

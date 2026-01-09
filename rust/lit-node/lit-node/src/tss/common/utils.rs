@@ -54,7 +54,8 @@ pub fn validate_and_get_self_peer(
     own_staker_address: &str,
 ) -> Result<SimplePeer> {
     let self_peer = peers.peer_at_address(addr)?;
-    let peer_staker_address_hex = bytes_to_hex(self_peer.staker_address.as_bytes());
+    // Use .0 directly to match how hex_staker_address() works in PeerState
+    let peer_staker_address_hex = bytes_to_hex(self_peer.staker_address.0);
 
     if own_staker_address != peer_staker_address_hex {
         error!(
