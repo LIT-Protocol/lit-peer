@@ -528,6 +528,7 @@ impl Client {
             UnionResponse::PkpPermissionsGetPermitted(PkpPermissionsGetPermittedRequest {
                 method,
                 token_id,
+                key_set_id,
             }) => {
                 self.pay(LitActionPriceComponent::ContractCalls, 1).await?;
                 let resources =
@@ -544,6 +545,7 @@ impl Client {
                     method,
                     user_id,
                     max_scope_id,
+                    key_set_id,
                 },
             ) => {
                 self.pay(LitActionPriceComponent::ContractCalls, 1).await?;
@@ -561,6 +563,7 @@ impl Client {
                 method,
                 token_id,
                 params,
+                key_set_id,
             }) => {
                 self.pay(LitActionPriceComponent::ContractCalls, 1).await?;
                 let is_permitted = pkp::utils::pkp_permissions_is_permitted(
@@ -576,7 +579,8 @@ impl Client {
                 PkpPermissionsIsPermittedAuthMethodRequest {
                     token_id,
                     method,
-                    user_id,
+                    user_id,    
+                    key_set_id,
                 },
             ) => {
                 self.pay(LitActionPriceComponent::ContractCalls, 1).await?;
@@ -591,7 +595,7 @@ impl Client {
                 .await?;
                 PkpPermissionsIsPermittedAuthMethodResponse { is_permitted }.into()
             }
-            UnionResponse::PubkeyToTokenId(PubkeyToTokenIdRequest { public_key }) => {
+            UnionResponse::PubkeyToTokenId(PubkeyToTokenIdRequest { public_key, key_set_id }) => {
                 let bytes = encoding::hex_to_bytes(public_key)?;
                 let token_id = format!("0x{}", bytes_to_hex(keccak256(bytes).as_slice()));
                 PubkeyToTokenIdResponse { token_id }.into()
@@ -601,6 +605,7 @@ impl Client {
                 public_key,
                 sig_name,
                 eth_personal_sign,
+                key_set_id,
             }) => {
                 self.pay(LitActionPriceComponent::Signatures, 1).await?;
 
@@ -644,6 +649,7 @@ impl Client {
                 public_key,
                 sig_name,
                 signing_scheme,
+                key_set_id,
             }) => {
                 self.pay(LitActionPriceComponent::Signatures, 1).await?;
 
@@ -961,6 +967,7 @@ impl Client {
                 data_to_encrypt_hash,
                 auth_sig,
                 chain,
+                key_set_id,
             }) => {
                 trace!("Ciphertext: {:?}", &ciphertext);
 
@@ -1087,6 +1094,7 @@ impl Client {
                 to_sign,
                 public_key,
                 sig_name,
+                key_set_id,
             }) => {
                 // we both the signatures and the broadcasts for this operation.
                 self.pay(LitActionPriceComponent::Signatures, 1).await?;
@@ -1176,6 +1184,7 @@ impl Client {
                 public_key,
                 sig_name,
                 signing_scheme,
+                key_set_id,
             }) => {
                 // we both the signatures and the broadcasts for this operation.
                 self.pay(LitActionPriceComponent::Signatures, 1).await?;

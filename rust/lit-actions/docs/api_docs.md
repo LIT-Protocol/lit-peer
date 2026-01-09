@@ -102,6 +102,8 @@ Ask the Lit Node to sign any data using the ECDSA Algorithm with it's private ke
     *   `params.toSign` **[Uint8Array][83]** The data to sign.  Should be an array of 8-bit integers.
     *   `params.publicKey` **[string][84]** The public key of the PKP you wish to sign with
     *   `params.sigName` **[string][84]** You can put any string here.  This is used to identify the signature in the response by the Lit JS SDK.  This is useful if you are signing multiple messages at once.  When you get the final signature out, it will be in an object with this signature name as the key.
+    *   `keySetId` **[string][84]** the key set identifier for the given public key
+
 
 Returns **[Promise][85]<[string][84]>** This function will return the string "success" if it works.  The signature share is returned behind the scenes to the Lit JS SDK which will automatically combine the shares and give you the full signature to use.
 
@@ -115,7 +117,9 @@ Ask the Lit Node to sign a message using the eth\_personalSign algorithm.  The r
 
     *   `params.message` **[string][84]** The message to sign.  Should be a string.
     *   `params.publicKey` **[string][84]** The public key of the PKP you wish to sign with
-    *   `params.sigName` **[string][84]** You can put any string here.  This is used to identify the signature in the response by the Lit JS SDK.  This is useful if you are signing multiple messages at once.  When you get the final signature out, it will be in an object with this signature name as the key.
+    *   `params.sigName` **[string][84]** You can put any string here.  This is used to identify the signature in the response by the 
+    *   `keySetId` **[string][84]** the key set identifier for the given public key
+    Lit JS SDK.  This is useful if you are signing multiple messages at once.  When you get the final signature out, it will be in an object with this signature name as the key.
 
 Returns **[Promise][85]<[string][84]>** This function will return the string "success" if it works.  The signature share is returned behind the scenes to the Lit JS SDK which will automatically combine the shares and give you the full signature to use.
 
@@ -142,6 +146,7 @@ Returns **[Promise][85]<[string][84]>** This function will return the string "su
     "SchnorrRedDecaf377Blake2b512"
     "SchnorrkelSubstrate"
     "Bls12381G1ProofOfPossession"
+*   `keySetId` **[string][84]** the key set identifier for the given public key
 
 Returns **[Uint8array][83]** The resulting signature share
 
@@ -166,6 +171,7 @@ The same action IPFS CID always generates the same keypair across all nodes.
         "SchnorrRistretto25519Sha512", "SchnorrEd448Shake256", "SchnorrRedJubjubBlake2b512",
         "SchnorrK256Taproot", "SchnorrRedDecaf377Blake2b512", "SchnorrkelSubstrate",
         "Bls12381G1ProofOfPossession"
+    *   `keySetId` **[string][84]** the key set identifier for the given public key
 
 Returns **[Promise][85]<[Uint8Array][83]>** The resulting signature that can be verified using verifyActionSignature
 
@@ -180,6 +186,7 @@ Sign with ECDSA and automatically combine signature shares from all nodes into a
     *   `params.toSign` **[Uint8Array][83]** The message to sign
     *   `params.publicKey` **[string][84]** The public key of the PKP
     *   `params.sigName` **[string][84]** The name of the signature
+    *   `keySetId` **[string][84]** the key set identifier for the given public key
 
 Returns **[Promise][85]<[Uint8Array][83]>** The resulting combined signature
 
@@ -200,6 +207,7 @@ Sign with any signing scheme and automatically combine signature shares from all
         "SchnorrRistretto25519Sha512", "SchnorrEd448Shake256", "SchnorrRedJubjubBlake2b512",
         "SchnorrK256Taproot", "SchnorrRedDecaf377Blake2b512", "SchnorrkelSubstrate",
         "Bls12381G1ProofOfPossession"
+    *   `keySetId` **[string][84]** the key set identifier for the given public key
 
 Returns **[Promise][85]<[Uint8Array][83]>** The resulting combined signature
 
@@ -239,6 +247,7 @@ Check if a given IPFS ID is permitted to sign using a given PKP tokenId
 
     *   `params.tokenId` **[string][84]** The tokenId to check
     *   `params.ipfsId` **[string][84]** The IPFS ID of some JS code (a lit action)
+    *   `keySetId` **[string][84]** the key set identifier for the given public key
 
 Returns **[Promise][85]<[boolean][86]>** A boolean indicating whether the IPFS ID is permitted to sign using the PKP tokenId
 
@@ -252,6 +261,7 @@ Check if a given wallet address is permitted to sign using a given PKP tokenId
 
     *   `params.tokenId` **[string][84]** The tokenId to check
     *   `params.address` **[string][84]** The wallet address to check
+    *   `keySetId` **[string][84]** the key set identifier for the given public key
 
 Returns **[Promise][85]<[boolean][86]>** A boolean indicating whether the wallet address is permitted to sign using the PKP tokenId
 
@@ -266,6 +276,7 @@ Check if a given auth method is permitted to sign using a given PKP tokenId
     *   `params.tokenId` **[string][84]** The tokenId to check
     *   `params.authMethodType` **[number][87]** The auth method type.  This is an integer.  This mapping shows the initial set but this set may be expanded over time without updating this contract: [https://github.com/LIT-Protocol/LitNodeContracts/blob/main/contracts/PKPPermissions.sol#L25][88]
     *   `params.userId` **[Uint8Array][83]** The id of the auth method to check expressed as an array of unsigned 8-bit integers (a Uint8Array)
+    *   `keySetId` **[string][84]** the key set identifier for the given public key
 
 Returns **[Promise][85]<[boolean][86]>** A boolean indicating whether the auth method is permitted to sign using the PKP tokenId
 
@@ -278,6 +289,7 @@ Get the full list of actions that are permitted to sign using a given PKP tokenI
 *   `params` **[Object][82]**&#x20;
 
     *   `params.tokenId` **[string][84]** The tokenId to check
+    *   `keySetId` **[string][84]** the key set identifier for the given public key
 
 Returns **[Promise][85]<[Array][89]<[string][84]>>** An array of IPFS IDs of lit actions that are permitted to sign using the PKP tokenId
 
@@ -290,6 +302,7 @@ Get the full list of addresses that are permitted to sign using a given PKP toke
 *   `params` **[Object][82]**&#x20;
 
     *   `params.tokenId` **[string][84]** The tokenId to check
+    *   `keySetId` **[string][84]** the key set identifier for the given public key
 
 Returns **[Promise][85]<[Array][89]<[string][84]>>** An array of addresses that are permitted to sign using the PKP tokenId
 
@@ -302,6 +315,7 @@ Get the full list of auth methods that are permitted to sign using a given PKP t
 *   `params` **[Object][82]**&#x20;
 
     *   `params.tokenId` **[string][84]** The tokenId to check
+    *   `keySetId` **[string][84]** the key set identifier for the given public key
 
 Returns **[Promise][85]<[Array][89]<[Object][82]>>** An array of auth methods that are permitted to sign using the PKP tokenId.  Each auth method is an object with the following properties: auth\_method\_type, id, and user\_pubkey (used for web authn, this is the pubkey of the user's authentication keypair)
 
@@ -317,6 +331,7 @@ Get the permitted auth method scopes for a given PKP tokenId and auth method typ
     *   `params.authMethodType` **[string][84]** The auth method type to look up
     *   `params.userId` **[Uint8Array][83]** The id of the auth method to check expressed as an array of unsigned 8-bit integers (a Uint8Array)
     *   `params.maxScopeId` **[number][87]** The maximum scope id to check.  This is an integer.
+    *   `keySetId` **[string][84]** the key set identifier for the given public key
 
 Returns **[Promise][85]<[Array][89]<[boolean][86]>>** An array of booleans that define if a given scope id is turned on.  The index of the array is the scope id.  For example, if the array is \[true, false, true], then scope ids 0 and 2 are turned on, but scope id 1 is turned off.
 
@@ -380,6 +395,7 @@ Converts a PKP public key to a PKP token ID by hashing it with keccak256
 *   `params` **[Object][82]**&#x20;
 
     *   `params.publicKey` **[string][84]** The public key to convert
+    *   `keySetId` **[string][84]** the key set identifier for the given public key
 
 Returns **[Promise][85]<[string][84]>** The token ID as a string
 
@@ -509,6 +525,7 @@ Important Considerations:
     *   `params.dataToEncryptHash` **[string][84]** The hash of the data to encrypt
     *   `params.authSig` **[Object][82]** The auth signature
     *   `params.chain` **[string][84]** The chain
+    *   `keySetId` **[string][84]** the key set identifier for the given public key
 
 Returns **[Promise][85]<[string][84]>** The decrypted and combined data
 
@@ -525,6 +542,7 @@ Decrypt to a single node
     *   `params.dataToEncryptHash` **[string][84]** The hash of the data to encrypt
     *   `params.authSig` **[Object][82]** The auth signature
     *   `params.chain` **[string][84]** The chain
+    *   `keySetId` **[string][84]** the key set identifier for the given public key
 
 Returns **[Promise][85]<[string][84]>** The decrypted data
 

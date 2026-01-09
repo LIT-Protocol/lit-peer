@@ -487,6 +487,7 @@ async fn pkp_get_permitted(mut client: TestClient) {
             PkpPermissionsGetPermittedRequest {
                 method: method.to_string(),
                 token_id: "0x1234".to_string(),
+                key_set_id: "datil-keyset".to_string(),
             }
         );
         assert!(client.received::<ExecutionResult>().success);
@@ -511,6 +512,7 @@ async fn pkp_get_permitted(mut client: TestClient) {
                 method: "5".to_string(),
                 user_id: vec![1, 2, 3],
                 max_scope_id: 100,
+                key_set_id: "datil-keyset".to_string(),
             }
         );
         assert!(client.received::<ExecutionResult>().success);
@@ -536,6 +538,7 @@ async fn pkp_is_permitted(mut client: TestClient) {
                 method: "isPermittedAction".to_string(),
                 token_id: "0x1234".to_string(),
                 params: b"[\"some-id\"]".into(),
+                key_set_id: "datil-keyset".to_string(),
             }
         );
         assert!(client.received::<ExecutionResult>().success);
@@ -557,6 +560,7 @@ async fn pkp_is_permitted(mut client: TestClient) {
                 method: "isPermittedAddress".to_string(),
                 token_id: "0x1234".to_string(),
                 params: b"[\"some-address\"]".into(),
+                key_set_id: "datil-keyset".to_string(),
             }
         );
         assert!(client.received::<ExecutionResult>().success);
@@ -578,6 +582,7 @@ async fn pkp_is_permitted(mut client: TestClient) {
                 token_id: "0x1234".to_string(),
                 method: "5".to_string(),
                 user_id: vec![1, 2, 3],
+                key_set_id: "datil-keyset".to_string(),
             }
         );
         assert!(client.received::<ExecutionResult>().success);
@@ -604,6 +609,7 @@ async fn sign_ecdsa(mut client: TestClient) {
                 public_key: "some-key".to_string(),
                 sig_name: "some-sig".to_string(),
                 eth_personal_sign: false,
+                key_set_id: "datil-keyset".to_string(),
             }
         );
         assert!(client.received::<ExecutionResult>().success);
@@ -626,6 +632,7 @@ async fn sign_ecdsa(mut client: TestClient) {
                 public_key: "some-key".to_string(),
                 sig_name: "some-sig".to_string(),
                 eth_personal_sign: true,
+                key_set_id: "datil-keyset".to_string(),
             }
         );
         assert!(client.received::<ExecutionResult>().success);
@@ -800,6 +807,7 @@ async fn pubkey_to_token_id(mut client: TestClient) {
         client.received::<PubkeyToTokenIdRequest>(),
         PubkeyToTokenIdRequest {
             public_key: "some-key".to_string(),
+            key_set_id: "datil-keyset".to_string(),
         }
     );
     assert!(client.received::<ExecutionResult>().success);
