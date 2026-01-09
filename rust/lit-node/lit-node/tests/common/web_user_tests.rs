@@ -229,7 +229,7 @@ pub async fn test_encryption_decryption_session_sigs(
     .unwrap();
 
     let node_set = validator_collection
-        .partially_random_threshold_nodeset(validators_to_include)
+        .partially_random_threshold_nodeset(validators_to_include) 
         .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     // Get session sig for auth
@@ -279,7 +279,7 @@ pub async fn test_encryption_decryption_session_sigs(
     );
 
     // Retrieve decrypted key
-    let decryption_resp = retrieve_decryption_key_session_sigs_with_version(
+    let _decryption_resp = retrieve_decryption_key_session_sigs_with_version(
         test_encryption_parameters.clone(),
         &session_sigs,
         epoch.as_u64(),
