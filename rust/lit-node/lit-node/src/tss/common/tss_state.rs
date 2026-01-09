@@ -287,6 +287,11 @@ impl TssState {
             return 0;
         }
 
+        // if we're not part of the peer set (yet), return 0.  This is a special case for joining a network.
+        if !peers.contains_address(self.peer_state.addr.as_str()) {
+            return 0;
+        }
+
         let curve_type = CurveType::K256;
         let epoch = self.get_keyshare_epoch().await;
         let cdm = &self.chain_data_config_manager;

@@ -89,8 +89,6 @@ impl DkgManager {
                     )
                 };
 
-                warn!("epoch_dkg_id: {}", epoch_dkg_id);
-
                 let existing_root_keys = key_set_config
                     .root_keys_by_curve
                     .get(&curve_type)

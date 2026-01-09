@@ -238,18 +238,18 @@ impl TestSetupBuilder {
             .epoch_length(self.epoch_length)
             .max_presign_count_u64(self.max_presign_count)
             .min_presign_count_u64(self.min_presign_count)
+            .default_key_set(Some(DEFAULT_KEY_SET_NAME.to_string()))
             .build();
+
+        info!(
+            "Staking contract realm config: {:?}",
+            staking_contract_realm_config
+        );
 
         let _testnet_contracts =
             Testnet::setup_contracts(&mut testnet, None, Some(staking_contract_realm_config))
                 .await
                 .expect("Failed to setup contracts");
-
-        testnet
-            .actions()
-            .set_default_keyset_id(1, DEFAULT_KEY_SET_NAME)
-            .await
-            .expect("Failed to set default keyset id");
 
         if self.low_kick_tolerance {
             testnet

@@ -955,7 +955,10 @@ impl ValidatorBuilder {
             node: NodeBuilder::new()
                 .realm_id(self.realm_id)
                 .binary_path(binary_path)
-                .build(node_config_file_path)
+                .build(
+                    node_config_file_path,
+                    self.node_binary_feature_flags.clone(),
+                )
                 .await?,
             account: node_account.clone(),
         });
@@ -1002,6 +1005,10 @@ impl Validator {
 
     pub fn set_binary_path(&mut self, binary_path: String) {
         self.node.binary_path = binary_path;
+    }
+
+    pub fn force_search_binary(&mut self) {
+        self.set_binary_path("".to_string());
     }
 
     pub async fn start_node(&mut self, clean_slate: bool, wait_for_node_awake: bool) -> Result<()> {
@@ -1239,7 +1246,7 @@ impl NodeBuilder {
         self
     }
 
-    pub async fn build(self, config_file: String) -> Result<Node> {
+    pub async fn build(self, config_file: String, feature_flags: String) -> Result<Node> {
         // if we're in CI, it's already built and in the root
         let path = self
             .binary_path
@@ -1258,6 +1265,7 @@ impl NodeBuilder {
             realm_id: self.realm_id.unwrap_or_else(|| U256::from(1)),
             process: None,
             config_file,
+            feature_flags,
             binary_path: path,
             log_mode: self.log_mode,
             extra_env_vars: self.extra_env_vars,
@@ -1271,6 +1279,7 @@ impl NodeBuilder {
 pub struct Node {
     process: Option<Child>,
     config_file: String,
+    feature_flags: String,
     binary_path: String,
     log_mode: String,
     extra_env_vars: Vec<(String, String)>,
@@ -1303,6 +1312,7 @@ impl Clone for Node {
         Self {
             process: None,
             config_file: self.config_file.clone(),
+            feature_flags: self.feature_flags.clone(),
             binary_path: self.binary_path.clone(),
             log_mode: self.log_mode.clone(),
             extra_env_vars: self.extra_env_vars.clone(),
@@ -1338,6 +1348,11 @@ impl Node {
         if self.process.is_some() {
             warn!("Node {} is already online", self.port);
             return Ok(());
+        }
+
+        if self.binary_path.is_empty() {
+            self.binary_path =
+                Self::get_binary(self.feature_flags.clone(), self.config_file.clone())?;
         }
 
         info!(

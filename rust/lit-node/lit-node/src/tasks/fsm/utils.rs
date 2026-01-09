@@ -192,7 +192,12 @@ pub(crate) async fn key_share_proofs_check(
     trace!("Key share proof check - root keys: {:?}", root_keys_map);
 
     for (identifier, map) in &root_keys_map {
-        let noonce = format!("{epoch}-{lifecycle_id}-{identifier}");
+        let noonce = if peers.has_version_lower_than("2.1.8") {
+            format!("{epoch}-{lifecycle_id}")
+        } else {
+            format!("{epoch}-{lifecycle_id}-{identifier}")
+        };
+
         trace!("Key share proofs nonce signed: {}", noonce);
         let proofs =
             compute_key_share_proofs(&noonce, map, &tss_state.addr, peers, realm_id, epoch).await?;
