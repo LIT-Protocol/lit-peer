@@ -623,7 +623,7 @@ pub async fn check_and_load_test_state_cache(
 ) -> bool {
 
     
-    let network_state= match network_state {
+    let network_state = match network_state {
         NetworkState::Restore => "restore",
         _ => "active",
     };
