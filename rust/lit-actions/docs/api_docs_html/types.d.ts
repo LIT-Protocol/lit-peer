@@ -579,7 +579,7 @@ export declare namespace Lit {
         waitForResponse: boolean;
         name: string;
       },
-      async_fn: Function,
+      async_fn: Function
     ): Promise<string>;
     /**
      * Get the RPC URL for a given blockchain
@@ -696,11 +696,11 @@ declare const jwt: {
   verify: (
     token: string,
     secretOrPublicKey: string | Buffer,
-    options?: any,
+    options?: any
   ) => any;
   sign: (
     payload: string | object | Buffer,
     secretOrPrivateKey: string | Buffer,
-    options?: any,
+    options?: any
   ) => string;
 };
