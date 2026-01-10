@@ -279,7 +279,7 @@ pub async fn test_encryption_decryption_session_sigs(
     );
 
     // Retrieve decrypted key
-    let _decryption_resp = retrieve_decryption_key_session_sigs_with_version(
+    let decryption_resp = retrieve_decryption_key_session_sigs_with_version(
         test_encryption_parameters.clone(),
         &session_sigs,
         epoch.as_u64(),

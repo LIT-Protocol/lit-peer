@@ -1,10 +1,11 @@
 use crate::common::{assertions::NetworkIntegrityChecker, version::get_crate_version};
+use async_std::stream::StreamExt;
 use ethers::types::U256;
 use lit_node_testnet::{
     TestSetupBuilder, node_collection::get_node_versions, testnet::actions::Actions,
     validator::ValidatorCollection,
 };
-use std::fs;
+use std::{fs, io::Write};
 use test_case::test_case;
 use tracing::info;
 
@@ -16,11 +17,6 @@ struct UpgradeStepData {
     pub epoch_length: usize,
 }
 
-/// This test assumes that you have the lit_node builds for the target branches.
-/// During local development, there are two ways to get the builds:
-/// 1. Run the `build_target_branches` script in the `scripts` directory. (x86 and arm64 builds)
-/// 2. Run the `download_builds` script in the `scripts` directory. (x86 builds only)
-/// The test will fail if the builds are not found.
 #[test_case("2.1.5", false; "Upgrade against the latest NAGA-Prod release branch, assuming chain state was updated manually.")]
 #[tokio::test]
 async fn test_version_upgrade_against_old_version(
@@ -32,6 +28,20 @@ async fn test_version_upgrade_against_old_version(
 
     // First check if we have the build.
     let release_build_path = format!("./target/{}/debug/lit_node", release_version);
+
+    if fs::metadata(&release_build_path).is_ok() {
+        info!(
+            "Build exists at {}, skipping download...",
+            release_build_path
+        );
+    } else {
+        info!(
+            "Build does not exist at {}, downloading...",
+            release_build_path
+        );
+        download_release_build(release_version).await;
+    }
+
     assert!(
         fs::metadata(&release_build_path).is_ok(),
         "Build does not exist at {}",
@@ -39,15 +49,13 @@ async fn test_version_upgrade_against_old_version(
     );
 
     if use_old_chain_state {
-        // TODO: Implement old chain state setup, by passing a parameter to the chain state data.
+        // TODO if required: Implement old chain state setup, by passing a parameter to the chain state data.
     }
 
     let initial_node_count = 5;
     // Set up a network of nodes running the old build.
     let (testnet, mut validator_collection, end_user) = TestSetupBuilder::default()
         .num_staked_and_joined_validators(initial_node_count)
-        // .num_staked_only_validators(initial_node_count)
-        // .start_staked_only_validators(false)
         .custom_binary_path(Some(release_build_path))
         .max_presign_count(0)
         .min_presign_count(0)
@@ -78,6 +86,7 @@ async fn test_version_upgrade_against_old_version(
         "Initial node versions: {:?}",
         upgrade_step_data.initial_node_versions
     );
+
     // Assert all node versions are the same.
     assert!(
         upgrade_step_data
@@ -133,7 +142,7 @@ async fn test_version_upgrade_against_old_version(
 
 async fn advance_and_validate_step(
     actions: &Actions,
-    network_checker: &NetworkIntegrityChecker,
+    _network_checker: &NetworkIntegrityChecker,
     validator_collection: &ValidatorCollection,
     data: &UpgradeStepData,
     nodes_removed: usize,
@@ -168,7 +177,7 @@ async fn advance_and_validate_step(
         );
 
         // Get current crate version.
-        let current_crate_version = get_crate_version();
+        // let current_crate_version = get_crate_version();
         // for (i, version) in node_versions.iter().enumerate() {
         //     if i < (data.initial_node_count - data.upgrade_round) {
         //         assert_eq!(version, &data.initial_node_versions[0]);
@@ -177,4 +186,47 @@ async fn advance_and_validate_step(
         //     }
         // }
     }
+}
+
+async fn download_release_build(release_version: &str) {
+    let download_path = format!("./target/{}", release_version);
+    let release_build_path = format!("./target/{}/debug/", release_version);
+    let release_build_url = format!(
+        "https://github.com/LIT-Protocol/lit-node-binary-releases/releases/download/{}/lit_node.tar.gz",
+        release_version
+    );
+    let zip_name = format!("{}/lit_node.tar.gz", download_path);
+
+    info!("Downloading {}...", release_build_url);
+
+    let mut stream = reqwest::get(&release_build_url)
+        .await
+        .unwrap()
+        .bytes_stream();
+
+    fs::create_dir_all(&release_build_path).expect("Failed to create directory"); // includes the download path
+    let mut file = std::fs::File::create(&zip_name).expect("Failed to create file");
+
+    let mut total_downloaded: u64 = 0;
+    let mut print_threshold: u64 = 5 * 1024 * 1024; // 5MB
+    while let Some(chunk_result) = stream.next().await {
+        let chunk = chunk_result.expect("Failed to get stream from GitHub");
+        total_downloaded += chunk.len() as u64;
+        if total_downloaded >= print_threshold {
+            info!("Downloaded {} kb.", total_downloaded / 1024);
+            print_threshold += 5 * 1024 * 1024; // 5MB
+        }
+        file.write_all(&chunk)
+            .expect("Failed to write to stream to local file");
+    }
+
+    file.flush().expect("Failed to flush file");
+    info!("Downloaded {} to {}", release_build_url, download_path);
+
+    info!("Unzipping {} to {}", zip_name, release_build_path);
+
+    lit_core::utils::tar::read_tar_gz_file(&zip_name, &release_build_path)
+        .expect("Failed to read tar.gz file");
+
+    info!("Unzipped {} to {}", zip_name, download_path);
 }
