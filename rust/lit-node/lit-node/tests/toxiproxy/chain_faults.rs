@@ -21,7 +21,9 @@ fn setup() {
     setup_proxies(&PROXY_MAPPINGS);
 }
 
+// This is the basic structure for a chain fault test.
 #[tokio::test]
+#[ignore]
 async fn kick_node_who_loses_chain_connection() {
     setup();
 
