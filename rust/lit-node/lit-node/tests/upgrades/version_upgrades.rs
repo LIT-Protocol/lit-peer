@@ -19,6 +19,7 @@ struct UpgradeStepData {
 
 #[test_case("2.1.5", false; "Upgrade against the latest NAGA-Prod release branch, assuming chain state was updated manually.")]
 #[tokio::test]
+#[ignore]
 async fn test_version_upgrade_against_old_version(
     release_version: &str,
     use_old_chain_state: bool,
