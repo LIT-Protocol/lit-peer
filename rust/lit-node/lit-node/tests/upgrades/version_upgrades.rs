@@ -145,7 +145,7 @@ async fn test_version_upgrade_against_old_version(
 
     network_checker.check(&vc, &vec![]).await;
 
-    uncomment_anvilDatil_chain_in_rpc_config().await;
+    uncomment_anvil_datil_chain_in_rpc_config().await;
 }
 
 async fn advance_and_validate_step(
@@ -275,7 +275,7 @@ async fn before_start_validators_fn()
 
             // read the rpc_config.yaml file and comment out the anvilDatil chain
             // this also causes the old nodes to fail to start ( won't affect the new nodes for THIS test )
-            comment_out_anvilDatil_chain_in_rpc_config().await;            // function here to increase blockchain timestamp by 1000 seconds
+            comment_out_anvil_datil_chain_in_rpc_config().await; // function here to increase blockchain timestamp by 1000 seconds
             Ok(())
         }) as BoxFuture<'static, Result<(), anyhow::Error>>
     });
@@ -283,7 +283,7 @@ async fn before_start_validators_fn()
     fut
 }
 
-async fn comment_out_anvilDatil_chain_in_rpc_config() {
+async fn comment_out_anvil_datil_chain_in_rpc_config() {
     let rpc_config = fs::read_to_string("rpc-config.yaml").unwrap();
     let rpc_config = rpc_config
         .lines()
@@ -296,11 +296,12 @@ async fn comment_out_anvilDatil_chain_in_rpc_config() {
                 line.to_string()
             }
         })
-        .collect::<Vec<String>>().join("\n");
+        .collect::<Vec<String>>()
+        .join("\n");
     fs::write("rpc-config.yaml", rpc_config).unwrap();
 }
 
-async fn uncomment_anvilDatil_chain_in_rpc_config() {
+async fn uncomment_anvil_datil_chain_in_rpc_config() {
     let rpc_config = fs::read_to_string("rpc-config.yaml").unwrap();
     let rpc_config = rpc_config
         .lines()
@@ -313,6 +314,7 @@ async fn uncomment_anvilDatil_chain_in_rpc_config() {
                 line.to_string()
             }
         })
-        .collect::<Vec<String>>().join("\n");
+        .collect::<Vec<String>>()
+        .join("\n");
     fs::write("rpc-config.yaml", rpc_config).unwrap();
 }
