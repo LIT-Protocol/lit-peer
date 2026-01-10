@@ -209,7 +209,7 @@ contract FunctionSelectorHelper {
         functionSignatures[15] = "decreaseRewardPool(uint256,uint256)";
         functionSignatures[
             16
-        ] = "setConfig((uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))";
+        ] = "setConfig((uint256,uint256[],uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))";
         functionSignatures[
             17
         ] = "setComplaintConfig(uint256,(uint256,uint256,uint256,uint256))";

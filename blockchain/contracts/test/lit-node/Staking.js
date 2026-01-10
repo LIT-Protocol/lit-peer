@@ -1557,6 +1557,7 @@ async function updateMinimumValidatorCount(
 
   await stakingAdminFacet.setConfig({
     tokenRewardPerTokenPerEpoch: currentConfig.tokenRewardPerTokenPerEpoch,
+    keyTypes_deprecated: currentConfig.keyTypes_deprecated,
     minimumValidatorCount: newMinimumValidatorCount,
     rewardEpochDuration: currentConfig.rewardEpochDuration,
     maxTimeLock: currentConfig.maxTimeLock,
