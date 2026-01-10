@@ -413,7 +413,7 @@ where
     <ecdsa::VerifyingKey<C> as PrehashVerifier<ecdsa::Signature<C>>>::verify_prehash(
         &vk, &message, &signature,
     )
-    .map_err(|e| SdkError::EcdsaSignature(e))?;
+    .map_err(SdkError::EcdsaSignature)?;
 
     let rid = RecoveryId::trial_recovery_from_prehash(&vk, &message, &signature)?;
 
