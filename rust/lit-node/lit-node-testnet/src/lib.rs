@@ -8,8 +8,8 @@ pub mod validator;
 use self::testnet::Testnet;
 use self::testnet::node_config::CustomNodeRuntimeConfig;
 use self::validator::ValidatorCollection;
-use crate::testnet::StakerAccountSetupMapper;
 use crate::testnet::contracts::StakingContractRealmConfig;
+use crate::testnet::{BeforeStartValidatorsFn, StakerAccountSetupMapper};
 use crate::{end_user::EndUser, validator::default_datil_keyset_config};
 use ethers::types::U256;
 use futures::future::BoxFuture;
@@ -58,6 +58,9 @@ pub struct TestSetupBuilder {
     staker_account_setup_mapper: Option<
         Box<dyn StakerAccountSetupMapper<Future = BoxFuture<'static, Result<(), anyhow::Error>>>>,
     >,
+    before_start_validators_fn: Option<
+        Box<dyn BeforeStartValidatorsFn<Future = BoxFuture<'static, Result<(), anyhow::Error>>>>,
+    >,
 }
 
 impl Default for TestSetupBuilder {
@@ -84,6 +87,7 @@ impl Default for TestSetupBuilder {
             asleep_initially_override: None,
             staker_account_setup_mapper: None,
             low_kick_tolerance: false,
+            before_start_validators_fn: None,
         }
     }
 }
@@ -193,6 +197,18 @@ impl TestSetupBuilder {
         >,
     ) -> Self {
         self.staker_account_setup_mapper = staker_account_setup_mapper;
+        self
+    }
+
+    pub fn before_start_validators_fn(
+        mut self,
+        before_start_validators_fn: Option<
+            Box<
+                dyn BeforeStartValidatorsFn<Future = BoxFuture<'static, Result<(), anyhow::Error>>>,
+            >,
+        >,
+    ) -> Self {
+        self.before_start_validators_fn = before_start_validators_fn;
         self
     }
 
@@ -366,6 +382,14 @@ impl TestSetupBuilder {
         } else {
             "lit-actions,testing".to_string()
         };
+
+        if let Some(mut before_start_validators_fn) = self.before_start_validators_fn {
+            let actions = testnet.actions().clone();
+            before_start_validators_fn
+                .run(actions)
+                .await
+                .expect("Failed to run a required function before starting validators.");
+        }
 
         let validator_collection = ValidatorCollection::builder()
             .num_staked_nodes(num_staked_nodes)

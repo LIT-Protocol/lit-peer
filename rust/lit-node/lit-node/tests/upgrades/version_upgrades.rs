@@ -1,8 +1,11 @@
-use crate::common::{assertions::NetworkIntegrityChecker, version::get_crate_version};
+use crate::common::assertions::NetworkIntegrityChecker; // version::get_crate_version};
 use async_std::stream::StreamExt;
 use ethers::types::U256;
+use futures::future::BoxFuture;
 use lit_node_testnet::{
-    TestSetupBuilder, node_collection::get_node_versions, testnet::actions::Actions,
+    DEFAULT_KEY_SET_NAME, TestSetupBuilder,
+    node_collection::get_node_versions,
+    testnet::{BeforeStartValidatorsFn, actions::Actions},
     validator::ValidatorCollection,
 };
 use std::{fs, io::Write};
@@ -19,7 +22,6 @@ struct UpgradeStepData {
 
 #[test_case("2.1.5", false; "Upgrade against the latest NAGA-Prod release branch, assuming chain state was updated manually.")]
 #[tokio::test]
-#[ignore]
 async fn test_version_upgrade_against_old_version(
     release_version: &str,
     use_old_chain_state: bool,
@@ -53,6 +55,8 @@ async fn test_version_upgrade_against_old_version(
         // TODO if required: Implement old chain state setup, by passing a parameter to the chain state data.
     }
 
+    let setup_function = before_start_validators_fn().await;
+
     let initial_node_count = 5;
     // Set up a network of nodes running the old build.
     let (testnet, mut validator_collection, end_user) = TestSetupBuilder::default()
@@ -61,6 +65,7 @@ async fn test_version_upgrade_against_old_version(
         .max_presign_count(0)
         .min_presign_count(0)
         .force_deploy(true)
+        .before_start_validators_fn(Some(setup_function))
         .build()
         .await;
 
@@ -118,8 +123,8 @@ async fn test_version_upgrade_against_old_version(
 
         validator.stop_node().expect("Failed to stop node");
 
-        // start the node with a binary from this build ( rebuild if required )
-        // let new_validator = validator_collection.get_validator_by_index_as_mut(upgrade_round+initial_node_count);
+        // we're going to use the same validator / staker, to match what we do in production.
+        // force_search binary clears any custom binary paths - causing the test to use the binary from this branch ( rebuilding if required )
         validator.force_search_binary();
 
         validator
@@ -139,6 +144,8 @@ async fn test_version_upgrade_against_old_version(
     }
 
     network_checker.check(&vc, &vec![]).await;
+
+    uncomment_anvilDatil_chain_in_rpc_config().await;
 }
 
 async fn advance_and_validate_step(
@@ -230,4 +237,82 @@ async fn download_release_build(release_version: &str) {
         .expect("Failed to read tar.gz file");
 
     info!("Unzipped {} to {}", zip_name, download_path);
+}
+
+use lit_blockchain::contracts::staking::KeySetConfig;
+async fn before_start_validators_fn()
+-> Box<dyn BeforeStartValidatorsFn<Future = BoxFuture<'static, Result<(), anyhow::Error>>>> {
+    let fut = Box::new(move |actions: Actions| {
+        Box::pin(async move {
+            // remove the last curve from the keyset, which isn't in the default node version 2.1.5 release, and will prevent the node from completing it's DKG.
+            let mut keyset_config: KeySetConfig = actions
+                .contracts()
+                .staking
+                .get_key_set(DEFAULT_KEY_SET_NAME.to_string())
+                .await
+                .unwrap();
+            let curve_count = keyset_config.counts.len();
+            keyset_config.counts = keyset_config
+                .counts
+                .iter()
+                .take(curve_count - 8)
+                .cloned()
+                .collect();
+            keyset_config.curves = keyset_config
+                .curves
+                .iter()
+                .take(curve_count - 8)
+                .cloned()
+                .collect();
+
+            actions
+                .contracts()
+                .staking
+                .delete_key_set(keyset_config.identifier.clone())
+                .await
+                .unwrap();
+            actions.add_keyset_config(keyset_config).await.unwrap();
+
+            // read the rpc_config.yaml file and comment out the anvilDatil chain
+            // this also causes the old nodes to fail to start ( won't affect the new nodes for THIS test )
+            comment_out_anvilDatil_chain_in_rpc_config().await;            // function here to increase blockchain timestamp by 1000 seconds
+            Ok(())
+        }) as BoxFuture<'static, Result<(), anyhow::Error>>
+    });
+
+    fut
+}
+
+async fn comment_out_anvilDatil_chain_in_rpc_config() {
+    let rpc_config = fs::read_to_string("rpc-config.yaml").unwrap();
+    let rpc_config = rpc_config
+        .lines()
+        .map(|line| {
+            if line.contains("anvilDatil") && !line.starts_with("#") {
+                format!("# {}", line)
+            } else if line.contains(" http://127.0.0.1:8549") && !line.starts_with("#") {
+                format!("# {}", line)
+            } else {
+                line.to_string()
+            }
+        })
+        .collect::<Vec<String>>().join("\n");
+    fs::write("rpc-config.yaml", rpc_config).unwrap();
+}
+
+async fn uncomment_anvilDatil_chain_in_rpc_config() {
+    let rpc_config = fs::read_to_string("rpc-config.yaml").unwrap();
+    let rpc_config = rpc_config
+        .lines()
+        .map(|line| {
+            if line.contains("anvilDatil") && line.starts_with("#") {
+                line.to_string().replace("# ", "")
+            } else if line.contains(" http://127.0.0.1:8549") && line.starts_with("#") {
+                line.to_string().replace("# ", "")
+            } else {
+                line.to_string()
+            }
+        })
+        .collect::<Vec<String>>().join("\n");
+    fs::write("rpc-config.yaml", rpc_config).unwrap();
 }

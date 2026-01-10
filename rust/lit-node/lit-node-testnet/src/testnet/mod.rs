@@ -486,6 +486,24 @@ where
     }
 }
 
+pub trait BeforeStartValidatorsFn: Send + Sync {
+    type Future: Future<Output = Result<(), anyhow::Error>>;
+
+    fn run(&mut self, actions: Actions) -> Self::Future;
+}
+
+impl<T: Future<Output = Result<(), anyhow::Error>>, F: FnMut(Actions) -> T> BeforeStartValidatorsFn
+    for F
+where
+    F: Send + Sync,
+{
+    type Future = T;
+
+    fn run(&mut self, actions: Actions) -> Self::Future {
+        self(actions)
+    }
+}
+
 // Implementing drop means we don't have to remember to clean up the testnet, and is more able to clean up even when there is a panic, since drop may still be called.
 impl Drop for Testnet {
     fn drop(&mut self) {
