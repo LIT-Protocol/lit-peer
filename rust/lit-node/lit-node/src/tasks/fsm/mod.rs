@@ -163,7 +163,7 @@ pub async fn node_fsm_worker(
                 }
 
                 // if the epoch seems to have jumped, we need to figure out why and handle it.
-                if epoch_number > previous_included_epoch_number {
+                if epoch_number >= previous_included_epoch_number {
                     // this could be the state if we haven't checked the chain - check it and continue.
                     if network_state == NetworkState::NextValidatorSetLocked {
                         wait_on_next_validator_set_locked(
