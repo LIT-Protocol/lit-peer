@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 /// Data representing a signature share from a distributed signing operation.
 #[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct SignedData {
     /// The type of signature (e.g., "ECDSA", "BLS").

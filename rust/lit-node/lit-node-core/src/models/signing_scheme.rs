@@ -5,6 +5,7 @@ use std::str::FromStr;
 
 /// Cryptographic signing algorithm types supported by the system.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum SigningAlgorithm {
     /// Pairing-based cryptography (e.g., BLS signatures).
     Pairing,
@@ -16,6 +17,7 @@ pub enum SigningAlgorithm {
 
 /// Preference for public key encoding format.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum KeyFormatPreference {
     /// Full uncompressed point representation.
     Uncompressed,
@@ -24,7 +26,16 @@ pub enum KeyFormatPreference {
 }
 
 /// Comprehensive signing schemes combining curve type, signature algorithm, and hash function.
+///
+/// Serializes as a string in JSON (e.g., "EcdsaK256Sha256", "Bls12381", "SchnorrEd25519Sha512").
+///
+/// Valid values: Bls12381, EcdsaK256Sha256, EcdsaP256Sha256, EcdsaP384Sha384,
+/// SchnorrEd25519Sha512, SchnorrK256Sha256, SchnorrP256Sha256, SchnorrP384Sha384,
+/// SchnorrRistretto25519Sha512, SchnorrEd448Shake256, SchnorrRedJubjubBlake2b512,
+/// SchnorrK256Taproot, SchnorrRedDecaf377Blake2b512, SchnorrRedPallasBlake2b512,
+/// SchnorrkelSubstrate, Bls12381G1ProofOfPossession
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Hash)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum SigningScheme {
     /// BLS12-381 pairing-based signatures (default).
     #[default]
