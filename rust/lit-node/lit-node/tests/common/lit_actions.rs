@@ -33,7 +33,7 @@ pub const HELLO_WORLD_LIT_ACTION_CODE: &str = "const go = async () => {
 
   let utf8Encode = new TextEncoder();
   const toSign = utf8Encode.encode('This message is exactly 32 bytes');
-  const sigShare = await Lit.Actions.signEcdsa({ toSign, publicKey, sigName });
+  const sigShare = await Lit.Actions.signEcdsa({ toSign, publicKey, sigName, keySetId });
 };
 go();";
 
@@ -43,7 +43,8 @@ const CALL_CHILD_LIT_ACTION_CODE: &str = "const go = async () => {
     const _ = await Lit.Actions.call({ ipfsId: 'QmRwN9GKHvCn4Vk7biqtr6adjXMs7PzzYPCzNCRjPFiDjm', params: {
         toSign: Array.from(toSign),
         publicKey,
-        sigName
+        sigName,
+        keySetId
     }});
   };
   go();";

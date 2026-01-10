@@ -15,7 +15,7 @@ use std::collections::HashMap;
 pub const INVALID_SESSION_SIG_LIT_ACTION_CODE: &str = r#"(async () => {
     let utf8Encode = new TextEncoder();
     const toSign = utf8Encode.encode('This message is exactly 32 bytes');
-    const sigShare = await LitActions.signEcdsa({ toSign, publicKey, sigName });
+    const sigShare = await LitActions.signEcdsa({ toSign, publicKey, sigName, keySetId });
 })();"#;
 
 pub const VALID_SESSION_SIG_LIT_ACTION_CODE: &str = r#"
@@ -43,7 +43,7 @@ pub const VALID_PKP_SIGNING_LIT_ACTION_CODE: &str = r#"(async () => {
 
     // Signs only when the sessionSig was created by the below Custom Lit Action Authentication
     if (Lit.Auth.actionIpfsIdStack.includes("QmNZQXmY2VijUPfNrkC6zWykBnEniDouAeUpFi9r6aaqNz")) {
-        const sigShare = await LitActions.signEcdsa({ toSign, publicKey, sigName });
+        const sigShare = await LitActions.signEcdsa({ toSign, publicKey, sigName, keySetId });
     }
 })();
 "#;
@@ -58,7 +58,7 @@ pub const CUSTOM_AUTH_RESOURCE_VALID_PKP_SIGNING_LIT_ACTION_CODE: &str = r#"(asy
     // Checks the custom auth resource returned in the SessionSigs
     if (Lit.Auth.actionIpfsIdStack.includes("QmRxUzYX52zEko9nvvtkdA6k8jU36enwwTVgW9ZwbdsUHY") && isValidCustomAuthResource) {
         console.log("Custom Authorization Successful!");
-        const sigShare = await LitActions.signEcdsa({ toSign, publicKey, sigName });
+        const sigShare = await LitActions.signEcdsa({ toSign, publicKey, sigName, keySetId });
     }
 })();
 "#;
@@ -78,7 +78,7 @@ pub const NO_AUTH_METHOD_PKP_SIGNING_LIT_ACTION_CODE: &str = r#"(async () => {
     console.log("Lit.Auth", Lit.Auth);
     // Signs only when the sessionSig was created by the below Custom Lit Action Authentication
     if (Lit.Auth.actionIpfsIdStack.includes("QmWLP9ojXrHJrFHnvMJv12HScFoz7R8kcYAECjtcpaJM2Y")) {
-        const sigShare = await LitActions.signEcdsa({ toSign, publicKey, sigName });
+        const sigShare = await LitActions.signEcdsa({ toSign, publicKey, sigName, keySetId });
     }
 })();
 "#;
@@ -86,7 +86,7 @@ pub const NO_AUTH_METHOD_PKP_SIGNING_LIT_ACTION_CODE: &str = r#"(async () => {
 pub const SIGN_ECDSA_LIT_ACTION_CODE: &str = r#"(async () => {
     let utf8Encode = new TextEncoder();
     const toSign = utf8Encode.encode('This message is exactly 32 bytes');
-    const sigShare = await LitActions.signEcdsa({ toSign, publicKey, sigName });
+    const sigShare = await LitActions.signEcdsa({ toSign, publicKey, sigName, keySetId });
 })();
 "#;
 

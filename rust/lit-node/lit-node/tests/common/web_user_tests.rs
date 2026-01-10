@@ -466,7 +466,6 @@ pub async fn test_lit_action_session_sigs(
 pub async fn generate_session_sigs_execute_lit_action(
     validator_collection: &ValidatorCollection,
     lit_action_code: &str,
-
     end_user: &EndUser,
 ) -> Result<Vec<GenericResponse<JsonExecutionResponse>>> {
     let (pubkey, _token_id, pkp_eth_address, key_set_id) = end_user.first_pkp().info();
@@ -508,6 +507,7 @@ pub async fn generate_session_sigs_execute_lit_action(
             .await
             .expect("Could not get lit action params");
 
+    info!("Executing lit action with session sigs");
     execute_lit_action_session_sigs(
         Some(lit_action_code),
         ipfs_id,
