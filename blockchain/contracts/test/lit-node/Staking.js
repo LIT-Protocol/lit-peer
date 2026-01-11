@@ -1315,6 +1315,7 @@ describe('Staking', function () {
       await expect(
         stakingAdminFacet.setConfig({
           tokenRewardPerTokenPerEpoch: 1,
+          keyTypes_deprecated: [],
           minimumValidatorCount: 1,
           rewardEpochDuration: 1,
           maxTimeLock: 1,
