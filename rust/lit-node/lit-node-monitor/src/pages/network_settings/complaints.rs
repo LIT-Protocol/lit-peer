@@ -33,7 +33,7 @@ pub struct ComplaintConfig {
 pub fn Complaints() -> impl IntoView {
     
     let data = LocalResource::new( || async move { 
-        if use_breakpoints(breakpoints_tailwind()).is_gt(BreakpointsTailwind::Md) { get_complaint_configs().await } else { vec![] } });
+         get_complaint_configs().await  });
 
     
 

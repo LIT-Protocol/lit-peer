@@ -2,14 +2,17 @@ use crate::error::{Result, unexpected_err};
 use crate::peers::peer_state::models::SimplePeerCollection;
 use crate::tss::common::tss_state::TssState;
 use crate::utils::traits::SignatureCurve;
-use elliptic_curve::group::GroupEncoding;
-use elliptic_curve::{CurveArithmetic, PrimeCurve};
 use flume::{Receiver, Sender};
-use hd_keys_curves::{HDDerivable, HDDeriver};
 use lit_fast_ecdsa::PreSignature;
-use lit_node_core::CurveType;
-use lit_node_core::PeerId;
-use lit_node_core::SigningScheme;
+use lit_node_core::{
+    CurveType, PeerId, SigningScheme,
+    hd_keys_curves_wasm::{HDDerivable, HDDeriver},
+};
+use lit_rust_crypto::{
+    elliptic_curve::{CurveArithmetic, PrimeCurve},
+    group::GroupEncoding,
+    k256, p256, p384,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::collections::hash_map::DefaultHasher;
@@ -184,14 +187,14 @@ pub enum TxnPrefix {
 impl TxnPrefix {
     pub fn as_str(&self) -> String {
         match self {
-            Self::GetPresign(hash) => format!("GET_PRESIGN_{}", hash),
+            Self::GetPresign(hash) => format!("GET_PRESIGN_{hash}"),
             Self::PregenSignal => "PREGEN_SIGNAL".to_string(),
             Self::PregenPresign(hash, curve_type) => {
-                format!("PREGEN_PRESIGN_{}_{}", hash, curve_type)
+                format!("PREGEN_PRESIGN_{hash}_{curve_type}")
             }
-            Self::ConfirmPregenPresign(hash) => format!("CONFIRM_PREGEN_PRESIGN_{}", hash),
+            Self::ConfirmPregenPresign(hash) => format!("CONFIRM_PREGEN_PRESIGN_{hash}"),
             Self::RealTimePresign(hash, curve_type) => {
-                format!("RT_PRESIGN_{}_{}", hash, curve_type)
+                format!("RT_PRESIGN_{hash}_{curve_type}")
             }
         }
     }

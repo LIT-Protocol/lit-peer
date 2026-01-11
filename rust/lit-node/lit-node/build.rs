@@ -23,32 +23,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Ok(s) => s.trim().to_string(),
             Err(e) => {
                 eprintln!(
-                    "Invalid UTF-8 output from git with error: {}.  No git commit hash will be inserted...",
-                    e
+                    "Invalid UTF-8 output from git with error: {e}.  No git commit hash will be inserted...",
                 );
                 "n/a".to_string()
             }
         },
         Err(e) => {
             eprintln!(
-                "Failed to execute git command with error: {}.  No git commit hash will be inserted...",
-                e
+                "Failed to execute git command with error: {e}.  No git commit hash will be inserted...",
             );
             "n/a".to_string()
         }
     };
 
     let dest_path = Path::new("src/git_info.rs");
-    let path_contents = format!(
-        "pub const GIT_COMMIT_HASH: &str = \"{}\";\n",
-        git_commit_hash
-    );
+    let path_contents = format!("pub const GIT_COMMIT_HASH: &str = \"{git_commit_hash}\";\n",);
 
     if let Err(e) = fs::write(dest_path, path_contents) {
-        eprintln!(
-            "Failed to write git_info.rs file with error: {}.  Exiting build.rs ...",
-            e
-        );
+        eprintln!("Failed to write git_info.rs file with error: {e}.  Exiting build.rs ...",);
     }
 
     Ok(())

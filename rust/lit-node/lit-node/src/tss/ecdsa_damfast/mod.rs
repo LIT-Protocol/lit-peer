@@ -9,7 +9,6 @@ use crate::{
     peers::peer_state::models::SimplePeerCollection,
     tss::common::{dkg_type::DkgType, tss_state::TssState},
 };
-use elliptic_curve::{CurveArithmetic, FieldBytesSize, NonZeroScalar, PrimeCurve};
 use lit_core::error::Unexpected;
 use lit_core::utils::binary::bytes_to_hex;
 use lit_fast_ecdsa::{
@@ -22,14 +21,21 @@ use tracing::trace;
 
 use super::common::traits::signable::Signable;
 use crate::tasks::utils::generate_hash;
+use crate::tss::common::curve_state::CurveState;
 use crate::utils::traits::SignatureCurve;
-use elliptic_curve::generic_array::ArrayLength;
-use elliptic_curve::group::{Curve, GroupEncoding};
-use hd_keys_curves::{HDDerivable, HDDeriver};
-use k256::ecdsa::hazmat::DigestPrimitive;
-use lit_node_core::PeerId;
-use lit_node_core::SigningScheme;
-use lit_node_core::{CompressedBytes, CompressedHex};
+use lit_node_core::{
+    CompressedBytes, CompressedHex, PeerId, SigningScheme,
+    hd_keys_curves_wasm::{HDDerivable, HDDeriver},
+};
+use lit_rust_crypto::{
+    elliptic_curve::{
+        CurveArithmetic, FieldBytesSize, NonZeroScalar, PrimeCurve, ScalarPrimitive,
+        generic_array::ArrayLength,
+    },
+    group::{Curve, GroupEncoding},
+    k256::{self, ecdsa::hazmat::DigestPrimitive},
+    p256, p384,
+};
 use serde::Serialize;
 use std::sync::Arc;
 use tracing::instrument;
@@ -217,7 +223,7 @@ impl DamFastState {
     pub async fn sign_with_pubkey_internal<C>(
         &mut self,
         message_bytes: &[u8],
-        root_pubkeys: Option<Vec<String>>,
+        root_pubkeys: &[String],
         tweak_preimage: Option<Vec<u8>>,
         request_id: Vec<u8>,
         epoch: Option<u64>,
@@ -304,7 +310,7 @@ impl DamFastState {
     pub async fn generate_signature_share_from_key_id<C>(
         &mut self,
         message_bytes: &[u8],
-        root_pubkeys: Option<Vec<String>>,
+        root_pubkeys: &[String],
         presig: &PreSignature<C>,
         request_id: &[u8],
         peers: &SimplePeerCollection,
@@ -340,11 +346,10 @@ impl DamFastState {
         debug!("Participants: {:?}", participants);
         let participant_list = ParticipantList::new(participants.as_slice())
             .map_err(|e| unexpected_err(e, Some("Error creating participant list".to_owned())))?;
-        let root_pubkeys = root_pubkeys.expect_or_err("No root pubkeys provided!")?;
 
         let (sk, pk) = get_derived_keyshare::<C::ProjectivePoint>(
             deriver,
-            &root_pubkeys,
+            root_pubkeys,
             self.signing_scheme.curve_type(),
             staker_address,
             &self_peer.peer_id,
@@ -366,13 +371,12 @@ impl DamFastState {
             ));
         }
 
-        let scalar_primitive = elliptic_curve::ScalarPrimitive::<C>::from_slice(message_bytes)
-            .map_err(|e| {
-                unexpected_err(
-                    e,
-                    Some("Could not convert message to sign into ScalarPrimitive".into()),
-                )
-            })?;
+        let scalar_primitive = ScalarPrimitive::<C>::from_slice(message_bytes).map_err(|e| {
+            unexpected_err(
+                e,
+                Some("Could not convert message to sign into ScalarPrimitive".into()),
+            )
+        })?;
         let msg_digest = C::Scalar::from(scalar_primitive);
 
         let peer_id = Option::<NonZeroScalar<C>>::from(NonZeroScalar::<C>::new(C::Scalar::from(
@@ -405,19 +409,25 @@ impl Signable for DamFastState {
         &mut self,
         message_bytes: &[u8],
         public_key: Vec<u8>,
-        root_pubkeys: Option<Vec<String>>,
         tweak_preimage: Option<Vec<u8>>,
         request_id: Vec<u8>,
+        key_set_id: &str,
         epoch: Option<u64>,
         nodeset: &[NodeSet],
     ) -> Result<SignableOutput> {
         let txn_id = generate_hash(request_id.clone());
+        let curve_state = CurveState::new(
+            self.state.peer_state.clone(),
+            self.signing_scheme.curve_type(),
+            key_set_id,
+        );
+        let root_pubkeys = curve_state.root_keys()?;
 
         let df_sig_share = match self.signing_scheme {
             SigningScheme::EcdsaK256Sha256 => {
                 self.sign_with_pubkey_internal::<k256::Secp256k1>(
                     message_bytes,
-                    root_pubkeys,
+                    &root_pubkeys,
                     tweak_preimage,
                     request_id,
                     epoch,
@@ -428,7 +438,7 @@ impl Signable for DamFastState {
             SigningScheme::EcdsaP256Sha256 => {
                 self.sign_with_pubkey_internal::<p256::NistP256>(
                     message_bytes,
-                    root_pubkeys,
+                    &root_pubkeys,
                     tweak_preimage,
                     request_id,
                     epoch,
@@ -439,7 +449,7 @@ impl Signable for DamFastState {
             SigningScheme::EcdsaP384Sha384 => {
                 self.sign_with_pubkey_internal::<p384::NistP384>(
                     message_bytes,
-                    root_pubkeys,
+                    &root_pubkeys,
                     tweak_preimage,
                     request_id,
                     epoch,

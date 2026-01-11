@@ -9,6 +9,7 @@ use ethers::providers::Provider;
 
 use lit_core::config::LitConfig;
 
+use crate::SignerProvider;
 use crate::config::LitBlockchainConfig;
 use crate::contracts::allowlist::Allowlist;
 use crate::contracts::backup_recovery::BackupRecovery;
@@ -103,6 +104,7 @@ pub const RELEASE_REGISTER_CONTRACT: &str = "RELEASE_REGISTER";
 pub const MULTI_SENDER_CONTRACT: &str = "MULTI_SENDER";
 pub const LIT_TOKEN_CONTRACT: &str = "LIT_TOKEN";
 pub const PUB_KEY_ROUTER_CONTRACT: &str = "PUB_KEY_ROUTER";
+pub const PUB_KEY_ROUTER_VIEWS_CONTRACT: &str = "PUB_KEY_ROUTER_VIEWS";
 pub const PKP_NFT_CONTRACT: &str = "PKP_NFT";
 pub const RATE_LIMIT_NFT_CONTRACT: &str = "RATE_LIMIT_NFT";
 pub const PKP_HELPER_CONTRACT: &str = "PKP_HELPER";
@@ -124,25 +126,19 @@ impl Staking<Provider<Http>> {
     }
 }
 
-impl Staking<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
+impl Staking<SignerProvider> {
     pub(crate) fn load_with_signer(
         cfg: &LitConfig, address: H160, wallet_key: Option<&str>,
-    ) -> Result<Staking<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<Staking<SignerProvider>> {
         Ok(Staking::new(address, default_local_client(cfg, wallet_key)?))
     }
 }
 
-impl
-    Staking<EIP2771GasRelayerMiddleware<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>>
-{
+impl Staking<EIP2771GasRelayerMiddleware<SignerProvider>> {
     pub(crate) fn load_with_gas_relay(
         cfg: &LitConfig, address: H160, forwarder_address: H160,
         gas_relayer_wallet_key: Option<&str>, meta_signer_key: impl Into<SigningKey>,
-    ) -> Result<
-        Staking<
-            EIP2771GasRelayerMiddleware<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-        >,
-    > {
+    ) -> Result<Staking<EIP2771GasRelayerMiddleware<SignerProvider>>> {
         let chain = cfg.blockchain_chain_name()?;
         let provider = ENDPOINT_MANAGER.get_provider(chain.as_str())?;
         let meta_signer = meta_signer_key.into();
@@ -169,10 +165,10 @@ impl BackupRecovery<Provider<Http>> {
     }
 }
 
-impl BackupRecovery<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
+impl BackupRecovery<SignerProvider> {
     pub(crate) fn load_with_signer(
         cfg: &LitConfig, address: H160, wallet_key: Option<&str>,
-    ) -> Result<BackupRecovery<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<BackupRecovery<SignerProvider>> {
         Ok(BackupRecovery::new(address, default_local_client(cfg, wallet_key)?))
     }
 }
@@ -186,25 +182,19 @@ impl Ledger<Provider<Http>> {
     }
 }
 
-impl Ledger<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
+impl Ledger<SignerProvider> {
     pub(crate) fn load_with_signer(
         cfg: &LitConfig, address: H160, wallet_key: Option<&str>,
-    ) -> Result<Ledger<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<Ledger<SignerProvider>> {
         Ok(Ledger::new(address, default_local_client(cfg, wallet_key)?))
     }
 }
 
-impl
-    Ledger<EIP2771GasRelayerMiddleware<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>>
-{
+impl Ledger<EIP2771GasRelayerMiddleware<SignerProvider>> {
     pub(crate) fn load_with_gas_relay(
         cfg: &LitConfig, address: H160, forwarder_address: H160,
         gas_relayer_wallet_key: Option<&str>, meta_signer_key: impl Into<SigningKey>,
-    ) -> Result<
-        Ledger<
-            EIP2771GasRelayerMiddleware<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-        >,
-    > {
+    ) -> Result<Ledger<EIP2771GasRelayerMiddleware<SignerProvider>>> {
         let chain = cfg.blockchain_chain_name()?;
         let provider = ENDPOINT_MANAGER.get_provider(chain.as_str())?;
         let meta_signer = meta_signer_key.into();
@@ -231,10 +221,10 @@ impl ContractResolver<Provider<Http>> {
     }
 }
 
-impl ContractResolver<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
+impl ContractResolver<SignerProvider> {
     pub(crate) fn load_with_signer(
         cfg: &LitConfig, address: H160, wallet_key: Option<&str>,
-    ) -> Result<ContractResolver<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<ContractResolver<SignerProvider>> {
         Ok(ContractResolver::new(address, default_local_client(cfg, wallet_key)?))
     }
 }
@@ -247,10 +237,10 @@ impl ReleaseRegister<Provider<Http>> {
     }
 }
 
-impl ReleaseRegister<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
+impl ReleaseRegister<SignerProvider> {
     pub(crate) fn load_with_signer(
         cfg: &LitConfig, address: H160, wallet_key: Option<&str>,
-    ) -> Result<ReleaseRegister<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<ReleaseRegister<SignerProvider>> {
         Ok(ReleaseRegister::new(address, default_local_client(cfg, wallet_key)?))
     }
 }
@@ -263,10 +253,10 @@ impl Multisender<Provider<Http>> {
     }
 }
 
-impl Multisender<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
+impl Multisender<SignerProvider> {
     pub(crate) fn load_with_signer(
         cfg: &LitConfig, address: H160, wallet_key: Option<&str>,
-    ) -> Result<Multisender<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<Multisender<SignerProvider>> {
         Ok(Multisender::new(address, default_local_client(cfg, wallet_key)?))
     }
 }
@@ -279,10 +269,10 @@ impl LITToken<Provider<Http>> {
     }
 }
 
-impl LITToken<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
+impl LITToken<SignerProvider> {
     pub(crate) fn load_with_signer(
         cfg: &LitConfig, address: H160, wallet_key: Option<&str>,
-    ) -> Result<LITToken<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<LITToken<SignerProvider>> {
         Ok(LITToken::new(address, default_local_client(cfg, wallet_key)?))
     }
 }
@@ -295,27 +285,19 @@ impl PubkeyRouter<Provider<Http>> {
     }
 }
 
-impl PubkeyRouter<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
+impl PubkeyRouter<SignerProvider> {
     pub(crate) fn load_with_signer(
         cfg: &LitConfig, address: H160, wallet_key: Option<&str>,
-    ) -> Result<PubkeyRouter<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<PubkeyRouter<SignerProvider>> {
         Ok(PubkeyRouter::new(address, default_local_client(cfg, wallet_key)?))
     }
 }
 
-impl
-    PubkeyRouter<
-        EIP2771GasRelayerMiddleware<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-    >
-{
+impl PubkeyRouter<EIP2771GasRelayerMiddleware<SignerProvider>> {
     pub(crate) fn load_with_gas_relay(
         cfg: &LitConfig, address: H160, forwarder_address: H160,
         gas_relayer_wallet_key: Option<&str>, meta_signer_key: impl Into<SigningKey>,
-    ) -> Result<
-        PubkeyRouter<
-            EIP2771GasRelayerMiddleware<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-        >,
-    > {
+    ) -> Result<PubkeyRouter<EIP2771GasRelayerMiddleware<SignerProvider>>> {
         let chain = cfg.blockchain_chain_name()?;
         let provider = ENDPOINT_MANAGER.get_provider(chain.as_str())?;
         let meta_signer = meta_signer_key.into();
@@ -342,25 +324,19 @@ impl PKPNFT<Provider<Http>> {
     }
 }
 
-impl PKPNFT<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
+impl PKPNFT<SignerProvider> {
     pub(crate) fn load_with_signer(
         cfg: &LitConfig, address: H160, wallet_key: Option<&str>,
-    ) -> Result<PKPNFT<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<PKPNFT<SignerProvider>> {
         Ok(PKPNFT::new(address, default_local_client(cfg, wallet_key)?))
     }
 }
 
-impl
-    PKPNFT<EIP2771GasRelayerMiddleware<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>>
-{
+impl PKPNFT<EIP2771GasRelayerMiddleware<SignerProvider>> {
     pub(crate) fn load_with_gas_relay(
         cfg: &LitConfig, address: H160, forwarder_address: H160,
         gas_relayer_wallet_key: Option<&str>, meta_signer_key: impl Into<SigningKey>,
-    ) -> Result<
-        PKPNFT<
-            EIP2771GasRelayerMiddleware<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-        >,
-    > {
+    ) -> Result<PKPNFT<EIP2771GasRelayerMiddleware<SignerProvider>>> {
         let chain = cfg.blockchain_chain_name()?;
         let provider = ENDPOINT_MANAGER.get_provider(chain.as_str())?;
         let meta_signer = meta_signer_key.into();
@@ -389,10 +365,10 @@ impl PKPHelper<Provider<Http>> {
     }
 }
 
-impl PKPHelper<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
+impl PKPHelper<SignerProvider> {
     pub(crate) fn load_with_signer(
         cfg: &LitConfig, address: H160, wallet_key: Option<&str>,
-    ) -> Result<PKPHelper<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<PKPHelper<SignerProvider>> {
         Ok(PKPHelper::new(address, default_local_client(cfg, wallet_key)?))
     }
 }
@@ -405,27 +381,19 @@ impl PKPPermissions<Provider<Http>> {
     }
 }
 
-impl PKPPermissions<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
+impl PKPPermissions<SignerProvider> {
     pub(crate) fn load_with_signer(
         cfg: &LitConfig, address: H160, wallet_key: Option<&str>,
-    ) -> Result<PKPPermissions<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<PKPPermissions<SignerProvider>> {
         Ok(PKPPermissions::new(address, default_local_client(cfg, wallet_key)?))
     }
 }
 
-impl
-    PKPPermissions<
-        EIP2771GasRelayerMiddleware<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-    >
-{
+impl PKPPermissions<EIP2771GasRelayerMiddleware<SignerProvider>> {
     pub(crate) fn load_with_gas_relay(
         cfg: &LitConfig, address: H160, forwarder_address: H160,
         gas_relayer_wallet_key: Option<&str>, meta_signer_key: impl Into<SigningKey>,
-    ) -> Result<
-        PKPPermissions<
-            EIP2771GasRelayerMiddleware<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-        >,
-    > {
+    ) -> Result<PKPPermissions<EIP2771GasRelayerMiddleware<SignerProvider>>> {
         let chain = cfg.blockchain_chain_name()?;
         let provider = ENDPOINT_MANAGER.get_provider(chain.as_str())?;
         let meta_signer = meta_signer_key.into();
@@ -452,10 +420,10 @@ impl PKPNFTMetadata<Provider<Http>> {
     }
 }
 
-impl PKPNFTMetadata<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
+impl PKPNFTMetadata<SignerProvider> {
     pub(crate) fn load_with_signer(
         cfg: &LitConfig, address: H160, wallet_key: Option<&str>,
-    ) -> Result<PKPNFTMetadata<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<PKPNFTMetadata<SignerProvider>> {
         Ok(PKPNFTMetadata::new(address, default_local_client(cfg, wallet_key)?))
     }
 }
@@ -468,10 +436,10 @@ impl Allowlist<Provider<Http>> {
     }
 }
 
-impl Allowlist<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
+impl Allowlist<SignerProvider> {
     pub(crate) fn load_with_signer(
         cfg: &LitConfig, address: H160, wallet_key: Option<&str>,
-    ) -> Result<Allowlist<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<Allowlist<SignerProvider>> {
         Ok(Allowlist::new(address, default_local_client(cfg, wallet_key)?))
     }
 }
@@ -486,10 +454,10 @@ impl PaymentDelegation<Provider<Http>> {
     }
 }
 
-impl PaymentDelegation<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
+impl PaymentDelegation<SignerProvider> {
     pub(crate) fn load_with_signer(
         cfg: &LitConfig, address: H160, wallet_key: Option<&str>,
-    ) -> Result<PaymentDelegation<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<PaymentDelegation<SignerProvider>> {
         Ok(PaymentDelegation::new(address, default_local_client(cfg, wallet_key)?))
     }
 }
@@ -502,27 +470,19 @@ impl PriceFeed<Provider<Http>> {
     }
 }
 
-impl PriceFeed<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
+impl PriceFeed<SignerProvider> {
     pub(crate) fn load_with_signer(
         cfg: &LitConfig, address: H160, wallet_key: Option<&str>,
-    ) -> Result<PriceFeed<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<PriceFeed<SignerProvider>> {
         Ok(PriceFeed::new(address, default_local_client(cfg, wallet_key)?))
     }
 }
 
-impl
-    PriceFeed<
-        EIP2771GasRelayerMiddleware<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-    >
-{
+impl PriceFeed<EIP2771GasRelayerMiddleware<SignerProvider>> {
     pub(crate) fn load_with_gas_relay(
         cfg: &LitConfig, address: H160, forwarder_address: H160,
         gas_relayer_wallet_key: Option<&str>, meta_signer_key: impl Into<SigningKey>,
-    ) -> Result<
-        PriceFeed<
-            EIP2771GasRelayerMiddleware<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-        >,
-    > {
+    ) -> Result<PriceFeed<EIP2771GasRelayerMiddleware<SignerProvider>>> {
         let chain = cfg.blockchain_chain_name()?;
         let provider = ENDPOINT_MANAGER.get_provider(chain.as_str())?;
         let meta_signer = meta_signer_key.into();
@@ -567,7 +527,7 @@ pub fn load_wallet(cfg: &LitConfig, wallet_key: Option<&str>) -> Result<Wallet<S
 
 pub fn default_local_client(
     cfg: &LitConfig, wallet_key: Option<&str>,
-) -> Result<Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+) -> Result<Arc<SignerProvider>> {
     let chain = cfg.blockchain_chain_name()?;
     let wallet = load_wallet(cfg, wallet_key)?;
     let provider = ENDPOINT_MANAGER.get_provider(chain.as_str())?;

@@ -1,4 +1,5 @@
-use crate::models::OsMetric;
+use crate::models::{InfoMetric, OsMetric};
+use lit_observability::opentelemetry::KeyValue;
 use serde::Serialize;
 use std::collections::BTreeMap;
 
@@ -26,7 +27,21 @@ pub struct SystemInfo {
 }
 
 impl OsMetric for SystemInfo {
-    const NAME: &'static str = "system_info";
+    const NAME: &'static str = "system_info_info";
+}
+
+impl InfoMetric for SystemInfo {
+    fn info_labels(&self) -> Vec<KeyValue> {
+        vec![
+            KeyValue::new("hostname", self.hostname.clone()),
+            KeyValue::new("cpu_brand", self.cpu_brand.clone()),
+            KeyValue::new("cpu_physical_cores", self.cpu_physical_cores.clone()),
+            KeyValue::new("cpu_logical_cores", self.cpu_logical_cores.clone()),
+            KeyValue::new("physical_memory", self.physical_memory.clone()),
+            KeyValue::new("hardware_vendor", self.hardware_vendor.clone()),
+            KeyValue::new("hardware_model", self.hardware_model.clone()),
+        ]
+    }
 }
 
 impl TryFrom<&BTreeMap<String, String>> for SystemInfo {

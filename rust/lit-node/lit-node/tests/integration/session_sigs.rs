@@ -37,8 +37,8 @@ use lit_node_core::{
     AccessControlConditionResource, AuthMaterialType, AuthMethod, AuthSigItem, LitAbility,
     LitResource, LitResourceAbilityRequest, LitResourceAbilityRequestResource, LitResourcePrefix,
 };
-use lit_node_testnet::TestSetupBuilder;
 use lit_node_testnet::node_collection::get_identity_pubkeys_from_node_set;
+use lit_node_testnet::{DEFAULT_KEY_SET_NAME, TestSetupBuilder};
 use rand_core::OsRng;
 use tracing::info;
 
@@ -52,7 +52,7 @@ async fn sign_session_sig_with_lit_actions() {
     let wallet = end_user.signing_provider().signer().clone();
     let auth_sig = generate_authsig_item(&wallet).await.unwrap();
 
-    let (pubkey, _token_id, eth_address) = end_user.first_pkp().info();
+    let (pubkey, _token_id, eth_address, _key_set_id) = end_user.first_pkp().info();
 
     let signing_key = ed25519_dalek::SigningKey::generate(&mut OsRng);
     let verifying_key = signing_key.verifying_key();
@@ -128,8 +128,7 @@ async fn sign_session_sig_with_lit_actions() {
         let error = response.error.as_ref().unwrap();
         assert!(
             error.contains("You can not sign without providing an auth_sig."),
-            "{:?}",
-            error
+            "{error:?}"
         );
     }
 
@@ -157,7 +156,7 @@ async fn sign_session_sig_with_lit_actions_requires_payment() {
     end_user.set_wallet_balance("0").await;
     let auth_sig = generate_authsig_item(&wallet).await.unwrap();
 
-    let (pubkey, _token_id, eth_address) = end_user.first_pkp().info();
+    let (pubkey, _token_id, eth_address, _key_set_id) = end_user.first_pkp().info();
 
     let signing_key = ed25519_dalek::SigningKey::generate(&mut OsRng);
     let verifying_key = signing_key.verifying_key();
@@ -194,14 +193,12 @@ async fn sign_session_sig_with_lit_actions_requires_payment() {
     for response in &responses {
         assert!(
             !response.ok,
-            "response.ok should be false. Response: {:?}",
-            response
+            "response.ok should be false. Response: {response:?}"
         );
         let response_error = response.error.as_ref().unwrap();
         assert!(
             response_error.contains("unable to get payment method"),
-            "response_error doesn't contain 'unable to get payment method': {:?}",
-            response_error
+            "response_error doesn't contain 'unable to get payment method': {response_error:?}"
         );
     }
 }
@@ -215,7 +212,7 @@ async fn only_permitted_lit_action_can_sign_session_sig() {
     let non_owner_wallet = LocalWallet::new(&mut OsRng);
     let auth_sig = generate_authsig_item(&non_owner_wallet).await.unwrap();
 
-    let (pubkey, _token_id, eth_address) = end_user.first_pkp().info();
+    let (pubkey, _token_id, eth_address, _key_set_id) = end_user.first_pkp().info();
 
     let signing_key = ed25519_dalek::SigningKey::generate(&mut OsRng);
     let verifying_key = signing_key.verifying_key();
@@ -267,7 +264,7 @@ async fn sign_pkp_with_lit_action_session_sigs() {
     let (_testnet, validator_collection, end_user) = init_test().await;
     let node_set = validator_collection.random_threshold_nodeset().await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
-    let (pubkey, _token_id, eth_address) = end_user.first_pkp().info();
+    let (pubkey, _token_id, eth_address, _key_set_id) = end_user.first_pkp().info();
 
     let lit_action_code =
         data_encoding::BASE64.encode(VALID_SESSION_SIG_LIT_ACTION_CODE.to_string().as_bytes());
@@ -317,6 +314,7 @@ async fn sign_pkp_with_lit_action_session_sigs() {
         false,
         "Hello Lit".to_string(),
         pubkey,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -339,7 +337,7 @@ async fn sign_lit_actions_with_lit_action_session_sig() {
     let (_testnet, validator_collection, end_user) = init_test().await;
     let node_set = validator_collection.random_threshold_nodeset().await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
-    let (pubkey, _token_id, eth_address) = end_user.first_pkp().info();
+    let (pubkey, _token_id, eth_address, key_set_id) = end_user.first_pkp().info();
 
     let session_sig_lit_action_code =
         data_encoding::BASE64.encode(VALID_SESSION_SIG_LIT_ACTION_CODE.to_string().as_bytes());
@@ -393,10 +391,13 @@ async fn sign_lit_actions_with_lit_action_session_sig() {
         .unwrap()
     );
 
-    let (lit_action_code, ipfs_id, js_params, auth_methods) =
-        lit_action_params(VALID_PKP_SIGNING_LIT_ACTION_CODE.to_string(), pubkey)
-            .await
-            .expect("Could not get lit action params");
+    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) = lit_action_params(
+        VALID_PKP_SIGNING_LIT_ACTION_CODE.to_string(),
+        pubkey,
+        key_set_id.clone(),
+    )
+    .await
+    .expect("Could not get lit action params");
 
     let execute_resp = execute_lit_action_session_sigs(
         Some(lit_action_code),
@@ -405,6 +406,7 @@ async fn sign_lit_actions_with_lit_action_session_sig() {
         auth_methods, // None
         &session_sigs_and_node_set,
         2,
+        &key_set_id,
     )
     .await
     .expect("Could not execute lit action");
@@ -430,7 +432,7 @@ async fn only_permitted_can_sign_with_lit_action_session_sig() {
         .get_current_epoch(realm_id)
         .await
         .as_u64();
-    let (pubkey, _token_id, eth_address) = end_user.first_pkp().info();
+    let (pubkey, _token_id, eth_address, key_set_id) = end_user.first_pkp().info();
 
     let session_sig_lit_action_code =
         data_encoding::BASE64.encode(VALID_SESSION_SIG_LIT_ACTION_CODE.to_string().as_bytes());
@@ -483,9 +485,10 @@ async fn only_permitted_can_sign_with_lit_action_session_sig() {
     .await
     .expect("Could not get session sigs");
 
-    let (lit_action_code, ipfs_id, js_params, auth_methods) = lit_action_params(
+    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) = lit_action_params(
         VALID_PKP_SIGNING_LIT_ACTION_CODE.to_string(),
         pubkey.clone(),
+        key_set_id.clone(),
     )
     .await
     .expect("Could not get lit action params");
@@ -497,6 +500,7 @@ async fn only_permitted_can_sign_with_lit_action_session_sig() {
         auth_methods, // None
         &session_sigs_and_node_set,
         epoch,
+        &key_set_id,
     )
     .await
     .expect("Could not execute lit action");
@@ -515,6 +519,7 @@ async fn only_permitted_can_sign_with_lit_action_session_sig() {
         false,
         "Hello Lit".to_string(),
         pubkey,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -534,7 +539,7 @@ async fn sign_lit_actions_with_custom_auth_resource_lit_action_session_sig() {
     let (_testnet, validator_collection, end_user) = init_test().await;
     let node_set = validator_collection.random_threshold_nodeset().await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
-    let (pubkey, _token_id, eth_address) = end_user.first_pkp().info();
+    let (pubkey, _token_id, eth_address, key_set_id) = end_user.first_pkp().info();
 
     let session_sig_lit_action_code = data_encoding::BASE64.encode(
         CUSTOM_AUTH_RESOURCE_VALID_SESSION_SIG_LIT_ACTION_CODE
@@ -591,9 +596,10 @@ async fn sign_lit_actions_with_custom_auth_resource_lit_action_session_sig() {
         .unwrap()
     );
 
-    let (lit_action_code, ipfs_id, js_params, auth_methods) = lit_action_params(
+    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) = lit_action_params(
         CUSTOM_AUTH_RESOURCE_VALID_PKP_SIGNING_LIT_ACTION_CODE.to_string(),
         pubkey,
+        key_set_id.clone(),
     )
     .await
     .expect("Could not get lit action params");
@@ -605,6 +611,7 @@ async fn sign_lit_actions_with_custom_auth_resource_lit_action_session_sig() {
         auth_methods, // None
         &session_sigs_and_node_set,
         2,
+        &key_set_id,
     )
     .await
     .expect("Could not execute lit action");
@@ -624,7 +631,7 @@ async fn sign_pkp_with_no_auth_method_lit_action_session_sig() {
     let (_testnet, validator_collection, end_user) = init_test().await;
     let node_set = validator_collection.random_threshold_nodeset().await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
-    let (pubkey, _token_id, eth_address) = end_user.first_pkp().info();
+    let (pubkey, _token_id, eth_address, _key_set_id) = end_user.first_pkp().info();
 
     let session_sig_lit_action_code = data_encoding::BASE64.encode(
         NO_AUTH_METHOD_SESSION_SIG_LIT_ACTION_CODE
@@ -685,6 +692,7 @@ async fn sign_pkp_with_no_auth_method_lit_action_session_sig() {
         false,
         "Hello Lit".to_string(),
         pubkey,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -706,7 +714,7 @@ async fn sign_lit_actions_with_no_auth_method_lit_action_session_sig() {
     let (_testnet, validator_collection, end_user) = init_test().await;
     let node_set = validator_collection.random_threshold_nodeset().await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
-    let (pubkey, _token_id, eth_address) = end_user.first_pkp().info();
+    let (pubkey, _token_id, eth_address, key_set_id) = end_user.first_pkp().info();
 
     let session_sig_lit_action_code = data_encoding::BASE64.encode(
         NO_AUTH_METHOD_SESSION_SIG_LIT_ACTION_CODE
@@ -762,9 +770,10 @@ async fn sign_lit_actions_with_no_auth_method_lit_action_session_sig() {
         .unwrap()
     );
 
-    let (lit_action_code, ipfs_id, js_params, auth_methods) = lit_action_params(
+    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) = lit_action_params(
         NO_AUTH_METHOD_PKP_SIGNING_LIT_ACTION_CODE.to_string(),
         pubkey,
+        key_set_id.clone(),
     )
     .await
     .expect("Could not get lit action params");
@@ -776,6 +785,7 @@ async fn sign_lit_actions_with_no_auth_method_lit_action_session_sig() {
         auth_methods, // None
         &session_sigs_and_node_set,
         2,
+        &key_set_id,
     )
     .await
     .expect("Could not execute lit action");
@@ -800,7 +810,7 @@ async fn sign_pkp_with_eoa_session_sigs() {
 
     let wallet = end_user.wallet.clone();
 
-    let (pubkey, _token_id, _eth_address) = end_user.first_pkp().info();
+    let (pubkey, _token_id, _eth_address, _key_set_id) = end_user.first_pkp().info();
 
     let session_sigs_and_node_set = get_session_sigs_for_auth(
         &node_set,
@@ -832,6 +842,7 @@ async fn sign_pkp_with_eoa_session_sigs() {
         false,
         "Hello Lit".to_string(),
         pubkey,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -856,7 +867,7 @@ async fn execute_js_with_eoa_session_sigs() {
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     let wallet = end_user.wallet.clone();
 
-    let (pubkey, _token_id, _eth_address) = end_user.first_pkp().info();
+    let (pubkey, _token_id, _eth_address, key_set_id) = end_user.first_pkp().info();
 
     let session_sigs_and_node_set = get_session_sigs_for_auth(
         &node_set,
@@ -872,10 +883,13 @@ async fn execute_js_with_eoa_session_sigs() {
         None,
     );
 
-    let (lit_action_code, ipfs_id, js_params, auth_methods) =
-        lit_action_params(HELLO_WORLD_LIT_ACTION_CODE.to_string(), pubkey)
-            .await
-            .expect("Could not get lit action params");
+    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) = lit_action_params(
+        HELLO_WORLD_LIT_ACTION_CODE.to_string(),
+        pubkey,
+        key_set_id.clone(),
+    )
+    .await
+    .expect("Could not get lit action params");
 
     let execute_resp = execute_lit_action_session_sigs(
         Some(lit_action_code),
@@ -884,6 +898,7 @@ async fn execute_js_with_eoa_session_sigs() {
         auth_methods, // None
         &session_sigs_and_node_set,
         2,
+        &key_set_id,
     )
     .await
     .expect("Could not execute lit action");
@@ -903,7 +918,7 @@ async fn decrypt_with_lit_action_session_sig() {
     let (_testnet, validator_collection, end_user) = init_test().await;
     let node_set = validator_collection.random_threshold_nodeset().await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
-    let (pubkey, _token_id, eth_address) = end_user.first_pkp().info();
+    let (pubkey, _token_id, eth_address, _key_set_id) = end_user.first_pkp().info();
 
     let lit_action_code =
         data_encoding::BASE64.encode(VALID_SESSION_SIG_LIT_ACTION_CODE.to_string().as_bytes());
@@ -921,10 +936,8 @@ async fn decrypt_with_lit_action_session_sig() {
     let test_encryption_params =
         prepare_test_encryption_parameters_with_wallet_address(encoding::bytes_to_hex(eth_address));
 
-    let network_pubkey = lit_node_testnet::node_collection::get_network_pubkey_from_node_set(
-        node_set.iter().map(|(n, _)| n),
-    )
-    .await;
+    let network_pubkey =
+        lit_node_testnet::node_collection::get_network_pubkey_from_node_set(node_set.keys()).await;
 
     let message_bytes = test_encryption_params.to_encrypt.as_bytes();
     let hashed_access_control_conditions = hash_access_control_conditions(RequestConditions {
@@ -943,7 +956,9 @@ async fn decrypt_with_lit_action_session_sig() {
     .get_resource_key()
     .into_bytes();
 
-    let bls_pubkey = blsful::PublicKey::try_from(&hex::decode(&network_pubkey).unwrap()).unwrap();
+    let bls_pubkey =
+        lit_rust_crypto::blsful::PublicKey::try_from(&hex::decode(&network_pubkey).unwrap())
+            .unwrap();
     // Encrypt
     let ciphertext =
         lit_sdk::encryption::encrypt_time_lock(&bls_pubkey, message_bytes, &identity_param)
@@ -993,6 +1008,7 @@ async fn decrypt_with_lit_action_session_sig() {
         test_encryption_params.clone(),
         &session_sigs_and_node_set,
         epoch,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -1018,7 +1034,7 @@ async fn test_v1_endpoints_api_constraints() {
     let wallet = end_user.wallet.clone();
     let auth_sig = generate_authsig_item(&wallet).await.unwrap();
 
-    let (pubkey, _token_id, eth_address) = end_user.first_pkp().info();
+    let (pubkey, _token_id, eth_address, key_set_id) = end_user.first_pkp().info();
 
     let signing_key = ed25519_dalek::SigningKey::generate(&mut OsRng);
     let verifying_key = signing_key.verifying_key();
@@ -1054,6 +1070,7 @@ async fn test_v1_endpoints_api_constraints() {
         false,
         "Hello Lit".to_string(),
         pubkey.clone(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await
     .expect("Could not get PKP sign");
@@ -1075,6 +1092,7 @@ async fn test_v1_endpoints_api_constraints() {
         true,
         "Hello Lit".to_string(),
         pubkey.clone(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await
     .expect("Could not get PKP sign");
@@ -1089,10 +1107,13 @@ async fn test_v1_endpoints_api_constraints() {
     );
 
     info!("Starting test: Can't provide Authsig to execute_js");
-    let (lit_action_code, ipfs_id, js_params, auth_methods) =
-        lit_action_params(HELLO_WORLD_LIT_ACTION_CODE.to_string(), pubkey.clone())
-            .await
-            .expect("Could not get lit action params");
+    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) = lit_action_params(
+        HELLO_WORLD_LIT_ACTION_CODE.to_string(),
+        pubkey.clone(),
+        key_set_id.clone(),
+    )
+    .await
+    .expect("Could not get lit action params");
 
     let realm_id = U256::from(1);
     let epoch = validator_collection
@@ -1109,16 +1130,20 @@ async fn test_v1_endpoints_api_constraints() {
         auth_methods, // None
         auth_sig.clone(),
         epoch,
+        &key_set_id,
     )
     .await;
 
     assert!(!execute_resp[0].ok);
 
     info!("Starting test: Can't provide AuthMethod to execute_js");
-    let (lit_action_code, ipfs_id, js_params, _auth_methods) =
-        lit_action_params(HELLO_WORLD_LIT_ACTION_CODE.to_string(), pubkey)
-            .await
-            .expect("Could not get lit action params");
+    let (lit_action_code, ipfs_id, js_params, _auth_methods, key_set_id) = lit_action_params(
+        HELLO_WORLD_LIT_ACTION_CODE.to_string(),
+        pubkey,
+        key_set_id.clone(),
+    )
+    .await
+    .expect("Could not get lit action params");
 
     let auth_methods = Some(vec![AuthMethod {
         auth_method_type: 1,
@@ -1133,6 +1158,7 @@ async fn test_v1_endpoints_api_constraints() {
         auth_methods,
         auth_sig,
         epoch,
+        &key_set_id,
     )
     .await;
 
@@ -1148,7 +1174,7 @@ async fn sign_session_key_auth_method() {
     let node_set = validator_collection.random_threshold_nodeset().await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
 
-    let (pubkey, _token_id, eth_address) = end_user.first_pkp().info();
+    let (pubkey, _token_id, eth_address, _key_set_id) = end_user.first_pkp().info();
 
     let signing_key = ed25519_dalek::SigningKey::generate(&mut rand::rngs::OsRng);
     let verifying_key = signing_key.verifying_key();
@@ -1306,7 +1332,7 @@ pub async fn session_sig_only_mbg_pkp() {
     let ipfs_cid = "QmUvLFoQggpYsVaPs8Wig6CyTb8GtTwHfHhDsrvNBjFVLP"; // MGB_PKP_SESSION_SIG_LIT_ACTION_CODE
 
     let mgb_pkp = end_user
-        .mint_grant_and_burn_next_pkp(ipfs_cid)
+        .mint_grant_and_burn_next_pkp(ipfs_cid, DEFAULT_KEY_SET_NAME)
         .await
         .unwrap();
 
@@ -1315,6 +1341,7 @@ pub async fn session_sig_only_mbg_pkp() {
     end_user.deposit_to_pkp_ledger(&mgb_pkp, fund_balance).await;
 
     let auth_pubkey = mgb_pkp.pubkey;
+    let key_set_id = mgb_pkp.key_set_id;
     let auth_eth_address = mgb_pkp.eth_address;
 
     info!(
@@ -1330,7 +1357,7 @@ pub async fn session_sig_only_mbg_pkp() {
     let session_sigs_and_node_set = get_session_sigs_and_node_set_for_pkp(
         &node_set,
         auth_pubkey.clone(),
-        auth_eth_address.into(),
+        auth_eth_address,
         vec![
             LitResourceAbilityRequest {
                 resource: LitResourceAbilityRequestResource {
@@ -1370,6 +1397,7 @@ pub async fn session_sig_only_mbg_pkp() {
         auth_pubkey.clone(),
         epoch,
         SigningScheme::EcdsaK256Sha256,
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -1383,7 +1411,7 @@ pub async fn session_sig_only_mbg_pkp() {
     info!("MGB PKP for signing");
     let ipfs_cid = "QmRwN9GKHvCn4Vk7biqtr6adjXMs7PzzYPCzNCRjPFiDjm";
     let mgb_pkp_info = end_user
-        .mint_grant_and_burn_next_pkp(ipfs_cid)
+        .mint_grant_and_burn_next_pkp(ipfs_cid, DEFAULT_KEY_SET_NAME)
         .await
         .unwrap();
     let mgb_pubkey = mgb_pkp_info.pubkey;
@@ -1410,6 +1438,7 @@ pub async fn session_sig_only_mbg_pkp() {
         None,
         &session_sigs_and_node_set,
         2,
+        &key_set_id,
     )
     .await
     .expect("Could not execute lit action");
@@ -1422,7 +1451,7 @@ async fn explicit_resource_permission_required_for_lit_action() {
 
     let (_testnet, validator_collection, end_user) = init_test().await;
 
-    let (pubkey, _token_id, _eth_address) = end_user.first_pkp().info();
+    let (pubkey, _token_id, _eth_address, key_set_id) = end_user.first_pkp().info();
 
     // the lit action we're going to test is VALID_PKP_SIGNING_LIT_ACTION_CODE
     // so let's derive the IPFS CID for it
@@ -1472,10 +1501,13 @@ async fn explicit_resource_permission_required_for_lit_action() {
         None,
     );
 
-    let (lit_action_code, ipfs_id, js_params, auth_methods) =
-        lit_action_params(SIGN_ECDSA_LIT_ACTION_CODE.to_string(), pubkey.clone())
-            .await
-            .expect("Could not get lit action params");
+    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) = lit_action_params(
+        SIGN_ECDSA_LIT_ACTION_CODE.to_string(),
+        pubkey.clone(),
+        key_set_id.clone(),
+    )
+    .await
+    .expect("Could not get lit action params");
 
     let execute_resp = execute_lit_action_session_sigs(
         Some(lit_action_code),
@@ -1484,6 +1516,7 @@ async fn explicit_resource_permission_required_for_lit_action() {
         auth_methods, // None
         &session_sigs,
         2,
+        &key_set_id,
     )
     .await
     .expect("Could not execute lit action");
@@ -1492,8 +1525,5 @@ async fn explicit_resource_permission_required_for_lit_action() {
     assert!(action_result.is_ok());
 
     let action_result = action_result.unwrap();
-    assert!(
-        action_result == true,
-        "The action should have returned true"
-    );
+    assert!(action_result, "The action should have returned true");
 }

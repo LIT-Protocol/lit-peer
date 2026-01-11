@@ -1,20 +1,19 @@
-use blsful::inner_types::{Group, GroupEncoding};
-use lit_node_testnet::{
-    end_user::EndUser,
-    testnet::{NodeAccount, Testnet, WhichTestnet, contracts::StakingContractRealmConfig},
-    validator::ValidatorCollection,
-};
-
 use crate::common::{assertions::NetworkIntegrityChecker, setup_logging};
+use lit_node_testnet::{TestSetupBuilder, testnet::NodeAccount};
 
 use ethers::types::U256;
 use lit_core::utils::binary::bytes_to_hex;
-use lit_node::common::key_helper::KeyCache;
 use lit_node::peers::peer_state::models::{SimplePeer, SimplePeerCollection};
 use lit_node::tss::common::key_persistence::KeyPersistence;
 use lit_node::tss::common::key_share_commitment::KeyShareCommitments;
 use lit_node::tss::common::storage::read_key_share_commitments_from_disk;
+use lit_node::{common::key_helper::KeyCache, tss::util::DEFAULT_KEY_SET_NAME};
 use lit_node_core::{CompressedBytes, CurveType, PeerId};
+use lit_rust_crypto::{
+    blsful, decaf377, ed448_goldilocks,
+    group::{Group, GroupEncoding},
+    jubjub, k256, p256, p384, pallas, vsss_rs,
+};
 use network_state::{NetworkState, get_next_random_network_state};
 use semver::Version;
 use tracing::info;
@@ -56,48 +55,17 @@ async fn test_many_epochs() {
         info!("{}", network_state);
     }
 
-    // Setup the network
-    let mut testnet = Testnet::builder()
-        .which_testnet(WhichTestnet::Anvil)
+    let (testnet, mut validator_collection, end_user) = TestSetupBuilder::default()
         .num_staked_and_joined_validators(INITIAL_VALIDATORS)
         .num_staked_only_validators((MAX_VALIDATORS * 2) - INITIAL_VALIDATORS)
+        .epoch_length(EPOCH_LENGTH as usize)
+        .max_presign_count(0)
+        .min_presign_count(0)
+        .asleep_initially_override(Some((INITIAL_VALIDATORS..(MAX_VALIDATORS * 2)).collect()))
         .build()
         .await;
 
-    info!("Setting up contracts");
-    let _testnet_contracts = Testnet::setup_contracts(
-        &mut testnet,
-        None,
-        Some(
-            StakingContractRealmConfig::builder()
-                .epoch_length(Some(U256::from(EPOCH_LENGTH)))
-                .max_presign_count(U256::from(0))
-                .min_presign_count(U256::from(0))
-                .build(),
-        ),
-    )
-    .await
-    .expect("Failed to setup contracts");
-
     let actions = testnet.actions();
-
-    info!("Building validator collection");
-    let mut validator_collection = ValidatorCollection::builder()
-        .num_staked_nodes(MAX_VALIDATORS * 2) // this is doubled since the entire set can request to leave and a new one requests to join
-        // explicitly indicate that the indices between INITIAL_VALIDATORS and (MAX_VALIDATORS * 2) are asleep as a vec
-        .asleep_initially_override(Some((INITIAL_VALIDATORS..(MAX_VALIDATORS * 2)).collect()))
-        .build(&testnet)
-        .await
-        .expect("Failed to build validator collection");
-
-    info!(
-        "Validator collection: {:?}",
-        validator_collection.addresses()
-    );
-
-    let mut end_user = EndUser::new(&testnet);
-    end_user.fund_wallet_default_amount().await;
-    end_user.new_pkp().await.expect("Failed to mint PKP");
 
     let network_checker = NetworkIntegrityChecker::new(&end_user, &actions).await;
 
@@ -204,7 +172,10 @@ async fn test_many_epochs() {
         });
     }
     for curve_type in CurveType::into_iter() {
-        let root_keys = actions.get_root_keys(curve_type as u8, None).await.unwrap();
+        let root_keys = actions
+            .get_root_keys(curve_type as u8, DEFAULT_KEY_SET_NAME)
+            .await
+            .unwrap();
         for pub_key in &root_keys {
             match curve_type {
                 CurveType::BLS | CurveType::BLS12381G1 => {
@@ -281,6 +252,15 @@ async fn test_many_epochs() {
                 }
                 CurveType::RedDecaf377 => {
                     check_for_lingering_keys::<decaf377::Element>(
+                        curve_type,
+                        pub_key,
+                        &peers,
+                        realm_id.as_u64(),
+                    )
+                    .await;
+                }
+                CurveType::RedPallas => {
+                    check_for_lingering_keys::<pallas::Point>(
                         curve_type,
                         pub_key,
                         &peers,

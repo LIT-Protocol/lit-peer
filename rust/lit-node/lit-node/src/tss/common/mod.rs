@@ -1,6 +1,6 @@
 pub mod backup;
 pub mod contract;
-mod curve_state;
+pub mod curve_state;
 pub mod dkg_type;
 pub mod hd_keys;
 pub mod key_persistence;
@@ -9,7 +9,6 @@ pub mod key_share_commitment;
 pub mod models;
 pub mod peer_communication;
 pub mod restore;
-pub mod signing_scheme;
 pub mod storage;
 pub mod traits;
 pub mod tss_state;

@@ -337,6 +337,7 @@ const config: HardhatUserConfig = {
       include: [
         'OwnershipFacet',
         'PubkeyRouterFacet',
+        'PubkeyRouterViewsFacet',
         'DiamondCutFacet',
         'DiamondLoupeFacet',
       ],

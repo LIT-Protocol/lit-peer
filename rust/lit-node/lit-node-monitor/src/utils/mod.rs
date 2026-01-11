@@ -5,6 +5,7 @@ pub mod polling;
 pub mod rpc_calls;
 pub mod sdk_models;
 pub mod table_classes;
+pub mod responsive;
 
 use crate::models::{GlobalState, NetworkConfig};
 use ethers::providers::{Http, Middleware, Provider};

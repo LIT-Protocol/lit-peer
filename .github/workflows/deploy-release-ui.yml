@@ -46,7 +46,7 @@ jobs:
           ref: ${{ github.event.inputs.source_branch || 'master' }}
 
       - name: Checkout Release Data from lit-peer
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: 'LIT-Protocol/lit-peer'
           ref: 'releases-info'
@@ -58,7 +58,7 @@ jobs:
           node-version: '20'
 
       - name: Cache Node Modules
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: lit-ansible/infrastructure/release-info-store/node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('lit-ansible/infrastructure/release-info-store/package-lock.json') }}

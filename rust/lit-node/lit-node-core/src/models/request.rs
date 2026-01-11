@@ -9,7 +9,7 @@ use serde_json::Value;
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct JsonSDKHandshakeRequest {
+pub struct SDKHandshakeRequest {
     pub client_public_key: String,
     pub challenge: Option<String>,
 }
@@ -26,6 +26,7 @@ pub struct EncryptionSignRequest {
     pub auth_sig: AuthSigItem,
     #[serde(default = "default_epoch")]
     pub epoch: u64,
+    pub key_set_id: String,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -44,6 +45,7 @@ pub struct JsonSignSessionKeyRequestV2 {
     pub epoch: u64,
     pub node_set: Vec<NodeSet>,
     pub max_price: U256,
+    pub pkp_key_set_id: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
@@ -57,6 +59,7 @@ pub struct JsonPKPSigningRequest {
     #[serde(default = "default_epoch")]
     pub epoch: u64,
     pub node_set: Vec<NodeSet>,
+    pub key_set_id: String,
 }
 
 #[derive(Clone, Default, Serialize, Deserialize)]
@@ -72,6 +75,7 @@ pub struct JsonExecutionRequest {
     pub node_set: Vec<NodeSet>,
     #[serde(default)]
     pub invocation: Invocation,
+    pub key_set_id: String,
 }
 
 impl JsonExecutionRequest {
@@ -105,6 +109,7 @@ impl std::fmt::Debug for JsonExecutionRequest {
             .field("epoch", &self.epoch)
             .field("node_set", &self.node_set)
             .field("invocation", &self.invocation)
+            .field("key_set_id", &self.key_set_id)
             .finish()
     }
 }

@@ -118,7 +118,7 @@ pub async fn get_key_set_configs() -> Vec<(String, KeySetMonitorConfig)> {
                 complete_isolation: key_config.complete_isolation,
                 realms: key_config.realms.iter().map(|realm| realm.as_u32() ).collect(),
                 root_keys_by_curve: root_keys_by_curve,
-                recovery_party_members: key_config.recovery_party_members.iter().map(|member| member.to_string()).collect(),
+                recovery_party_members: vec![], //key_config.recovery_party_members.iter().map(|member| member.to_string()).collect(),
             };
 
         key_set_monitor_configs.push((key_config.identifier.to_string(), key_set_config));

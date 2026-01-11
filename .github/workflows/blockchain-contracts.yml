@@ -43,6 +43,7 @@ jobs:
         image: litptcl/anvil-lit:latest
         ports:
           - 8545:8545
+          - 8549:8549
         credentials:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -70,6 +71,7 @@ jobs:
         image: litptcl/anvil-lit:latest
         ports:
           - 8545:8545
+          - 8549:8549
         credentials:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}

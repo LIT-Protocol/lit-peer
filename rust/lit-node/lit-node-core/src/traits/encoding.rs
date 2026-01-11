@@ -6,6 +6,7 @@ mod k256;
 mod p256;
 mod p384;
 mod redjubjub;
+mod redpallas;
 
 /// A trait for handling points in compressed form.
 pub trait CompressedBytes: Sized {

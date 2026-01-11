@@ -46,10 +46,6 @@ contract Staking {
         // this is a monotonic counter that is incremented every time a new reward epoch is created
         s.nextAvailableRewardEpochNumber = 0;
 
-        uint256[] memory keyTypesTemp = new uint256[](2);
-        keyTypesTemp[0] = 1;
-        keyTypesTemp[1] = 2;
-
         // Hardcode the total supply of the token to 1 billion.
         s.tokenTotalSupplyStandIn = 1_000_000_000 ether;
 
@@ -57,7 +53,6 @@ contract Staking {
         // Most of this is related to staking / delegation
         s.globalConfig[0] = LibStakingStorage.GlobalConfig({
             tokenRewardPerTokenPerEpoch: (10 ** 18) / 20, // 18 decimal places in token
-            keyTypes: keyTypesTemp,
             rewardEpochDuration: 1 hours,
             maxTimeLock: 4 * 365 days,
             minTimeLock: 90 days,

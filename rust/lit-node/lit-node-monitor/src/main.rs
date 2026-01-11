@@ -58,6 +58,9 @@ pub fn App() -> impl IntoView {
         )
     });
 
+    let open_menu = RwSignal::new(true);
+    let (_open_menu_get, open_menu_set) = open_menu.split();
+    let is_mobile = RwSignal::new(crate::utils::responsive::is_mobile());
     // load the networks for this instance
     move || {
         match network_loading.get() {
@@ -67,7 +70,7 @@ pub fn App() -> impl IntoView {
             .into_any(),
             Some(_data) => {
                 view! {
-
+    <style>{move || if is_mobile.get() { ".hide-lst-col { display: none; }" } else { "" }}</style>
     <Ethereum>
     <Router base=base_path()>
         <ConfigProvider theme class="w-screen p-2">
@@ -79,10 +82,12 @@ pub fn App() -> impl IntoView {
                     });
                 }
                 <div class="flex">
-                        <div class="w-160 ">
-                            <img class="size-10" src="images/lit-logo-black.svg" />
-                            <div class=""> Network Explorer</div>
-                            <div class="text-sm">{ move || page_name_signal.get() }</div>
+                        <div class="w-160 flex ">
+                            <Button class="!p-0" appearance=ButtonAppearance::Transparent on_click=move |_| open_menu_set.set(true)>
+                                <img class="size-10" src="images/lit-logo-black.svg" />
+                            </Button>                            
+                            <div class="px-3"> <b>Network Explorer </b> </div>
+                            <div class="text-sm"> { move || page_name_signal.get() }</div>
                         </div>
                         <div class="flex-1 justify-items-end">
                             <ConnectWeb3 />
@@ -90,9 +95,13 @@ pub fn App() -> impl IntoView {
                     </div>
 
                     <div class="flex">
-                        <div class="w-80 ">
-                            <NavMenu page_name_signal />
-                        </div>
+    
+                         <InlineDrawer class="flex-none" open=open_menu>
+                            <DrawerBody class="!p-0">
+                                <NavMenu page_name_signal open_menu_set />
+                            </DrawerBody>
+                        </InlineDrawer>
+    
                             <main class="flex-1">
                                 <Routes fallback=|| "Not found.">
                                     <Route path=path!("/") view=pages::home::Home />
