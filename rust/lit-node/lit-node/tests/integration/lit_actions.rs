@@ -106,7 +106,7 @@ pub mod litactions {
 
         let (testnet, validator_collection, mut end_user) = TestSetupBuilder::default()
             .include_datil_testnet(datil_testnet_type)
-            .force_deploy(is_datil) // this can be removed once datil is the default.
+            .force_deploy(true) // this can be removed once datil is the default.
             .build()
             .await;
 
