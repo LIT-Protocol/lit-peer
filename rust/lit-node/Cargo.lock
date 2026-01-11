@@ -9965,6 +9965,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.17",
+ "utoipa",
 ]
 
 [[package]]
@@ -11351,6 +11352,16 @@ dependencies = [
  "proc-macro2 1.0.103",
  "quote 1.0.42",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "openapi-gen"
+version = "0.1.0"
+dependencies = [
+ "lit-node-core",
+ "serde",
+ "serde_json",
+ "utoipa",
 ]
 
 [[package]]
@@ -18096,6 +18107,29 @@ dependencies = [
  "anyhow",
  "chrono",
  "tracing",
+]
+
+[[package]]
+name = "utoipa"
+version = "5.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2fcc29c80c21c31608227e0912b2d7fddba57ad76b606890627ba8ee7964e993"
+dependencies = [
+ "indexmap 2.11.1",
+ "serde",
+ "serde_json",
+ "utoipa-gen",
+]
+
+[[package]]
+name = "utoipa-gen"
+version = "5.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d79d08d92ab8af4c5e8a6da20c47ae3f61a0f1dabc1997cdf2d082b757ca08b"
+dependencies = [
+ "proc-macro2 1.0.103",
+ "quote 1.0.42",
+ "syn 2.0.111",
 ]
 
 [[package]]

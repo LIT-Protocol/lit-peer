@@ -5,8 +5,10 @@ edition.workspace = true
 
 [features]
 default = []
+openapi = ["dep:utoipa"]
 
 [dependencies]
+utoipa = { workspace = true, optional = true }
 ed25519-dalek.workspace = true
 ethabi.workspace = true
 ethers.workspace = true
