@@ -14,7 +14,7 @@ use crate::types::Description;
 pub type ArcCode = Arc<dyn Code + Send + Sync>;
 
 pub trait Code: Display + Debug + Description {
-    fn code(&self) -> Cow<str>;
+    fn code(&self) -> Cow<'_, str>;
     fn kind(&self) -> Option<Kind>;
     fn http_status(&self) -> Option<u16>;
 }
@@ -22,10 +22,10 @@ pub trait Code: Display + Debug + Description {
 #[allow(dead_code)]
 #[derive(Clone, Debug, Display, ErrorCode, Description)]
 pub(crate) enum EC {
-    /// A fatal error occured in the lit core system
+    /// A fatal error occurred in the lit core system
     #[code(kind = Unexpected, http_status = 500)]
     CoreFatal,
-    /// An unexpected internal server error occured.
+    /// An unexpected internal server error occurred.
     #[code(kind = Unexpected, http_status = 500)]
     CoreUnexpected,
 }
@@ -67,7 +67,7 @@ impl Description for StaticCode {
 }
 
 impl Code for StaticCode {
-    fn code(&self) -> Cow<str> {
+    fn code(&self) -> Cow<'_, str> {
         Cow::from(self.code.clone())
     }
 

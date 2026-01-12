@@ -78,7 +78,7 @@ jobs:
       - name: Install rust
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: '1.86' # keep in sync with rust/lit-node/rust-toolchain.toml
+          toolchain: '1.91' # keep in sync with rust/lit-node/rust-toolchain.toml
       - name: Rust Cache
         uses: WarpBuilds/rust-cache@v2
         with:
@@ -147,7 +147,7 @@ jobs:
       - name: Setup local files for testing
         run: make setup-local-files
       - name: Copy lit-node binary to Shiva target directory
-        run: | 
+        run: |
           mkdir -p ${{github.workspace}}/rust/lit-node/shiva/target/debug
           cp ${{github.workspace}}/rust/lit-node/lit-node/target/debug/lit_node ${{github.workspace}}/rust/lit-node/shiva/target/debug/lit_node
       - name: Run Shiva Integration tests
@@ -162,7 +162,8 @@ jobs:
     needs: build-if-needed
     runs-on: warp-ubuntu-latest-x64-16x # change to LargeRunner to run on github.  Change to self-hosted to run on our own runner.  Change to buildjet-8vcpu-ubuntu-2204 to run on buildjet with 8 cpus
     # TODO: enable this when you want to turn on version upgrade tests.  there's also another spot below where you have to remove a hardcoded "false" with a comment like this.
-    if: false
+    # To enable, change the condition below to: if: ${{ true }} or remove the if line entirely
+    if: ${{ github.event_name == 'never' }}
     timeout-minutes: 60
     strategy:
       matrix:
@@ -201,7 +202,7 @@ jobs:
       - name: Install rust because the version upgrade tests do a recompile
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: '1.86' # keep in sync with rust/lit-node/rust-toolchain.toml
+          toolchain: '1.91' # keep in sync with rust/lit-node/rust-toolchain.toml
           components: rust-src
       - name: Install nextest
         run: curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C "${CARGO_HOME:-$HOME/.cargo}/bin"
@@ -231,7 +232,7 @@ jobs:
         env:
           RUST_LOG: debug
       - name: Download the latest build for release-habanero-* branch
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: lit_node_${{ steps.get_latest_commit_sha.outputs.COMMIT_SHA_HABANERO }}
           run-id: ${{ steps.get_latest_workflow_run_id.outputs.LATEST_WORKFLOW_RUN_ID_HABANERO }}
@@ -240,7 +241,7 @@ jobs:
       - name: Move the downloaded binary
         run: mv lit_node target/debug/lit_node_${{ steps.get_latest_commit_sha.outputs.COMMIT_SHA_HABANERO }}
       - name: Download the latest build for release-manzano-* branch
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: lit_node_${{ steps.get_latest_commit_sha.outputs.COMMIT_SHA_MANZANO }}
           run-id: ${{ steps.get_latest_workflow_run_id.outputs.LATEST_WORKFLOW_RUN_ID_MANZANO }}
@@ -249,7 +250,7 @@ jobs:
       - name: Move the downloaded binary
         run: mv lit_node target/debug/lit_node_${{ steps.get_latest_commit_sha.outputs.COMMIT_SHA_MANZANO }}
       - name: Download the latest build for release-cayenne-* branch
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: lit_node_${{ steps.get_latest_commit_sha.outputs.COMMIT_SHA_CAYENNE }}
           run-id: ${{ steps.get_latest_workflow_run_id.outputs.LATEST_WORKFLOW_RUN_ID_CAYENNE }}
@@ -289,8 +290,9 @@ jobs:
               exit 1
           fi
           # TODO: enable this when you want to turn on version upgrade tests
-          if false && [ ${{ needs.lit_node_version_upgrade_tests.result }} != 'success' ]; then
-              echo "Version upgrade tests failed"
-              exit 1
-          fi
+          # To enable, uncomment the check below (and enable the job above)
+          # if [ ${{ needs.lit_node_version_upgrade_tests.result }} != 'success' ]; then
+          #     echo "Version upgrade tests failed"
+          #     exit 1
+          # fi
           echo "All tests passed"

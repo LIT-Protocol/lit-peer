@@ -2,7 +2,7 @@ use std::backtrace::Backtrace;
 use std::panic;
 
 use env_logger::Env;
-use log::{as_error, as_serde, error};
+use log::error;
 
 use lit_core::error::{Error, Kind};
 use lit_core::utils::backtrace::{backtrace_to_vec, extract_panic_msg};
@@ -32,7 +32,7 @@ async fn main() {
             None,
         );
 
-        error!(error = as_error!(err), backtrace = as_serde!(backtrace);
+        error!(error:err = err, backtrace:serde = backtrace;
                     "Unexpectedly panicked!: {}", msg);
     }));
 

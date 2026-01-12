@@ -43,7 +43,7 @@ jobs:
       - name: Install rust
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: "1.86" # keep in sync with rust/lit-os/rust-toolchain.toml
+          toolchain: "1.91" # keep in sync with rust/lit-os/rust-toolchain.toml
           components: rustfmt clippy rust-src
       - name: Rust Cache
         uses: WarpBuilds/rust-cache@v2

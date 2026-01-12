@@ -97,7 +97,7 @@ async fn lookup_api_domain(cfg: &LitConfig, resolver: &ContractResolver) -> Resu
 #[cfg(feature = "trust-dns")]
 fn create_http_client() -> Result<Client> {
     let mut client = Client::builder();
-    client = client.trust_dns(true);
+    client = client.hickory_dns(true);
 
     let client = client
         .build()
