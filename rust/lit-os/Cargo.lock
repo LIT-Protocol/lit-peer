@@ -8030,23 +8030,9 @@ dependencies = [
  "ecdsa 0.16.9",
  "elliptic-curve-tools",
  "getrandom 0.2.16",
- "lit-rust-crypto 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lit-rust-crypto",
  "sha2 0.10.9",
  "sha3 0.10.8",
- "subtle",
-]
-
-[[package]]
-name = "hd-keys-curves-wasm"
-version = "1.0.5"
-source = "git+https://github.com/LIT-Protocol/hd-keys-curves-wasm.git?branch=pallas#597a14b9cf4bafd4c778f1053ca4bbad0b3d249b"
-dependencies = [
- "digest 0.10.7",
- "ecdsa 0.16.9",
- "elliptic-curve-tools",
- "getrandom 0.2.16",
- "lit-rust-crypto 0.6.0 (git+https://github.com/LIT-Protocol/lit-rust-crypto?tag=0.6.0)",
- "sha2 0.10.9",
  "subtle",
 ]
 
@@ -10241,10 +10227,10 @@ dependencies = [
  "digest 0.10.7",
  "ecdsa 0.16.9",
  "elliptic-curve-tools",
- "hd-keys-curves-wasm 1.0.5 (git+https://github.com/LIT-Protocol/hd-keys-curves-wasm.git?branch=pallas)",
+ "hd-keys-curves-wasm",
  "hex",
  "lit-poly",
- "lit-rust-crypto 0.6.0 (git+https://github.com/LIT-Protocol/lit-rust-crypto?tag=0.6.0)",
+ "lit-rust-crypto",
  "rand 0.8.5",
  "serde",
  "sha2 0.10.9",
@@ -10277,7 +10263,7 @@ dependencies = [
  "lit-frost-schnorrkel25519",
  "lit-frost-secp256k1",
  "lit-frost-taproot",
- "lit-rust-crypto 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lit-rust-crypto",
  "rand_core 0.6.4",
  "reddsa",
  "schnorrkel",
@@ -10582,9 +10568,9 @@ dependencies = [
  "ed25519-dalek 2.2.0",
  "ethabi 16.0.0",
  "ethers",
- "hd-keys-curves-wasm 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hd-keys-curves-wasm",
  "hex",
- "lit-rust-crypto 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lit-rust-crypto",
  "serde",
  "serde_json",
  "thiserror 2.0.16",
@@ -10898,7 +10884,7 @@ dependencies = [
  "lit-blockchain",
  "lit-core",
  "lit-node-core",
- "lit-rust-crypto 0.6.0 (git+https://github.com/LIT-Protocol/lit-rust-crypto?tag=0.6.0)",
+ "lit-rust-crypto",
  "path-clean 1.0.1",
  "rand 0.8.5",
  "reqwest 0.11.27",
@@ -10922,26 +10908,6 @@ name = "lit-rust-crypto"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3c14417f51ca7213ea4f50e59bd47e1b55b67c759fad8e6e44fadc3c6aa2bc9"
-dependencies = [
- "bls12_381_plus",
- "blsful",
- "blstrs_plus",
- "curve25519-dalek-ml",
- "decaf377_plus",
- "ed448-goldilocks-plus 0.16.0",
- "elliptic-curve 0.13.8",
- "jubjub-plus",
- "k256 0.13.4",
- "p256",
- "p384",
- "pasta_curves_plus",
- "vsss-rs 5.1.0",
-]
-
-[[package]]
-name = "lit-rust-crypto"
-version = "0.6.0"
-source = "git+https://github.com/LIT-Protocol/lit-rust-crypto?tag=0.6.0#9548fce521473f289ea1366249b782355e96507d"
 dependencies = [
  "bls12_381_plus",
  "blsful",
@@ -10989,7 +10955,7 @@ dependencies = [
  "blake2",
  "bulletproofs",
  "elliptic-curve-tools",
- "lit-rust-crypto 0.6.0 (git+https://github.com/LIT-Protocol/lit-rust-crypto?tag=0.6.0)",
+ "lit-rust-crypto",
  "rfc6979 0.4.0",
  "serde",
  "sha2 0.10.9",
@@ -11050,7 +11016,7 @@ dependencies = [
  "lit-node-core",
  "lit-observability",
  "lit-recovery",
- "lit-rust-crypto 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lit-rust-crypto",
  "lit-sdk",
  "lit-vrf",
  "moka 0.12.10",

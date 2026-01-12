@@ -4680,20 +4680,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "hd-keys-curves-wasm"
-version = "1.0.5"
-source = "git+https://github.com/LIT-Protocol/hd-keys-curves-wasm.git?branch=pallas#597a14b9cf4bafd4c778f1053ca4bbad0b3d249b"
-dependencies = [
- "digest 0.10.7",
- "ecdsa",
- "elliptic-curve-tools",
- "getrandom 0.2.16",
- "lit-rust-crypto 0.6.0 (git+https://github.com/LIT-Protocol/lit-rust-crypto?tag=0.6.0)",
- "sha2 0.10.9",
- "subtle",
-]
-
-[[package]]
 name = "heapless"
 version = "0.7.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5957,10 +5943,10 @@ dependencies = [
  "digest 0.10.7",
  "ecdsa",
  "elliptic-curve-tools",
- "hd-keys-curves-wasm 1.0.5 (git+https://github.com/LIT-Protocol/hd-keys-curves-wasm.git?branch=pallas)",
+ "hd-keys-curves-wasm",
  "hex",
  "lit-poly",
- "lit-rust-crypto 0.6.0 (git+https://github.com/LIT-Protocol/lit-rust-crypto?tag=0.6.0)",
+ "lit-rust-crypto 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "rstest",
@@ -5998,7 +5984,7 @@ dependencies = [
  "ed25519-dalek",
  "ethabi 16.0.0",
  "ethers",
- "hd-keys-curves-wasm 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "hd-keys-curves-wasm",
  "hex",
  "lit-rust-crypto 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
@@ -6080,7 +6066,7 @@ dependencies = [
  "lit-blockchain",
  "lit-core",
  "lit-node-core",
- "lit-rust-crypto 0.6.0 (git+https://github.com/LIT-Protocol/lit-rust-crypto?tag=0.6.0)",
+ "lit-rust-crypto 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "path-clean",
  "rand 0.8.5",
  "reqwest 0.11.27",
@@ -6167,7 +6153,7 @@ dependencies = [
  "blake2",
  "bulletproofs",
  "elliptic-curve-tools",
- "lit-rust-crypto 0.6.0 (git+https://github.com/LIT-Protocol/lit-rust-crypto?tag=0.6.0)",
+ "lit-rust-crypto 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "rfc6979",
