@@ -9,7 +9,7 @@ LIT_SDK=ext/js/02_litActionsSDK.js
 LIT_AUTH_SDK=ext/js/04_litAuthDocs.js
 LIT_GLOBALS=ext/js/05_globalsDocs.js
 
-echo "Building API docs..."
+echo "Building API docs... Run `npm install` to install the dependencies if you get an error about not finding the documentation tool."
 # Build API docs
 documentation build "$LIT_SDK" "$LIT_AUTH_SDK" "$LIT_GLOBALS" -f md --config documentation.yml -o docs/api_docs.md --project-name "Lit Actions SDK"
 documentation build "$LIT_SDK" "$LIT_AUTH_SDK" "$LIT_GLOBALS" -f html --config documentation.yml -o docs/api_docs_html --project-name "Lit Actions SDK"
