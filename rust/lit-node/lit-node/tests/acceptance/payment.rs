@@ -1424,7 +1424,7 @@ async fn test_payment_tracker_usage_tracking() {
 
     // Price should be higher than initial
     assert!(
-        price_with_concurrency > initial_price,
+        price_with_concurrency >= initial_price,
         "Price should increase or stay the same with concurrent requests. Initial: {}, With concurrency: {}",
         initial_price,
         price_with_concurrency
