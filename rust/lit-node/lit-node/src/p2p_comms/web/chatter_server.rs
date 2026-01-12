@@ -32,6 +32,7 @@ use tracing::{debug, error, info, instrument};
 use xor_name::XorName;
 
 #[allow(clippy::unwrap_used)]
+#[allow(dead_code)]
 pub mod chatter {
     tonic::include_proto!("chatter");
 }
@@ -197,11 +198,14 @@ impl ChatterService for ChatterServer {
             version: version::get_version().to_string(),
         };
 
-        if let Ok(at) = create_attestation(cfg.load_full(), &noonce, None).await {
-            peer_item.attestation = Some(at);
-        } else {
-            #[cfg(not(feature = "testing"))]
-            error!("Error creating attestation.");
+        match create_attestation(cfg.load_full(), &noonce, None).await {
+            Ok(at) => {
+                peer_item.attestation = Some(at);
+            }
+            Err(e) => {
+                #[cfg(not(feature = "testing"))]
+                error!("Error creating attestation: {:?}", e);
+            }
         }
 
         let peer_item_json = match serde_json::to_string(&peer_item) {

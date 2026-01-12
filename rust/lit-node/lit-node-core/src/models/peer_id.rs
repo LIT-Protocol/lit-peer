@@ -1,6 +1,8 @@
 use crate::{Error, Result};
-use blsful::vsss_rs::{
-    self,
+use lit_rust_crypto::{
+    blsful::inner_types as bls,
+    curve25519_dalek, decaf377,
+    ed448_goldilocks::{self, sha3},
     elliptic_curve::{
         bigint::{
             ArrayEncoding, ByteArray, Encoding, NonZero, Random, RandomMod, U256, U512, U768, U896,
@@ -9,20 +11,15 @@ use blsful::vsss_rs::{
         rand_core::{CryptoRng, RngCore},
         scalar::FromUintUnchecked,
     },
-};
-use hd_keys_curves_wasm::{
-    decaf377,
-    ed448_goldilocks_plus::{self, sha3},
     jubjub,
     k256::{
         self,
         sha2::{self, Digest},
     },
-    p256, p384,
+    p256, p384, pallas, vsss_rs,
 };
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::fmt;
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::{self, Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::num::{NonZeroU8, NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU128, NonZeroUsize};
 use std::str::FromStr;
@@ -160,7 +157,6 @@ impl From<&PeerId> for U256 {
 
 impl From<PeerId> for ethers::types::U256 {
     fn from(value: PeerId) -> Self {
-        use blsful::vsss_rs::elliptic_curve::bigint::Encoding;
         ethers::types::U256::from(value.0.to_be_bytes())
     }
 }
@@ -552,15 +548,15 @@ impl From<PeerId> for p384::NonZeroScalar {
     }
 }
 
-impl From<PeerId> for ed448_goldilocks_plus::Scalar {
+impl From<PeerId> for ed448_goldilocks::Scalar {
     fn from(value: PeerId) -> Self {
         use sha3::digest::{ExtendableOutput, Update};
 
         let mut hasher = sha3::Shake128::default();
         hasher.update(&value.0.to_be_byte_array());
         let digest = hasher.finalize_boxed(114);
-        let wide_bytes = ed448_goldilocks_plus::WideScalarBytes::from_slice(digest.as_ref());
-        <ed448_goldilocks_plus::Scalar as Reduce<U896>>::reduce_bytes(wide_bytes)
+        let wide_bytes = ed448_goldilocks::WideScalarBytes::from_slice(digest.as_ref());
+        <ed448_goldilocks::Scalar as Reduce<U896>>::reduce_bytes(wide_bytes)
     }
 }
 
@@ -571,10 +567,10 @@ impl From<PeerId> for jubjub::Scalar {
     }
 }
 
-impl From<PeerId> for blsful::inner_types::Scalar {
+impl From<PeerId> for bls::Scalar {
     fn from(value: PeerId) -> Self {
         let digest = sha2::Sha512::digest(value.0.to_be_byte_array());
-        <blsful::inner_types::Scalar as Reduce<U512>>::reduce(U512::from_be_byte_array(digest))
+        <bls::Scalar as Reduce<U512>>::reduce(U512::from_be_byte_array(digest))
     }
 }
 
@@ -582,6 +578,14 @@ impl From<PeerId> for decaf377::Fr {
     fn from(value: PeerId) -> Self {
         let digest = sha2::Sha512::digest(value.0.to_be_byte_array());
         Self::from_le_bytes_mod_order(&digest)
+    }
+}
+
+impl From<PeerId> for pallas::Scalar {
+    fn from(value: PeerId) -> Self {
+        let digest = sha2::Sha512::digest(value.0.to_be_byte_array());
+        let n = U512::from_be_byte_array(digest);
+        Self::reduce(n)
     }
 }
 
@@ -654,13 +658,13 @@ impl FromPeerIdDirect for vsss_rs::curve25519::WrappedScalar {
     }
 }
 
-impl FromPeerIdDirect for ed448_goldilocks_plus::Scalar {
+impl FromPeerIdDirect for ed448_goldilocks::Scalar {
     fn from_peer_id(peer_id: PeerId) -> Self {
         Self::from_uint_unchecked(peer_id.0.as_ref().resize())
     }
 }
 
-impl FromPeerIdDirect for blsful::inner_types::Scalar {
+impl FromPeerIdDirect for bls::Scalar {
     fn from_peer_id(peer_id: PeerId) -> Self {
         Self::from_uint_unchecked(peer_id.0.as_ref().resize())
     }
@@ -688,6 +692,12 @@ impl FromPeerIdDirect for decaf377::Fr {
     fn from_peer_id(peer_id: PeerId) -> Self {
         let bytes = peer_id.0.as_ref().to_le_bytes();
         Self::from_bytes_checked(&bytes).expect("to be small enough to work")
+    }
+}
+
+impl FromPeerIdDirect for pallas::Scalar {
+    fn from_peer_id(peer_id: PeerId) -> Self {
+        Self::from_uint_unchecked(*peer_id.0.as_ref())
     }
 }
 
@@ -761,4 +771,23 @@ fn test_parse_peer_id() {
     let u256: ethers::types::U256 = peer_id.into();
     let peer_id2 = u256.try_into().unwrap();
     assert_eq!(peer_id, peer_id2);
+}
+
+#[test]
+fn test_into_scalar_pallas() {
+    use rand_core::SeedableRng;
+
+    let rng = rand_chacha::ChaChaRng::seed_from_u64(0);
+    let peer_id = PeerId::random(rng);
+    let id: pallas::Scalar = peer_id.into();
+    let limbs = id.to_raw();
+    assert_eq!(
+        limbs,
+        [
+            0x3fd0ff79135bb946,
+            0xcacf6941e56db2e4,
+            0xa49547659cb1baa7,
+            0x04e7181b6f5533de,
+        ]
+    );
 }

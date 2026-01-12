@@ -38,7 +38,7 @@ use std::collections::BTreeSet;
 use std::iter::FromIterator;
 use std::sync::{Arc, Weak};
 use tonic::transport::Channel;
-use tracing::instrument;
+use tracing::{error, instrument};
 use xor_name::XorName;
 
 #[derive(Debug)]
@@ -111,11 +111,21 @@ impl PeerState {
                 .send()
                 .await
             {
-                let decoded_err = e
-                    .decode_contract_revert::<staking::StakingErrors>()
-                    .expect_or_err("Could not decode staking contract error")?;
+                // This error currently causes the node to fail startup (and typically be restarted by a supervisor like systemd).
+                let decoded_revert = e.decode_contract_revert::<staking::StakingErrors>();
+                error!(
+                    ?staker_address,
+                    ?attested_node_address,
+                    err = ?e,
+                    decoded_revert = ?decoded_revert,
+                    "Attested wallet registration failed"
+                );
+
+                let err_msg = decoded_revert
+                    .map(|d| format!("{:?}", d))
+                    .unwrap_or_else(|| format!("{:?}", e));
                 return Err(unexpected_err_code(
-                    format!("{:?}", decoded_err),
+                    err_msg,
                     EC::NodeBlockchainError,
                     Some("Could not register attested wallet".to_string()),
                 ));

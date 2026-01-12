@@ -14,17 +14,21 @@ use crate::tss::common::storage::{
 };
 use async_std::fs;
 use async_std::path::{Path, PathBuf};
-use blsful::inner_types::{G1Projective, GroupEncoding, InnerBls12381G1};
 use bulletproofs::BulletproofCurveArithmetic as BCA;
 use chrono::{DateTime, Utc};
-use elliptic_curve::Group;
 use k256::Secp256k1;
 use lit_core::config::LitConfig;
 use lit_core::error::Unexpected;
 use lit_node_common::config::{LitNodeConfig, encrypted_key_path};
-use lit_node_core::CurveType;
-use lit_node_core::JsonAuthSig;
+use lit_node_core::{CurveType, JsonAuthSig};
 use lit_recovery::models::{EncryptedKeyShare, OldEncryptedKeyShare};
+use lit_rust_crypto::{
+    blsful::inner_types::{G1Projective, GroupEncoding, InnerBls12381G1},
+    decaf377, ed448_goldilocks,
+    elliptic_curve::ScalarPrimitive,
+    group::Group,
+    jubjub, k256, p256, p384, pallas, vsss_rs,
+};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::io::{AsyncRead, AsyncReadExt};
@@ -291,6 +295,22 @@ pub(crate) async fn encrypt_and_tar_backup_keys(
         .await
     });
 
+    let args = write_curve_recovery_data_args.clone();
+    let pallas_encryption_key = recovery_party.pallas_encryption_key;
+    let pallas_blinder = blinders
+        .pallas_blinder
+        .ok_or(blinder_not_set_err(CurveType::RedPallas))?;
+    tasks.spawn(async move {
+        write_curve_recovery_data::<pallas::Pallas>(
+            args,
+            CurveType::RedPallas,
+            &pallas_encryption_key,
+            &pallas_blinder,
+            &(pallas::Point::generator() * pallas_blinder),
+        )
+        .await
+    });
+
     while let Some(result) = tasks.join_next().await {
         match result {
             Ok(Ok(())) => {}
@@ -440,7 +460,7 @@ pub(crate) async fn untar_keys_stream<R: AsyncRead + Unpin>(
         blinders.bls_blinder,
         G1Projective::GENERATOR,
         CurveType::BLS,
-        &path.clone(),
+        &path,
         &key_cache,
     )
     .await?;
@@ -449,7 +469,7 @@ pub(crate) async fn untar_keys_stream<R: AsyncRead + Unpin>(
         blinders.k256_blinder,
         k256::ProjectivePoint::GENERATOR,
         CurveType::K256,
-        &path.clone(),
+        &path,
         &key_cache,
     )
     .await?;
@@ -458,7 +478,7 @@ pub(crate) async fn untar_keys_stream<R: AsyncRead + Unpin>(
         blinders.p256_blinder,
         p256::ProjectivePoint::GENERATOR,
         CurveType::P256,
-        &path.clone(),
+        &path,
         &key_cache,
     )
     .await?;
@@ -467,7 +487,7 @@ pub(crate) async fn untar_keys_stream<R: AsyncRead + Unpin>(
         blinders.p384_blinder,
         p384::ProjectivePoint::GENERATOR,
         CurveType::P384,
-        &path.clone(),
+        &path,
         &key_cache,
     )
     .await?;
@@ -476,7 +496,7 @@ pub(crate) async fn untar_keys_stream<R: AsyncRead + Unpin>(
         blinders.ed25519_blinder,
         vsss_rs::curve25519::WrappedEdwards::generator(),
         CurveType::Ed25519,
-        &path.clone(),
+        &path,
         &key_cache,
     )
     .await?;
@@ -485,7 +505,7 @@ pub(crate) async fn untar_keys_stream<R: AsyncRead + Unpin>(
         blinders.ristretto25519_blinder,
         vsss_rs::curve25519::WrappedRistretto::generator(),
         CurveType::Ristretto25519,
-        &path.clone(),
+        &path,
         &key_cache,
     )
     .await?;
@@ -494,7 +514,7 @@ pub(crate) async fn untar_keys_stream<R: AsyncRead + Unpin>(
         blinders.ed448_blinder,
         ed448_goldilocks::EdwardsPoint::GENERATOR,
         CurveType::Ed448,
-        &path.clone(),
+        &path,
         &key_cache,
     )
     .await?;
@@ -503,7 +523,16 @@ pub(crate) async fn untar_keys_stream<R: AsyncRead + Unpin>(
         blinders.jubjub_blinder,
         jubjub::SubgroupPoint::generator(),
         CurveType::RedJubjub,
-        &path.clone(),
+        &path,
+        &key_cache,
+    )
+    .await?;
+
+    let pallas_recovery_data = read_curve_recovery_data::<pallas::Pallas>(
+        blinders.pallas_blinder,
+        pallas::Point::generator(),
+        CurveType::RedPallas,
+        &path,
         &key_cache,
     )
     .await?;
@@ -538,6 +567,7 @@ pub(crate) async fn untar_keys_stream<R: AsyncRead + Unpin>(
         jubjub_recovery_data,
         decaf377_recovery_data,
         bls12381g1_recovery_data,
+        pallas_recovery_data,
         threshold,
         restored_key_cache: KeyCache::default(),
     };
@@ -825,10 +855,10 @@ fn parse_bls_blinder(blinder_str: &str) -> Result<<InnerBls12381G1 as BCA>::Scal
     match blinder.into_option() {
         Some(blinder) => Ok(blinder),
         None => Err(parser_err(
-            std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("Could not convert to bls key blinder:{}", blinder_str),
-            ),
+            std::io::Error::other(format!(
+                "Could not convert to bls key blinder:{}",
+                blinder_str
+            )),
             None,
         )),
     }
@@ -839,17 +869,16 @@ fn parse_k256_blinder(blinder_str: &str) -> Result<<Secp256k1 as BCA>::Scalar> {
     // This is the error closure so we don't repeat it in the code.
     let error = |blinder_str| {
         parser_err(
-            std::io::Error::new(
-                std::io::ErrorKind::Other,
-                format!("Could not convert to ecdsa key blinder:{}", blinder_str),
-            ),
+            std::io::Error::other(format!(
+                "Could not convert to ecdsa key blinder:{}",
+                blinder_str
+            )),
             None,
         )
     };
 
     let bytes = hex::decode(blinder_str).map_err(|e| error(blinder_str))?;
-    let scalar_primitive = elliptic_curve::scalar::ScalarPrimitive::from_slice(&bytes)
-        .map_err(|e| error(blinder_str))?;
+    let scalar_primitive = ScalarPrimitive::from_slice(&bytes).map_err(|e| error(blinder_str))?;
     Ok(k256::Scalar::from(&scalar_primitive))
 }
 
@@ -873,21 +902,26 @@ mod test {
     use crate::tss::common::storage::{
         read_key_share_from_disk, write_key_share_commitments_to_disk, write_key_share_to_disk,
     };
-    use blsful::{
-        Bls12381G1Impl, SecretKeyShare,
-        inner_types::{G1Projective, InnerBls12381G1},
-    };
     use bulletproofs::BulletproofCurveArithmetic as BCA;
-    use elliptic_curve::{Field, Group, PrimeField};
-    use k256::{ProjectivePoint, PublicKey, Secp256k1};
-    use lit_node_core::CurveType;
-    use lit_node_core::PeerId;
+    use lit_node_core::{CurveType, PeerId};
     use lit_recovery::models::{EncryptedKeyShare, UploadedShareData};
+    use lit_rust_crypto::vsss_rs::{DefaultShare, IdentifierPrimeField, ValuePrimeField};
+    use lit_rust_crypto::{
+        blsful::{
+            Bls12381G1Impl, SecretKeyShare,
+            inner_types::{G1Projective, InnerBls12381G1},
+        },
+        decaf377, ed448_goldilocks,
+        ff::{Field, PrimeField},
+        group::Group,
+        jubjub,
+        k256::{FieldBytes, ProjectivePoint, PublicKey, Scalar, Secp256k1},
+        p256, p384, pallas, vsss_rs,
+    };
     use semver::Version;
     use std::sync::Arc;
     use tokio::fs;
     use verifiable_share_encryption::DecryptionShare;
-    use vsss_rs::{DefaultShare, IdentifierPrimeField, ValuePrimeField};
 
     #[tokio::test]
     async fn run_backup_tests() {
@@ -895,8 +929,7 @@ mod test {
         test_untar_old_backup().await;
     }
 
-    type K256Share =
-        DefaultShare<IdentifierPrimeField<k256::Scalar>, ValuePrimeField<k256::Scalar>>;
+    type K256Share = DefaultShare<IdentifierPrimeField<Scalar>, ValuePrimeField<Scalar>>;
 
     #[cfg(any(feature = "testing", test))]
     pub fn get_test_recovery_party() -> RecoveryParty {
@@ -904,7 +937,7 @@ mod test {
         let mut rng = rand_core::OsRng;
         let bls_encryption_key = <InnerBls12381G1 as BCA>::Point::generator()
             * <InnerBls12381G1 as BCA>::Scalar::random(&mut rng);
-        let k256_encryption_key = k256::ProjectivePoint::GENERATOR * k256::Scalar::random(&mut rng);
+        let k256_encryption_key = ProjectivePoint::GENERATOR * Scalar::random(&mut rng);
         let p256_encryption_key = p256::ProjectivePoint::GENERATOR * p256::Scalar::random(&mut rng);
         let p384_encryption_key = p384::ProjectivePoint::GENERATOR * p384::Scalar::random(&mut rng);
         let ed25519_encryption_key = vsss_rs::curve25519::WrappedEdwards::generator()
@@ -918,6 +951,7 @@ mod test {
         let decaf377_encryption_key = decaf377::Element::GENERATOR * decaf377::Fr::random(&mut rng);
         let bls12381g1_encryption_key =
             G1Projective::GENERATOR * <InnerBls12381G1 as BCA>::Scalar::random(&mut rng);
+        let pallas_encryption_key = pallas::Point::generator() * pallas::Scalar::random(&mut rng);
 
         // Mock recovery party members
         let mut party_members = vec![];
@@ -938,6 +972,7 @@ mod test {
             jubjub_encryption_key,
             decaf377_encryption_key,
             bls12381g1_encryption_key,
+            pallas_encryption_key,
             threshold: 2,
         }
     }
@@ -971,7 +1006,7 @@ mod test {
         let k256_key: KeyShare = serde_json::from_str(TEST_ECDSA_KEY_SHARE).unwrap();
         let bls_key_share_commitments: KeyShareCommitments<<InnerBls12381G1 as BCA>::Point> =
             serde_json::from_str(TEST_BLS_KEY_SHARE_COMMITMENT).unwrap();
-        let k256_key_share_commitments: KeyShareCommitments<k256::ProjectivePoint> =
+        let k256_key_share_commitments: KeyShareCommitments<ProjectivePoint> =
             serde_json::from_str(TEST_ECDSA_KEY_SHARE_COMMITMENT).unwrap();
 
         // Make sure the key shares and key share commitments match
@@ -984,7 +1019,7 @@ mod test {
         )
         .unwrap();
 
-        verify_decrypted_key_share::<k256::Secp256k1>(
+        verify_decrypted_key_share::<Secp256k1>(
             k256_key_helper
                 .secret_from_hex(&k256_key.hex_private_share)
                 .unwrap(),
@@ -1206,19 +1241,17 @@ mod test {
         let dec_key_share_1 = hex_to_k256_dec_key_share(TEST_ECDSA_PRI_KEY_SHARE_1, 1);
         let dec_key_share_2 = hex_to_k256_dec_key_share(TEST_ECDSA_PRI_KEY_SHARE_2, 2);
 
-        let key_share_1 =
-            k256::Scalar::from_repr(k256::FieldBytes::clone_from_slice(&dec_key_share_1[1..]))
-                .expect("Failed to create k256 scalar from bytes");
+        let key_share_1 = Scalar::from_repr(FieldBytes::clone_from_slice(&dec_key_share_1[1..]))
+            .expect("Failed to create k256 scalar from bytes");
         let dec_key_share_1 = K256Share {
-            identifier: IdentifierPrimeField(k256::Scalar::from(dec_key_share_1[0] as u64)),
+            identifier: IdentifierPrimeField(Scalar::from(dec_key_share_1[0] as u64)),
             value: IdentifierPrimeField(key_share_1),
         };
 
-        let key_share_2 =
-            k256::Scalar::from_repr(k256::FieldBytes::clone_from_slice(&dec_key_share_2[1..]))
-                .expect("Failed to create k256 scalar from bytes");
+        let key_share_2 = Scalar::from_repr(FieldBytes::clone_from_slice(&dec_key_share_2[1..]))
+            .expect("Failed to create k256 scalar from bytes");
         let dec_key_share_2 = K256Share {
-            identifier: IdentifierPrimeField(k256::Scalar::from(dec_key_share_2[0] as u64)),
+            identifier: IdentifierPrimeField(Scalar::from(dec_key_share_2[0] as u64)),
             value: IdentifierPrimeField(key_share_2),
         };
 
@@ -1257,7 +1290,7 @@ mod test {
         let bls_helper = KeyPersistence::<G1Projective>::new(CurveType::BLS);
         let bls_blinder = bls_helper.secret_from_hex(TEST_BLS_BLINDER).unwrap();
 
-        let k256_helper = KeyPersistence::<k256::ProjectivePoint>::new(CurveType::K256);
+        let k256_helper = KeyPersistence::<ProjectivePoint>::new(CurveType::K256);
         let k256_blinder = k256_helper.secret_from_hex(TEST_ECDSA_BLINDER).unwrap();
 
         let cfg = crate::tests::common::get_backup_config();
@@ -1308,7 +1341,7 @@ mod test {
             .await
             .unwrap();
 
-        let peer_id = PeerId::try_from(555 as usize).unwrap();
+        let peer_id = PeerId::try_from(555usize).unwrap();
         let epoch = 333;
         let restored_key_shares = restore_state
             .try_restore_key_shares(&peer_id, epoch, staker_address, realm_id)

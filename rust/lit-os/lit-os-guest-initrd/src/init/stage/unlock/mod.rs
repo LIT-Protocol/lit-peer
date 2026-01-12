@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 use std::{fs, thread};
 
-use log::{as_error, error, info};
+use log::{error, info};
 
 use lit_core::error::Unexpected;
 use lit_core::utils::binary::bytes_to_hex;
@@ -32,7 +32,7 @@ pub(crate) async fn run(ctx: &mut InitContext) -> Result<Outcome> {
     verify_hashes(ctx)?;
 
     if let Err(e) = maybe_resize_volumes(ctx) {
-        error!(error = as_error!(e); "unable to proceed: volume resize failed");
+        error!(error:err = e; "unable to proceed: volume resize failed");
 
         return Ok(Outcome::Diagnose);
     }
@@ -220,10 +220,11 @@ fn verify_var_hash(ctx: &mut InitContext) -> Result<()> {
     })?;
     let var_dev_label = format!("{}:{:?}", "var", var_dev.as_path());
 
-    if let Some(var_hash) = ctx.cmdline_env().build_varhhash.as_ref() {
-        if ctx.is_first_boot() && guest_type != GuestType::Prov {
-            verify_hash(ctx, &var_dev, var_hash, &var_dev_label)?;
-        }
+    if let Some(var_hash) = ctx.cmdline_env().build_varhhash.as_ref()
+        && ctx.is_first_boot()
+        && guest_type != GuestType::Prov
+    {
+        verify_hash(ctx, &var_dev, var_hash, &var_dev_label)?;
     }
 
     Ok(())

@@ -1,6 +1,9 @@
-use blsful::inner_types::Scalar;
+use lit_rust_crypto::{
+    blsful::inner_types::*, decaf377, ed448_goldilocks, elliptic_curve::subtle::Choice, jubjub,
+    k256, p256, p384, pallas, vsss_rs::curve25519,
+};
+
 use serde::{Deserialize, Serialize};
-use vsss_rs::subtle::Choice;
 
 /// Blinders for the different curves for verifiable encryption
 #[derive(Clone, Copy, Debug, Default, Serialize, Deserialize)]
@@ -9,12 +12,13 @@ pub struct Blinders {
     pub k256_blinder: Option<k256::Scalar>,
     pub p256_blinder: Option<p256::Scalar>,
     pub p384_blinder: Option<p384::Scalar>,
-    pub ed25519_blinder: Option<vsss_rs::curve25519::WrappedScalar>,
-    pub ristretto25519_blinder: Option<vsss_rs::curve25519::WrappedScalar>,
+    pub ed25519_blinder: Option<curve25519::WrappedScalar>,
+    pub ristretto25519_blinder: Option<curve25519::WrappedScalar>,
     pub ed448_blinder: Option<ed448_goldilocks::Scalar>,
     pub jubjub_blinder: Option<jubjub::Scalar>,
     pub decaf377_blinder: Option<decaf377::Fr>,
     pub bls12381g1_blinder: Option<Scalar>,
+    pub pallas_blinder: Option<pallas::Scalar>,
 }
 
 impl Blinders {
@@ -29,11 +33,10 @@ impl Blinders {
             || self.jubjub_blinder.is_some()
             || self.decaf377_blinder.is_some()
             || self.bls12381g1_blinder.is_some()
+            || self.pallas_blinder.is_some()
     }
 
     pub fn any_blinders_invalid(&self) -> bool {
-        use blsful::inner_types::*;
-
         let mut any = Choice::from(0u8);
         if let Some(bls_blinder) = &self.bls_blinder {
             any |= bls_blinder.is_zero();
@@ -61,6 +64,9 @@ impl Blinders {
         }
         if let Some(bls12381g1_blinder) = &self.bls12381g1_blinder {
             any |= bls12381g1_blinder.is_zero();
+        }
+        if let Some(pallas_blinder) = &self.pallas_blinder {
+            any |= pallas_blinder.is_zero();
         }
 
         bool::from(any)

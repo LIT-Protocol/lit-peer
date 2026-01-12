@@ -27,14 +27,10 @@ edition = "2024"
 [workspace.dependencies]
 async-std = "1.13"
 async-trait = "0.1"
-blsful = "3.0.0-pre8"
-bulletproofs = { git = "https://github.com/LIT-Protocol/bulletproofs", rev = "ddf11c2f593e71f24c9a3d64c56f62d82f2b5099" }
-curve25519-dalek = { package = "curve25519-dalek-ml", version="4.3.0", features = ["group", "serde", "rand_core"] }
-data-encoding = "2.8"
-decaf377 = { git = "https://github.com/LIT-Protocol/decaf377", rev = "1c5755b2b90e1969d47ce89cf2d35078984a0ee5", features = ["serde"]  }
+bulletproofs = { git = "https://github.com/LIT-Protocol/bulletproofs", branch = "pallas" }
+data-encoding = "2.9"
 derive_more = { version = "2" , features = ["display"] }
 ed25519-dalek = { version = "2.2", features = ["rand_core"] }
-ed448-goldilocks = { version = "0.16", package = "ed448-goldilocks-plus", features = ["serde"] }
 elliptic-curve = { version = "0.13", features = ["arithmetic", "serde"] }
 ethabi = "16.0.0"
 ethers = { version = "2.0.8", features = [
@@ -42,21 +38,40 @@ ethers = { version = "2.0.8", features = [
     "legacy"
 ]}
 generic-array = "=1.1.1"
+hd-keys-curves-wasm = { git = "https://github.com/LIT-Protocol/hd-keys-curves-wasm", branch = "pallas", default-features = false, features = ["bls", "k256", "p256", "p384", "curve25519", "ed448", "jubjub", "decaf377", "pasta"] }
 hex = "0.4"
-jubjub = { package = "jubjub-plus", version = "0.10", features = ["serde"] }
+lit-frost = { git = "https://github.com/LIT-Protocol/lit-frost.git", branch = "pallas" }
 reqwest = { version = "0.11.14", default-features = false, features = ["json", "rustls-tls", "stream"] }
 rand = "0.8"
 rand_core = "0.6"
 rand_chacha = "0.3.1"
-sdd = "3"
+scc = "3"
+sdd = "4"
 sha2 = "0.10.9"
 sha3 = "0.10.8"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 soteria-rs = { version = "0.3.1", features = ["serde", "elements"] }
 url = { version = "2", features = ["serde"] }
-vsss-rs = { version = "5.1", features = ["curve25519"] }
 zeroize = { version = "1.8", features = ["derive"] }
+
+[workspace.dependencies.lit-rust-crypto]
+git = "https://github.com/LIT-Protocol/lit-rust-crypto"
+tag = "0.6.0"
+features = [
+    "arithmetic",
+    "bits",
+    "ecdsa",
+    "ecdsa-core",
+    "digest",
+    "hash2curve",
+    "hex",
+    "rand_core",
+    "serde",
+    "sha",
+    "std",
+    "zeroize",
+]
 
 [patch.crates-io]
 # needed to force deno_crypto to use v0.7.0-pre and not v0.7.0-rc.0 which for some reason is missing a bunch of stuff from the -pre version
