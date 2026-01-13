@@ -16,6 +16,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .compile_protos(&[proto_file], &[proto_dir])?;
 
     // INSERT GIT COMMIT HASH
+    insert_git_commit_hash().expect("Failed to insert git commit hash.");
+    Ok(())
+}
+
+fn insert_git_commit_hash() -> Result<(), Box<dyn std::error::Error>> {
+    let src_hash = dirhash_fast::file::dir::dirhash::hash_directory("src".as_ref());
+    println!("Source directory hash: {}", src_hash);
+    let git_info_path = Path::new("src/git_info.rs");
+    if git_info_path.exists() {
+        let git_info_contents = fs::read_to_string(git_info_path).unwrap();
+        if git_info_contents.contains(&src_hash) {
+            println!("Source directory hash is already in git_info.rs file.  No need to update.");
+            return Ok(());
+        }
+    }
+
     let output = Command::new("git").args(["rev-parse", "HEAD"]).output();
 
     let git_commit_hash = match output {
@@ -36,12 +52,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     };
 
-    let dest_path = Path::new("src/git_info.rs");
-    let path_contents = format!("pub const GIT_COMMIT_HASH: &str = \"{git_commit_hash}\";\n",);
+    if !git_commit_hash.is_empty() {
+        let path_contents = format!("pub const GIT_COMMIT_HASH: &str = \"{git_commit_hash}\";\n",);
 
-    if let Err(e) = fs::write(dest_path, path_contents) {
-        eprintln!("Failed to write git_info.rs file with error: {e}.  Exiting build.rs ...",);
+        if let Err(e) = fs::write(git_info_path, path_contents) {
+            eprintln!("Failed to write git_info.rs file with error: {e}.  Exiting build.rs ...",);
+        }
     }
-
     Ok(())
 }

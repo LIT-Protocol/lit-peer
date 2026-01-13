@@ -5657,6 +5657,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "dirhash_fast"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "939c56145f5c4c132f017c6652691708f341009fe63e6a5e57c2f05c774096f4"
+dependencies = [
+ "blake3",
+ "rayon",
+ "tempfile",
+ "walkdir",
+]
+
+[[package]]
 name = "dirs"
 version = "4.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10228,6 +10240,7 @@ dependencies = [
  "derive_builder",
  "derive_more 2.1.0",
  "digest 0.10.7",
+ "dirhash_fast",
  "dotenv",
  "ecdsa 0.16.9",
  "ed25519-dalek 2.2.0",
@@ -12649,7 +12662,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be769465445e8c1474e9c5dac2018218498557af32d9ed057325ec9a41ae81bf"
 dependencies = [
  "heck 0.5.0",
- "itertools 0.10.5",
+ "itertools 0.13.0",
  "log",
  "multimap",
  "once_cell",
@@ -12669,7 +12682,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a56d757972c98b346a9b766e3f02746cde6dd1cd1d1d563472929fdd74bec4d"
 dependencies = [
  "anyhow",
- "itertools 0.10.5",
+ "itertools 0.13.0",
  "proc-macro2 1.0.103",
  "quote 1.0.42",
  "syn 2.0.111",
@@ -12682,7 +12695,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9120690fafc389a67ba3803df527d0ec9cbbc9cc45e4cc20b332996dfb672425"
 dependencies = [
  "anyhow",
- "itertools 0.10.5",
+ "itertools 0.13.0",
  "proc-macro2 1.0.103",
  "quote 1.0.42",
  "syn 2.0.111",
