@@ -153,7 +153,7 @@ jobs:
       - name: Setup local files for testing
         run: make setup-local-files
       - name: Copy lit-node binary to Shiva target directory
-        run: | 
+        run: |
           mkdir -p ${{github.workspace}}/rust/lit-node/shiva/target/debug
           cp ${{github.workspace}}/rust/lit-node/lit-node/target/debug/lit_node ${{github.workspace}}/rust/lit-node/shiva/target/debug/lit_node
       - name: Run Shiva Integration tests

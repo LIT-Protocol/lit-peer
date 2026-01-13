@@ -642,6 +642,10 @@ pub async fn check_and_load_test_state_cache(
     trace!("Block number before loading chain state: {}", block_number);
 
     let root = "./tests/test_state_cache";
+    let tar_name = format!(
+        "./{}/{}_{}_{}.tar.gz",
+        root, num_staked, num_nodes, network_state
+    );
 
     lit_core::utils::tar::read_tar_gz_file(&tar_name, &root).expect("Failed to read tar.gz file");
     let dir_name = format!(
