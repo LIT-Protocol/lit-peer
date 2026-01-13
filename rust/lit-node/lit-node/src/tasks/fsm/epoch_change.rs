@@ -392,7 +392,7 @@ async fn process_epoch_for_key_set(
                 };
 
                 let lifecycle_id = fsm_worker_metadata.get_lifecycle_id(realm_id);
-                if false {
+                if new_peers.has_version_lower_than("2.1.8") {
                     match key_share_proofs_check(&dkg_manager.tss_state, &res, new_peers, latest_dkg_id, realm_id, epoch, lifecycle_id).await {
                         Err(e) => {
                             warn!("Key share proofs check failed in realm {}: {}", realm_id, e);

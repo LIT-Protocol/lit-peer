@@ -520,7 +520,7 @@ impl PresignManager {
             curve_type,
             &tag,
             &staker_address,
-            epoch,
+            0u64,
             realm,
             key_cache,
             &presign,
@@ -851,7 +851,7 @@ impl PresignManager {
                 curve_type,
                 &pubkey,
                 &staker_address,
-                epoch,
+                0u64,
                 realm_id,
                 &key_cache,
             )

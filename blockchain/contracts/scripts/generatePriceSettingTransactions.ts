@@ -580,7 +580,7 @@ async function main() {
   const updatedGlobalConfig = {
     tokenRewardPerTokenPerEpoch:
       currentGlobalConfig.tokenRewardPerTokenPerEpoch,
-    keyTypes: currentGlobalConfig.keyTypes,
+    keyTypes_deprecated: currentGlobalConfig.keyTypes_deprecated,
     minimumValidatorCount: currentGlobalConfig.minimumValidatorCount,
     rewardEpochDuration: currentGlobalConfig.rewardEpochDuration,
     maxTimeLock: currentGlobalConfig.maxTimeLock,
