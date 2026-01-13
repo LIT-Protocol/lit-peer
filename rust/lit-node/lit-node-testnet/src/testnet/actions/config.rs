@@ -206,4 +206,22 @@ impl Actions {
         }
         Ok(())
     }
+
+    pub async fn clear_presigns(&self) -> Result<()> {
+        let r = self
+            .contracts
+            .staking
+            .emit_clear_offline_phase_data(U256::from(1))
+            .call()
+            .await;
+        if r.is_err() {
+            return Err(anyhow::anyhow!(
+                "Error clearing presigns: {:?}",
+                r.err().unwrap()
+            ));
+        } else {
+            info!("Presigns cleared");
+        }
+        Ok(())
+    }
 }

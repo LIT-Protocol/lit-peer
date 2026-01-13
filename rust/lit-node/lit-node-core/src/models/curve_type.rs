@@ -7,6 +7,7 @@ use std::str::FromStr;
 #[derive(
     Clone, Copy, Debug, Default, PartialEq, Eq, Ord, PartialOrd, Hash, Serialize, Deserialize,
 )]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[repr(u8)]
 pub enum CurveType {
     #[default]

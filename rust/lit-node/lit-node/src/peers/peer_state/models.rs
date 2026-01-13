@@ -344,4 +344,16 @@ impl SimplePeerCollection {
         input.hash(&mut s);
         s.finish()
     }
+
+    pub fn has_version_lower_than(&self, version: &str) -> bool {
+        let parsed_version = semver::Version::parse(version);
+        if let Ok(ver) = parsed_version {
+            for peer in &self.0 {
+                if peer.version < ver {
+                    return true;
+                }
+            }
+        }
+        false
+    }
 }
