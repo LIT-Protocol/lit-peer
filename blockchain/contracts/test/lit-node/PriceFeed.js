@@ -126,9 +126,13 @@ describe('PriceFeed', function () {
     priceFeedFacet = priceFeedFacet.connect(deployer);
     // check that it's set to defaults
     let baseNetworkPrices = await priceFeedFacet.baseNetworkPrices([0, 1, 2]);
-    expect(baseNetworkPrices[0]).equal(ethers.parseUnits('0.01', 18));
-    expect(baseNetworkPrices[1]).equal(ethers.parseUnits('0.01', 18));
-    expect(baseNetworkPrices[2]).equal(ethers.parseUnits('0.01', 18));
+    // Defaults are set in `contracts/lit-node/PriceFeed.sol` constructor.
+    const defaultPkpSignBase = ethers.parseUnits('29751.916618468', 'gwei');
+    const defaultEncSignBase = ethers.parseUnits('29751.916618468', 'gwei');
+    const defaultLitActionBase = ethers.parseUnits('5950.383323693', 'gwei');
+    expect(baseNetworkPrices[0]).equal(defaultPkpSignBase);
+    expect(baseNetworkPrices[1]).equal(defaultEncSignBase);
+    expect(baseNetworkPrices[2]).equal(defaultLitActionBase);
 
     // try setting and getting it
     await priceFeedFacet.setBaseNetworkPrices(
@@ -145,9 +149,13 @@ describe('PriceFeed', function () {
     priceFeedFacet = priceFeedFacet.connect(deployer);
     // check that it's set to defaults
     let maxNetworkPrices = await priceFeedFacet.maxNetworkPrices([0, 1, 2]);
-    expect(maxNetworkPrices[0]).equal(ethers.parseUnits('1', 18));
-    expect(maxNetworkPrices[1]).equal(ethers.parseUnits('1', 18));
-    expect(maxNetworkPrices[2]).equal(ethers.parseUnits('1', 18));
+    // Defaults are set in `contracts/lit-node/PriceFeed.sol` constructor.
+    const defaultPkpSignBase = ethers.parseUnits('29751.916618468', 'gwei');
+    const defaultEncSignBase = ethers.parseUnits('29751.916618468', 'gwei');
+    const defaultLitActionBase = ethers.parseUnits('5950.383323693', 'gwei');
+    expect(maxNetworkPrices[0]).equal(defaultPkpSignBase * 100n);
+    expect(maxNetworkPrices[1]).equal(defaultEncSignBase * 100n);
+    expect(maxNetworkPrices[2]).equal(defaultLitActionBase * 100n);
 
     // try setting and getting it
     await priceFeedFacet.setMaxNetworkPrices(
