@@ -56,17 +56,19 @@ tracing = { version = "0.1" }
 tracing-opentelemetry = { version = "0.25" }
 zeroize = { version = "1.8", features = ["derive"] }
 
-[workspace.dependencies.lit-rust-crypto]
-git = "https://github.com/LIT-Protocol/lit-rust-crypto"
-tag = "0.6.0"
-features = [
+lit-rust-crypto = { version = "0.6.0", features = [
     "arithmetic",
+    "bits",
+    "digest",
+    "ecdsa",
+    "ecdsa-core",
     "hash2curve",
+    "hex",
+    "rand_core",
     "serde",
+    "sha",
     "std",
-]
+    "zeroize",
+] }
 
-[workspace.dependencies.hd-keys-curves-wasm]
-git = "https://github.com/LIT-Protocol/hd-keys-curves-wasm.git"
-branch = "pallas"
-default-features = false
+hd-keys-curves-wasm = { version = "1.0.5", default-features = false }
