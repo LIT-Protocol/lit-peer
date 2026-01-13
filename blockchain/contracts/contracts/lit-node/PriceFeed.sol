@@ -42,12 +42,34 @@ contract PriceFeed {
 
         s.contractResolver = ContractResolver(_args.contractResolver);
         s.env = _args.env;
-        // set default prices for the first 4 product IDs.  goes from 0.01 tokens min to 1 token max
-        uint256 baseAmount = 10000000000000000;
-        for (uint256 i = 0; i < 4; i++) {
-            s.baseNetworkPrices[i] = baseAmount;
-            s.maxNetworkPrices[i] = baseAmount * 100;
-        }
+        // set default prices for the first 4 product IDs (see LibPriceFeedStorage.ProductId)
+        //
+        // NOTE (testnet defaults):
+        // These values are appropriate for testnet deployments and were taken from the
+        // `naga-test` network on 2026-01-01.
+        //
+        // Base Network Prices:
+        // - Encryption Sign:      29751.916618468 gwei
+        // - Lit Action:           5950.383323693 gwei
+        // - PKP Sign:             29751.916618468 gwei
+        // - Session Key Sign:     148759.583092342 gwei
+        uint256 pkpSignBasePrice = 29751.916618468 gwei;
+        uint256 encSignBasePrice = 29751.916618468 gwei;
+        uint256 litActionBasePrice = 5950.383323693 gwei;
+        uint256 signSessionKeyBasePrice = 148759.583092342 gwei;
+
+        s.baseNetworkPrices[uint256(LibPriceFeedStorage.ProductId.PkpSign)] = pkpSignBasePrice;
+        s.maxNetworkPrices[uint256(LibPriceFeedStorage.ProductId.PkpSign)] = pkpSignBasePrice * 100;
+
+        s.baseNetworkPrices[uint256(LibPriceFeedStorage.ProductId.EncSign)] = encSignBasePrice;
+        s.maxNetworkPrices[uint256(LibPriceFeedStorage.ProductId.EncSign)] = encSignBasePrice * 100;
+
+        s.baseNetworkPrices[uint256(LibPriceFeedStorage.ProductId.LitAction)] = litActionBasePrice;
+        s.maxNetworkPrices[uint256(LibPriceFeedStorage.ProductId.LitAction)] = litActionBasePrice * 100;
+
+        s.baseNetworkPrices[uint256(LibPriceFeedStorage.ProductId.SignSessionKey)] = signSessionKeyBasePrice;
+        s.maxNetworkPrices[uint256(LibPriceFeedStorage.ProductId.SignSessionKey)] = signSessionKeyBasePrice * 100;
+
         s.nodeCapacityConfigs[0] = LibPriceFeedStorage.NodeCapacityConfig({
             pkpSignMaxConcurrency: 75,
             encSignMaxConcurrency: 300,
@@ -56,63 +78,80 @@ contract PriceFeed {
             globalMaxCapacity: 300
         });
 
+        // Lit Action Individual Prices
+        //
+        // NOTE (testnet defaults):
+        // These values are appropriate for testnet deployments and were taken from the
+        // `naga-test` network on 2026-01-01.
+        // - baseAmount:      29751.916618468 gwei  perCount
+        // - runtimeLength:   595.038332369 gwei    perSecond
+        // - memoryUsage:     59.503833236 gwei     perMegabyte
+        // - codeLength:      59.503833236 gwei     perMegabyte
+        // - responseLength:  59.503833236 gwei     perMegabyte
+        // - signatures:      29751.916618468 gwei  perCount
+        // - broadcasts:      595.038332369 gwei    perCount
+        // - contractCalls:   2975.191661846 gwei   perCount
+        // - callDepth:       595.038332369 gwei    perCount
+        // - decrypts:        5950.383323693 gwei   perCount
+        // - fetches:         595.038332369 gwei    perCount
+
         setLitActionPriceConfig(
             LibPriceFeedStorage.LitActionPriceComponent.baseAmount,
             LibPriceFeedStorage.NodePriceMeasurement.perCount,
-            baseAmount / 2
+            29751.916618468 gwei
         );
 
         setLitActionPriceConfig(
             LibPriceFeedStorage.LitActionPriceComponent.runtimeLength,
             LibPriceFeedStorage.NodePriceMeasurement.perSecond,
-            baseAmount / 10
+            595.038332369 gwei
         );
 
         setLitActionPriceConfig(
             LibPriceFeedStorage.LitActionPriceComponent.memoryUsage,
             LibPriceFeedStorage.NodePriceMeasurement.perMegabyte,
-            baseAmount / 100
+            59.503833236 gwei
         );
         setLitActionPriceConfig(
             LibPriceFeedStorage.LitActionPriceComponent.codeLength,
             LibPriceFeedStorage.NodePriceMeasurement.perMegabyte,
-            baseAmount / 10
+            59.503833236 gwei
         );
         setLitActionPriceConfig(
             LibPriceFeedStorage.LitActionPriceComponent.responseLength,
             LibPriceFeedStorage.NodePriceMeasurement.perMegabyte,
-            baseAmount / 10
+            59.503833236 gwei
         );
         setLitActionPriceConfig(
             LibPriceFeedStorage.LitActionPriceComponent.signatures,
             LibPriceFeedStorage.NodePriceMeasurement.perCount,
-            baseAmount
+            29751.916618468 gwei
         );
         setLitActionPriceConfig(
             LibPriceFeedStorage.LitActionPriceComponent.broadcasts,
             LibPriceFeedStorage.NodePriceMeasurement.perCount,
-            baseAmount / 10
+            595.038332369 gwei
         );
 
         setLitActionPriceConfig(
             LibPriceFeedStorage.LitActionPriceComponent.contractCalls,
             LibPriceFeedStorage.NodePriceMeasurement.perCount,
-            baseAmount / 10
+            2975.191661846 gwei
         );
         setLitActionPriceConfig(
             LibPriceFeedStorage.LitActionPriceComponent.callDepth,
             LibPriceFeedStorage.NodePriceMeasurement.perCount,
-            baseAmount / 10
+            595.038332369 gwei
         );
         setLitActionPriceConfig(
             LibPriceFeedStorage.LitActionPriceComponent.decrypts,
             LibPriceFeedStorage.NodePriceMeasurement.perCount,
-            baseAmount / 10
+            5950.383323693 gwei
         );
         setLitActionPriceConfig(
             LibPriceFeedStorage.LitActionPriceComponent.fetches,
             LibPriceFeedStorage.NodePriceMeasurement.perCount,
-            baseAmount / 10
+            595.038332369 gwei
         );
     }
 
