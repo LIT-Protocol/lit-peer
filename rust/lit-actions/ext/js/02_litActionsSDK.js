@@ -1,6 +1,5 @@
 import * as ops from 'ext:core/ops';
 import { Uint8arrays } from 'ext:lit_actions/01_uint8arrays.js';
-const datilKeySetId = 'datil-keyset';
 /**
  * Check if a given IPFS ID is permitted to sign using a given PKP tokenId
  * @name Lit.Actions.isPermittedAction
@@ -11,7 +10,7 @@ const datilKeySetId = 'datil-keyset';
  * @param {string} params.keySetId The key set id to use
  * @returns {Promise<boolean>} A boolean indicating whether the IPFS ID is permitted to sign using the PKP tokenId
  */
-function isPermittedAction({ tokenId, ipfsId, keySetId = datilKeySetId }) {
+function isPermittedAction({ tokenId, ipfsId, keySetId }) {
   return ops.op_pkp_permissions_is_permitted(
     'isPermittedAction',
     tokenId,
@@ -30,7 +29,7 @@ function isPermittedAction({ tokenId, ipfsId, keySetId = datilKeySetId }) {
  * @param {string} params.keySetId The key set id to use
  * @returns {Promise<boolean>} A boolean indicating whether the wallet address is permitted to sign using the PKP tokenId
  */
-function isPermittedAddress({ tokenId, address, keySetId = datilKeySetId }) {
+function isPermittedAddress({ tokenId, address, keySetId }) {
   return ops.op_pkp_permissions_is_permitted(
     'isPermittedAddress',
     tokenId,
@@ -54,7 +53,7 @@ function isPermittedAuthMethod({
   tokenId,
   authMethodType,
   userId,
-  keySetId = datilKeySetId,
+  keySetId,
 }) {
   return ops.op_pkp_permissions_is_permitted_auth_method(
     tokenId,
@@ -73,7 +72,7 @@ function isPermittedAuthMethod({
  * @param {string} params.keySetId The key set id to use
  * @returns {Promise<Array<string>>} An array of IPFS IDs of lit actions that are permitted to sign using the PKP tokenId
  */
-function getPermittedActions({ tokenId, keySetId = datilKeySetId }) {
+function getPermittedActions({ tokenId, keySetId }) {
   return ops.op_pkp_permissions_get_permitted(
     'getPermittedActions',
     tokenId,
@@ -90,7 +89,7 @@ function getPermittedActions({ tokenId, keySetId = datilKeySetId }) {
  * @param {string} params.keySetId The key set id to use
  * @returns {Promise<Array<string>>} An array of addresses that are permitted to sign using the PKP tokenId
  */
-function getPermittedAddresses({ tokenId, keySetId = datilKeySetId }) {
+function getPermittedAddresses({ tokenId, keySetId }) {
   return ops.op_pkp_permissions_get_permitted(
     'getPermittedAddresses',
     tokenId,
@@ -107,7 +106,7 @@ function getPermittedAddresses({ tokenId, keySetId = datilKeySetId }) {
  * @param {string} params.keySetId The key set id to use
  * @returns {Promise<Array<Object>>} An array of auth methods that are permitted to sign using the PKP tokenId.  Each auth method is an object with the following properties: auth_method_type, id, and user_pubkey (used for web authn, this is the pubkey of the user's authentication keypair)
  */
-function getPermittedAuthMethods({ tokenId, keySetId = datilKeySetId }) {
+function getPermittedAuthMethods({ tokenId, keySetId }) {
   return ops.op_pkp_permissions_get_permitted(
     'getPermittedAuthMethods',
     tokenId,
@@ -132,7 +131,7 @@ function getPermittedAuthMethodScopes({
   authMethodType,
   userId,
   maxScopeId = 100,
-  keySetId = datilKeySetId,
+  keySetId,
 }) {
   return ops.op_pkp_permissions_get_permitted_auth_method_scopes(
     tokenId,
@@ -152,7 +151,7 @@ function getPermittedAuthMethodScopes({
  * @param {string} params.keySetId The key set id to use
  * @returns {Promise<string>} The token ID as a string
  */
-function pubkeyToTokenId({ publicKey, keySetId = datilKeySetId }) {
+function pubkeyToTokenId({ publicKey, keySetId }) {
   return ops.op_pubkey_to_token_id(publicKey, keySetId);
 }
 
@@ -180,7 +179,7 @@ function getLatestNonce({ address, chain }) {
  * @param {string} params.keySetId The key set id to use
  * @returns {Promise<string>} This function will return the string "success" if it works.  The signature share is returned behind the scenes to the Lit JS SDK which will automatically combine the shares and give you the full signature to use.
  */
-function signEcdsa({ toSign, publicKey, sigName, keySetId = datilKeySetId }) {
+function signEcdsa({ toSign, publicKey, sigName, keySetId }) {
   return ops.op_sign_ecdsa(
     new Uint8Array(toSign),
     publicKey,
@@ -214,7 +213,7 @@ function signEcdsa({ toSign, publicKey, sigName, keySetId = datilKeySetId }) {
  * @function sign
  * @returns {Uint8array} The resulting signature share
  */
-function sign({ toSign, publicKey, sigName, signingScheme, keySetId = datilKeySetId }) {
+function sign({ toSign, publicKey, sigName, signingScheme, keySetId }) {
   return ops.op_sign(
     new Uint8Array(toSign),
     publicKey,
@@ -321,7 +320,7 @@ function ethPersonalSignMessageEcdsa({
   message,
   publicKey,
   sigName,
-  keySetId = datilKeySetId,
+  keySetId,
 }) {
   return ops.op_sign_ecdsa_eth_personal_sign_message(
     uint8arrayFromString(message),
@@ -473,7 +472,7 @@ function decryptAndCombine({
   dataToEncryptHash,
   authSig,
   chain,
-  keySetId = datilKeySetId,
+  keySetId,
 }) {
   return ops.op_decrypt_and_combine(
     accessControlConditions,
@@ -504,7 +503,7 @@ function decryptToSingleNode({
   dataToEncryptHash,
   authSig,
   chain,
-  keySetId = datilKeySetId,
+  keySetId,
 }) {
   return ops.op_decrypt_to_single_node(
     accessControlConditions,
@@ -531,7 +530,7 @@ function signAndCombineEcdsa({
   toSign,
   publicKey,
   sigName,
-  keySetId = datilKeySetId,
+  keySetId,
 }) {
   return ops.op_sign_and_combine_ecdsa(
     new Uint8Array(toSign),
@@ -563,7 +562,7 @@ function signAndCombine({
   publicKey,
   sigName,
   signingScheme,
-  keySetId = datilKeySetId,
+  keySetId,
 }) {
   return ops.op_sign_and_combine(
     new Uint8Array(toSign),
@@ -644,7 +643,7 @@ function getRpcUrl({ chain }) {
 function encrypt({
   accessControlConditions,
   to_encrypt,
-  keySetId = datilKeySetId,
+  keySetId,
 }) {
   return ops.op_encrypt_bls(accessControlConditions, to_encrypt, keySetId);
 }

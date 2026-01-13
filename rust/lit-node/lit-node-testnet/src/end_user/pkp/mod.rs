@@ -136,6 +136,14 @@ impl Pkp {
         }
     }
 
+    pub async fn is_permitted_action(&self, ipfs_cid: &str) -> Result<bool, anyhow::Error> {
+        if self.is_datil {
+            self.is_permitted_action_datil(ipfs_cid).await
+        } else {
+            self.is_permitted_action_mainnet(ipfs_cid).await
+        }
+    }
+
     #[doc = "Grant a Address Authmethod permission to use a PKP"]
     pub async fn add_permitted_address_auth_method_to_pkp(
         &self,

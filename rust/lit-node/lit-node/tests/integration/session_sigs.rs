@@ -406,6 +406,7 @@ async fn sign_lit_actions_with_lit_action_session_sig() {
         auth_methods, // None
         &session_sigs_and_node_set,
         2,
+        key_set_id,
     )
     .await
     .expect("Could not execute lit action");
@@ -499,6 +500,7 @@ async fn only_permitted_can_sign_with_lit_action_session_sig() {
         auth_methods, // None
         &session_sigs_and_node_set,
         epoch,
+        key_set_id,
     )
     .await
     .expect("Could not execute lit action");
@@ -609,6 +611,7 @@ async fn sign_lit_actions_with_custom_auth_resource_lit_action_session_sig() {
         auth_methods, // None
         &session_sigs_and_node_set,
         2,
+        key_set_id,
     )
     .await
     .expect("Could not execute lit action");
@@ -782,6 +785,7 @@ async fn sign_lit_actions_with_no_auth_method_lit_action_session_sig() {
         auth_methods, // None
         &session_sigs_and_node_set,
         2,
+        key_set_id,
     )
     .await
     .expect("Could not execute lit action");
@@ -894,6 +898,7 @@ async fn execute_js_with_eoa_session_sigs() {
         auth_methods, // None
         &session_sigs_and_node_set,
         2,
+        key_set_id,
     )
     .await
     .expect("Could not execute lit action");
@@ -1125,6 +1130,7 @@ async fn test_v1_endpoints_api_constraints() {
         auth_methods, // None
         auth_sig.clone(),
         epoch,
+        key_set_id.clone(),
     )
     .await;
 
@@ -1152,6 +1158,7 @@ async fn test_v1_endpoints_api_constraints() {
         auth_methods,
         auth_sig,
         epoch,
+        key_set_id.clone(),
     )
     .await;
 
@@ -1335,6 +1342,7 @@ pub async fn session_sig_only_mbg_pkp() {
 
     let auth_pubkey = mgb_pkp.pubkey;
     let auth_eth_address = mgb_pkp.eth_address;
+    let key_set_id = mgb_pkp.key_set_id;
 
     info!(
         "Funded MGB PKP {:?} with {:?}",
@@ -1430,6 +1438,7 @@ pub async fn session_sig_only_mbg_pkp() {
         None,
         &session_sigs_and_node_set,
         2,
+        key_set_id.clone(),
     )
     .await
     .expect("Could not execute lit action");
@@ -1507,6 +1516,7 @@ async fn explicit_resource_permission_required_for_lit_action() {
         auth_methods, // None
         &session_sigs,
         2,
+        key_set_id.clone(),
     )
     .await
     .expect("Could not execute lit action");

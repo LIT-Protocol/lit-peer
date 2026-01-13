@@ -100,7 +100,8 @@ pub struct Client {
     endpoint_version: EndpointVersion,
     #[builder(default, setter(into))]
     node_set: Vec<NodeSet>,
-
+    #[builder(default, setter(into))]
+    key_set_id: String,
     // Limits
     #[builder(default = "DEFAULT_TIMEOUT_MS")]
     timeout_ms: u64,
@@ -532,6 +533,8 @@ impl Client {
                 key_set_id,
             }) => {
                 self.pay(LitActionPriceComponent::ContractCalls, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+
                 let resources =
                     pkp::utils::pkp_permissions_get_permitted(method, self.lit_config(), token_id)
                         .await?;
@@ -550,6 +553,8 @@ impl Client {
                 },
             ) => {
                 self.pay(LitActionPriceComponent::ContractCalls, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+
                 let scopes = pkp::utils::pkp_permissions_get_permitted_auth_method_scopes(
                     token_id,
                     self.lit_config(),
@@ -567,11 +572,20 @@ impl Client {
                 key_set_id,
             }) => {
                 self.pay(LitActionPriceComponent::ContractCalls, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+                let cdm = self
+                    .tss_state_and_txn_prefix()?
+                    .0
+                    .chain_data_config_manager
+                    .clone();
+
                 let is_permitted = pkp::utils::pkp_permissions_is_permitted(
                     token_id,
                     self.lit_config(),
                     method,
                     serde_json::from_slice(&params)?,
+                    &key_set_id,
+                    &cdm,
                 )
                 .await?;
                 PkpPermissionsIsPermittedResponse { is_permitted }.into()
@@ -585,13 +599,20 @@ impl Client {
                 },
             ) => {
                 self.pay(LitActionPriceComponent::ContractCalls, 1).await?;
-                use lit_blockchain::resolver::contract::ContractResolver;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+                let cdm = self
+                    .tss_state_and_txn_prefix()?
+                    .0
+                    .chain_data_config_manager
+                    .clone();
 
-                let cfg = self.lit_config();
-                let resolver = ContractResolver::try_from(cfg)?;
-                let contract = resolver.pkp_permissions_contract(cfg).await?;
                 let is_permitted = pkp::utils::pkp_permissions_is_permitted_auth_method(
-                    token_id, cfg, method, user_id,
+                    token_id,
+                    self.lit_config(),
+                    method,
+                    user_id,
+                    &key_set_id,
+                    &cdm,
                 )
                 .await?;
                 PkpPermissionsIsPermittedAuthMethodResponse { is_permitted }.into()
@@ -600,6 +621,8 @@ impl Client {
                 public_key,
                 key_set_id,
             }) => {
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+
                 let bytes = encoding::hex_to_bytes(public_key)?;
                 let token_id = format!("0x{}", bytes_to_hex(keccak256(bytes).as_slice()));
                 PubkeyToTokenIdResponse { token_id }.into()
@@ -611,6 +634,8 @@ impl Client {
                 eth_personal_sign,
                 key_set_id,
             }) => {
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+
                 self.pay(LitActionPriceComponent::Signatures, 1).await?;
 
                 let success = if eth_personal_sign {
@@ -656,6 +681,7 @@ impl Client {
                 key_set_id,
             }) => {
                 self.pay(LitActionPriceComponent::Signatures, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
 
                 let scheme = signing_scheme
                     .parse::<SigningScheme>()
@@ -882,6 +908,7 @@ impl Client {
                 self.increment_broad_and_collect_counter()?;
                 self.pay(LitActionPriceComponent::Broadcasts, 1).await?;
                 self.pay(LitActionPriceComponent::Decrypts, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
 
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
                 let json_auth_sig = self.parse_json_authsig_helper(auth_sig)?;
@@ -994,6 +1021,7 @@ impl Client {
                 self.increment_broad_and_collect_counter()?;
                 self.pay(LitActionPriceComponent::Broadcasts, 1).await?;
                 self.pay(LitActionPriceComponent::Decrypts, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
 
                 let json_auth_sig = self.parse_json_authsig_helper(auth_sig)?;
 
@@ -1119,6 +1147,7 @@ impl Client {
                 // we both the signatures and the broadcasts for this operation.
                 self.pay(LitActionPriceComponent::Signatures, 1).await?;
                 self.pay(LitActionPriceComponent::Broadcasts, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
 
                 self.increment_broad_and_collect_counter()?;
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
@@ -1209,6 +1238,7 @@ impl Client {
                 // we both the signatures and the broadcasts for this operation.
                 self.pay(LitActionPriceComponent::Signatures, 1).await?;
                 self.pay(LitActionPriceComponent::Broadcasts, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
 
                 let scheme = signing_scheme
                     .parse::<SigningScheme>()
@@ -1404,6 +1434,8 @@ impl Client {
                 to_encrypt,
                 key_set_id,
             }) => {
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
                 let tss_state = Arc::new(tss_state);
                 let network_pubkey = get_bls_root_pubkey(&tss_state, &key_set_id)?;
@@ -1800,6 +1832,14 @@ impl Client {
         )
         .await
         .map_err(|e| anyhow::anyhow!(format!("Error checking access control conditions: {e:?}")))
+    }
+
+    fn ensure_key_set_id(&self, key_set_id: String) -> String {
+        if key_set_id.is_empty() {
+            self.key_set_id.clone()
+        } else {
+            key_set_id
+        }
     }
 
     async fn get_bls_root_pubkey(&self) -> Result<String> {

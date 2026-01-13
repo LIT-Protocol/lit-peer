@@ -93,6 +93,7 @@ pub struct JsonExecutionRequest {
     pub node_set: Vec<NodeSet>,
     #[serde(default)]
     pub invocation: Invocation,
+    pub key_set_id: String,
 }
 
 impl JsonExecutionRequest {
