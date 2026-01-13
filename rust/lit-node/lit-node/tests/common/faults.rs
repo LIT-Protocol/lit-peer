@@ -14,6 +14,7 @@ use toxiproxy_rust::*;
 use tracing::{debug, info, trace};
 
 pub const FAULT_TEST_CHATTER_CLIENT_TIMEOUT_SECS: u64 = 30;
+const ANVIL_PORT: usize = 8545;
 
 /// Given a number of nodes and a starting port, generate and save proxy mappings for local testing.
 pub fn generate_and_save_proxy_mappings_for_local_testing(
@@ -24,6 +25,7 @@ pub fn generate_and_save_proxy_mappings_for_local_testing(
 
     let mut proxy_mappings: BTreeMap<Url, BTreeMap<Url, Url>> = BTreeMap::new();
 
+    // mapping between nodes
     for i in 0..num_nodes {
         let source_port = initial_port + i;
         let our_url = get_local_url_from_port(source_port);
@@ -52,6 +54,29 @@ pub fn generate_and_save_proxy_mappings_for_local_testing(
                     .is_none()
             );
         }
+    }
+
+    // mapping between nodes and anvil
+    for i in 0..num_nodes {
+        let source_port = initial_port + i;
+        let our_url = get_local_url_from_port(source_port);
+        assert!(proxy_mappings.get(&our_url).is_some());
+
+        let dest_port = ANVIL_PORT + 10000 + i;
+        let proxy_grpc_url = get_local_url_from_port(dest_port);
+        let dest_grpc_url = get_local_url_from_port(ANVIL_PORT);
+        debug!(
+            "Generated proxy URL for {:?} to {:?}: {:?}",
+            our_url, dest_grpc_url, proxy_grpc_url
+        );
+
+        assert!(
+            proxy_mappings
+                .get_mut(&our_url)
+                .unwrap()
+                .insert(dest_grpc_url, proxy_grpc_url)
+                .is_none()
+        );
     }
 
     let client_proxy_mapping = ClientProxyMapping::new_with_mappings(&proxy_mappings);
@@ -483,4 +508,66 @@ pub fn get_random_faulty_node_port(
     let mut rng = rand::thread_rng();
 
     rng.gen_range(starting_port_number..ending_port_number)
+}
+
+pub fn disable_fault_channel(source_url: Url, target_url: Url) {
+    disable_fault_channel_direct(source_url, target_url, false);
+}
+
+pub fn disable_fault_channel_direct(source_url: Url, target_url: Url, target_is_chain: bool) {
+    thread::spawn(move || {
+        let target_grpc_url = if target_is_chain {
+            target_url.clone()
+        } else {
+            get_grpc_url_from_http_url(target_url.clone())
+        };
+        let proxy_name = get_proxy_name(&source_url, &target_grpc_url);
+        let get_proxy_result = TOXIPROXY.find_proxy(proxy_name.as_str());
+        assert!(get_proxy_result.is_ok());
+        let r = get_proxy_result.as_ref().unwrap().disable();
+        assert!(r.is_ok());
+        info!("Disabled fault for {:?}", proxy_name);
+    })
+    .join()
+    .expect("Failed to disable fault");
+}
+
+pub fn disable_chain_for_random_faulty_node(
+    starting_port_number: usize,
+    num_nodes: usize,
+) -> usize {
+    let random_faulty_node_port =
+        get_random_faulty_node_port(starting_port_number, starting_port_number + num_nodes);
+    let random_fault_node = get_local_url_from_port(random_faulty_node_port);
+    let anvil_url = get_local_url_from_port(ANVIL_PORT);
+    disable_fault_channel_direct(random_fault_node, anvil_url, true);
+    random_faulty_node_port
+}
+
+pub fn enable_chain_for_node(port: usize) {
+    let url = get_local_url_from_port(port);
+    let anvil_url = get_local_url_from_port(ANVIL_PORT);
+    enable_fault_channel_direct(url, anvil_url, true);
+}
+
+pub fn enable_fault_channel(source_url: Url, target_url: Url) {
+    enable_fault_channel_direct(source_url, target_url, false);
+}
+
+pub fn enable_fault_channel_direct(source_url: Url, target_url: Url, target_is_chain: bool) {
+    thread::spawn(move || {
+        let target_grpc_url = if target_is_chain {
+            target_url.clone()
+        } else {
+            get_grpc_url_from_http_url(target_url.clone())
+        };
+        let proxy_name = get_proxy_name(&source_url, &target_grpc_url);
+        let get_proxy_result = TOXIPROXY.find_proxy(proxy_name.as_str());
+        assert!(get_proxy_result.is_ok());
+        let r = get_proxy_result.as_ref().unwrap().enable();
+        assert!(r.is_ok());
+        info!("Enabled fault for {:?}", proxy_name);
+    })
+    .join()
+    .expect("Failed to enable fault");
 }
