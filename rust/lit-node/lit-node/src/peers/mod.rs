@@ -125,7 +125,7 @@ impl PeerState {
                     .map(|d| format!("{:?}", d))
                     .unwrap_or_else(|| format!("{:?}", e));
                 return Err(unexpected_err_code(
-                    format!("{decoded_err:?}"),
+                    format!("{err_msg:?}"),
                     EC::NodeBlockchainError,
                     Some("Could not register attested wallet".to_string()),
                 ));
