@@ -4,6 +4,7 @@ use crate::components::right_drawer::RightDrawer;
 use crate::models::GlobalState;
 use crate::utils::get_address;
 use crate::utils::get_lit_config;
+use crate::utils::responsive::is_mobile;
 use crate::utils::rpc_calls;
 use crate::utils::table_classes::TailwindClassesPreset;
 use chrono::Days;
@@ -21,7 +22,6 @@ use lit_blockchain_lite::contracts::{
 use serde::{Deserialize, Serialize};
 use thaw::DatePicker;
 use thaw::TimePicker;
-use thaw::{Card, CardHeader, CardPreview};
 use thaw::{Checkbox, Label, Pagination, Select};
 
 #[derive(TableRow, Clone, Serialize, Deserialize, Debug)]
@@ -35,13 +35,13 @@ pub struct ChainHistoryRow {
     block_hash: String,
     #[table(skip)]
     time_stamp: String,
-    #[table(renderer = "TransactionRenderer", title = "Transaction")]
+    #[table(renderer = "TransactionRenderer", title = "Transaction", class="hide-lst-col")]
     transaction: String,
     #[table(renderer = "DescriptionRenderer")]
     description: String,
-    #[table(title = "Block")]
+    #[table(title = "Block", class="hide-lst-col")]
     block_number: String,
-    #[table(renderer = "ToFromRenderer", title = "From/To")]
+    #[table(renderer = "ToFromRenderer", title = "From/To", class="hide-lst-col")]
     to_from: String,
     #[table(skip)]
     from: String,
@@ -59,12 +59,37 @@ fn DescriptionRenderer(
     class: String,
     #[allow(unused_variables)] // onchange & index need to be part of the signature for now
     value: Signal<String>,
-    #[allow(unused_variables)] // onchange & index need to be part of the signature for now
     row: RwSignal<ChainHistoryRow>,
     #[allow(unused_variables)] // onchange & index need to be part of the signature for now
     index: usize,
 ) -> impl IntoView {
-    let description = row.get_untracked().decoded_input;
+
+
+    if is_mobile() {
+        let t  = transaction_renderer(row, true).into_any();
+        let d =  internal_description_renderer(row).into_any();
+        let f = to_from_renderer(row, true).into_any();
+        view! {
+            <td class=class>
+                {t}<br/><br/>
+                {d}<br/>
+                {f}
+            </td>
+        }.into_any()
+    }
+    else {
+        view! {
+            <td class=class>
+                {internal_description_renderer(row)}
+            </td>
+        }.into_any()
+    }
+
+    
+}
+
+fn internal_description_renderer(row: RwSignal<ChainHistoryRow>) -> impl IntoView {
+  let description = row.get_untracked().decoded_input;
     let description = description
         .split("|")
         .map(|s| s.to_string())
@@ -90,10 +115,8 @@ fn DescriptionRenderer(
             0
         }
     };
-    // 1000000000000000000
-    // 8091994000000000000
+
     view! {
-        <td class=class>
             {name}<Label>"("</Label> <i class="text-muted">{details}</i> <Label>")"</Label>
             { if decimal_val > 0 {
                 view! { <br/> <Label>Value: {decimal_val}</Label> }.into_any()
@@ -102,9 +125,10 @@ fn DescriptionRenderer(
                 view! { <br/> }.into_any()
             }
             }
-        </td>
     }
+ 
 }
+
 
 #[component]
 fn TransactionRenderer(
@@ -119,10 +143,17 @@ fn TransactionRenderer(
 ) -> impl IntoView {
     view! {
         <td class=class>
-            {simple_hex(row.get_untracked().transaction)}
-            <br/>
-            {row.get_untracked().time_stamp}
+            {transaction_renderer(row, false)}
         </td>
+    }
+}
+
+fn transaction_renderer(row: RwSignal<ChainHistoryRow>, is_mobile: bool) -> impl IntoView {
+    
+    view! {        
+        {simple_hex(row.get_untracked().transaction)}
+        {if is_mobile { view! { " - " }.into_any() } else { view! { <br/> }.into_any() }}
+        {row.get_untracked().time_stamp}
     }
 }
 
@@ -136,6 +167,17 @@ fn ToFromRenderer(
     #[allow(unused_variables)] //index needs to be part of the signature
     index: usize,
 ) -> impl IntoView {
+
+    view!{
+        <td class=class>
+            {to_from_renderer(row, false)}
+        </td>
+    }
+    
+}
+
+fn to_from_renderer(row: RwSignal<ChainHistoryRow>, is_mobile: bool) -> impl IntoView {
+ 
     let to = row.get_untracked().to;
     let from = row.get_untracked().from;
 
@@ -151,13 +193,11 @@ fn ToFromRenderer(
         .clone();
 
     view! {
-        <td class=class>
             {from}
-            <br/>
+            {if is_mobile { view! { " - " }.into_any() } else { view! { <br/> }.into_any() }}
             {to}
-        </td>
     }
-}
+}   
 
 #[component]
 pub fn History() -> impl IntoView {
@@ -225,18 +265,14 @@ pub fn History() -> impl IntoView {
 
     view! {
            <Title text="History"/>
-           <Card class="min-w-full">
-               <CardHeader>
-                   <div class="grid grid-cols-2 w-full">
-                       <div class="col">
+                   <div class="flex flex-wrap">
+                       <div class="flex-1">
                            <b class="mb-0"> Network History </b>
                        </div>
-                       <div class="col justify-self-end">
+                       <div class="flex-1 text-end">
                            <Label on:click={move |_| filter_open.set(true)}> {move || filter_text.get()} </Label>
                        </div>
                    </div>
-               </CardHeader>
-               <CardPreview class="p-3">
                     {move || match data.get().as_deref() {
                        None => view! { <p>"Loading..."</p> }.into_any(),
                        Some(rows) => view! {
@@ -253,28 +289,24 @@ pub fn History() -> impl IntoView {
                            </table>
                            }.into_any()
                    }}
-               </CardPreview>
-                <div class="card-footer">
-                   <div class="grid grid-cols-12">
-                       <div class="col-span-6">
+                   <div class="flex flex-wrap">
+                       <div class="flex-1">
                        <Pagination page page_count=pagination_pages />
                        </div>
-                       <div class="col-span-5 text-end">
+                       <div class="flex-1 text-end">
                            <Checkbox checked=include_internal_transactions />
                            "Include Internal Transactions  |  Page Size: "
-
                        </div>
-                       <div class="col-span-1">
-                       <Select value=page_size  >
-                           <option value=10>10</option>
-                           <option value=20>20</option>
-                           <option value=30>30</option>
-                           <option value=50>50</option>
-                           <option value=100>100</option>
-                       </Select> </div>
+                       <div class="flex-1">
+                        <Select value=page_size  >
+                            <option value=10>10</option>
+                            <option value=20>20</option>
+                            <option value=30>30</option>
+                            <option value=50>50</option>
+                            <option value=100>100</option>
+                        </Select> 
+                       </div>
                    </div>
-               </div>
-           </Card>
            <br />
 
               { move || sel_row_read.get().map(|selected_row| {

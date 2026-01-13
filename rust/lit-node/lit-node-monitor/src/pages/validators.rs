@@ -17,8 +17,6 @@ use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_struct_table::*;
 use lit_blockchain_lite::contracts::staking::Staking;
-use thaw::{Card, CardHeader, CardPreview};
-// use lit_sdk::models::response::JsonSDKHandshakeResponse;
 use serde::{Deserialize, Serialize};
 use std::net::Ipv4Addr;
 
@@ -42,11 +40,11 @@ pub struct Validator {
     pub status: String,
     #[table(title = "Guest IP")]
     pub socket_address: String,
-    #[table(renderer = "WalletAddressRenderer")]
+    #[table(renderer = "WalletAddressRenderer", class="hide-lst-col")]
     pub wallet_address: String,
     #[table(renderer = "WalletAddressRenderer", class="hide-lst-col")]
     pub staker_address: String,
-    #[table(renderer = "ValidatorStatusRenderer", class="hide-lst-col")]
+    #[table(renderer = "ValidatorStatusRenderer")]
     pub ver: String,
     #[table(skip)]
     pub operator_address: String,
@@ -118,7 +116,9 @@ pub fn Validators() -> impl IntoView {
         let ctx = get_web_callback_context();
         async move { get_floaters(&ctx).await }
     });
-    let selected_index = RwSignal::new(None);
+    let selected_index_current = RwSignal::new(None);
+    let selected_index_next = RwSignal::new(None);
+    let selected_index_available = RwSignal::new(None);
     let (get_selected_row, set_selected_row) = signal(None::<Validator>);
     let open_buttom = RwSignal::new(false);
     let pop_up_title = RwSignal::new("".to_string());
@@ -127,51 +127,49 @@ pub fn Validators() -> impl IntoView {
         <Title text="Validators (by realm)"/>
         {
         move || match realms.get().as_deref() {
-            None => view! { <p>{ move || handshake_state.get() }</p> }.into_any(),
+            None => view! { 
+                    <div class="flex rounded outline outline-gray-400 p-3 ml-2 items-center">
+                        <div class="flex-1 font-bold">{ move || handshake_state.get() }</div>
+                    </div>
+            <br />
+                
+            
+            }.into_any(),
             Some(realms) => {
                 let realms2 = realms.clone();
-                realms2.iter().map(|realm|
+                realms2.iter().map(|realm|  
                     view! {
-                        <div class="col-12"><h4>Realm: {realm.id}</h4></div>
-                        <div class="col-12"><NetworkStatus realm_id=realm.id as u64 /></div>
-                        <div class="row">
-                            <div class="col-12 col-sm-6">
-                                // <Card>
-                                //     <CardHeader>
-                                //         <b class="card-title">Current Nodes</b>
-                                //     </CardHeader>
-                                //     <CardPreview>
-                                        <table class="table w-full">
-                                            <TableContent
-                                                selection=Selection::Single(selected_index)
-                                                    on_selection_change={move |evt: SelectionChangeEvent<Validator>| {
-                                                        log::info!("evt: {:?}", evt);
-                                                        set_selected_row.write().replace(evt.row.get_untracked());
-                                                        open_buttom.set(true);
-                                                    }}
-                                                rows = realm.current_validators.clone() scroll_container="html" />
-                                        </table>
-                                //     </CardPreview>
-                                // </Card>
+                        <div class="flex rounded outline outline-gray-400 p-3 ml-2 items-center">
+                            <div class="flex-1 text-lg font-bold">Realm # {realm.id}</div>
+                            <div class="flex-1 text-right pr-2"><NetworkStatus realm_id=realm.id as u64 /></div>
+                        </div>
+                        <div class="flex flex-wrap gap-2 mt-4">
+                            <div class="flex-1 outline outline-gray-400 rounded p-2 ml-2">
+                                <div class="font-bold border-b border-gray-400 pb-2">Current Nodes</div>                                
+                                <table class="table w-full">
+                                    <TableContent
+                                        selection=Selection::Single(selected_index_current)
+                                            on_selection_change={move |evt: SelectionChangeEvent<Validator>| {
+                                                log::info!("evt: {:?}", evt);
+                                                set_selected_row.write().replace(evt.row.get_untracked());
+                                                open_buttom.set(true);
+                                            }}
+                                        rows = realm.current_validators.clone() scroll_container="html" />
+                                </table>
                             </div>
-                            <div class="col-md-6">
-                                // <Card>
-                                //     <CardHeader>
-                                //         <b class="card-title">Next Nodes</b>
-                                //     </CardHeader>
-                                //     <CardPreview>
-                                        <table class="table w-full">
+                            <div class="flex-1 outline outline-gray-400 rounded p-2 ml-2">
+                                <div class="font-bold border-b border-gray-400 pb-2">Next Nodes</div>                                
+
+                                <table class="table w-full">
                                             <TableContent
-                                                selection=Selection::Single(selected_index)
+                                                selection=Selection::Single(selected_index_next)
                                                     on_selection_change={move |evt: SelectionChangeEvent<Validator>| {
                                                         log::info!("evt: {:?}", evt);
                                                         set_selected_row.write().replace(evt.row.get_untracked());
                                                         open_buttom.set(true);
                                                     }}
                                                 rows = realm.next_validators.clone() scroll_container="html" />
-                                        </table>
-                                    // </CardPreview>
-                                // </Card>
+                                        </table>                                    
                             </div>
                         </div>
                         <br />
@@ -181,33 +179,25 @@ pub fn Validators() -> impl IntoView {
 
 
 
-        <h4>Available</h4>
-        <Card class="min-w-full">
-            <CardHeader>
-                <b class="card-title">Not assigned to any realm</b>
-            </CardHeader>
-            <CardPreview class="p-3">
-            {move || match floaters.get().as_deref() {
-                None => view! { <p>"Loading..."</p> }.into_any(),
-                Some(rows) => view! {
-                    <table class="table w-full">
-                        <TableContent
-                            selection=Selection::Single(selected_index)
-                                on_selection_change={move |evt: SelectionChangeEvent<Validator>| {
-                                    log::info!("evt: {:?}", evt);
-                                    set_selected_row.write().replace(evt.row.get_untracked());
-                                    open_buttom.set(true);
-                                }}
-                            rows = rows.clone() scroll_container="html" />
-                    </table>
-                }.into_any()
-            }}
-
-            </CardPreview>
-        </Card>
-        <br />
-
-
+            <div class="flex-1 outline outline-gray-400 rounded p-2 ml-2">
+                <div class="font-bold border-b border-gray-400 pb-2">Next Nodes</div>                                
+                {move || match floaters.get().as_deref() {
+                    None => view! { <p>"Loading..."</p> }.into_any(),
+                    Some(rows) => view! {
+                        <table class="table w-full">
+                            <TableContent
+                                selection=Selection::Single(selected_index_available)
+                                    on_selection_change={move |evt: SelectionChangeEvent<Validator>| {
+                                        log::info!("evt: {:?}", evt);
+                                        set_selected_row.write().replace(evt.row.get_untracked());
+                                        open_buttom.set(true);
+                                    }}
+                                rows = rows.clone() scroll_container="html" />
+                        </table>
+                    }.into_any()
+                }}
+            </div>
+<br />
           { move || get_selected_row.get().map(|selected_row| {
                 let title = format!("Validator Details {}", selected_row.host_name);
                 pop_up_title.set(title);
@@ -354,10 +344,12 @@ pub async fn get_validators(
         };
 
         let socket_address = format!("{}:{}", ip_address, v.port);
-        let guest_ip = match socket_address.contains("127.0.0.1") {
-            true => socket_address.clone(),
-            false => socket_address.split(":").nth(0).unwrap().to_string(),
+        let (guest_ip, socket_address) = match socket_address.contains("127.0.0.1") {
+            true => (socket_address.clone(), format!(":{}", v.port)),
+            false => (socket_address.split(":").nth(0).unwrap().to_string(), ip_address.to_string()),
         };
+
+        
         // log::info!("Guest IP: {:?} / {:?}", guest_ip, gs.staker_names.get());
         let info = gs
             .staker_names

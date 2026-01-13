@@ -61,6 +61,12 @@ pub fn App() -> impl IntoView {
     let open_menu = RwSignal::new(true);
     let (_open_menu_get, open_menu_set) = open_menu.split();
     let is_mobile = RwSignal::new(crate::utils::responsive::is_mobile());
+
+    let image_url = if crate::utils::responsive::is_localhost_build() {
+        "/images/lit-logo-black.svg"
+    } else {
+        "images/lit-logo-black.svg"
+    };
     // load the networks for this instance
     move || {
         match network_loading.get() {
@@ -81,13 +87,15 @@ pub fn App() -> impl IntoView {
                         let _r = listener::listen_for_events(&ctx).await;
                     });
                 }
-                <div class="flex">
-                        <div class="w-160 flex ">
-                            <Button class="!p-0" appearance=ButtonAppearance::Transparent on_click=move |_| open_menu_set.set(true)>
-                                <img class="size-10" src="images/lit-logo-black.svg" />
+                    <div class="flex pb-2">
+                        <div class="w-80 flex items-center ">
+                            <Button class="!p-0 !min-w-0" appearance=ButtonAppearance::Transparent on_click=move |_| open_menu_set.set(!open_menu.get())>
+                                <img class="size-10" src=image_url />
                             </Button>                            
-                            <div class="px-3"> <b>Network Explorer </b> </div>
-                            <div class="text-sm"> { move || page_name_signal.get() }</div>
+                            <div class="flex-1 px-3">
+                                <div class="text-lg font-bold">Network Explorer </div>
+                                <div class="text-sm"> { move || page_name_signal.get() }</div>
+                            </div>
                         </div>
                         <div class="flex-1 justify-items-end">
                             <ConnectWeb3 />
@@ -96,13 +104,23 @@ pub fn App() -> impl IntoView {
 
                     <div class="flex">
     
+    { move || match is_mobile.get() {
+        true => view! { <OverlayDrawer open=open_menu >
+                            <DrawerBody class="!p-0">
+                                <div class="text-lg font-bold p-5">Network Explorer Menu</div>
+                                <NavMenu page_name_signal open_menu_set />
+                            </DrawerBody>
+                        </OverlayDrawer>
+                        }.into_any(),
+        false => view! {
                          <InlineDrawer class="flex-none" open=open_menu>
                             <DrawerBody class="!p-0">
                                 <NavMenu page_name_signal open_menu_set />
                             </DrawerBody>
                         </InlineDrawer>
-    
-                            <main class="flex-1">
+                        }.into_any(),
+    } }
+                            <main class="flex-1 gao-3">
                                 <Routes fallback=|| "Not found.">
                                     <Route path=path!("/") view=pages::home::Home />
                                     <Route path=path!("/home") view=pages::home::Home />

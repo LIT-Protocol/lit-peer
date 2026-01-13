@@ -28,8 +28,6 @@ pub fn NavMenu(page_name_signal: RwSignal<String>, open_menu_set: WriteSignal<bo
             let navigate = leptos_router::hooks::use_navigate();
             navigate(nav_to.as_str(), Default::default()); 
 
-            log::info!("closing menu");
-
             if crate::utils::responsive::is_mobile() {
                     open_menu_set.set(false);
                 }

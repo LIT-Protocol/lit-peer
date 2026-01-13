@@ -19,7 +19,7 @@ pub fn ConnectWeb3() -> impl IntoView {
         
             <Button on:click=move |_| { ec2.connect(WalletType::Injected); }>
                 { move || if ec.is_connected() {
-                    format!("{:?}", &ec.accounts().unwrap()[0]) }
+                    format!("{:?}", &ec.accounts().unwrap()[0])[..6].to_string() }
                     else { "Connect".to_string() }      }
             </Button>
         </div>
