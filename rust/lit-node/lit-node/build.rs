@@ -21,7 +21,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn insert_git_commit_hash() -> Result<(), Box<dyn std::error::Error>> {
+
+    let timer = std::time::Instant::now();
     let src_hash = dirhash_fast::file::dir::dirhash::hash_directory("src".as_ref());
+    let src_hash_duration = timer.elapsed().as_millis();
     println!("Source directory hash: {}", src_hash);
     let git_info_path = Path::new("src/git_info.rs");
     if git_info_path.exists() {
@@ -53,7 +56,7 @@ fn insert_git_commit_hash() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     if !git_commit_hash.is_empty() {
-        let path_contents = format!("pub const GIT_COMMIT_HASH: &str = \"{git_commit_hash}\";\npub const SRC_HASH: &str = \"{src_hash}\";\n",);
+        let path_contents = format!("pub const GIT_COMMIT_HASH: &str = \"{git_commit_hash}\";\npub const SRC_HASH: &str = \"{src_hash}\";\npub const SRC_HASH_DURATION: u64 = {src_hash_duration};\n",);
 
         if let Err(e) = fs::write(git_info_path, path_contents) {
             eprintln!("Failed to write git_info.rs file with error: {e}.  Exiting build.rs ...",);

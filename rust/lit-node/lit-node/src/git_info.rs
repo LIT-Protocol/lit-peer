@@ -1,2 +1,3 @@
-pub const GIT_COMMIT_HASH: &str = "1576474c05e3580ba292730fa1f94314abf01ba5";
-pub const SRC_HASH: &str = "da4d827a3b04d8f80b77ab516acd295cfd6d3d17b6316d7efd7a3ab880b5c345";
+pub const GIT_COMMIT_HASH: &str = "9de708a5c436b20812c76532b6bf0db0453bdfca";
+pub const SRC_HASH: &str = "5580057cb0d595b33e89ad1a929e153f39fa67c129762430288967e6e1a41033";
+pub const SRC_HASH_DURATION: u64 = 11;
