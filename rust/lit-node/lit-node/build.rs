@@ -53,7 +53,7 @@ fn insert_git_commit_hash() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     if !git_commit_hash.is_empty() {
-        let path_contents = format!("pub const GIT_COMMIT_HASH: &str = \"{git_commit_hash}\";\n",);
+        let path_contents = format!("pub const GIT_COMMIT_HASH: &str = \"{git_commit_hash}\";\npub const SRC_HASH: &str = \"{src_hash}\";\n",);
 
         if let Err(e) = fs::write(git_info_path, path_contents) {
             eprintln!("Failed to write git_info.rs file with error: {e}.  Exiting build.rs ...",);
