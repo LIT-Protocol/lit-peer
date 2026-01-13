@@ -10666,6 +10666,7 @@ dependencies = [
 name = "lit-observability"
 version = "0.1.0"
 dependencies = [
+ "dashmap 6.1.0",
  "derive_more 2.0.1",
  "flume",
  "hyper-util",
@@ -11066,7 +11067,6 @@ dependencies = [
  "tracing-subscriber",
  "ucan-capabilities-object",
  "url",
- "uuid 1.18.0",
  "verifiable-share-encryption",
  "visibility",
  "web3",
