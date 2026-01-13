@@ -2,7 +2,8 @@ use std::collections::HashMap;
 use std::fmt;
 use std::result::Result as StdResult;
 
-use futures::future::{BoxFuture, join_all};
+use futures::future::BoxFuture;
+use futures::stream::{FuturesUnordered, StreamExt};
 use rocket::catcher::Handler;
 use rocket::fairing::Fairing;
 use rocket::http::Status;
@@ -10,6 +11,7 @@ use rocket::http::uri::Origin;
 use rocket::response::{Redirect, Responder, status};
 use rocket::serde::json::Value;
 use rocket::{Build, Catcher, Error as RocketError, Ignite, Request, Rocket, Route, catcher};
+use tracing::{error, info};
 
 use tokio::sync::mpsc;
 use tokio::task_local;
@@ -33,6 +35,53 @@ static HTTPS_PORT: u16 = 443;
 
 task_local! {
     pub static CONFIG: ReloadableLitConfig;
+}
+
+#[derive(Debug, Clone)]
+struct RocketTarget {
+    address: String,
+    port: u16,
+    tls_enabled: bool,
+    role: &'static str,
+}
+
+#[derive(Debug, Clone)]
+struct RocketTargets(Vec<RocketTarget>);
+
+impl From<&[Rocket<Ignite>]> for RocketTargets {
+    fn from(ignited: &[Rocket<Ignite>]) -> Self {
+        Self(
+            ignited
+                .iter()
+                .enumerate()
+                .map(|(idx, r)| {
+                    let cfg = r.config();
+                    RocketTarget {
+                        address: cfg.address.to_string(),
+                        port: cfg.port,
+                        tls_enabled: cfg.tls.is_some(),
+                        role: if idx == 0 { "primary" } else { "aux" },
+                    }
+                })
+                .collect(),
+        )
+    }
+}
+
+impl RocketTargets {
+    fn log(&self) {
+        for (idx, t) in self.0.iter().enumerate() {
+            let proto = if t.tls_enabled { "https" } else { "http" };
+            info!(
+                rocket_index = idx,
+                proto,
+                role = t.role,
+                address = %t.address,
+                port = t.port,
+                "rocket launch starting"
+            );
+        }
+    }
 }
 
 pub struct Launcher {
@@ -154,15 +203,45 @@ impl Launcher {
 
     pub async fn launch(&mut self) -> StdResult<(), RocketError> {
         if self.ignited.is_empty() {
+            error!("rocket launcher - launch called before ignite (no ignited rockets)");
             panic!("ignite must be called prior to launch");
         }
 
-        let mut futures = Vec::new();
-        while !self.ignited.is_empty() {
-            futures.push(self.ignited.remove(0).launch());
+        // Extra diagnostics: log the configured bind targets and surface bind/listen failures
+        let targets = RocketTargets::from(self.ignited.as_slice());
+        targets.log();
+
+        // FuturesUnordered so we can fail fast on the first launch error (irrespective of other launches)
+        let mut futures: FuturesUnordered<_> = FuturesUnordered::new();
+        for (idx, rocket) in self.ignited.drain(..).enumerate() {
+            futures.push(async move { (idx, rocket.launch().await) });
         }
 
-        join_all(futures).await;
+        // Each `launch()` future will typically run indefinitely while the server is up.
+        // We await launch results as they complete and fail fast on the first error.
+        while let Some((idx, res)) = futures.next().await {
+            if let Err(e) = res {
+                let t = targets.0.get(idx).cloned().unwrap_or(RocketTarget {
+                    address: "<unknown>".to_string(),
+                    port: 0,
+                    tls_enabled: false,
+                    role: "unknown",
+                });
+                let proto = if t.tls_enabled { "https" } else { "http" };
+
+                error!(
+                    rocket_index = idx,
+                    proto,
+                    role = t.role,
+                    address = %t.address,
+                    port = t.port,
+                    error = ?e,
+                    "rocket launch failed (likely bind/listen failure for configured address/port)"
+                );
+
+                return Err(e);
+            }
+        }
 
         Ok(())
     }
