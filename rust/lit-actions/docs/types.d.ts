@@ -612,7 +612,6 @@ export declare namespace Lit {
       ciphertext: string;
       dataToEncryptHash: string;
     }>;
-    const datilKeySetId: "datil-keyset";
   }
 
   export namespace Auth {
