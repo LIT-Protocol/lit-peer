@@ -14,5 +14,6 @@ pub mod serde_encrypt;
 pub mod siwe;
 pub mod tracing;
 pub mod traits;
+pub mod version_update;
 #[allow(dead_code)]
 pub mod web;

@@ -9,6 +9,7 @@ use crate::tss::common::key_persistence::RECOVERY_DKG_EPOCH;
 use crate::tss::common::traits::fsm_worker_metadata::FSMWorkerMetadata;
 use crate::tss::dkg::engine::DkgAfterRestore;
 use crate::tss::dkg::manager::DkgManager;
+use crate::utils::version_update::peers_not_at_version_2_1_8;
 use crate::version::DataVersionReader;
 use ethers::types::U256;
 use lit_core::error::Result;
@@ -392,7 +393,7 @@ async fn process_epoch_for_key_set(
                 };
 
                 let lifecycle_id = fsm_worker_metadata.get_lifecycle_id(realm_id);
-                if new_peers.has_version_lower_than("2.1.8") {
+                if peers_not_at_version_2_1_8(&new_peers) {
                     match key_share_proofs_check(&dkg_manager.tss_state, &res, new_peers, latest_dkg_id, realm_id, epoch, lifecycle_id).await {
                         Err(e) => {
                             warn!("Key share proofs check failed in realm {}: {}", realm_id, e);
