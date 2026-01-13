@@ -58,17 +58,33 @@ contract PriceFeed {
         uint256 litActionBasePrice = 5950.383323693 gwei;
         uint256 signSessionKeyBasePrice = 148759.583092342 gwei;
 
-        s.baseNetworkPrices[uint256(LibPriceFeedStorage.ProductId.PkpSign)] = pkpSignBasePrice;
-        s.maxNetworkPrices[uint256(LibPriceFeedStorage.ProductId.PkpSign)] = pkpSignBasePrice * 100;
+        s.baseNetworkPrices[
+            uint256(LibPriceFeedStorage.ProductId.PkpSign)
+        ] = pkpSignBasePrice;
+        s.maxNetworkPrices[uint256(LibPriceFeedStorage.ProductId.PkpSign)] =
+            pkpSignBasePrice *
+            100;
 
-        s.baseNetworkPrices[uint256(LibPriceFeedStorage.ProductId.EncSign)] = encSignBasePrice;
-        s.maxNetworkPrices[uint256(LibPriceFeedStorage.ProductId.EncSign)] = encSignBasePrice * 100;
+        s.baseNetworkPrices[
+            uint256(LibPriceFeedStorage.ProductId.EncSign)
+        ] = encSignBasePrice;
+        s.maxNetworkPrices[uint256(LibPriceFeedStorage.ProductId.EncSign)] =
+            encSignBasePrice *
+            100;
 
-        s.baseNetworkPrices[uint256(LibPriceFeedStorage.ProductId.LitAction)] = litActionBasePrice;
-        s.maxNetworkPrices[uint256(LibPriceFeedStorage.ProductId.LitAction)] = litActionBasePrice * 100;
+        s.baseNetworkPrices[
+            uint256(LibPriceFeedStorage.ProductId.LitAction)
+        ] = litActionBasePrice;
+        s.maxNetworkPrices[uint256(LibPriceFeedStorage.ProductId.LitAction)] =
+            litActionBasePrice *
+            100;
 
-        s.baseNetworkPrices[uint256(LibPriceFeedStorage.ProductId.SignSessionKey)] = signSessionKeyBasePrice;
-        s.maxNetworkPrices[uint256(LibPriceFeedStorage.ProductId.SignSessionKey)] = signSessionKeyBasePrice * 100;
+        s.baseNetworkPrices[
+            uint256(LibPriceFeedStorage.ProductId.SignSessionKey)
+        ] = signSessionKeyBasePrice;
+        s.maxNetworkPrices[
+            uint256(LibPriceFeedStorage.ProductId.SignSessionKey)
+        ] = signSessionKeyBasePrice * 100;
 
         s.nodeCapacityConfigs[0] = LibPriceFeedStorage.NodeCapacityConfig({
             pkpSignMaxConcurrency: 75,
