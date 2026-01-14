@@ -22,8 +22,6 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::process::Command;
-use tokio::fs::File;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 use tracing::{debug, error, info, trace};
 
@@ -674,14 +672,15 @@ pub async fn check_and_load_test_state_cache(
 
     info!("Contents of anvil_state.hex length: {} ", contents.len());
     let params: Vec<String> = vec![contents];
-    let res: bool = provider
+    let res: Result<bool, ProviderError> = provider
         .request("anvil_loadState", params.clone())
-        .await
-        .unwrap();
-    if !res {
-        error!("Couldn't load chain state into anvil...");
+        .await;
+
+    if let Err(e) = res {
+        error!("Failed to load chain state into anvil: {}", e);
         return false;
-    }
+    };
+
 
     let block_number = provider.get_block_number().await.unwrap();
     trace!("Block number after loading chain state: {}", block_number);
@@ -801,9 +800,7 @@ pub async fn save_to_test_state_cache(
 
     let filename = "anvil_state.hex".to_string();
     let path = dir.join(&filename);
-    let mut file = File::create(&path).await.unwrap();
-    file.write_all(res.as_bytes()).await.unwrap();
-    file.sync_all().await.unwrap();
+    fs::write(&path, res).expect("Failed to write anvil_state.hex file");
 
     // also save the node configs
     info!("Getting node configs to cache...");
