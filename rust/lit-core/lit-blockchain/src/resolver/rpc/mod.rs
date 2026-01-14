@@ -832,4 +832,45 @@ mod tests {
             );
         }
     }
+
+    #[test]
+    fn test_rpc_entry_identity_excludes_priority() {
+        // Verify that priority is NOT part of RpcEntry identity.
+        // This ensures config reloads that only change priority don't invalidate health state.
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+
+        let entry_prio_0 =
+            RpcEntry::new(RpcKind::EVM, "https://example.com".into(), None, None).with_priority(0);
+        let entry_prio_10 =
+            RpcEntry::new(RpcKind::EVM, "https://example.com".into(), None, None).with_priority(10);
+
+        // Same identity despite different priorities
+        assert_eq!(
+            entry_prio_0, entry_prio_10,
+            "Entries with different priorities should be equal"
+        );
+
+        // Same hash despite different priorities
+        let hash = |e: &RpcEntry| {
+            let mut h = DefaultHasher::new();
+            e.hash(&mut h);
+            h.finish()
+        };
+        assert_eq!(
+            hash(&entry_prio_0),
+            hash(&entry_prio_10),
+            "Entries with different priorities should have same hash"
+        );
+
+        // Verify HashMap lookup works across priority changes
+        let mut latencies = im::hashmap::HashMap::new();
+        latencies.insert(entry_prio_0.clone(), Latency::Unhealthy);
+
+        // Looking up with different priority should still find the entry
+        assert!(
+            latencies.get(&entry_prio_10).is_some(),
+            "Should find entry in map regardless of priority difference"
+        );
+    }
 }

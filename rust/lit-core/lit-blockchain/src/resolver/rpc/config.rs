@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use std::fs;
+use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
 use std::result::Result as StdResult;
 
@@ -150,7 +151,7 @@ pub enum RpcKind {
     COSMOS,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct RpcEntry {
     #[serde(default)]
@@ -163,6 +164,30 @@ pub struct RpcEntry {
     url: String,
     headers: Option<BTreeMap<String, String>>,
     apikey: Option<String>,
+}
+
+// Custom Eq/Hash implementation: priority is excluded from identity.
+// This ensures that changing an endpoint's priority in config reload
+// doesn't invalidate the existing health state in the latencies map.
+
+impl PartialEq for RpcEntry {
+    fn eq(&self, other: &Self) -> bool {
+        self.kind == other.kind
+            && self.url == other.url
+            && self.headers == other.headers
+            && self.apikey == other.apikey
+    }
+}
+
+impl Eq for RpcEntry {}
+
+impl Hash for RpcEntry {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.kind.hash(state);
+        self.url.hash(state);
+        self.headers.hash(state);
+        self.apikey.hash(state);
+    }
 }
 
 impl RpcEntry {
