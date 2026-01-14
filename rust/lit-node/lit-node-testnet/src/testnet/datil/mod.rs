@@ -171,7 +171,12 @@ impl DatilTestnet {
 
             let local_pubkey_router = PubkeyRouter::new(pubkey_router_address, client);
             let func = local_pubkey_router.vote_for_root_keys(staking_address, root_keys.clone());
-            let tx = func.send().await.unwrap();
+            let tx = match func.send().await {
+                Ok(tx) => tx,
+                Err(e) => {
+                    panic!("Failed to send vote for root keys on the Datil chain: {:?}", e);
+                }
+            };
             let _receipt = tx.await.unwrap();
             info!(
                 "Node {} voted for root keys on the Datil chain",

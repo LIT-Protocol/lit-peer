@@ -216,12 +216,12 @@ impl TestnetBuilder {
 
         let provider = Arc::new(provider_mut.set_interval(Duration::from_millis(10)).clone());
 
-            let datil_testnet = DatilTestnet::new(
-                self.total_num_validators(),
-                self.datil_testnet_state_cache_path,
-                self.datil_testnet_contract_resolver_address,
-            )
-            .await;
+        let datil_testnet = DatilTestnet::new(
+            self.total_num_validators(),
+            self.datil_testnet_state_cache_path,
+            self.datil_testnet_contract_resolver_address,
+        )
+        .await;
 
         let mut is_from_cache = false;
 

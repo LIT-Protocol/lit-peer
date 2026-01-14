@@ -676,8 +676,7 @@ pub async fn check_and_load_test_state_cache(
         provider.request("anvil_loadState", params.clone()).await;
 
     if let Err(e) = res {
-        error!("Failed to load chain state into anvil: {}", e);
-        return false;
+        panic!("Failed to load chain state into anvil: {}", e);
     };
 
     let block_number = provider.get_block_number().await.unwrap();
