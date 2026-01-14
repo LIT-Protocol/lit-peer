@@ -72,7 +72,9 @@ impl Pkp {
 
         info!(
             "Minted PKP with token id: {} / pubkey : {} / eth address: {:?}",
-            token_id.encode_hex(), &pubkey, eth_address
+            token_id.encode_hex(),
+            &pubkey,
+            eth_address
         );
 
         Ok(Pkp {

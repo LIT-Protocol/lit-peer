@@ -191,7 +191,8 @@ impl Pkp {
     ) -> Result<bool, anyhow::Error> {
         info!(
             "ipfs_cid to permit for token id: {} is: {}",
-            self.token_id.encode_hex(), ipfs_cid
+            self.token_id.encode_hex(),
+            ipfs_cid
         );
 
         let pkp_permissions_address = self.actions.contracts().pkp_permissions.address();

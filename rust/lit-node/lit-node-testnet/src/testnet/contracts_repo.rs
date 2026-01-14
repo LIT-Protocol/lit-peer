@@ -672,15 +672,13 @@ pub async fn check_and_load_test_state_cache(
 
     info!("Contents of anvil_state.hex length: {} ", contents.len());
     let params: Vec<String> = vec![contents];
-    let res: Result<bool, ProviderError> = provider
-        .request("anvil_loadState", params.clone())
-        .await;
+    let res: Result<bool, ProviderError> =
+        provider.request("anvil_loadState", params.clone()).await;
 
     if let Err(e) = res {
         error!("Failed to load chain state into anvil: {}", e);
         return false;
     };
-
 
     let block_number = provider.get_block_number().await.unwrap();
     trace!("Block number after loading chain state: {}", block_number);
