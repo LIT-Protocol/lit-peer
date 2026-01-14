@@ -396,6 +396,22 @@
     "type": "error"
   },
   {
+    "inputs": [],
+    "name": "RealmIdCannotBeZero",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "realmId",
+        "type": "uint256"
+      }
+    ],
+    "name": "RealmIdNotFound",
+    "type": "error"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -788,7 +804,33 @@
   },
   {
     "inputs": [],
+    "name": "CannotRemoveLastRealm",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "realmId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "validatorCount",
+        "type": "uint256"
+      }
+    ],
+    "name": "CannotRemoveRealmWithValidators",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "CannotStakeZero",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "CannotUnfreezeOnBehalfOfValidators",
     "type": "error"
   },
   {
@@ -820,6 +862,22 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "minimumRequired",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "actualCount",
+        "type": "uint256"
+      }
+    ],
+    "name": "MinimumSourceRealmValidatorsRequired",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "enum LibStakingStorage.States",
         "name": "state",
         "type": "uint8"
@@ -836,6 +894,54 @@
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "stakerAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "rewardEpochNumber",
+        "type": "uint256"
+      }
+    ],
+    "name": "NoSharePrice",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "threshold",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "newValidatorCount",
+        "type": "uint256"
+      }
+    ],
+    "name": "NotEnoughNewValidatorsToReplaceShadowNodes",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "validatorCount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minimumValidatorCount",
+        "type": "uint256"
+      }
+    ],
+    "name": "NotEnoughValidatorsInCurrentEpoch",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "validatorCount",
         "type": "uint256"
@@ -847,6 +953,38 @@
       }
     ],
     "name": "NotEnoughValidatorsInNextEpoch",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "validatorCnt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "minimumThreshold",
+        "type": "uint256"
+      }
+    ],
+    "name": "NotEnoughValidatorsToSetupKeySet",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "sourceCount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "targetCount",
+        "type": "uint256"
+      }
+    ],
+    "name": "SourceAndTargetValidatorCountsMustMatch",
     "type": "error"
   },
   {
@@ -1838,6 +1976,11 @@
   },
   {
     "inputs": [],
+    "name": "RateMustBeLessThan100Percent",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "RewardsMustBeClaimed",
     "type": "error"
   },
@@ -2609,6 +2752,47 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "CannotDeleteSpecifiedKeySet",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "CountsCannotBeEmpty",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "CurvesAndCountsMustBeEqual",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "CurvesCannotBeEmpty",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "minimumThreshold",
+        "type": "uint256"
+      }
+    ],
+    "name": "InvalidNewMinimumThreshold",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "KeyCountsCannotBeSetToZero",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "SpecifiedKeySetNotFoundInList",
+    "type": "error"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {
@@ -2910,6 +3094,28 @@
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "length",
+        "type": "uint256"
+      }
+    ],
+    "name": "InvalidUncompressedKeyLength",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint8",
+        "name": "prefix",
+        "type": "uint8"
+      }
+    ],
+    "name": "InvalidUncompressedKeyPrefix",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "address",
         "name": "senderAddress",
         "type": "address"
@@ -3195,6 +3401,17 @@
       }
     ],
     "name": "NotEnoughValidatorsReadyForNextEpoch",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      }
+    ],
+    "name": "OnlyStakingContractCanCall",
     "type": "error"
   },
   {
@@ -3970,6 +4187,17 @@
   {
     "inputs": [],
     "name": "InvalidTimeLock",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "attestedAddress",
+        "type": "address"
+      }
+    ],
+    "name": "NoPubKeyRegisteredForAttestedAddress",
     "type": "error"
   },
   {

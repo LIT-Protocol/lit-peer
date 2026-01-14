@@ -7404,6 +7404,17 @@ abi_errors.append(&mut __abi_errors_2());
                     ],
                 ),
                 (
+                    ::std::borrow::ToOwned::to_owned("CannotDeleteSpecifiedKeySet"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "CannotDeleteSpecifiedKeySet",
+                            ),
+                            inputs: ::std::vec![],
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned(
                         "CannotKickBelowCurrentValidatorThreshold",
                     ),
@@ -7555,6 +7566,47 @@ abi_errors.append(&mut __abi_errors_2());
                     ],
                 ),
                 (
+                    ::std::borrow::ToOwned::to_owned("CannotRemoveLastRealm"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "CannotRemoveLastRealm",
+                            ),
+                            inputs: ::std::vec![],
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("CannotRemoveRealmWithValidators"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "CannotRemoveRealmWithValidators",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("realmId"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("validatorCount"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned(
                         "CannotReplaceFunctionThatDoesNotExists",
                     ),
@@ -7686,6 +7738,19 @@ abi_errors.append(&mut __abi_errors_2());
                     ],
                 ),
                 (
+                    ::std::borrow::ToOwned::to_owned(
+                        "CannotUnfreezeOnBehalfOfValidators",
+                    ),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "CannotUnfreezeOnBehalfOfValidators",
+                            ),
+                            inputs: ::std::vec![],
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned("CannotVoteTwice"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::AbiError {
@@ -7774,6 +7839,39 @@ abi_errors.append(&mut __abi_errors_2());
                     ],
                 ),
                 (
+                    ::std::borrow::ToOwned::to_owned("CountsCannotBeEmpty"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "CountsCannotBeEmpty",
+                            ),
+                            inputs: ::std::vec![],
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("CurvesAndCountsMustBeEqual"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "CurvesAndCountsMustBeEqual",
+                            ),
+                            inputs: ::std::vec![],
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("CurvesCannotBeEmpty"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "CurvesCannotBeEmpty",
+                            ),
+                            inputs: ::std::vec![],
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned("IncorrectFacetCutAction"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::AbiError {
@@ -7851,6 +7949,27 @@ abi_errors.append(&mut __abi_errors_2());
                     ],
                 ),
                 (
+                    ::std::borrow::ToOwned::to_owned("InvalidNewMinimumThreshold"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "InvalidNewMinimumThreshold",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("minimumThreshold"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned("InvalidNewSharePrice"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::AbiError {
@@ -7891,6 +8010,57 @@ abi_errors.append(&mut __abi_errors_2());
                     ],
                 ),
                 (
+                    ::std::borrow::ToOwned::to_owned("InvalidUncompressedKeyLength"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "InvalidUncompressedKeyLength",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("length"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("InvalidUncompressedKeyPrefix"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "InvalidUncompressedKeyPrefix",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("prefix"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(8usize),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint8"),
+                                    ),
+                                },
+                            ],
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("KeyCountsCannotBeSetToZero"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "KeyCountsCannotBeSetToZero",
+                            ),
+                            inputs: ::std::vec![],
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned("MinTimeLockNotMet"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::AbiError {
@@ -7907,6 +8077,38 @@ abi_errors.append(&mut __abi_errors_2());
                                 },
                                 ::ethers::core::abi::ethabi::Param {
                                     name: ::std::borrow::ToOwned::to_owned("minTimeLock"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned(
+                        "MinimumSourceRealmValidatorsRequired",
+                    ),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "MinimumSourceRealmValidatorsRequired",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("minimumRequired"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("actualCount"),
                                     kind: ::ethers::core::abi::ethabi::ParamType::Uint(
                                         256usize,
                                     ),
@@ -7984,8 +8186,19 @@ abi_errors.append(&mut __abi_errors_2());
                             ],
                         },
                     ],
-                ),
-                (
+                )
+        ]
+        )
+        }
+        
+        
+        
+#[allow(deprecated)]
+        fn __abi_errors_2() -> std::collections::BTreeMap<String, Vec<::ethers::core::abi::ethabi::AbiError>> {
+        
+        std::collections::BTreeMap::from(
+        [
+        (
                     ::std::borrow::ToOwned::to_owned(
                         "MustBeInNextValidatorSetLockedOrReadyForNextEpochState",
                     ),
@@ -8121,6 +8334,27 @@ abi_errors.append(&mut __abi_errors_2());
                 ),
                 (
                     ::std::borrow::ToOwned::to_owned(
+                        "NoPubKeyRegisteredForAttestedAddress",
+                    ),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "NoPubKeyRegisteredForAttestedAddress",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("attestedAddress"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                            ],
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned(
                         "NoSelectorsProvidedForFacetForCut",
                     ),
                     ::std::vec![
@@ -8134,6 +8368,32 @@ abi_errors.append(&mut __abi_errors_2());
                                     kind: ::ethers::core::abi::ethabi::ParamType::Address,
                                     internal_type: ::core::option::Option::Some(
                                         ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                            ],
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("NoSharePrice"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned("NoSharePrice"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("stakerAddress"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("rewardEpochNumber"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
                                     ),
                                 },
                             ],
@@ -8169,6 +8429,38 @@ abi_errors.append(&mut __abi_errors_2());
                                     kind: ::ethers::core::abi::ethabi::ParamType::Address,
                                     internal_type: ::core::option::Option::Some(
                                         ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                            ],
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned(
+                        "NotEnoughNewValidatorsToReplaceShadowNodes",
+                    ),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "NotEnoughNewValidatorsToReplaceShadowNodes",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("threshold"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("newValidatorCount"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
                                     ),
                                 },
                             ],
@@ -8247,19 +8539,42 @@ abi_errors.append(&mut __abi_errors_2());
                             ],
                         },
                     ],
-                )
-        ]
-        )
-        }
-        
-        
-        
-#[allow(deprecated)]
-        fn __abi_errors_2() -> std::collections::BTreeMap<String, Vec<::ethers::core::abi::ethabi::AbiError>> {
-        
-        std::collections::BTreeMap::from(
-        [
-        (
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned(
+                        "NotEnoughValidatorsInCurrentEpoch",
+                    ),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "NotEnoughValidatorsInCurrentEpoch",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("validatorCount"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned(
+                                        "minimumValidatorCount",
+                                    ),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned("NotEnoughValidatorsInNextEpoch"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::AbiError {
@@ -8339,8 +8654,93 @@ abi_errors.append(&mut __abi_errors_2());
                     ],
                 ),
                 (
+                    ::std::borrow::ToOwned::to_owned("NotEnoughValidatorsToSetupKeySet"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "NotEnoughValidatorsToSetupKeySet",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("validatorCnt"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("minimumThreshold"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("OnlyStakingContractCanCall"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "OnlyStakingContractCanCall",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("caller"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                            ],
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("RateMustBeLessThan100Percent"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "RateMustBeLessThan100Percent",
+                            ),
+                            inputs: ::std::vec![],
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("RealmIdCannotBeZero"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "RealmIdCannotBeZero",
+                            ),
+                            inputs: ::std::vec![],
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned("RealmIdNotFound"),
                     ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned("RealmIdNotFound"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("realmId"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                        },
                         ::ethers::core::abi::ethabi::AbiError {
                             name: ::std::borrow::ToOwned::to_owned("RealmIdNotFound"),
                             inputs: ::std::vec![
@@ -8462,6 +8862,49 @@ abi_errors.append(&mut __abi_errors_2());
                                     ),
                                 },
                             ],
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned(
+                        "SourceAndTargetValidatorCountsMustMatch",
+                    ),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "SourceAndTargetValidatorCountsMustMatch",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("sourceCount"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("targetCount"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("SpecifiedKeySetNotFoundInList"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "SpecifiedKeySetNotFoundInList",
+                            ),
+                            inputs: ::std::vec![],
                         },
                     ],
                 ),
@@ -11199,6 +11642,24 @@ abi_errors.append(&mut __abi_errors_2());
     pub struct CannotAddSelectorsToZeroAddress {
         pub selectors: ::std::vec::Vec<[u8; 4]>,
     }
+    ///Custom Error type `CannotDeleteSpecifiedKeySet` with signature `CannotDeleteSpecifiedKeySet()` and selector `0x8252826e`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "CannotDeleteSpecifiedKeySet",
+        abi = "CannotDeleteSpecifiedKeySet()"
+    )]
+    pub struct CannotDeleteSpecifiedKeySet;
     ///Custom Error type `CannotKickBelowCurrentValidatorThreshold` with signature `CannotKickBelowCurrentValidatorThreshold()` and selector `0xe81f2804`
     #[derive(
         Clone,
@@ -11368,6 +11829,42 @@ abi_errors.append(&mut __abi_errors_2());
     pub struct CannotRemoveImmutableFunction {
         pub selector: [u8; 4],
     }
+    ///Custom Error type `CannotRemoveLastRealm` with signature `CannotRemoveLastRealm()` and selector `0x161e14c7`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(name = "CannotRemoveLastRealm", abi = "CannotRemoveLastRealm()")]
+    pub struct CannotRemoveLastRealm;
+    ///Custom Error type `CannotRemoveRealmWithValidators` with signature `CannotRemoveRealmWithValidators(uint256,uint256)` and selector `0x6fd1f0e3`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "CannotRemoveRealmWithValidators",
+        abi = "CannotRemoveRealmWithValidators(uint256,uint256)"
+    )]
+    pub struct CannotRemoveRealmWithValidators {
+        pub realm_id: ::ethers::core::types::U256,
+        pub validator_count: ::ethers::core::types::U256,
+    }
     ///Custom Error type `CannotReplaceFunctionThatDoesNotExists` with signature `CannotReplaceFunctionThatDoesNotExists(bytes4)` and selector `0x7479f939`
     #[derive(
         Clone,
@@ -11484,6 +11981,24 @@ abi_errors.append(&mut __abi_errors_2());
     )]
     #[etherror(name = "CannotStakeZero", abi = "CannotStakeZero()")]
     pub struct CannotStakeZero;
+    ///Custom Error type `CannotUnfreezeOnBehalfOfValidators` with signature `CannotUnfreezeOnBehalfOfValidators()` and selector `0xabcc4968`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "CannotUnfreezeOnBehalfOfValidators",
+        abi = "CannotUnfreezeOnBehalfOfValidators()"
+    )]
+    pub struct CannotUnfreezeOnBehalfOfValidators;
     ///Custom Error type `CannotVoteTwice` with signature `CannotVoteTwice(address)` and selector `0x384ce38a`
     #[derive(
         Clone,
@@ -11572,6 +12087,54 @@ abi_errors.append(&mut __abi_errors_2());
     pub struct CouldNotMapNodeAddressToStakerAddress {
         pub node_address: ::ethers::core::types::Address,
     }
+    ///Custom Error type `CountsCannotBeEmpty` with signature `CountsCannotBeEmpty()` and selector `0x2932c9ed`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(name = "CountsCannotBeEmpty", abi = "CountsCannotBeEmpty()")]
+    pub struct CountsCannotBeEmpty;
+    ///Custom Error type `CurvesAndCountsMustBeEqual` with signature `CurvesAndCountsMustBeEqual()` and selector `0xc645f221`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "CurvesAndCountsMustBeEqual",
+        abi = "CurvesAndCountsMustBeEqual()"
+    )]
+    pub struct CurvesAndCountsMustBeEqual;
+    ///Custom Error type `CurvesCannotBeEmpty` with signature `CurvesCannotBeEmpty()` and selector `0xb2bf608d`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(name = "CurvesCannotBeEmpty", abi = "CurvesCannotBeEmpty()")]
+    pub struct CurvesCannotBeEmpty;
     ///Custom Error type `IncorrectFacetCutAction` with signature `IncorrectFacetCutAction(uint8)` and selector `0x7fe9a41e`
     #[derive(
         Clone,
@@ -11642,6 +12205,26 @@ abi_errors.append(&mut __abi_errors_2());
     )]
     #[etherror(name = "InvalidAttestedAddress", abi = "InvalidAttestedAddress()")]
     pub struct InvalidAttestedAddress;
+    ///Custom Error type `InvalidNewMinimumThreshold` with signature `InvalidNewMinimumThreshold(uint256)` and selector `0x638673d2`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "InvalidNewMinimumThreshold",
+        abi = "InvalidNewMinimumThreshold(uint256)"
+    )]
+    pub struct InvalidNewMinimumThreshold {
+        pub minimum_threshold: ::ethers::core::types::U256,
+    }
     ///Custom Error type `InvalidNewSharePrice` with signature `InvalidNewSharePrice()` and selector `0x6039f2d8`
     #[derive(
         Clone,
@@ -11702,6 +12285,64 @@ abi_errors.append(&mut __abi_errors_2());
     )]
     #[etherror(name = "InvalidTimeLock", abi = "InvalidTimeLock()")]
     pub struct InvalidTimeLock;
+    ///Custom Error type `InvalidUncompressedKeyLength` with signature `InvalidUncompressedKeyLength(uint256)` and selector `0x9e6852cb`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "InvalidUncompressedKeyLength",
+        abi = "InvalidUncompressedKeyLength(uint256)"
+    )]
+    pub struct InvalidUncompressedKeyLength {
+        pub length: ::ethers::core::types::U256,
+    }
+    ///Custom Error type `InvalidUncompressedKeyPrefix` with signature `InvalidUncompressedKeyPrefix(uint8)` and selector `0xc097f02c`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "InvalidUncompressedKeyPrefix",
+        abi = "InvalidUncompressedKeyPrefix(uint8)"
+    )]
+    pub struct InvalidUncompressedKeyPrefix {
+        pub prefix: u8,
+    }
+    ///Custom Error type `KeyCountsCannotBeSetToZero` with signature `KeyCountsCannotBeSetToZero()` and selector `0x01568144`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "KeyCountsCannotBeSetToZero",
+        abi = "KeyCountsCannotBeSetToZero()"
+    )]
+    pub struct KeyCountsCannotBeSetToZero;
     ///Custom Error type `MinTimeLockNotMet` with signature `MinTimeLockNotMet(uint256,uint256)` and selector `0x9bcaa089`
     #[derive(
         Clone,
@@ -11719,6 +12360,27 @@ abi_errors.append(&mut __abi_errors_2());
     pub struct MinTimeLockNotMet {
         pub time_lock: ::ethers::core::types::U256,
         pub min_time_lock: ::ethers::core::types::U256,
+    }
+    ///Custom Error type `MinimumSourceRealmValidatorsRequired` with signature `MinimumSourceRealmValidatorsRequired(uint256,uint256)` and selector `0xe741a033`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "MinimumSourceRealmValidatorsRequired",
+        abi = "MinimumSourceRealmValidatorsRequired(uint256,uint256)"
+    )]
+    pub struct MinimumSourceRealmValidatorsRequired {
+        pub minimum_required: ::ethers::core::types::U256,
+        pub actual_count: ::ethers::core::types::U256,
     }
     ///Custom Error type `MustBeInActiveOrUnlockedOrPausedState` with signature `MustBeInActiveOrUnlockedOrPausedState(uint8)` and selector `0xc1f8741d`
     #[derive(
@@ -11914,6 +12576,26 @@ abi_errors.append(&mut __abi_errors_2());
     )]
     #[etherror(name = "NoEmptyStakingSlot", abi = "NoEmptyStakingSlot()")]
     pub struct NoEmptyStakingSlot;
+    ///Custom Error type `NoPubKeyRegisteredForAttestedAddress` with signature `NoPubKeyRegisteredForAttestedAddress(address)` and selector `0x24ad342e`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "NoPubKeyRegisteredForAttestedAddress",
+        abi = "NoPubKeyRegisteredForAttestedAddress(address)"
+    )]
+    pub struct NoPubKeyRegisteredForAttestedAddress {
+        pub attested_address: ::ethers::core::types::Address,
+    }
     ///Custom Error type `NoSelectorsProvidedForFacetForCut` with signature `NoSelectorsProvidedForFacetForCut(address)` and selector `0xe767f91f`
     #[derive(
         Clone,
@@ -11933,6 +12615,24 @@ abi_errors.append(&mut __abi_errors_2());
     )]
     pub struct NoSelectorsProvidedForFacetForCut {
         pub facet_address: ::ethers::core::types::Address,
+    }
+    ///Custom Error type `NoSharePrice` with signature `NoSharePrice(address,uint256)` and selector `0x8707d68e`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(name = "NoSharePrice", abi = "NoSharePrice(address,uint256)")]
+    pub struct NoSharePrice {
+        pub staker_address: ::ethers::core::types::Address,
+        pub reward_epoch_number: ::ethers::core::types::U256,
     }
     ///Custom Error type `NodeAddressNotFoundForStaker` with signature `NodeAddressNotFoundForStaker()` and selector `0x0722622c`
     #[derive(
@@ -11969,6 +12669,27 @@ abi_errors.append(&mut __abi_errors_2());
     pub struct NotContractOwner {
         pub user: ::ethers::core::types::Address,
         pub contract_owner: ::ethers::core::types::Address,
+    }
+    ///Custom Error type `NotEnoughNewValidatorsToReplaceShadowNodes` with signature `NotEnoughNewValidatorsToReplaceShadowNodes(uint256,uint256)` and selector `0xe6cb6e2b`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "NotEnoughNewValidatorsToReplaceShadowNodes",
+        abi = "NotEnoughNewValidatorsToReplaceShadowNodes(uint256,uint256)"
+    )]
+    pub struct NotEnoughNewValidatorsToReplaceShadowNodes {
+        pub threshold: ::ethers::core::types::U256,
+        pub new_validator_count: ::ethers::core::types::U256,
     }
     ///Custom Error type `NotEnoughTimeElapsedForTimeoutSinceLastEpoch` with signature `NotEnoughTimeElapsedForTimeoutSinceLastEpoch(uint256,uint256,uint256)` and selector `0x9312e856`
     #[derive(
@@ -12013,6 +12734,27 @@ abi_errors.append(&mut __abi_errors_2());
         pub current_timestamp: ::ethers::core::types::U256,
         pub epoch_end_time: ::ethers::core::types::U256,
     }
+    ///Custom Error type `NotEnoughValidatorsInCurrentEpoch` with signature `NotEnoughValidatorsInCurrentEpoch(uint256,uint256)` and selector `0xae4f396a`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "NotEnoughValidatorsInCurrentEpoch",
+        abi = "NotEnoughValidatorsInCurrentEpoch(uint256,uint256)"
+    )]
+    pub struct NotEnoughValidatorsInCurrentEpoch {
+        pub validator_count: ::ethers::core::types::U256,
+        pub minimum_validator_count: ::ethers::core::types::U256,
+    }
     ///Custom Error type `NotEnoughValidatorsInNextEpoch` with signature `NotEnoughValidatorsInNextEpoch(uint256,uint256)` and selector `0x8a0defa4`
     #[derive(
         Clone,
@@ -12055,6 +12797,97 @@ abi_errors.append(&mut __abi_errors_2());
         pub current_ready_validator_count: ::ethers::core::types::U256,
         pub next_ready_validator_count: ::ethers::core::types::U256,
         pub minimum_validator_count_to_be_ready: ::ethers::core::types::U256,
+    }
+    ///Custom Error type `NotEnoughValidatorsToSetupKeySet` with signature `NotEnoughValidatorsToSetupKeySet(uint256,uint256)` and selector `0xef8a1de0`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "NotEnoughValidatorsToSetupKeySet",
+        abi = "NotEnoughValidatorsToSetupKeySet(uint256,uint256)"
+    )]
+    pub struct NotEnoughValidatorsToSetupKeySet {
+        pub validator_cnt: ::ethers::core::types::U256,
+        pub minimum_threshold: ::ethers::core::types::U256,
+    }
+    ///Custom Error type `OnlyStakingContractCanCall` with signature `OnlyStakingContractCanCall(address)` and selector `0xdd97ec35`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "OnlyStakingContractCanCall",
+        abi = "OnlyStakingContractCanCall(address)"
+    )]
+    pub struct OnlyStakingContractCanCall {
+        pub caller: ::ethers::core::types::Address,
+    }
+    ///Custom Error type `RateMustBeLessThan100Percent` with signature `RateMustBeLessThan100Percent()` and selector `0x04a2ea86`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "RateMustBeLessThan100Percent",
+        abi = "RateMustBeLessThan100Percent()"
+    )]
+    pub struct RateMustBeLessThan100Percent;
+    ///Custom Error type `RealmIdCannotBeZero` with signature `RealmIdCannotBeZero()` and selector `0xce0350ec`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(name = "RealmIdCannotBeZero", abi = "RealmIdCannotBeZero()")]
+    pub struct RealmIdCannotBeZero;
+    ///Custom Error type `RealmIdNotFound` with signature `RealmIdNotFound(uint256)` and selector `0xc89752ff`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(name = "RealmIdNotFound", abi = "RealmIdNotFound(uint256)")]
+    pub struct RealmIdNotFound {
+        pub realm_id: ::ethers::core::types::U256,
     }
     ///Custom Error type `RealmIdNotFound` with signature `RealmIdNotFound(address)` and selector `0x4d1e0bab`
     #[derive(
@@ -12152,6 +12985,45 @@ abi_errors.append(&mut __abi_errors_2());
         pub sender_address: ::ethers::core::types::Address,
         pub sender_realm_id: ::ethers::core::types::U256,
     }
+    ///Custom Error type `SourceAndTargetValidatorCountsMustMatch` with signature `SourceAndTargetValidatorCountsMustMatch(uint256,uint256)` and selector `0x38853c0d`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "SourceAndTargetValidatorCountsMustMatch",
+        abi = "SourceAndTargetValidatorCountsMustMatch(uint256,uint256)"
+    )]
+    pub struct SourceAndTargetValidatorCountsMustMatch {
+        pub source_count: ::ethers::core::types::U256,
+        pub target_count: ::ethers::core::types::U256,
+    }
+    ///Custom Error type `SpecifiedKeySetNotFoundInList` with signature `SpecifiedKeySetNotFoundInList()` and selector `0xe6593e28`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "SpecifiedKeySetNotFoundInList",
+        abi = "SpecifiedKeySetNotFoundInList()"
+    )]
+    pub struct SpecifiedKeySetNotFoundInList;
     ///Custom Error type `StakeAmountNotMet` with signature `StakeAmountNotMet(uint256)` and selector `0xd15fec9f`
     #[derive(
         Clone,
@@ -12456,6 +13328,7 @@ abi_errors.append(&mut __abi_errors_2());
             CannotAddFunctionToDiamondThatAlreadyExists,
         ),
         CannotAddSelectorsToZeroAddress(CannotAddSelectorsToZeroAddress),
+        CannotDeleteSpecifiedKeySet(CannotDeleteSpecifiedKeySet),
         CannotKickBelowCurrentValidatorThreshold(
             CannotKickBelowCurrentValidatorThreshold,
         ),
@@ -12469,6 +13342,8 @@ abi_errors.append(&mut __abi_errors_2());
         CannotRejoinUntilNextEpochBecauseKicked(CannotRejoinUntilNextEpochBecauseKicked),
         CannotRemoveFunctionThatDoesNotExist(CannotRemoveFunctionThatDoesNotExist),
         CannotRemoveImmutableFunction(CannotRemoveImmutableFunction),
+        CannotRemoveLastRealm(CannotRemoveLastRealm),
+        CannotRemoveRealmWithValidators(CannotRemoveRealmWithValidators),
         CannotReplaceFunctionThatDoesNotExists(CannotReplaceFunctionThatDoesNotExists),
         CannotReplaceFunctionWithTheSameFunctionFromTheSameFacet(
             CannotReplaceFunctionWithTheSameFunctionFromTheSameFacet,
@@ -12479,20 +13354,29 @@ abi_errors.append(&mut __abi_errors_2());
         CannotReplaceImmutableFunction(CannotReplaceImmutableFunction),
         CannotReuseCommsKeys(CannotReuseCommsKeys),
         CannotStakeZero(CannotStakeZero),
+        CannotUnfreezeOnBehalfOfValidators(CannotUnfreezeOnBehalfOfValidators),
         CannotVoteTwice(CannotVoteTwice),
         CannotWithdrawFrozen(CannotWithdrawFrozen),
         CannotWithdrawZero(CannotWithdrawZero),
         CheckpointAheadOfCurrentEpoch(CheckpointAheadOfCurrentEpoch),
         CouldNotMapNodeAddressToStakerAddress(CouldNotMapNodeAddressToStakerAddress),
+        CountsCannotBeEmpty(CountsCannotBeEmpty),
+        CurvesAndCountsMustBeEqual(CurvesAndCountsMustBeEqual),
+        CurvesCannotBeEmpty(CurvesCannotBeEmpty),
         IncorrectFacetCutAction(IncorrectFacetCutAction),
         InitializationFunctionReverted(InitializationFunctionReverted),
         InsufficientSelfStake(InsufficientSelfStake),
         InvalidAttestedAddress(InvalidAttestedAddress),
+        InvalidNewMinimumThreshold(InvalidNewMinimumThreshold),
         InvalidNewSharePrice(InvalidNewSharePrice),
         InvalidRatio(InvalidRatio),
         InvalidSlashPercentage(InvalidSlashPercentage),
         InvalidTimeLock(InvalidTimeLock),
+        InvalidUncompressedKeyLength(InvalidUncompressedKeyLength),
+        InvalidUncompressedKeyPrefix(InvalidUncompressedKeyPrefix),
+        KeyCountsCannotBeSetToZero(KeyCountsCannotBeSetToZero),
         MinTimeLockNotMet(MinTimeLockNotMet),
+        MinimumSourceRealmValidatorsRequired(MinimumSourceRealmValidatorsRequired),
         MustBeInActiveOrUnlockedOrPausedState(MustBeInActiveOrUnlockedOrPausedState),
         MustBeInActiveOrUnlockedState(MustBeInActiveOrUnlockedState),
         MustBeInNextValidatorSetLockedOrReadyForNextEpochOrRestoreState(
@@ -12507,20 +13391,33 @@ abi_errors.append(&mut __abi_errors_2());
         NewTimeLockMustBeGreaterThanCurrent(NewTimeLockMustBeGreaterThanCurrent),
         NoBytecodeAtAddress(NoBytecodeAtAddress),
         NoEmptyStakingSlot(NoEmptyStakingSlot),
+        NoPubKeyRegisteredForAttestedAddress(NoPubKeyRegisteredForAttestedAddress),
         NoSelectorsProvidedForFacetForCut(NoSelectorsProvidedForFacetForCut),
+        NoSharePrice(NoSharePrice),
         NodeAddressNotFoundForStaker(NodeAddressNotFoundForStaker),
         NotContractOwner(NotContractOwner),
+        NotEnoughNewValidatorsToReplaceShadowNodes(
+            NotEnoughNewValidatorsToReplaceShadowNodes,
+        ),
         NotEnoughTimeElapsedForTimeoutSinceLastEpoch(
             NotEnoughTimeElapsedForTimeoutSinceLastEpoch,
         ),
         NotEnoughTimeElapsedSinceLastEpoch(NotEnoughTimeElapsedSinceLastEpoch),
+        NotEnoughValidatorsInCurrentEpoch(NotEnoughValidatorsInCurrentEpoch),
         NotEnoughValidatorsInNextEpoch(NotEnoughValidatorsInNextEpoch),
         NotEnoughValidatorsReadyForNextEpoch(NotEnoughValidatorsReadyForNextEpoch),
+        NotEnoughValidatorsToSetupKeySet(NotEnoughValidatorsToSetupKeySet),
+        OnlyStakingContractCanCall(OnlyStakingContractCanCall),
+        RateMustBeLessThan100Percent(RateMustBeLessThan100Percent),
+        RealmIdCannotBeZero(RealmIdCannotBeZero),
+        RealmIdNotFound(RealmIdNotFound),
         RealmIdNotFound(RealmIdNotFound),
         RemoveFacetAddressMustBeZeroAddress(RemoveFacetAddressMustBeZeroAddress),
         RewardsMustBeClaimed(RewardsMustBeClaimed),
         SignaledReadyForWrongEpochNumber(SignaledReadyForWrongEpochNumber),
         SlashingMustOccurInSameRealm(SlashingMustOccurInSameRealm),
+        SourceAndTargetValidatorCountsMustMatch(SourceAndTargetValidatorCountsMustMatch),
+        SpecifiedKeySetNotFoundInList(SpecifiedKeySetNotFoundInList),
         StakeAmountNotMet(StakeAmountNotMet),
         StakeMustBeGreaterThanMinimumStake(StakeMustBeGreaterThanMinimumStake),
         StakeRecordNotFound(StakeRecordNotFound),
@@ -12580,6 +13477,11 @@ abi_errors.append(&mut __abi_errors_2());
             ) {
                 return Ok(Self::CannotAddSelectorsToZeroAddress(decoded));
             }
+            if let Ok(decoded) = <CannotDeleteSpecifiedKeySet as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::CannotDeleteSpecifiedKeySet(decoded));
+            }
             if let Ok(decoded) = <CannotKickBelowCurrentValidatorThreshold as ::ethers::core::abi::AbiDecode>::decode(
                 data,
             ) {
@@ -12627,6 +13529,16 @@ abi_errors.append(&mut __abi_errors_2());
             ) {
                 return Ok(Self::CannotRemoveImmutableFunction(decoded));
             }
+            if let Ok(decoded) = <CannotRemoveLastRealm as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::CannotRemoveLastRealm(decoded));
+            }
+            if let Ok(decoded) = <CannotRemoveRealmWithValidators as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::CannotRemoveRealmWithValidators(decoded));
+            }
             if let Ok(decoded) = <CannotReplaceFunctionThatDoesNotExists as ::ethers::core::abi::AbiDecode>::decode(
                 data,
             ) {
@@ -12661,6 +13573,11 @@ abi_errors.append(&mut __abi_errors_2());
             ) {
                 return Ok(Self::CannotStakeZero(decoded));
             }
+            if let Ok(decoded) = <CannotUnfreezeOnBehalfOfValidators as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::CannotUnfreezeOnBehalfOfValidators(decoded));
+            }
             if let Ok(decoded) = <CannotVoteTwice as ::ethers::core::abi::AbiDecode>::decode(
                 data,
             ) {
@@ -12686,6 +13603,21 @@ abi_errors.append(&mut __abi_errors_2());
             ) {
                 return Ok(Self::CouldNotMapNodeAddressToStakerAddress(decoded));
             }
+            if let Ok(decoded) = <CountsCannotBeEmpty as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::CountsCannotBeEmpty(decoded));
+            }
+            if let Ok(decoded) = <CurvesAndCountsMustBeEqual as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::CurvesAndCountsMustBeEqual(decoded));
+            }
+            if let Ok(decoded) = <CurvesCannotBeEmpty as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::CurvesCannotBeEmpty(decoded));
+            }
             if let Ok(decoded) = <IncorrectFacetCutAction as ::ethers::core::abi::AbiDecode>::decode(
                 data,
             ) {
@@ -12705,6 +13637,11 @@ abi_errors.append(&mut __abi_errors_2());
                 data,
             ) {
                 return Ok(Self::InvalidAttestedAddress(decoded));
+            }
+            if let Ok(decoded) = <InvalidNewMinimumThreshold as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::InvalidNewMinimumThreshold(decoded));
             }
             if let Ok(decoded) = <InvalidNewSharePrice as ::ethers::core::abi::AbiDecode>::decode(
                 data,
@@ -12726,10 +13663,30 @@ abi_errors.append(&mut __abi_errors_2());
             ) {
                 return Ok(Self::InvalidTimeLock(decoded));
             }
+            if let Ok(decoded) = <InvalidUncompressedKeyLength as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::InvalidUncompressedKeyLength(decoded));
+            }
+            if let Ok(decoded) = <InvalidUncompressedKeyPrefix as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::InvalidUncompressedKeyPrefix(decoded));
+            }
+            if let Ok(decoded) = <KeyCountsCannotBeSetToZero as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::KeyCountsCannotBeSetToZero(decoded));
+            }
             if let Ok(decoded) = <MinTimeLockNotMet as ::ethers::core::abi::AbiDecode>::decode(
                 data,
             ) {
                 return Ok(Self::MinTimeLockNotMet(decoded));
+            }
+            if let Ok(decoded) = <MinimumSourceRealmValidatorsRequired as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::MinimumSourceRealmValidatorsRequired(decoded));
             }
             if let Ok(decoded) = <MustBeInActiveOrUnlockedOrPausedState as ::ethers::core::abi::AbiDecode>::decode(
                 data,
@@ -12787,10 +13744,20 @@ abi_errors.append(&mut __abi_errors_2());
             ) {
                 return Ok(Self::NoEmptyStakingSlot(decoded));
             }
+            if let Ok(decoded) = <NoPubKeyRegisteredForAttestedAddress as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::NoPubKeyRegisteredForAttestedAddress(decoded));
+            }
             if let Ok(decoded) = <NoSelectorsProvidedForFacetForCut as ::ethers::core::abi::AbiDecode>::decode(
                 data,
             ) {
                 return Ok(Self::NoSelectorsProvidedForFacetForCut(decoded));
+            }
+            if let Ok(decoded) = <NoSharePrice as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::NoSharePrice(decoded));
             }
             if let Ok(decoded) = <NodeAddressNotFoundForStaker as ::ethers::core::abi::AbiDecode>::decode(
                 data,
@@ -12802,6 +13769,11 @@ abi_errors.append(&mut __abi_errors_2());
             ) {
                 return Ok(Self::NotContractOwner(decoded));
             }
+            if let Ok(decoded) = <NotEnoughNewValidatorsToReplaceShadowNodes as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::NotEnoughNewValidatorsToReplaceShadowNodes(decoded));
+            }
             if let Ok(decoded) = <NotEnoughTimeElapsedForTimeoutSinceLastEpoch as ::ethers::core::abi::AbiDecode>::decode(
                 data,
             ) {
@@ -12812,6 +13784,11 @@ abi_errors.append(&mut __abi_errors_2());
             ) {
                 return Ok(Self::NotEnoughTimeElapsedSinceLastEpoch(decoded));
             }
+            if let Ok(decoded) = <NotEnoughValidatorsInCurrentEpoch as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::NotEnoughValidatorsInCurrentEpoch(decoded));
+            }
             if let Ok(decoded) = <NotEnoughValidatorsInNextEpoch as ::ethers::core::abi::AbiDecode>::decode(
                 data,
             ) {
@@ -12821,6 +13798,31 @@ abi_errors.append(&mut __abi_errors_2());
                 data,
             ) {
                 return Ok(Self::NotEnoughValidatorsReadyForNextEpoch(decoded));
+            }
+            if let Ok(decoded) = <NotEnoughValidatorsToSetupKeySet as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::NotEnoughValidatorsToSetupKeySet(decoded));
+            }
+            if let Ok(decoded) = <OnlyStakingContractCanCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::OnlyStakingContractCanCall(decoded));
+            }
+            if let Ok(decoded) = <RateMustBeLessThan100Percent as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::RateMustBeLessThan100Percent(decoded));
+            }
+            if let Ok(decoded) = <RealmIdCannotBeZero as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::RealmIdCannotBeZero(decoded));
+            }
+            if let Ok(decoded) = <RealmIdNotFound as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::RealmIdNotFound(decoded));
             }
             if let Ok(decoded) = <RealmIdNotFound as ::ethers::core::abi::AbiDecode>::decode(
                 data,
@@ -12846,6 +13848,16 @@ abi_errors.append(&mut __abi_errors_2());
                 data,
             ) {
                 return Ok(Self::SlashingMustOccurInSameRealm(decoded));
+            }
+            if let Ok(decoded) = <SourceAndTargetValidatorCountsMustMatch as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::SourceAndTargetValidatorCountsMustMatch(decoded));
+            }
+            if let Ok(decoded) = <SpecifiedKeySetNotFoundInList as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::SpecifiedKeySetNotFoundInList(decoded));
             }
             if let Ok(decoded) = <StakeAmountNotMet as ::ethers::core::abi::AbiDecode>::decode(
                 data,
@@ -12946,6 +13958,9 @@ abi_errors.append(&mut __abi_errors_2());
                 Self::CannotAddSelectorsToZeroAddress(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
+                Self::CannotDeleteSpecifiedKeySet(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::CannotKickBelowCurrentValidatorThreshold(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
@@ -12973,6 +13988,12 @@ abi_errors.append(&mut __abi_errors_2());
                 Self::CannotRemoveImmutableFunction(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
+                Self::CannotRemoveLastRealm(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::CannotRemoveRealmWithValidators(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::CannotReplaceFunctionThatDoesNotExists(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
@@ -12991,6 +14012,9 @@ abi_errors.append(&mut __abi_errors_2());
                 Self::CannotStakeZero(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
+                Self::CannotUnfreezeOnBehalfOfValidators(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::CannotVoteTwice(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
@@ -13006,6 +14030,15 @@ abi_errors.append(&mut __abi_errors_2());
                 Self::CouldNotMapNodeAddressToStakerAddress(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
+                Self::CountsCannotBeEmpty(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::CurvesAndCountsMustBeEqual(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::CurvesCannotBeEmpty(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::IncorrectFacetCutAction(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
@@ -13016,6 +14049,9 @@ abi_errors.append(&mut __abi_errors_2());
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::InvalidAttestedAddress(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::InvalidNewMinimumThreshold(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::InvalidNewSharePrice(element) => {
@@ -13030,7 +14066,19 @@ abi_errors.append(&mut __abi_errors_2());
                 Self::InvalidTimeLock(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
+                Self::InvalidUncompressedKeyLength(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::InvalidUncompressedKeyPrefix(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::KeyCountsCannotBeSetToZero(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::MinTimeLockNotMet(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::MinimumSourceRealmValidatorsRequired(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::MustBeInActiveOrUnlockedOrPausedState(element) => {
@@ -13063,7 +14111,13 @@ abi_errors.append(&mut __abi_errors_2());
                 Self::NoEmptyStakingSlot(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
+                Self::NoPubKeyRegisteredForAttestedAddress(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::NoSelectorsProvidedForFacetForCut(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::NoSharePrice(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::NodeAddressNotFoundForStaker(element) => {
@@ -13072,16 +14126,37 @@ abi_errors.append(&mut __abi_errors_2());
                 Self::NotContractOwner(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
+                Self::NotEnoughNewValidatorsToReplaceShadowNodes(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::NotEnoughTimeElapsedForTimeoutSinceLastEpoch(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::NotEnoughTimeElapsedSinceLastEpoch(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
+                Self::NotEnoughValidatorsInCurrentEpoch(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::NotEnoughValidatorsInNextEpoch(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::NotEnoughValidatorsReadyForNextEpoch(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::NotEnoughValidatorsToSetupKeySet(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::OnlyStakingContractCanCall(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::RateMustBeLessThan100Percent(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::RealmIdCannotBeZero(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::RealmIdNotFound(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::RealmIdNotFound(element) => {
@@ -13097,6 +14172,12 @@ abi_errors.append(&mut __abi_errors_2());
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::SlashingMustOccurInSameRealm(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::SourceAndTargetValidatorCountsMustMatch(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::SpecifiedKeySetNotFoundInList(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::StakeAmountNotMet(element) => {
@@ -13177,6 +14258,10 @@ abi_errors.append(&mut __abi_errors_2());
                     true
                 }
                 _ if selector
+                    == <CannotDeleteSpecifiedKeySet as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
                     == <CannotKickBelowCurrentValidatorThreshold as ::ethers::contract::EthError>::selector() => {
                     true
                 }
@@ -13213,6 +14298,14 @@ abi_errors.append(&mut __abi_errors_2());
                     true
                 }
                 _ if selector
+                    == <CannotRemoveLastRealm as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
+                    == <CannotRemoveRealmWithValidators as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
                     == <CannotReplaceFunctionThatDoesNotExists as ::ethers::contract::EthError>::selector() => {
                     true
                 }
@@ -13237,6 +14330,10 @@ abi_errors.append(&mut __abi_errors_2());
                     true
                 }
                 _ if selector
+                    == <CannotUnfreezeOnBehalfOfValidators as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
                     == <CannotVoteTwice as ::ethers::contract::EthError>::selector() => {
                     true
                 }
@@ -13257,6 +14354,18 @@ abi_errors.append(&mut __abi_errors_2());
                     true
                 }
                 _ if selector
+                    == <CountsCannotBeEmpty as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
+                    == <CurvesAndCountsMustBeEqual as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
+                    == <CurvesCannotBeEmpty as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
                     == <IncorrectFacetCutAction as ::ethers::contract::EthError>::selector() => {
                     true
                 }
@@ -13270,6 +14379,10 @@ abi_errors.append(&mut __abi_errors_2());
                 }
                 _ if selector
                     == <InvalidAttestedAddress as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
+                    == <InvalidNewMinimumThreshold as ::ethers::contract::EthError>::selector() => {
                     true
                 }
                 _ if selector
@@ -13287,7 +14400,23 @@ abi_errors.append(&mut __abi_errors_2());
                     true
                 }
                 _ if selector
+                    == <InvalidUncompressedKeyLength as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
+                    == <InvalidUncompressedKeyPrefix as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
+                    == <KeyCountsCannotBeSetToZero as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
                     == <MinTimeLockNotMet as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
+                    == <MinimumSourceRealmValidatorsRequired as ::ethers::contract::EthError>::selector() => {
                     true
                 }
                 _ if selector
@@ -13331,15 +14460,25 @@ abi_errors.append(&mut __abi_errors_2());
                     true
                 }
                 _ if selector
+                    == <NoPubKeyRegisteredForAttestedAddress as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
                     == <NoSelectorsProvidedForFacetForCut as ::ethers::contract::EthError>::selector() => {
                     true
                 }
+                _ if selector
+                    == <NoSharePrice as ::ethers::contract::EthError>::selector() => true,
                 _ if selector
                     == <NodeAddressNotFoundForStaker as ::ethers::contract::EthError>::selector() => {
                     true
                 }
                 _ if selector
                     == <NotContractOwner as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
+                    == <NotEnoughNewValidatorsToReplaceShadowNodes as ::ethers::contract::EthError>::selector() => {
                     true
                 }
                 _ if selector
@@ -13351,11 +14490,35 @@ abi_errors.append(&mut __abi_errors_2());
                     true
                 }
                 _ if selector
+                    == <NotEnoughValidatorsInCurrentEpoch as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
                     == <NotEnoughValidatorsInNextEpoch as ::ethers::contract::EthError>::selector() => {
                     true
                 }
                 _ if selector
                     == <NotEnoughValidatorsReadyForNextEpoch as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
+                    == <NotEnoughValidatorsToSetupKeySet as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
+                    == <OnlyStakingContractCanCall as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
+                    == <RateMustBeLessThan100Percent as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
+                    == <RealmIdCannotBeZero as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
+                    == <RealmIdNotFound as ::ethers::contract::EthError>::selector() => {
                     true
                 }
                 _ if selector
@@ -13376,6 +14539,14 @@ abi_errors.append(&mut __abi_errors_2());
                 }
                 _ if selector
                     == <SlashingMustOccurInSameRealm as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
+                    == <SourceAndTargetValidatorCountsMustMatch as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
+                    == <SpecifiedKeySetNotFoundInList as ::ethers::contract::EthError>::selector() => {
                     true
                 }
                 _ if selector
@@ -13459,6 +14630,9 @@ abi_errors.append(&mut __abi_errors_2());
                 Self::CannotAddSelectorsToZeroAddress(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
+                Self::CannotDeleteSpecifiedKeySet(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
                 Self::CannotKickBelowCurrentValidatorThreshold(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
@@ -13486,6 +14660,12 @@ abi_errors.append(&mut __abi_errors_2());
                 Self::CannotRemoveImmutableFunction(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
+                Self::CannotRemoveLastRealm(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::CannotRemoveRealmWithValidators(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
                 Self::CannotReplaceFunctionThatDoesNotExists(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
@@ -13502,6 +14682,9 @@ abi_errors.append(&mut __abi_errors_2());
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::CannotStakeZero(element) => ::core::fmt::Display::fmt(element, f),
+                Self::CannotUnfreezeOnBehalfOfValidators(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
                 Self::CannotVoteTwice(element) => ::core::fmt::Display::fmt(element, f),
                 Self::CannotWithdrawFrozen(element) => {
                     ::core::fmt::Display::fmt(element, f)
@@ -13513,6 +14696,15 @@ abi_errors.append(&mut __abi_errors_2());
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::CouldNotMapNodeAddressToStakerAddress(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::CountsCannotBeEmpty(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::CurvesAndCountsMustBeEqual(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::CurvesCannotBeEmpty(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::IncorrectFacetCutAction(element) => {
@@ -13527,6 +14719,9 @@ abi_errors.append(&mut __abi_errors_2());
                 Self::InvalidAttestedAddress(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
+                Self::InvalidNewMinimumThreshold(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
                 Self::InvalidNewSharePrice(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
@@ -13535,7 +14730,19 @@ abi_errors.append(&mut __abi_errors_2());
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::InvalidTimeLock(element) => ::core::fmt::Display::fmt(element, f),
+                Self::InvalidUncompressedKeyLength(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::InvalidUncompressedKeyPrefix(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::KeyCountsCannotBeSetToZero(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
                 Self::MinTimeLockNotMet(element) => ::core::fmt::Display::fmt(element, f),
+                Self::MinimumSourceRealmValidatorsRequired(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
                 Self::MustBeInActiveOrUnlockedOrPausedState(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
@@ -13566,17 +14773,27 @@ abi_errors.append(&mut __abi_errors_2());
                 Self::NoEmptyStakingSlot(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
+                Self::NoPubKeyRegisteredForAttestedAddress(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
                 Self::NoSelectorsProvidedForFacetForCut(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
+                Self::NoSharePrice(element) => ::core::fmt::Display::fmt(element, f),
                 Self::NodeAddressNotFoundForStaker(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::NotContractOwner(element) => ::core::fmt::Display::fmt(element, f),
+                Self::NotEnoughNewValidatorsToReplaceShadowNodes(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
                 Self::NotEnoughTimeElapsedForTimeoutSinceLastEpoch(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::NotEnoughTimeElapsedSinceLastEpoch(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::NotEnoughValidatorsInCurrentEpoch(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::NotEnoughValidatorsInNextEpoch(element) => {
@@ -13585,6 +14802,19 @@ abi_errors.append(&mut __abi_errors_2());
                 Self::NotEnoughValidatorsReadyForNextEpoch(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
+                Self::NotEnoughValidatorsToSetupKeySet(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::OnlyStakingContractCanCall(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::RateMustBeLessThan100Percent(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::RealmIdCannotBeZero(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::RealmIdNotFound(element) => ::core::fmt::Display::fmt(element, f),
                 Self::RealmIdNotFound(element) => ::core::fmt::Display::fmt(element, f),
                 Self::RemoveFacetAddressMustBeZeroAddress(element) => {
                     ::core::fmt::Display::fmt(element, f)
@@ -13596,6 +14826,12 @@ abi_errors.append(&mut __abi_errors_2());
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::SlashingMustOccurInSameRealm(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::SourceAndTargetValidatorCountsMustMatch(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::SpecifiedKeySetNotFoundInList(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::StakeAmountNotMet(element) => ::core::fmt::Display::fmt(element, f),
@@ -13677,6 +14913,11 @@ abi_errors.append(&mut __abi_errors_2());
             Self::CannotAddSelectorsToZeroAddress(value)
         }
     }
+    impl ::core::convert::From<CannotDeleteSpecifiedKeySet> for StakingErrors {
+        fn from(value: CannotDeleteSpecifiedKeySet) -> Self {
+            Self::CannotDeleteSpecifiedKeySet(value)
+        }
+    }
     impl ::core::convert::From<CannotKickBelowCurrentValidatorThreshold>
     for StakingErrors {
         fn from(value: CannotKickBelowCurrentValidatorThreshold) -> Self {
@@ -13725,6 +14966,16 @@ abi_errors.append(&mut __abi_errors_2());
             Self::CannotRemoveImmutableFunction(value)
         }
     }
+    impl ::core::convert::From<CannotRemoveLastRealm> for StakingErrors {
+        fn from(value: CannotRemoveLastRealm) -> Self {
+            Self::CannotRemoveLastRealm(value)
+        }
+    }
+    impl ::core::convert::From<CannotRemoveRealmWithValidators> for StakingErrors {
+        fn from(value: CannotRemoveRealmWithValidators) -> Self {
+            Self::CannotRemoveRealmWithValidators(value)
+        }
+    }
     impl ::core::convert::From<CannotReplaceFunctionThatDoesNotExists>
     for StakingErrors {
         fn from(value: CannotReplaceFunctionThatDoesNotExists) -> Self {
@@ -13760,6 +15011,11 @@ abi_errors.append(&mut __abi_errors_2());
             Self::CannotStakeZero(value)
         }
     }
+    impl ::core::convert::From<CannotUnfreezeOnBehalfOfValidators> for StakingErrors {
+        fn from(value: CannotUnfreezeOnBehalfOfValidators) -> Self {
+            Self::CannotUnfreezeOnBehalfOfValidators(value)
+        }
+    }
     impl ::core::convert::From<CannotVoteTwice> for StakingErrors {
         fn from(value: CannotVoteTwice) -> Self {
             Self::CannotVoteTwice(value)
@@ -13785,6 +15041,21 @@ abi_errors.append(&mut __abi_errors_2());
             Self::CouldNotMapNodeAddressToStakerAddress(value)
         }
     }
+    impl ::core::convert::From<CountsCannotBeEmpty> for StakingErrors {
+        fn from(value: CountsCannotBeEmpty) -> Self {
+            Self::CountsCannotBeEmpty(value)
+        }
+    }
+    impl ::core::convert::From<CurvesAndCountsMustBeEqual> for StakingErrors {
+        fn from(value: CurvesAndCountsMustBeEqual) -> Self {
+            Self::CurvesAndCountsMustBeEqual(value)
+        }
+    }
+    impl ::core::convert::From<CurvesCannotBeEmpty> for StakingErrors {
+        fn from(value: CurvesCannotBeEmpty) -> Self {
+            Self::CurvesCannotBeEmpty(value)
+        }
+    }
     impl ::core::convert::From<IncorrectFacetCutAction> for StakingErrors {
         fn from(value: IncorrectFacetCutAction) -> Self {
             Self::IncorrectFacetCutAction(value)
@@ -13803,6 +15074,11 @@ abi_errors.append(&mut __abi_errors_2());
     impl ::core::convert::From<InvalidAttestedAddress> for StakingErrors {
         fn from(value: InvalidAttestedAddress) -> Self {
             Self::InvalidAttestedAddress(value)
+        }
+    }
+    impl ::core::convert::From<InvalidNewMinimumThreshold> for StakingErrors {
+        fn from(value: InvalidNewMinimumThreshold) -> Self {
+            Self::InvalidNewMinimumThreshold(value)
         }
     }
     impl ::core::convert::From<InvalidNewSharePrice> for StakingErrors {
@@ -13825,9 +15101,29 @@ abi_errors.append(&mut __abi_errors_2());
             Self::InvalidTimeLock(value)
         }
     }
+    impl ::core::convert::From<InvalidUncompressedKeyLength> for StakingErrors {
+        fn from(value: InvalidUncompressedKeyLength) -> Self {
+            Self::InvalidUncompressedKeyLength(value)
+        }
+    }
+    impl ::core::convert::From<InvalidUncompressedKeyPrefix> for StakingErrors {
+        fn from(value: InvalidUncompressedKeyPrefix) -> Self {
+            Self::InvalidUncompressedKeyPrefix(value)
+        }
+    }
+    impl ::core::convert::From<KeyCountsCannotBeSetToZero> for StakingErrors {
+        fn from(value: KeyCountsCannotBeSetToZero) -> Self {
+            Self::KeyCountsCannotBeSetToZero(value)
+        }
+    }
     impl ::core::convert::From<MinTimeLockNotMet> for StakingErrors {
         fn from(value: MinTimeLockNotMet) -> Self {
             Self::MinTimeLockNotMet(value)
+        }
+    }
+    impl ::core::convert::From<MinimumSourceRealmValidatorsRequired> for StakingErrors {
+        fn from(value: MinimumSourceRealmValidatorsRequired) -> Self {
+            Self::MinimumSourceRealmValidatorsRequired(value)
         }
     }
     impl ::core::convert::From<MustBeInActiveOrUnlockedOrPausedState> for StakingErrors {
@@ -13885,9 +15181,19 @@ abi_errors.append(&mut __abi_errors_2());
             Self::NoEmptyStakingSlot(value)
         }
     }
+    impl ::core::convert::From<NoPubKeyRegisteredForAttestedAddress> for StakingErrors {
+        fn from(value: NoPubKeyRegisteredForAttestedAddress) -> Self {
+            Self::NoPubKeyRegisteredForAttestedAddress(value)
+        }
+    }
     impl ::core::convert::From<NoSelectorsProvidedForFacetForCut> for StakingErrors {
         fn from(value: NoSelectorsProvidedForFacetForCut) -> Self {
             Self::NoSelectorsProvidedForFacetForCut(value)
+        }
+    }
+    impl ::core::convert::From<NoSharePrice> for StakingErrors {
+        fn from(value: NoSharePrice) -> Self {
+            Self::NoSharePrice(value)
         }
     }
     impl ::core::convert::From<NodeAddressNotFoundForStaker> for StakingErrors {
@@ -13898,6 +15204,12 @@ abi_errors.append(&mut __abi_errors_2());
     impl ::core::convert::From<NotContractOwner> for StakingErrors {
         fn from(value: NotContractOwner) -> Self {
             Self::NotContractOwner(value)
+        }
+    }
+    impl ::core::convert::From<NotEnoughNewValidatorsToReplaceShadowNodes>
+    for StakingErrors {
+        fn from(value: NotEnoughNewValidatorsToReplaceShadowNodes) -> Self {
+            Self::NotEnoughNewValidatorsToReplaceShadowNodes(value)
         }
     }
     impl ::core::convert::From<NotEnoughTimeElapsedForTimeoutSinceLastEpoch>
@@ -13911,6 +15223,11 @@ abi_errors.append(&mut __abi_errors_2());
             Self::NotEnoughTimeElapsedSinceLastEpoch(value)
         }
     }
+    impl ::core::convert::From<NotEnoughValidatorsInCurrentEpoch> for StakingErrors {
+        fn from(value: NotEnoughValidatorsInCurrentEpoch) -> Self {
+            Self::NotEnoughValidatorsInCurrentEpoch(value)
+        }
+    }
     impl ::core::convert::From<NotEnoughValidatorsInNextEpoch> for StakingErrors {
         fn from(value: NotEnoughValidatorsInNextEpoch) -> Self {
             Self::NotEnoughValidatorsInNextEpoch(value)
@@ -13919,6 +15236,31 @@ abi_errors.append(&mut __abi_errors_2());
     impl ::core::convert::From<NotEnoughValidatorsReadyForNextEpoch> for StakingErrors {
         fn from(value: NotEnoughValidatorsReadyForNextEpoch) -> Self {
             Self::NotEnoughValidatorsReadyForNextEpoch(value)
+        }
+    }
+    impl ::core::convert::From<NotEnoughValidatorsToSetupKeySet> for StakingErrors {
+        fn from(value: NotEnoughValidatorsToSetupKeySet) -> Self {
+            Self::NotEnoughValidatorsToSetupKeySet(value)
+        }
+    }
+    impl ::core::convert::From<OnlyStakingContractCanCall> for StakingErrors {
+        fn from(value: OnlyStakingContractCanCall) -> Self {
+            Self::OnlyStakingContractCanCall(value)
+        }
+    }
+    impl ::core::convert::From<RateMustBeLessThan100Percent> for StakingErrors {
+        fn from(value: RateMustBeLessThan100Percent) -> Self {
+            Self::RateMustBeLessThan100Percent(value)
+        }
+    }
+    impl ::core::convert::From<RealmIdCannotBeZero> for StakingErrors {
+        fn from(value: RealmIdCannotBeZero) -> Self {
+            Self::RealmIdCannotBeZero(value)
+        }
+    }
+    impl ::core::convert::From<RealmIdNotFound> for StakingErrors {
+        fn from(value: RealmIdNotFound) -> Self {
+            Self::RealmIdNotFound(value)
         }
     }
     impl ::core::convert::From<RealmIdNotFound> for StakingErrors {
@@ -13944,6 +15286,17 @@ abi_errors.append(&mut __abi_errors_2());
     impl ::core::convert::From<SlashingMustOccurInSameRealm> for StakingErrors {
         fn from(value: SlashingMustOccurInSameRealm) -> Self {
             Self::SlashingMustOccurInSameRealm(value)
+        }
+    }
+    impl ::core::convert::From<SourceAndTargetValidatorCountsMustMatch>
+    for StakingErrors {
+        fn from(value: SourceAndTargetValidatorCountsMustMatch) -> Self {
+            Self::SourceAndTargetValidatorCountsMustMatch(value)
+        }
+    }
+    impl ::core::convert::From<SpecifiedKeySetNotFoundInList> for StakingErrors {
+        fn from(value: SpecifiedKeySetNotFoundInList) -> Self {
+            Self::SpecifiedKeySetNotFoundInList(value)
         }
     }
     impl ::core::convert::From<StakeAmountNotMet> for StakingErrors {
