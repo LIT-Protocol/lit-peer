@@ -17,7 +17,6 @@ use std::process::Command;
 use std::{env, fs};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-
     // INSERT GIT COMMIT HASH
     println!("cargo:rerun-if-env-changed=GIT_COMMIT_HASH");
     let injected_hash = env::var("GIT_COMMIT_HASH")
