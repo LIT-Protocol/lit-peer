@@ -41,17 +41,18 @@ pub struct StandardRpcHealthcheckPoller<'a> {
     health_request_id: &'a AtomicUsize,
 }
 
-/// Select the best RPC entry.
+/// Select the best RPC entry from a non-empty list.
 /// Order: healthy > higher priority > lower latency > lexicographically smaller URL.
 /// Entries missing in `latencies` are treated as unhealthy; if none are healthy, fall back to
-/// highest priority. Returns `None` when `entries` is empty.
+/// highest priority.
+///
+/// # Panics
+/// Panics if `entries` is empty. Callers must ensure the list is non-empty.
 #[inline]
 fn select_rpc_entry<'a>(
     entries: &'a [RpcEntry], latencies: &im::hashmap::HashMap<RpcEntry, Latency>,
-) -> Option<&'a RpcEntry> {
-    if entries.is_empty() {
-        return None;
-    }
+) -> &'a RpcEntry {
+    assert!(!entries.is_empty(), "select_rpc_entry called with empty entries");
 
     // Try to find the best healthy entry first
     let best_healthy = entries
@@ -68,15 +69,18 @@ fn select_rpc_entry<'a>(
         })
         .map(|(entry, _)| entry);
 
-    if best_healthy.is_some() {
-        return best_healthy;
+    if let Some(entry) = best_healthy {
+        return entry;
     }
 
     // No healthy entries - fall back to highest priority regardless of health.
     // Uses same comparator pattern as healthy path for consistency and readability.
-    entries.iter().min_by(|a, b| {
-        Reverse(a.priority()).cmp(&Reverse(b.priority())).then_with(|| a.url().cmp(b.url()))
-    })
+    entries
+        .iter()
+        .min_by(|a, b| {
+            Reverse(a.priority()).cmp(&Reverse(b.priority())).then_with(|| a.url().cmp(b.url()))
+        })
+        .expect("entries is non-empty")
 }
 
 impl<'a> StandardRpcHealthcheckPoller<'a> {
@@ -332,9 +336,7 @@ pub trait RpcHealthcheckPoller: Sync {
         let resolver = self.get_rpc_resolver().load();
         let entries = resolver.resolve(chain_name.as_ref())?;
 
-        select_rpc_entry(entries, &latencies).cloned().ok_or_else(|| {
-            config_err(format!("No RPC entry exists for chain id: {}", chain_name.as_ref()), None)
-        })
+        Ok(select_rpc_entry(entries, &latencies).clone())
     }
 
     fn get_provider<C>(&self, chain_name: C) -> Result<Arc<Provider<Http>>>
@@ -686,11 +688,12 @@ mod tests {
     }
 
     #[test]
-    fn test_select_rpc_entry_returns_none_for_empty_entries() {
+    #[should_panic(expected = "select_rpc_entry called with empty entries")]
+    fn test_select_rpc_entry_panics_on_empty_entries() {
         let entries: Vec<RpcEntry> = vec![];
         let latencies = im::hashmap::HashMap::new();
 
-        assert!(select_rpc_entry(&entries, &latencies).is_none());
+        select_rpc_entry(&entries, &latencies);
     }
 
     #[test]
@@ -706,7 +709,7 @@ mod tests {
         latencies.insert(e_low_prio_fast.clone(), Latency::Healthy(Duration::from_millis(5)));
         latencies.insert(e_high_prio_slow.clone(), Latency::Healthy(Duration::from_millis(50)));
 
-        let selected = select_rpc_entry(&entries, &latencies).expect("should return entry");
+        let selected = select_rpc_entry(&entries, &latencies);
         assert_eq!(selected.url(), e_high_prio_slow.url());
     }
 
@@ -722,7 +725,7 @@ mod tests {
         latencies.insert(e_slow.clone(), Latency::Healthy(Duration::from_millis(25)));
         latencies.insert(e_fast.clone(), Latency::Healthy(Duration::from_millis(10)));
 
-        let selected = select_rpc_entry(&entries, &latencies).expect("should return entry");
+        let selected = select_rpc_entry(&entries, &latencies);
         assert_eq!(selected.url(), e_fast.url());
     }
 
@@ -738,7 +741,7 @@ mod tests {
         latencies.insert(e_unhealthy_high.clone(), Latency::Unhealthy);
         latencies.insert(e_healthy_low.clone(), Latency::Healthy(Duration::from_millis(30)));
 
-        let selected = select_rpc_entry(&entries, &latencies).expect("should return entry");
+        let selected = select_rpc_entry(&entries, &latencies);
         assert_eq!(selected.url(), e_healthy_low.url());
     }
 
@@ -754,7 +757,7 @@ mod tests {
         latencies.insert(e_prio_1.clone(), Latency::Unhealthy);
         latencies.insert(e_prio_2.clone(), Latency::Unhealthy);
 
-        let selected = select_rpc_entry(&entries, &latencies).expect("should return entry");
+        let selected = select_rpc_entry(&entries, &latencies);
         assert_eq!(selected.url(), e_prio_2.url());
     }
 
@@ -769,7 +772,7 @@ mod tests {
         let mut latencies = im::hashmap::HashMap::new();
         latencies.insert(e_known_healthy.clone(), Latency::Healthy(Duration::from_millis(10)));
 
-        let selected = select_rpc_entry(&entries, &latencies).expect("should return entry");
+        let selected = select_rpc_entry(&entries, &latencies);
         assert_eq!(selected.url(), e_known_healthy.url());
     }
 
@@ -783,7 +786,7 @@ mod tests {
         let entries = vec![e_low_prio.clone(), e_high_prio.clone()];
         let latencies = im::hashmap::HashMap::new();
 
-        let selected = select_rpc_entry(&entries, &latencies).expect("should return entry");
+        let selected = select_rpc_entry(&entries, &latencies);
         assert_eq!(selected.url(), e_high_prio.url());
     }
 
@@ -801,7 +804,7 @@ mod tests {
             latencies.insert(e_alpha.clone(), Latency::Healthy(Duration::from_millis(10)));
             latencies.insert(e_zeta.clone(), Latency::Healthy(Duration::from_millis(10)));
 
-            let selected = select_rpc_entry(&entries, &latencies).expect("should return entry");
+            let selected = select_rpc_entry(&entries, &latencies);
             assert_eq!(
                 selected.url(),
                 e_alpha.url(),
@@ -824,7 +827,7 @@ mod tests {
             latencies.insert(e_alpha.clone(), Latency::Unhealthy);
             latencies.insert(e_zeta.clone(), Latency::Unhealthy);
 
-            let selected = select_rpc_entry(&entries, &latencies).expect("should return entry");
+            let selected = select_rpc_entry(&entries, &latencies);
             assert_eq!(
                 selected.url(),
                 e_alpha.url(),
