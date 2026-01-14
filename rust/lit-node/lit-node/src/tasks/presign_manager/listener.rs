@@ -195,7 +195,7 @@ impl PresignManager {
                     }
                 }
                 _ = heartbeat.tick() => {
-                    self.set_chain_defaults(false).await;
+                    let _ = self.set_chain_defaults(false).await;
                 }
             }
         }
