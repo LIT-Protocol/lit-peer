@@ -658,10 +658,21 @@ pub async fn check_and_load_test_state_cache(
 
     let filename = "anvil_state.hex".to_string();
     let path = dir.join(&filename);
-    let mut file = File::open(&path).await.unwrap();
-    let mut contents = String::new();
-    file.read_to_string(&mut contents).await.unwrap();
 
+    if !path.exists() {
+        error!("anvil_state.hex file does not exist in the cache");
+        return false;
+    };
+
+    let contents = match fs::read_to_string(&path) {
+        Ok(contents) => contents,
+        Err(e) => {
+            error!("Failed to read anvil_state.hex file: {}", e);
+            return false;
+        }
+    };
+
+    info!("Contents of anvil_state.hex length: {} ", contents.len());
     let params: Vec<String> = vec![contents];
     let res: bool = provider
         .request("anvil_loadState", params.clone())
