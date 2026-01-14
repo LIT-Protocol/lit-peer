@@ -24,6 +24,10 @@ library StakingUtilsLib {
     error MustBeInActiveOrUnlockedOrPausedState(LibStakingStorage.States state);
     error CallerNotOwner();
     error CallerNotOwnerOrDevopsAdmin();
+    error NotEnoughValidatorsInCurrentEpoch(
+        uint256 validatorCount,
+        uint256 minimumValidatorCount
+    );
     error NotEnoughValidatorsInNextEpoch(
         uint256 validatorCount,
         uint256 minimumValidatorCount
@@ -39,6 +43,7 @@ library StakingUtilsLib {
     error InvalidSlashPercentage();
     error CannotStakeZero();
     error CannotMoveToLockedValidatorStateBeforeEpochEnds();
+    error NotEnoughValidatorsToSetupKeySet(uint256 validatorCnt, uint256 minimumThreshold);
 
     /* ========== VIEWS ========== */
 
@@ -146,8 +151,22 @@ library StakingUtilsLib {
         emit StateChanged(realmStorage.state);
     }
 
-    function checkNextSetAboveThreshold(uint256 realmId) internal view {
-        uint256 validatorsCnt = realm(realmId).validatorsInNextEpoch.length();
+    function checkNodeCountIsSafe(uint256 realmId) internal view {
+        // check two things - is the current node count high enough, and is the next node count high enough.
+        // current node count check
+        uint256 validatorsCnt = realm(realmId).validatorsInCurrentEpoch.length();
+        checkValidatorCountAgainstKeySetsInRealm(realmId, validatorsCnt, 4);
+
+        // never let the network go below 3
+        if (validatorsCnt < s().globalConfig[0].minimumValidatorCount) {
+            revert NotEnoughValidatorsInCurrentEpoch(
+                validatorsCnt,
+                s().globalConfig[0].minimumValidatorCount
+            );
+        }
+
+        // next node count check
+        validatorsCnt = realm(realmId).validatorsInNextEpoch.length();
         checkValidatorCountAgainstKeySetsInRealm(realmId, validatorsCnt, 2);
 
         // never let the network go below 3
@@ -170,10 +189,10 @@ library StakingUtilsLib {
                 keySetIds[i]
             ];
             for (uint256 j = 0; j < config.realms.length; j++) {
-                if (config.realms[i] == realmId) {
+                if (config.realms[j] == realmId) {
                     if (validatorCnt < config.minimumThreshold) {
                         if (reason == 1) {
-                            revert("Not enough validators for key set");
+                            revert NotEnoughValidatorsToSetupKeySet(validatorCnt, config.minimumThreshold);
                         } else if (reason == 2) {
                             revert NotEnoughValidatorsInNextEpoch(
                                 validatorCnt,
@@ -184,6 +203,11 @@ library StakingUtilsLib {
                                 .CannotKickBelowKeySetThreshold(
                                     config.identifier
                                 );
+                        } else if (reason == 4) {
+                            revert NotEnoughValidatorsInCurrentEpoch(
+                                validatorCnt,
+                                config.minimumThreshold
+                            );
                         }
                     }
                     break;

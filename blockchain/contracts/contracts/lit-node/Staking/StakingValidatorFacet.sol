@@ -131,7 +131,7 @@ contract StakingValidatorFacet {
             );
         }
 
-        StakingUtilsLib.checkNextSetAboveThreshold(realmId);
+        StakingUtilsLib.checkNodeCountIsSafe(realmId);
 
         StakingUtilsLib.realm(realmId).state = LibStakingStorage
             .States
@@ -775,7 +775,7 @@ contract StakingValidatorFacet {
                 // we want to kick off the next epoch transition to remove this node from the set
 
                 // check that it's safe to move to locked
-                StakingUtilsLib.checkNextSetAboveThreshold(realmId);
+                StakingUtilsLib.checkNodeCountIsSafe(realmId);
 
                 realmStorage.state = LibStakingStorage
                     .States
@@ -950,7 +950,7 @@ contract StakingValidatorFacet {
         // technically, if we would drop below the threshold in the next set due to this node leaving,
         // it should be okay, since this node is "gracefully" leaving and participating in the Reshare.
         // but we still need to prevent it from dropping below the threshold due to kicks.
-        StakingUtilsLib.checkNextSetAboveThreshold(realmId);
+        StakingUtilsLib.checkNodeCountIsSafe(realmId);
         emit RequestToLeave(stakerAddress);
     }
 
