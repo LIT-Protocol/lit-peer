@@ -77,7 +77,7 @@ chains:
   litTestnet:
     - url: https://lit.calderachain.xyz/http
   litMainnet:
-    # - url: https://lit-chain-rpc.litprotocol.com
+    - url: http://0.0.0.0
   localchain:
     - url: http://127.0.0.1:8545
   localchainArbitrum:
@@ -144,7 +144,9 @@ chains:
   vesuvius:
     - url: https://vesuvius-rpc.litprotocol.com
   yellowstone:
-    # - url: https://yellowstone-rpc.litprotocol.com
+    # NOTE: This is a dummy URL for example purposes only and needed for tests to succeed.
+    # It is not functional. Replace with a valid endpoint as needed.
+    - url: http://0.0.0.0
   skaleTestnet:
     - url: https://testnet.skalenodes.com/v1/lanky-ill-funny-testnet
   skale:
