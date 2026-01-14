@@ -39,7 +39,8 @@ pub async fn datil_check_pkp_auth(
 ) -> Result<bool, Error> {
     use std::io::Error;
 
-    let datil_contracts = DatilContracts::new(tss_state, key_set_id).await?;
+    let datil_contracts =
+        DatilContracts::new(&tss_state.chain_data_config_manager, key_set_id).await?;
     let pkp_permissions_contract = datil_contracts.pkp_permissions;
     let pkp_nft_contract = datil_contracts.pkp_nft;
 

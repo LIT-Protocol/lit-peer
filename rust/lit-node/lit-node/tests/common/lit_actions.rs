@@ -33,7 +33,7 @@ pub const HELLO_WORLD_LIT_ACTION_CODE: &str = "const go = async () => {
 
   let utf8Encode = new TextEncoder();
   const toSign = utf8Encode.encode('This message is exactly 32 bytes');
-  const sigShare = await Lit.Actions.signEcdsa({ toSign, publicKey, sigName });
+  const sigShare = await Lit.Actions.signEcdsa({ toSign, publicKey, sigName, keySetId });
 };
 go();";
 
@@ -43,7 +43,8 @@ const CALL_CHILD_LIT_ACTION_CODE: &str = "const go = async () => {
     const _ = await Lit.Actions.call({ ipfsId: 'QmRwN9GKHvCn4Vk7biqtr6adjXMs7PzzYPCzNCRjPFiDjm', params: {
         toSign: Array.from(toSign),
         publicKey,
-        sigName
+        sigName,
+        keySetId
     }});
   };
   go();";
@@ -95,20 +96,19 @@ pub async fn lit_action_params(
     Option<String>,
     Option<serde_json::Value>,
     Option<Vec<AuthMethod>>,
-    String,
 )> {
     let lit_action_code = data_encoding::BASE64.encode(lit_action_code.as_bytes());
 
     let mut js_params = serde_json::Map::new();
     js_params.insert("publicKey".to_string(), pubkey.into());
     js_params.insert("sigName".to_string(), "sig1".into());
+    js_params.insert("keySetId".to_string(), key_set_id.clone().into());
 
     Ok((
         lit_action_code,
         None,
         Some(serde_json::Value::Object(js_params)),
         None,
-        key_set_id,
     ))
 }
 
@@ -124,7 +124,7 @@ pub async fn sign_using_child_lit_action(
 
     let (pubkey, _token_id, _eth_address, key_set_id) = end_user.first_pkp().info();
 
-    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) =
+    let (lit_action_code, ipfs_id, js_params, auth_methods) =
         lit_action_params(lit_action_code, pubkey, key_set_id.clone()).await?;
 
     let node_set = validator_collection.random_threshold_nodeset().await;
@@ -140,7 +140,7 @@ pub async fn sign_using_child_lit_action(
         js_params,
         auth_methods,
         epoch,
-        &key_set_id,
+        key_set_id,
     )
     .await?;
 
@@ -184,7 +184,7 @@ pub async fn sign_from_file_system(
         js_params,
         auth_methods,
         epoch,
-        &key_set_id,
+        key_set_id,
     )
     .await?;
 
@@ -202,7 +202,7 @@ pub async fn generate_session_sigs_and_execute_lit_action(
     js_params: Option<serde_json::Value>,
     auth_methods: Option<Vec<AuthMethod>>,
     epoch: u64,
-    key_set_id: &str,
+    key_set_id: String,
 ) -> Result<Vec<GenericResponse<JsonExecutionResponse>>> {
     info!("lit_action_code: {:?}", lit_action_code);
     let session_sigs_and_node_set = get_session_sigs_for_auth(
@@ -240,7 +240,7 @@ pub async fn execute_lit_action_session_sigs(
     auth_methods: Option<Vec<AuthMethod>>,
     session_sigs_and_node_set: &[SessionSigAndNodeSet],
     epoch: u64,
-    key_set_id: &str,
+    key_set_id: String,
 ) -> Result<Vec<GenericResponse<JsonExecutionResponse>>> {
     info!("executing lit action with session sigs");
     // Generate JSON body for each port
@@ -264,7 +264,7 @@ pub async fn execute_lit_action_session_sigs(
                         epoch,
                         node_set: nodes.clone(),
                         invocation: Invocation::Sync,
-                        key_set_id: key_set_id.to_string(),
+                        key_set_id: key_set_id.clone(),
                     };
                     lit_sdk::EndpointRequest {
                         node_set: sig_and_nodeset.node.clone(),
@@ -295,7 +295,8 @@ pub async fn prepare_sign_from_file_parameters(
 
     let (pubkey, _token_id, _eth_address, key_set_id) = end_user.first_pkp().info();
 
-    lit_action_params(lit_action_code, pubkey, key_set_id).await
+    let params = lit_action_params(lit_action_code, pubkey, key_set_id.clone()).await?;
+    Ok((params.0, params.1, params.2, params.3, key_set_id))
 }
 
 pub async fn execute_lit_action_auth_sig(
@@ -306,7 +307,7 @@ pub async fn execute_lit_action_auth_sig(
     auth_methods: Option<Vec<AuthMethod>>,
     auth_sig_item: AuthSigItem,
     epoch: u64,
-    key_set_id: &str,
+    key_set_id: String,
 ) -> Vec<GenericResponse<JsonExecutionResponse>> {
     let execute_request = JsonExecutionRequest {
         auth_sig: auth_sig_item,
@@ -317,7 +318,7 @@ pub async fn execute_lit_action_auth_sig(
         epoch,
         node_set: node_set.keys().cloned().collect(),
         invocation: Invocation::Sync,
-        key_set_id: key_set_id.to_string(),
+        key_set_id: key_set_id.clone(),
     };
     let my_private_key = OsRng.r#gen();
     let response = lit_sdk::ExecuteFunctionRequest::new()
@@ -478,14 +479,7 @@ pub async fn generate_pkp_check_is_permitted_pkp_action(
         .await;
     assert!(res.is_ok());
 
-    let res = lit_node::pkp::utils::pkp_permissions_is_permitted(
-        token_id.to_string(),
-        loaded_config.as_ref(),
-        String::from("isPermittedAction"),
-        [serde_json::Value::from(ipfs_cid)].to_vec(),
-    )
-    .await
-    .map_err(|e| anyhow::anyhow!("Error getting permitted actions: {e:?}"));
+    let res = pkp.is_permitted_action(ipfs_cid).await;
 
     assert!(res.is_ok());
     res

@@ -18,12 +18,15 @@ use crate::payment::dynamic::DynamicPayment;
 use crate::peers::{grpc_client_pool::GrpcClientPool, peer_state::models::SimplePeerCollection};
 use crate::pkp;
 use crate::tasks::utils::generate_hash;
+use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::hd_keys::get_derived_keyshare;
 use crate::tss::common::tss_state::TssState;
-use crate::tss::util::DEFAULT_KEY_SET_NAME;
 use crate::utils::encoding;
+use crate::utils::keysets::get_default_keyset_id;
 use crate::utils::tracing::inject_tracing_metadata;
-use crate::utils::web::{get_default_bls_root_pubkey, hash_access_control_conditions};
+use crate::utils::web::{
+    get_bls_root_pubkey, get_default_bls_root_pubkey, hash_access_control_conditions,
+};
 use anyhow::{Context as _, Result, bail};
 use base64_light::base64_decode;
 use derive_builder::Builder;
@@ -39,12 +42,6 @@ use lit_blockchain::resolver::rpc::{ENDPOINT_MANAGER, RpcHealthcheckPoller};
 use lit_core::config::LitConfig;
 use lit_core::error::Unexpected;
 use lit_core::utils::binary::bytes_to_hex;
-use moka::future::Cache;
-use serde::{Deserialize, Serialize};
-use tokio::time::Duration;
-use tracing::{debug, instrument};
-
-use crate::tss::common::curve_state::CurveState;
 use lit_node_common::config::LitNodeConfig as _;
 use lit_node_core::{
     AccessControlConditionResource, AuthSigItem, BeHex, CompressedBytes, EndpointVersion,
@@ -61,6 +58,10 @@ use lit_rust_crypto::{
     jubjub, k256, p256, p384, vsss_rs,
 };
 use lit_sdk::signature::{SignedDataOutput, combine_and_verify_signature_shares};
+use moka::future::Cache;
+use serde::{Deserialize, Serialize};
+use tokio::time::Duration;
+use tracing::{debug, instrument};
 
 const DEFAULT_TIMEOUT_MS: u64 = 30_000; // 30s
 const DEFAULT_ASYNC_TIMEOUT_MS: u64 = 300_000; // 5m
@@ -99,7 +100,8 @@ pub struct Client {
     endpoint_version: EndpointVersion,
     #[builder(default, setter(into))]
     node_set: Vec<NodeSet>,
-
+    #[builder(default, setter(into))]
+    key_set_id: String,
     // Limits
     #[builder(default = "DEFAULT_TIMEOUT_MS")]
     timeout_ms: u64,
@@ -528,8 +530,11 @@ impl Client {
             UnionResponse::PkpPermissionsGetPermitted(PkpPermissionsGetPermittedRequest {
                 method,
                 token_id,
+                key_set_id,
             }) => {
                 self.pay(LitActionPriceComponent::ContractCalls, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+
                 let resources =
                     pkp::utils::pkp_permissions_get_permitted(method, self.lit_config(), token_id)
                         .await?;
@@ -544,9 +549,12 @@ impl Client {
                     method,
                     user_id,
                     max_scope_id,
+                    key_set_id,
                 },
             ) => {
                 self.pay(LitActionPriceComponent::ContractCalls, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+
                 let scopes = pkp::utils::pkp_permissions_get_permitted_auth_method_scopes(
                     token_id,
                     self.lit_config(),
@@ -561,13 +569,23 @@ impl Client {
                 method,
                 token_id,
                 params,
+                key_set_id,
             }) => {
                 self.pay(LitActionPriceComponent::ContractCalls, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+                let cdm = self
+                    .tss_state_and_txn_prefix()?
+                    .0
+                    .chain_data_config_manager
+                    .clone();
+
                 let is_permitted = pkp::utils::pkp_permissions_is_permitted(
                     token_id,
                     self.lit_config(),
                     method,
                     serde_json::from_slice(&params)?,
+                    &key_set_id,
+                    &cdm,
                 )
                 .await?;
                 PkpPermissionsIsPermittedResponse { is_permitted }.into()
@@ -577,21 +595,34 @@ impl Client {
                     token_id,
                     method,
                     user_id,
+                    key_set_id,
                 },
             ) => {
                 self.pay(LitActionPriceComponent::ContractCalls, 1).await?;
-                use lit_blockchain::resolver::contract::ContractResolver;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+                let cdm = self
+                    .tss_state_and_txn_prefix()?
+                    .0
+                    .chain_data_config_manager
+                    .clone();
 
-                let cfg = self.lit_config();
-                let resolver = ContractResolver::try_from(cfg)?;
-                let contract = resolver.pkp_permissions_contract(cfg).await?;
                 let is_permitted = pkp::utils::pkp_permissions_is_permitted_auth_method(
-                    token_id, cfg, method, user_id,
+                    token_id,
+                    self.lit_config(),
+                    method,
+                    user_id,
+                    &key_set_id,
+                    &cdm,
                 )
                 .await?;
                 PkpPermissionsIsPermittedAuthMethodResponse { is_permitted }.into()
             }
-            UnionResponse::PubkeyToTokenId(PubkeyToTokenIdRequest { public_key }) => {
+            UnionResponse::PubkeyToTokenId(PubkeyToTokenIdRequest {
+                public_key,
+                key_set_id,
+            }) => {
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+
                 let bytes = encoding::hex_to_bytes(public_key)?;
                 let token_id = format!("0x{}", bytes_to_hex(keccak256(bytes).as_slice()));
                 PubkeyToTokenIdResponse { token_id }.into()
@@ -601,7 +632,10 @@ impl Client {
                 public_key,
                 sig_name,
                 eth_personal_sign,
+                key_set_id,
             }) => {
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+
                 self.pay(LitActionPriceComponent::Signatures, 1).await?;
 
                 let success = if eth_personal_sign {
@@ -621,7 +655,7 @@ impl Client {
                         self.epoch,
                         action_ipfs_id,
                         SigningScheme::EcdsaK256Sha256,
-                        DEFAULT_KEY_SET_NAME,
+                        &key_set_id,
                     )
                     .await
                 } else {
@@ -633,7 +667,7 @@ impl Client {
                         self.epoch,
                         action_ipfs_id,
                         SigningScheme::EcdsaK256Sha256,
-                        DEFAULT_KEY_SET_NAME,
+                        &key_set_id,
                     )
                     .await
                 }?;
@@ -644,8 +678,10 @@ impl Client {
                 public_key,
                 sig_name,
                 signing_scheme,
+                key_set_id,
             }) => {
                 self.pay(LitActionPriceComponent::Signatures, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
 
                 let scheme = signing_scheme
                     .parse::<SigningScheme>()
@@ -659,7 +695,7 @@ impl Client {
                         self.epoch,
                         action_ipfs_id,
                         scheme,
-                        DEFAULT_KEY_SET_NAME,
+                        &key_set_id,
                     )
                     .await?;
                 SignResponse { success }.into()
@@ -867,10 +903,12 @@ impl Client {
                 data_to_encrypt_hash,
                 auth_sig,
                 chain,
+                key_set_id,
             }) => {
                 self.increment_broad_and_collect_counter()?;
                 self.pay(LitActionPriceComponent::Broadcasts, 1).await?;
                 self.pay(LitActionPriceComponent::Decrypts, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
 
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
                 let json_auth_sig = self.parse_json_authsig_helper(auth_sig)?;
@@ -907,7 +945,7 @@ impl Client {
 
                 // Sign the identity parameter using the blsful secret key share.
                 let (signature_share, share_id) = match cipher_state
-                    .sign(&identity_parameter, DEFAULT_KEY_SET_NAME, self.epoch)
+                    .sign(&identity_parameter, &key_set_id, self.epoch)
                     .await
                 {
                     Ok(signature_share) => signature_share,
@@ -976,12 +1014,14 @@ impl Client {
                 data_to_encrypt_hash,
                 auth_sig,
                 chain,
+                key_set_id,
             }) => {
                 trace!("Ciphertext: {:?}", &ciphertext);
 
                 self.increment_broad_and_collect_counter()?;
                 self.pay(LitActionPriceComponent::Broadcasts, 1).await?;
                 self.pay(LitActionPriceComponent::Decrypts, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
 
                 let json_auth_sig = self.parse_json_authsig_helper(auth_sig)?;
 
@@ -1026,7 +1066,7 @@ impl Client {
 
                 // Sign the identity parameter using the blsful secret key share.
                 let (signature_share, share_index) = match cipher_state
-                    .sign(&identity_parameter, DEFAULT_KEY_SET_NAME, self.epoch)
+                    .sign(&identity_parameter, &key_set_id, self.epoch)
                     .await
                 {
                     Ok(signature_share) => signature_share,
@@ -1102,10 +1142,12 @@ impl Client {
                 to_sign,
                 public_key,
                 sig_name,
+                key_set_id,
             }) => {
                 // we both the signatures and the broadcasts for this operation.
                 self.pay(LitActionPriceComponent::Signatures, 1).await?;
                 self.pay(LitActionPriceComponent::Broadcasts, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
 
                 self.increment_broad_and_collect_counter()?;
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
@@ -1121,7 +1163,7 @@ impl Client {
                         self.epoch,
                         action_ipfs_id,
                         SigningScheme::EcdsaK256Sha256,
-                        DEFAULT_KEY_SET_NAME,
+                        &key_set_id,
                     )
                     .await?;
 
@@ -1191,10 +1233,12 @@ impl Client {
                 public_key,
                 sig_name,
                 signing_scheme,
+                key_set_id,
             }) => {
                 // we both the signatures and the broadcasts for this operation.
                 self.pay(LitActionPriceComponent::Signatures, 1).await?;
                 self.pay(LitActionPriceComponent::Broadcasts, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
 
                 let scheme = signing_scheme
                     .parse::<SigningScheme>()
@@ -1221,7 +1265,7 @@ impl Client {
                         self.epoch,
                         action_ipfs_id,
                         scheme,
-                        DEFAULT_KEY_SET_NAME,
+                        &key_set_id,
                     )
                     .await?;
 
@@ -1388,10 +1432,13 @@ impl Client {
             UnionResponse::EncryptBls(EncryptBlsRequest {
                 access_control_conditions,
                 to_encrypt,
+                key_set_id,
             }) => {
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
                 let tss_state = Arc::new(tss_state);
-                let network_pubkey = get_default_bls_root_pubkey(&tss_state)?;
+                let network_pubkey = get_bls_root_pubkey(&tss_state, &key_set_id)?;
                 let network_pubkey = blsful::PublicKey::try_from(&hex::decode(&network_pubkey)?)?;
 
                 use sha2::{Digest, Sha256};
@@ -1505,14 +1552,15 @@ impl Client {
                 }
 
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
+
+                let cdm = &tss_state.chain_data_config_manager;
+                let key_set_id = get_default_keyset_id(cdm)?;
+
                 let txn_prefix = format!("{txn_prefix}_signasaction_{scheme}");
                 let tss_state = Arc::new(tss_state);
                 let curve_type = scheme.curve_type();
-                let curve_state = CurveState::new(
-                    tss_state.peer_state.clone(),
-                    curve_type,
-                    DEFAULT_KEY_SET_NAME,
-                );
+                let curve_state =
+                    CurveState::new(tss_state.peer_state.clone(), curve_type, &key_set_id);
                 let root_keys = curve_state.root_keys()?;
                 let pubkey = lit_sdk::signature::get_lit_action_public_key(
                     scheme,
@@ -1548,13 +1596,12 @@ impl Client {
                 let curve_type = scheme.curve_type();
 
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
+                let cdm = &tss_state.chain_data_config_manager;
+                let key_set_id = get_default_keyset_id(cdm)?;
                 let txn_prefix = format!("{txn_prefix}_signasaction_{scheme}");
                 let tss_state = Arc::new(tss_state);
-                let curve_state = CurveState::new(
-                    tss_state.peer_state.clone(),
-                    curve_type,
-                    DEFAULT_KEY_SET_NAME,
-                );
+                let curve_state =
+                    CurveState::new(tss_state.peer_state.clone(), curve_type, &key_set_id);
                 let root_keys = curve_state.root_keys()?;
                 let pubkey = lit_sdk::signature::get_lit_action_public_key(
                     scheme,
@@ -1663,10 +1710,8 @@ impl Client {
         }
 
         debug!(
-            "sign_helper() called with to_sign: {:?}, pubkey: {}, sig_name: {}",
+            "sign_helper() called with to_sign: {:?}, pubkey: {pubkey}, sig_name: {sig_name}, key_set_id: {key_set_id}",
             bytes_to_hex(to_sign.clone()),
-            pubkey,
-            sig_name
         );
 
         let tss_state = self
@@ -1789,6 +1834,14 @@ impl Client {
         .map_err(|e| anyhow::anyhow!(format!("Error checking access control conditions: {e:?}")))
     }
 
+    fn ensure_key_set_id(&self, key_set_id: String) -> String {
+        if key_set_id.is_empty() {
+            self.key_set_id.clone()
+        } else {
+            key_set_id
+        }
+    }
+
     async fn get_bls_root_pubkey(&self) -> Result<String> {
         let tss_state = match &self.js_env.tss_state {
             Some(tss_state) => Arc::new(tss_state.clone()),
@@ -1834,20 +1887,19 @@ impl Client {
             signing_scheme
         );
 
+        let cdm = &tss_state.chain_data_config_manager;
+        let key_set_id = get_default_keyset_id(cdm)?;
+
         let curve_type = signing_scheme.curve_type();
         let mut sign_state = tss_state.get_signing_state(signing_scheme)?;
-        let curve_state = CurveState::new(
-            tss_state.peer_state.clone(),
-            curve_type,
-            DEFAULT_KEY_SET_NAME,
-        );
+        let curve_state = CurveState::new(tss_state.peer_state.clone(), curve_type, &key_set_id);
         let key_id = keccak256(format!("lit_action_{action_ipfs_id}"));
         let epoch = tss_state.get_keyshare_epoch().await;
         let pubkey = self
             .get_action_pubkey(
                 tss_state.clone(),
                 action_ipfs_id,
-                DEFAULT_KEY_SET_NAME,
+                &key_set_id,
                 signing_scheme,
             )
             .await?;
@@ -1857,7 +1909,7 @@ impl Client {
                 pubkey,
                 Some(key_id.to_vec()),
                 self.request_id().as_bytes().to_vec(),
-                DEFAULT_KEY_SET_NAME,
+                &key_set_id,
                 Some(epoch),
                 &self.node_set,
             )

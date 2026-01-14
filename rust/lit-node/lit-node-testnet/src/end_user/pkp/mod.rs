@@ -2,6 +2,7 @@ mod datil;
 mod mainnet;
 
 use crate::end_user::EndUser;
+use ethers::abi::AbiEncode;
 use ethers::middleware::SignerMiddleware;
 use ethers::types::{Address, Bytes, H160, U256};
 use lit_blockchain::contracts::pkpnft::PKPNFT;
@@ -71,7 +72,9 @@ impl Pkp {
 
         info!(
             "Minted PKP with token id: {} / pubkey : {} / eth address: {:?}",
-            token_id, &pubkey, eth_address
+            token_id.encode_hex(),
+            &pubkey,
+            eth_address
         );
 
         Ok(Pkp {
@@ -133,6 +136,14 @@ impl Pkp {
         } else {
             self.add_permitted_action_to_pkp_mainnet(ipfs_cid, scopes)
                 .await
+        }
+    }
+
+    pub async fn is_permitted_action(&self, ipfs_cid: &str) -> Result<bool, anyhow::Error> {
+        if self.is_datil {
+            self.is_permitted_action_datil(ipfs_cid).await
+        } else {
+            self.is_permitted_action_mainnet(ipfs_cid).await
         }
     }
 

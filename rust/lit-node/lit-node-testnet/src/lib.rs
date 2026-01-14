@@ -285,7 +285,7 @@ impl TestSetupBuilder {
         if self.low_kick_tolerance {
             testnet
                 .actions()
-                .update_all_complaint_configs(Some(5), Some(3), Some(1), Some(10))
+                .update_all_complaint_configs(Some(30), Some(3), Some(1), Some(10))
                 .await
                 .expect("Failed to update complaint configs");
         }
