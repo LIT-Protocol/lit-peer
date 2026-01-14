@@ -586,6 +586,8 @@ async fn sign_lit_actions_with_custom_auth_resource_lit_action_session_sig() {
     .await
     .expect("Could not get session sigs");
 
+    info!("Session sigs returned: {:?}", session_sigs_and_node_set.len());
+
     // For signing inside Lit Actions i.e. signing anything
     assert!(
         pkp.add_permitted_action_to_pkp(

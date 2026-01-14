@@ -1,4 +1,5 @@
 use crate::end_user::EndUser;
+use ethers::abi::AbiEncode;
 use ethers::types::{Address, Bytes, H160, U256};
 use lit_blockchain::util::decode_revert;
 use lit_blockchain_lite::contracts::pkp_permissions::{AuthMethod, PKPPermissions};
@@ -117,7 +118,7 @@ impl Pkp {
     ) -> Result<bool, anyhow::Error> {
         info!(
             "ipfs_cid to permit for token id: {} is: {}",
-            self.token_id, ipfs_cid
+            self.token_id.encode_hex(), ipfs_cid
         );
 
         let pkp_permissions_address = self.actions.contracts().pkp_permissions.address();
@@ -132,19 +133,19 @@ impl Pkp {
         let tx = pacc.send().await;
         if tx.is_err() {
             error!("Error adding action to pkp: {:?}", tx.unwrap_err());
-            return Err(anyhow::anyhow!("Error minting PKP"));
+            return Err(anyhow::anyhow!("Error adding permitted action to PKP"));
         }
         let tx = tx.unwrap();
 
         let tr = tx.await;
         if tr.is_err() {
             error!("Error adding action to pkp: {:?}", tr.unwrap_err());
-            return Err(anyhow::anyhow!("Error minting PKP"));
+            return Err(anyhow::anyhow!("Error adding permitted action to PKP"));
         }
         let tr = tr.unwrap();
         if tr.is_none() {
             error!("Error adding action to pkp: No transaction receipt?");
-            return Err(anyhow::anyhow!("Error minting PKP"));
+            return Err(anyhow::anyhow!("Error adding permitted action to PKP"));
         }
 
         Ok(true)

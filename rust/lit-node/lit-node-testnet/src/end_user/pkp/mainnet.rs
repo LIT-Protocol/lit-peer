@@ -1,4 +1,5 @@
 use crate::end_user::EndUser;
+use ethers::abi::AbiEncode;
 use ethers::middleware::SignerMiddleware;
 use ethers::types::{Address, Bytes, H160, U256};
 use lit_blockchain::contracts::pkp_permissions::{AuthMethod, PKPPermissions};
@@ -190,7 +191,7 @@ impl Pkp {
     ) -> Result<bool, anyhow::Error> {
         info!(
             "ipfs_cid to permit for token id: {} is: {}",
-            self.token_id, ipfs_cid
+            self.token_id.encode_hex(), ipfs_cid
         );
 
         let pkp_permissions_address = self.actions.contracts().pkp_permissions.address();

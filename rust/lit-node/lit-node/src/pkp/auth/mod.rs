@@ -4,6 +4,7 @@ use crate::error::{self, Error, unexpected_err_code, validation_err, validation_
 use crate::error::{EC, unexpected_err};
 use crate::models;
 use crate::tss::common::tss_state::TssState;
+use crate::utils::datil_contract::is_datil_key_set_id;
 use crate::utils::encoding;
 use anyhow::Result;
 use ethers::abi::AbiEncode;
@@ -344,7 +345,7 @@ pub async fn check_pkp_auth(
     key_set_id: &str,
     tss_state: &TssState,
 ) -> Result<bool, Error> {
-    if key_set_id.contains("datil") {
+    if is_datil_key_set_id(key_set_id) {
         return datil::datil_check_pkp_auth(
             ipfs_id_option,
             auth_sig,

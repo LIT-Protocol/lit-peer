@@ -2,6 +2,7 @@ mod datil;
 mod mainnet;
 
 use crate::end_user::EndUser;
+use ethers::abi::AbiEncode;
 use ethers::middleware::SignerMiddleware;
 use ethers::types::{Address, Bytes, H160, U256};
 use lit_blockchain::contracts::pkpnft::PKPNFT;
@@ -71,7 +72,7 @@ impl Pkp {
 
         info!(
             "Minted PKP with token id: {} / pubkey : {} / eth address: {:?}",
-            token_id, &pubkey, eth_address
+            token_id.encode_hex(), &pubkey, eth_address
         );
 
         Ok(Pkp {
