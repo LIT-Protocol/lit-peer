@@ -1597,6 +1597,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "dashmap"
+version = "6.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5041cc499144891f3790297212f32a74fb938e5136a14943f338ef9e0ae276cf"
+dependencies = [
+ "cfg-if",
+ "crossbeam-utils",
+ "hashbrown 0.14.5",
+ "lock_api",
+ "once_cell",
+ "parking_lot_core",
+]
+
+[[package]]
 name = "data-encoding"
 version = "2.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2469,7 +2483,7 @@ dependencies = [
  "async-trait",
  "base32",
  "boxed_error",
- "dashmap",
+ "dashmap 5.5.3",
  "deno_cache_dir",
  "deno_config",
  "deno_error",
@@ -5296,6 +5310,7 @@ dependencies = [
 name = "lit-observability"
 version = "0.1.0"
 dependencies = [
+ "dashmap 6.1.0",
  "derive_more",
  "flume",
  "hyper-util",
@@ -5304,7 +5319,6 @@ dependencies = [
  "lit-logging",
  "nu-ansi-term",
  "opentelemetry 0.24.0",
- "opentelemetry-appender-tracing",
  "opentelemetry-otlp 0.17.0",
  "opentelemetry-semantic-conventions 0.15.0",
  "opentelemetry_sdk 0.24.1",
@@ -5707,7 +5721,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "boxed_error",
- "dashmap",
+ "dashmap 5.5.3",
  "deno_config",
  "deno_error",
  "deno_media_type",
@@ -5979,18 +5993,6 @@ dependencies = [
  "pin-project-lite",
  "thiserror 1.0.69",
  "tracing",
-]
-
-[[package]]
-name = "opentelemetry-appender-tracing"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b84de945cb3a6f1e0d6317cbd998bbd0519ab00f4b790db67e0ff4fdcf7cedb6"
-dependencies = [
- "opentelemetry 0.24.0",
- "tracing",
- "tracing-core",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -8393,7 +8395,7 @@ checksum = "83406221c501860fce9c27444f44125eafe9e598b8b81be7563d7036784cd05c"
 dependencies = [
  "ahash",
  "anyhow",
- "dashmap",
+ "dashmap 5.5.3",
  "once_cell",
  "regex",
  "serde",
@@ -8613,7 +8615,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "76c76d8b9792ce51401d38da0fa62158d61f6d80d16d68fe5b03ce4bf5fba383"
 dependencies = [
  "base64 0.21.7",
- "dashmap",
+ "dashmap 5.5.3",
  "indexmap 2.11.0",
  "once_cell",
  "serde",
