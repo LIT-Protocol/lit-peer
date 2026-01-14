@@ -2,11 +2,11 @@
 env = "dev"
 
 [network]
-chain_name = "yellowstone"
+chain_name = "mumbai"
 
 [blockchain]
-chain_id = "175188"
-chain_name = "yellowstone"
+chain_id = "31337"
+chain_name = "anvil"
 
 ["blockchain.wallet.default"]
 "address: " = "0x038318535b54105d4a7aae60c08fc45f9687181b4fdfc625bd1a753fa7397fed75"

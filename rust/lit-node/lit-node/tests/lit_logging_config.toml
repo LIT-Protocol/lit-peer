@@ -1,6 +1,6 @@
 [blockchain]
-chain_id = "175188"
-chain_name = "yellowstone"
+chain_id = "31337"
+chain_name = "anvil"
 
 ["blockchain.wallet.default"]
 "address: " = "0x02d7456485d203bbbe5a10db053a4c52c53b0332cabddb37d535d4713d9f29103c"
