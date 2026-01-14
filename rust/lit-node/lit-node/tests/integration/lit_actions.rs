@@ -91,7 +91,7 @@ pub mod litactions {
     ) {
         setup_logging();
         let (testnet, validator_collection, mut end_user) =
-            TestSetupBuilder::default().build().await;
+            TestSetupBuilder::default().force_deploy(true).build().await;
         lit_action_from_file_preloaded(
             price_components,
             &validator_collection,
