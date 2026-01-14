@@ -6,6 +6,7 @@ use futures::stream::FuturesUnordered;
 use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde_json::json;
+use std::cmp::Reverse;
 use std::ops::Deref;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, OnceLock};
@@ -38,6 +39,44 @@ pub struct StandardRpcHealthcheckPoller<'a> {
     latencies: ArcSwap<im::hashmap::HashMap<RpcEntry, Latency>>,
     rpc_resolver: &'a Lazy<ArcSwap<RpcResolver>>,
     health_request_id: &'a AtomicUsize,
+}
+
+fn select_rpc_entry<'a>(
+    entries: &'a [RpcEntry], latencies: &im::hashmap::HashMap<RpcEntry, Latency>,
+) -> &'a RpcEntry {
+    // Selection rule:
+    // - Select the highest (largest number) priority URL that is healthy.
+    // - In case of multiple healthy URLs sharing the same priority, break the tie by lowest latency.
+    // - If no URLs are healthy, fall back to the highest priority URL
+    // - All else being equal, break the tie by URL (lexicographic order)
+
+    let best_healthy = entries
+        .iter()
+        .filter_map(|entry| match latencies.get(entry) {
+            Some(Latency::Healthy(d)) => Some((entry, *d)),
+            _ => None,
+        })
+        .min_by(|(a, a_latency), (b, b_latency)| {
+            Reverse(a.priority())
+                .cmp(&Reverse(b.priority()))
+                .then_with(|| a_latency.cmp(b_latency))
+                .then_with(|| a.url().cmp(b.url()))
+        })
+        .map(|(entry, _)| entry)
+        ;
+
+    if let Some(best_healthy) = best_healthy {
+        return best_healthy;
+    }
+
+    entries
+        .iter()
+        .min_by(|a, b| {
+            Reverse(a.priority())
+                .cmp(&Reverse(b.priority()))
+                .then_with(|| a.url().cmp(b.url()))
+        })
+        .expect("select_rpc_entry requires entries to be non-empty")
 }
 
 impl<'a> StandardRpcHealthcheckPoller<'a> {
@@ -291,15 +330,15 @@ pub trait RpcHealthcheckPoller: Sync {
     {
         let latencies = self.get_latencies().load();
         let resolver = self.get_rpc_resolver().load();
-        resolver
-            .resolve(chain_name.as_ref())?
-            .iter()
-            .min_by_key(|entry| latencies.get(entry))
-            .ok_or(config_err(
+        let entries = resolver.resolve(chain_name.as_ref())?;
+        if entries.is_empty() {
+            return Err(config_err(
                 format!("No RPC entry exists for chain id: {}", chain_name.as_ref()),
                 None,
-            ))
-            .cloned()
+            ));
+        }
+
+        Ok(select_rpc_entry(entries, &latencies).clone())
     }
 
     fn get_provider<C>(&self, chain_name: C) -> Result<Arc<Provider<Http>>>
@@ -648,5 +687,73 @@ mod tests {
         assert!(provider.url().as_str().starts_with("https://"), "Provider URL should be HTTPS");
 
         Ok(())
+    }
+
+    #[test]
+    fn test_select_rpc_entry_prefers_priority_over_latency() {
+        let e_low_prio_fast =
+            RpcEntry::new(RpcKind::EVM, "https://fast.lowprio".into(), None, None)
+                .with_priority(0);
+        let e_high_prio_slow =
+            RpcEntry::new(RpcKind::EVM, "https://slow.highprio".into(), None, None)
+                .with_priority(10);
+
+        let entries = vec![e_low_prio_fast.clone(), e_high_prio_slow.clone()];
+        let mut latencies = im::hashmap::HashMap::new();
+        latencies.insert(
+            e_low_prio_fast.clone(),
+            Latency::Healthy(Duration::from_millis(5)),
+        );
+        latencies.insert(
+            e_high_prio_slow.clone(),
+            Latency::Healthy(Duration::from_millis(50)),
+        );
+
+        let selected = select_rpc_entry(&entries, &latencies);
+        assert_eq!(selected.url(), e_high_prio_slow.url());
+    }
+
+    #[test]
+    fn test_select_rpc_entry_tie_breaks_by_latency_within_priority() {
+        let e_slow = RpcEntry::new(RpcKind::EVM, "https://slow".into(), None, None).with_priority(1);
+        let e_fast = RpcEntry::new(RpcKind::EVM, "https://fast".into(), None, None).with_priority(1);
+
+        let entries = vec![e_slow.clone(), e_fast.clone()];
+        let mut latencies = im::hashmap::HashMap::new();
+        latencies.insert(e_slow.clone(), Latency::Healthy(Duration::from_millis(25)));
+        latencies.insert(e_fast.clone(), Latency::Healthy(Duration::from_millis(10)));
+
+        let selected = select_rpc_entry(&entries, &latencies);
+        assert_eq!(selected.url(), e_fast.url());
+    }
+
+    #[test]
+    fn test_select_rpc_entry_ignores_unhealthy_even_if_high_priority() {
+        let e_unhealthy_high =
+            RpcEntry::new(RpcKind::EVM, "https://bad".into(), None, None).with_priority(100);
+        let e_healthy_low =
+            RpcEntry::new(RpcKind::EVM, "https://good".into(), None, None).with_priority(0);
+
+        let entries = vec![e_unhealthy_high.clone(), e_healthy_low.clone()];
+        let mut latencies = im::hashmap::HashMap::new();
+        latencies.insert(e_unhealthy_high.clone(), Latency::Unhealthy);
+        latencies.insert(e_healthy_low.clone(), Latency::Healthy(Duration::from_millis(30)));
+
+        let selected = select_rpc_entry(&entries, &latencies);
+        assert_eq!(selected.url(), e_healthy_low.url());
+    }
+
+    #[test]
+    fn test_select_rpc_entry_falls_back_to_priority_when_none_healthy() {
+        let e_prio_1 = RpcEntry::new(RpcKind::EVM, "https://p1".into(), None, None).with_priority(1);
+        let e_prio_2 = RpcEntry::new(RpcKind::EVM, "https://p2".into(), None, None).with_priority(2);
+
+        let entries = vec![e_prio_1.clone(), e_prio_2.clone()];
+        let mut latencies = im::hashmap::HashMap::new();
+        latencies.insert(e_prio_1.clone(), Latency::Unhealthy);
+        latencies.insert(e_prio_2.clone(), Latency::Unhealthy);
+
+        let selected = select_rpc_entry(&entries, &latencies);
+        assert_eq!(selected.url(), e_prio_2.url());
     }
 }
