@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use std::fs;
+use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
 use std::result::Result as StdResult;
 
@@ -150,14 +151,44 @@ pub enum RpcKind {
     COSMOS,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
 pub struct RpcEntry {
     #[serde(default)]
     kind: RpcKind,
+    /// Selection priority for this RPC endpoint (higher wins).
+    /// Compared only among healthy endpoints; used as a fallback when none are healthy.
+    /// Negative values can be used to deprioritize an endpoint below the default.
+    /// Defaults to `0`.
+    #[serde(default)]
+    priority: i32,
     url: String,
     headers: Option<BTreeMap<String, String>>,
     apikey: Option<String>,
+}
+
+// Custom Eq/Hash implementation: priority is excluded from identity.
+// This ensures that changing an endpoint's priority in config reload
+// doesn't invalidate the existing health state in the latencies map.
+
+impl PartialEq for RpcEntry {
+    fn eq(&self, other: &Self) -> bool {
+        self.kind == other.kind
+            && self.url == other.url
+            && self.headers == other.headers
+            && self.apikey == other.apikey
+    }
+}
+
+impl Eq for RpcEntry {}
+
+impl Hash for RpcEntry {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.kind.hash(state);
+        self.url.hash(state);
+        self.headers.hash(state);
+        self.apikey.hash(state);
+    }
 }
 
 impl RpcEntry {
@@ -165,12 +196,23 @@ impl RpcEntry {
         kind: RpcKind, url: String, headers: Option<BTreeMap<String, String>>,
         apikey: Option<String>,
     ) -> Self {
-        Self { kind, url, headers, apikey }
+        Self { kind, priority: 0, url, headers, apikey }
+    }
+
+    /// Sets the selection priority (builder-style).
+    pub fn with_priority(mut self, priority: i32) -> Self {
+        self.priority = priority;
+        self
     }
 
     // Accessors
     pub fn url(&self) -> &String {
         &self.url
+    }
+
+    /// Returns the selection priority (higher wins).
+    pub fn priority(&self) -> i32 {
+        self.priority
     }
 
     pub fn headers(&self) -> &Option<BTreeMap<String, String>> {
