@@ -18,11 +18,23 @@ contract StakingAdminFacet is StakingCommon {
 
     /* ========== ERRORS ========== */
     error CannotRemoveLastRealm();
-    error CannotRemoveRealmWithValidators(uint256 realmId, uint256 validatorCount);
+    error CannotRemoveRealmWithValidators(
+        uint256 realmId,
+        uint256 validatorCount
+    );
     error CannotUnfreezeOnBehalfOfValidators();
-    error MinimumSourceRealmValidatorsRequired(uint256 minimumRequired, uint256 actualCount);
-    error SourceAndTargetValidatorCountsMustMatch(uint256 sourceCount, uint256 targetCount);
-    error NotEnoughNewValidatorsToReplaceShadowNodes(uint256 threshold, uint256 newValidatorCount);
+    error MinimumSourceRealmValidatorsRequired(
+        uint256 minimumRequired,
+        uint256 actualCount
+    );
+    error SourceAndTargetValidatorCountsMustMatch(
+        uint256 sourceCount,
+        uint256 targetCount
+    );
+    error NotEnoughNewValidatorsToReplaceShadowNodes(
+        uint256 threshold,
+        uint256 newValidatorCount
+    );
 
     /* ========== Modifier Equivalents ========== */
 
@@ -530,7 +542,10 @@ contract StakingAdminFacet is StakingCommon {
         );
 
         if (sourceValidators.length < 3) {
-            revert MinimumSourceRealmValidatorsRequired(3, sourceValidators.length);
+            revert MinimumSourceRealmValidatorsRequired(
+                3,
+                sourceValidators.length
+            );
         }
 
         // check if the source and new validators counts are the same

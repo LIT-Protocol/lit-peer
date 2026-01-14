@@ -44,7 +44,10 @@ library StakingUtilsLib {
     error NoSharePrice(address stakerAddress, uint256 rewardEpochNumber);
     error CannotStakeZero();
     error CannotMoveToLockedValidatorStateBeforeEpochEnds();
-    error NotEnoughValidatorsToSetupKeySet(uint256 validatorCnt, uint256 minimumThreshold);
+    error NotEnoughValidatorsToSetupKeySet(
+        uint256 validatorCnt,
+        uint256 minimumThreshold
+    );
 
     /* ========== VIEWS ========== */
 
@@ -155,7 +158,9 @@ library StakingUtilsLib {
     function checkNodeCountIsSafe(uint256 realmId) internal view {
         // check two things - is the current node count high enough, and is the next node count high enough.
         // current node count check
-        uint256 validatorsCnt = realm(realmId).validatorsInCurrentEpoch.length();
+        uint256 validatorsCnt = realm(realmId)
+            .validatorsInCurrentEpoch
+            .length();
         checkValidatorCountAgainstKeySetsInRealm(realmId, validatorsCnt, 4);
 
         // never let the network go below 3
@@ -193,7 +198,10 @@ library StakingUtilsLib {
                 if (config.realms[j] == realmId) {
                     if (validatorCnt < config.minimumThreshold) {
                         if (reason == 1) {
-                            revert NotEnoughValidatorsToSetupKeySet(validatorCnt, config.minimumThreshold);
+                            revert NotEnoughValidatorsToSetupKeySet(
+                                validatorCnt,
+                                config.minimumThreshold
+                            );
                         } else if (reason == 2) {
                             revert NotEnoughValidatorsInNextEpoch(
                                 validatorCnt,
