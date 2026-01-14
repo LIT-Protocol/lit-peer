@@ -26,9 +26,7 @@ use lit_node_testnet::node_collection::get_identity_pubkeys_from_node_set;
 use lit_node_testnet::testnet::Testnet;
 use lit_node_testnet::testnet::actions::{Actions, keysets::RootKeyConfig};
 use lit_node_testnet::validator::ValidatorCollection;
-use lit_node_testnet::{
-    DEFAULT_DATIL_KEY_SET_NAME, DEFAULT_KEY_SET_NAME, DatilTestnetType, TestSetupBuilder,
-};
+use lit_node_testnet::{DEFAULT_DATIL_KEY_SET_NAME, DEFAULT_KEY_SET_NAME, TestSetupBuilder};
 use lit_rust_crypto::k256::ecdsa::{SigningKey, VerifyingKey};
 use reqwest::Client;
 use rocket::serde::Serialize;
@@ -84,7 +82,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
     let (testnet, mut validator_collection, mut end_user) = TestSetupBuilder::default()
         .num_staked_and_joined_validators(number_of_nodes)
         .epoch_length(epoch_length)
-        .include_datil_testnet(DatilTestnetType::NoKeyOverride)
+        .setup_datil_keys(false)
         .build()
         .await;
 

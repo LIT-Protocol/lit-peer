@@ -25,7 +25,7 @@ pub mod validators;
 #[derive(Clone, Debug)]
 pub struct Actions {
     contracts: Contracts,
-    datil_contracts: Option<DatilContracts>,
+    datil_contracts: DatilContracts,
     deployer_signing_provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
     which_testnet: WhichTestnet,
     deploy_address: Address,
@@ -65,7 +65,7 @@ impl Display for NetworkState {
 impl Actions {
     pub fn new(
         contracts: Contracts,
-        datil_contracts: Option<DatilContracts>,
+        datil_contracts: DatilContracts,
         deployer_signing_provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
         which_testnet: WhichTestnet,
         deploy_address: Address,
@@ -93,11 +93,8 @@ impl Actions {
         &self.contracts
     }
 
-    pub fn datil_contracts(&self) -> &DatilContracts {
-        if self.datil_contracts.is_none() {
-            panic!("Datil contracts not found");
-        }
-        self.datil_contracts.as_ref().unwrap()
+    pub fn datil_contracts(&self) -> &DatilContracts {            
+        &self.datil_contracts
     }
 
     pub async fn lit_token_balance(&self, address: Address) -> U256 {

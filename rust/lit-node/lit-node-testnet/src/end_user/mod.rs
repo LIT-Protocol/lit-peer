@@ -26,7 +26,7 @@ pub struct EndUser {
     actions: Actions,
     pkps: Vec<Pkp>,
     provider: Arc<Provider<Http>>,
-    datil_provider: Option<Arc<Provider<Http>>>,
+    datil_provider: Arc<Provider<Http>>,
 }
 
 #[derive(Debug, Clone)]
@@ -45,12 +45,7 @@ impl EndUser {
         let new_wallet = LocalWallet::new(&mut OsRng).with_chain_id(testnet.chain_id);
 
         let provider = testnet.provider.clone();
-
-        let datil_provider = if testnet.datil_testnet.is_some() {
-            Some(testnet.datil_testnet.as_ref().unwrap().provider.clone())
-        } else {
-            None
-        };
+        let datil_provider = testnet.datil_testnet.provider.clone();
 
         info!("New wallet: {:?}", new_wallet.address());
         Self {
@@ -97,11 +92,9 @@ impl EndUser {
         self.set_wallet_balance_with_provider(provider, amount)
             .await;
 
-        if self.datil_provider.is_some() {
-            let provider = self.datil_provider.as_ref().unwrap().clone();
+            let provider = self.datil_provider.clone();
             self.set_wallet_balance_with_provider(provider, amount)
                 .await;
-        }
     }
 
     async fn set_wallet_balance_with_provider(&self, provider: Arc<Provider<Http>>, amount: &str) {
@@ -228,12 +221,9 @@ impl EndUser {
     pub fn datil_signing_provider(
         &self,
     ) -> Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
-        if self.datil_provider.is_none() {
-            panic!("Secondary Datil network not found.");
-        }
 
         Arc::new(SignerMiddleware::new(
-            self.datil_provider.as_ref().unwrap().clone(),
+            self.datil_provider.clone(),
             self.wallet.clone(),
         ))
     }

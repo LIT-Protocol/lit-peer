@@ -468,10 +468,7 @@ pub async fn generate_pkp_check_is_permitted_pkp_action(
         std::env::set_var(ENV_LIT_CONFIG_FILE, config_file);
     }
 
-    let cfg = lit_node_common::config::load_cfg().expect("failed to load LitConfig");
-    let loaded_config = &cfg.load_full();
-
-    let (pkp_pubkey, token_id, _, _) = end_user.first_pkp().info();
+    let pkp_pubkey = end_user.first_pkp().pubkey.clone();
 
     let pkp = end_user.pkp_by_pubkey(pkp_pubkey);
     let res = pkp

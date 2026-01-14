@@ -213,17 +213,8 @@ impl Actions {
                 return Ok(pubkey_routing_data.key_set_identifier);
             }
         }
-
-        if self.datil_contracts.is_none() {
-            info!(
-                "No datil contracts exist, and no pubkey routing data found in mainnet routing contract for pubkey: {}",
-                pubkey
-            );
-            return Err(anyhow::anyhow!(
-                "Could not find token id in pubkey routing contract, and no datil contracts exist."
-            ));
-        }
-        let datil_contracts = self.datil_contracts.as_ref().unwrap();
+        
+        let datil_contracts = &self.datil_contracts;
         let pubkey_routing_data: Result<
             lit_blockchain_lite::contracts::pubkey_router::PubkeyRoutingData,
         > = datil_contracts
