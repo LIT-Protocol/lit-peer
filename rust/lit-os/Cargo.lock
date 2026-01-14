@@ -4241,7 +4241,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d162beedaa69905488a8da94f5ac3edb4dd4788b732fadb7bd120b2625c1976"
 dependencies = [
  "data-encoding",
- "syn 1.0.109",
+ "syn 2.0.106",
 ]
 
 [[package]]
@@ -5854,6 +5854,18 @@ version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a7ad16bf5f84253b50d6557681c58c3ab67c47c77d39fed9aeb56e947290bd10"
 dependencies = [
+ "walkdir",
+]
+
+[[package]]
+name = "dirhash_fast"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "939c56145f5c4c132f017c6652691708f341009fe63e6a5e57c2f05c774096f4"
+dependencies = [
+ "blake3",
+ "rayon",
+ "tempfile",
  "walkdir",
 ]
 
@@ -10905,6 +10917,7 @@ dependencies = [
  "derive_builder 0.20.2",
  "derive_more 2.0.1",
  "digest 0.10.7",
+ "dirhash_fast",
  "dotenv",
  "ecdsa 0.16.9",
  "ed25519-dalek 2.2.0",
@@ -18969,7 +18982,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
  "cfg-if",
- "rand 0.7.3",
+ "rand 0.8.5",
  "static_assertions",
 ]
 
