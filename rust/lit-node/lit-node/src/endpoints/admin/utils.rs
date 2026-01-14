@@ -29,7 +29,7 @@ use lit_rust_crypto::{
     group::Group,
     jubjub, k256, p256, p384, pallas, vsss_rs,
 };
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
 use tokio::io::{AsyncRead, AsyncReadExt};
 use tokio::process::Command;
@@ -38,6 +38,7 @@ use tracing::trace;
 
 use crate::endpoints::auth_sig::{LITNODE_ADMIN_RES, check_auth_sig};
 use crate::error::{EC, Result, io_err, io_err_code, unexpected_err};
+use crate::models::KeySetConfig;
 use crate::peers::peer_state::models::SimplePeerCollection;
 use crate::tss::common::backup::BackupGenerator;
 use crate::tss::common::key_share_commitment::KeyShareCommitments;
@@ -86,7 +87,7 @@ pub(crate) async fn encrypt_and_tar_backup_keys(
     // Create the temporary dir in which we will save the resulting artifacts.
     let mut path = encrypted_key_path(&staker_address);
     let _ = std::fs::remove_dir_all(path.clone());
-    path.push(format!("backup-{}/", now));
+    path.push(format!("backup-{now}/"));
     fs::create_dir_all(&path)
         .await
         .map_err(|e| io_err(e, None))?;
@@ -409,9 +410,11 @@ where
     Ok(())
 }
 
+#[allow(clippy::collapsible_if)]
 pub(crate) async fn untar_keys_stream<R: AsyncRead + Unpin>(
     cfg: &LitConfig,
     restore_state: &Arc<RestoreState>,
+    current_key_sets: &BTreeMap<String, KeySetConfig>,
     stream: R,
 ) -> Result<()> {
     restore_state.assert_actively_restoring()?;
@@ -421,7 +424,7 @@ pub(crate) async fn untar_keys_stream<R: AsyncRead + Unpin>(
     // Create the temporary dir in which we will save the artefacts.
     let now: DateTime<Utc> = Utc::now();
     let mut path = encrypted_key_path(staker_address);
-    path.push(format!("restore-{}/", now));
+    path.push(format!("restore-{now}/"));
 
     // Untar the data
     untar_stream_to_path(path.as_path(), stream).await?;
@@ -449,12 +452,6 @@ pub(crate) async fn untar_keys_stream<R: AsyncRead + Unpin>(
     trace!("Threshold: {:?}", threshold);
 
     let session_id: String = read_from_disk(path.clone(), SESSION_ID_FN).await?;
-    trace!(
-        "Session id: backup {}, key_set {}",
-        session_id,
-        restore_state.get_expected_recovery_session_id()
-    );
-
     let peers: Result<SimplePeerCollection> = read_from_disk(path.clone(), PEERS_FN).await;
     if let Ok(peers) = peers {
         // Might be missing for legacy reasons
@@ -560,6 +557,161 @@ pub(crate) async fn untar_keys_stream<R: AsyncRead + Unpin>(
     )
     .await?;
 
+    // Using current_key_sets and the *recovery_data, figure out which key_set is being restored.
+    // Strategy:
+    // - For each key set, check if its root_keys_by_curve contains at least one key for each corresponding {curve}_recovery_data that is Some()
+    // - Do a reverse lookup: try to find a unique key set whose set of curves being restored matches the backup.
+
+    // Collect all recovery_data "active" curves being recovered
+    let mut curves_with_data = Vec::with_capacity(11);
+    if bls_recovery_data.is_some() {
+        curves_with_data.push(CurveType::BLS);
+    }
+    if k256_recovery_data.is_some() {
+        curves_with_data.push(CurveType::K256);
+    }
+    if p256_recovery_data.is_some() {
+        curves_with_data.push(CurveType::P256);
+    }
+    if p384_recovery_data.is_some() {
+        curves_with_data.push(CurveType::P384);
+    }
+    if ed25519_recovery_data.is_some() {
+        curves_with_data.push(CurveType::Ed25519);
+    }
+    if ristretto25519_recovery_data.is_some() {
+        curves_with_data.push(CurveType::Ristretto25519);
+    }
+    if ed448_recovery_data.is_some() {
+        curves_with_data.push(CurveType::Ed448);
+    }
+    if jubjub_recovery_data.is_some() {
+        curves_with_data.push(CurveType::RedJubjub);
+    }
+    if decaf377_recovery_data.is_some() {
+        curves_with_data.push(CurveType::RedDecaf377);
+    }
+    if bls12381g1_recovery_data.is_some() {
+        curves_with_data.push(CurveType::BLS12381G1);
+    }
+    if pallas_recovery_data.is_some() {
+        curves_with_data.push(CurveType::RedPallas);
+    }
+
+    // Find the key_set whose root_keys_by_curve keys match the curves present in the backup.
+    let mut matching_keyset: Option<&KeySetConfig> = None;
+    for keyset in current_key_sets.values() {
+        // For all curves with data, the keyset must contain at least an entry in root_keys_by_curve
+        let mut matching_key_set_info = true;
+        for curve in &curves_with_data {
+            // Check if keyset has an entry for this curve
+            match keyset.root_keys_by_curve.get(curve) {
+                Some(keys) => {
+                    // Now check that these keys are present in the corresponding recovery_data
+                    // We'll need to check which recovery_data this is and extract its keys
+                    let recovered_keys: Option<Vec<String>> = match curve {
+                        CurveType::BLS => bls_recovery_data.as_ref().map(|r| r.get_root_keys()),
+                        CurveType::K256 => k256_recovery_data.as_ref().map(|r| r.get_root_keys()),
+                        CurveType::P256 => p256_recovery_data.as_ref().map(|r| r.get_root_keys()),
+                        CurveType::P384 => p384_recovery_data.as_ref().map(|r| r.get_root_keys()),
+                        CurveType::Ed25519 => {
+                            ed25519_recovery_data.as_ref().map(|r| r.get_root_keys())
+                        }
+                        CurveType::Ristretto25519 => ristretto25519_recovery_data
+                            .as_ref()
+                            .map(|r| r.get_root_keys()),
+                        CurveType::Ed448 => ed448_recovery_data.as_ref().map(|r| r.get_root_keys()),
+                        CurveType::RedJubjub => {
+                            jubjub_recovery_data.as_ref().map(|r| r.get_root_keys())
+                        }
+                        CurveType::RedDecaf377 => {
+                            decaf377_recovery_data.as_ref().map(|r| r.get_root_keys())
+                        }
+                        CurveType::BLS12381G1 => {
+                            bls12381g1_recovery_data.as_ref().map(|r| r.get_root_keys())
+                        }
+                        CurveType::RedPallas => {
+                            pallas_recovery_data.as_ref().map(|r| r.get_root_keys())
+                        }
+                    };
+                    match recovered_keys {
+                        Some(ref rec_keys) => {
+                            // keys (from keyset) and rec_keys (from recovery_data for this curve) must match as Sets
+                            use std::collections::HashSet;
+                            let keyset_keys: HashSet<_> = keys.iter().collect();
+                            let recovered_keys_set: HashSet<_> = rec_keys.iter().collect();
+                            if keyset_keys != recovered_keys_set {
+                                matching_key_set_info = false;
+                                break;
+                            }
+                        }
+                        None => {
+                            // Should have recovery data for this curve
+                            matching_key_set_info = false;
+                            break;
+                        }
+                    }
+                }
+                None => {
+                    matching_key_set_info = false;
+                    break;
+                }
+            }
+        }
+        // Additionally check: the keyset does not have "extra" curves that are not in curves_with_data and have nonzero root keys
+        for curve in keyset.root_keys_by_curve.keys() {
+            if !curves_with_data.contains(curve) {
+                if let Some(keys) = keyset.root_keys_by_curve.get(curve) {
+                    if !keys.is_empty() {
+                        matching_key_set_info = false;
+                        break;
+                    }
+                }
+            }
+        }
+        if matching_key_set_info {
+            matching_keyset = Some(keyset);
+            break;
+        }
+    }
+
+    // Determine if the matching_keyset is the same as the restoring_keyset. If restoring_keyset is not set,
+    // set it in restore_state. If it is set and they are the same, do nothing. If they aren't the same,
+    // log error and set it in restore_state as if it wasn't set.
+    if let Some(matching_keyset) = matching_keyset {
+        let restoring_key_set = restore_state.get_restoring_key_set();
+        if let Some(restoring_key_set) = restoring_key_set {
+            if restoring_key_set.identifier != matching_keyset.identifier {
+                error!(
+                    "Restoring key set was already set and does not match the key set found in backup. Overwriting restoring_key_set. Expected {}, got {}. Will continue anyway with the new key set found.",
+                    restoring_key_set.identifier, matching_keyset.identifier
+                );
+                restore_state.set_restoring_key_set(matching_keyset.clone());
+            }
+            // else: they're the same, nothing to do
+        } else {
+            // Restoring key set not set, so set it
+            restore_state.set_restoring_key_set(matching_keyset.clone());
+        }
+    }
+
+    // If no matching key set was found, log error and return an error
+    if matching_keyset.is_none() {
+        error!(
+            "No matching key set found in current key sets for the curves and root keys found in backup. Unable to continue restoration. Also, make sure the key set has been written to chain so matching root keys can be found."
+        );
+        return Err(unexpected_err(
+            "No matching key set found for the backup's root keys/curves".to_string(),
+            None,
+        ));
+    }
+
+    trace!(
+        "Session id: backup {}, key_set {}",
+        session_id,
+        restore_state.get_expected_recovery_session_id()
+    );
+
     let inner_state = InnerState {
         recovery_party_members,
         bls_recovery_data,
@@ -643,17 +795,19 @@ where
 
     // Read the key share commitments corresponding to given encrypted key shares.
     let eks_and_ds =
-        read_key_share_commitments::<C>(encrypted_key_shares, curve_type, path, key_cache).await?;
+        read_key_share_commitments::<C>(encrypted_key_shares.clone(), curve_type, path, key_cache)
+            .await?;
 
     Ok(Some(CurveRecoveryData {
         encryption_key,
         blinder,
         eks_and_ds,
+        encrypted_key_shares,
     }))
 }
 
 fn blinder_not_set_err(curve_type: CurveType) -> crate::error::Error {
-    unexpected_err(format!("{} blinder is not set", curve_type), None)
+    unexpected_err(format!("{curve_type} blinder is not set"), None)
 }
 
 async fn read_key_shares<C>(
@@ -710,7 +864,7 @@ where
             unexpected_err_code(
                 e,
                 EC::NodeSystemFault,
-                Some(format!("Could not open file: {:?}", path)),
+                Some(format!("Could not open file: {path:?}")),
             )
         })?;
         let mut buffer = Vec::new();
@@ -718,7 +872,7 @@ where
             unexpected_err_code(
                 e,
                 EC::NodeSystemFault,
-                Some(format!("Could not read file: {:?}", path)),
+                Some(format!("Could not read file: {path:?}")),
             )
         })?;
 
@@ -732,7 +886,7 @@ where
                 unexpected_err_code(
                     e,
                     EC::NodeSystemFault,
-                    Some(format!("Could not parse cbor file: {:?}", path)),
+                    Some(format!("Could not parse cbor file: {path:?}")),
                 )
             })?;
 
@@ -862,8 +1016,7 @@ fn parse_bls_blinder(blinder_str: &str) -> Result<<InnerBls12381G1 as BCA>::Scal
         Some(blinder) => Ok(blinder),
         None => Err(parser_err(
             std::io::Error::other(format!(
-                "Could not convert to bls key blinder:{}",
-                blinder_str
+                "Could not convert to bls key blinder:{blinder_str}"
             )),
             None,
         )),
@@ -876,8 +1029,7 @@ fn parse_k256_blinder(blinder_str: &str) -> Result<<Secp256k1 as BCA>::Scalar> {
     let error = |blinder_str| {
         parser_err(
             std::io::Error::other(format!(
-                "Could not convert to ecdsa key blinder:{}",
-                blinder_str
+                "Could not convert to ecdsa key blinder:{blinder_str}"
             )),
             None,
         )
@@ -892,6 +1044,7 @@ fn parse_k256_blinder(blinder_str: &str) -> Result<<Secp256k1 as BCA>::Scalar> {
 mod test {
     use crate::common::key_helper::KeyCache;
     use crate::endpoints::admin::utils::{encrypt_and_tar_backup_keys, untar_keys_stream};
+    use crate::models::KeySetConfig;
     use crate::peers::peer_state::models::{SimplePeer, SimplePeerCollection};
     use crate::tests::key_shares::{
         TEST_BLS_KEY_SHARE, TEST_BLS_KEY_SHARE_COMMITMENT, TEST_ECDSA_KEY_SHARE,
@@ -1006,14 +1159,16 @@ mod test {
         let bls_key_helper = KeyPersistence::<G1Projective>::new(CurveType::BLS);
         let k256_key_helper = KeyPersistence::<ProjectivePoint>::new(CurveType::K256);
         let recovery_party = get_test_recovery_party_with_encryption_keys();
-        let key_set_root_keys = maplit::hashmap! {
-            CurveType::BLS => vec!["83fc126ef56547bb28734a4a5393a873b8c22a9ba2d507036285a506567b2b3a376fc524cd589bb018613e24c51ebbae".to_string()],
-            CurveType::K256 => vec!["0268c27a16f03d19949f0a64d58c71ea32049b754888211cc25827f5449d26bf74".to_string()],
-        };
 
         // Make sure that there is at least one ECDSA and one BLS key share.
         let bls_key: KeyShare = serde_json::from_str(TEST_BLS_KEY_SHARE).unwrap();
         let k256_key: KeyShare = serde_json::from_str(TEST_ECDSA_KEY_SHARE).unwrap();
+
+        // Use the actual public keys from the key shares as root keys
+        let key_set_root_keys = maplit::hashmap! {
+            CurveType::BLS => vec![bls_key.hex_public_key.clone()],
+            CurveType::K256 => vec![k256_key.hex_public_key.clone()],
+        };
         let bls_key_share_commitments: KeyShareCommitments<<InnerBls12381G1 as BCA>::Point> =
             serde_json::from_str(TEST_BLS_KEY_SHARE_COMMITMENT).unwrap();
         let k256_key_share_commitments: KeyShareCommitments<ProjectivePoint> =
@@ -1043,7 +1198,7 @@ mod test {
         write_key_share_to_disk(
             CurveType::BLS,
             &bls_key.hex_public_key,
-            &staker_address,
+            staker_address,
             &bls_key.peer_id,
             333,
             1,
@@ -1055,7 +1210,7 @@ mod test {
         write_key_share_to_disk(
             CurveType::K256,
             &k256_key.hex_public_key,
-            &staker_address,
+            staker_address,
             &k256_key.peer_id,
             333,
             1,
@@ -1068,7 +1223,7 @@ mod test {
         write_key_share_commitments_to_disk(
             CurveType::BLS,
             &bls_key.hex_public_key,
-            &staker_address,
+            staker_address,
             &bls_key.peer_id,
             333,
             1,
@@ -1080,7 +1235,7 @@ mod test {
         write_key_share_commitments_to_disk(
             CurveType::K256,
             &k256_key.hex_public_key,
-            &staker_address,
+            staker_address,
             &k256_key.peer_id,
             333,
             1,
@@ -1095,7 +1250,7 @@ mod test {
         let peers = SimplePeerCollection(vec![SimplePeer {
             socket_address: "127.0.0.1".to_string(),
             peer_id: bls_key.peer_id,
-            staker_address: ethers::types::H160::from_slice(&hex::decode(&staker_address).unwrap()),
+            staker_address: ethers::types::H160::from_slice(&hex::decode(staker_address).unwrap()),
             key_hash: 0,
             kicked: false,
             version: Version::new(1, 0, 0),
@@ -1117,7 +1272,32 @@ mod test {
         let restore_state = Arc::new(RestoreState::new());
         restore_state.set_blinders(blinders);
         restore_state.set_actively_restoring(true);
-        untar_keys_stream(&cfg, &restore_state, child.as_slice())
+        // Create a matching key set for the test using the actual public keys from the key shares
+        // The root keys must match the public keys that will be in the encrypted key shares
+        let test_key_set = KeySetConfig {
+            identifier: "test-keyset".to_string(),
+            description: "Test key set".to_string(),
+            minimum_threshold: 1,
+            monetary_value: 0,
+            complete_isolation: false,
+            realms: std::collections::HashSet::from([1]),
+            root_keys_by_curve: {
+                let mut map = std::collections::HashMap::new();
+                map.insert(CurveType::BLS, vec![bls_key.hex_public_key.clone()]);
+                map.insert(CurveType::K256, vec![k256_key.hex_public_key.clone()]);
+                map
+            },
+            root_key_counts: {
+                let mut map = std::collections::HashMap::new();
+                map.insert(CurveType::BLS, 1);
+                map.insert(CurveType::K256, 1);
+                map
+            },
+            recovery_session_id: String::new(),
+        };
+        let mut key_sets = std::collections::BTreeMap::new();
+        key_sets.insert("test-keyset".to_string(), test_key_set);
+        untar_keys_stream(&cfg, &restore_state, &key_sets, child.as_slice())
             .await
             .unwrap();
 
@@ -1149,7 +1329,7 @@ mod test {
             .await
             .unwrap();
 
-        let peer_id = PeerId::try_from(555 as usize).unwrap();
+        let peer_id = PeerId::try_from(555_usize).unwrap();
         let epoch = 333;
         let realm_id = 1;
         let restored_key_shares = restore_state
@@ -1190,6 +1370,139 @@ mod test {
 
         restore_state.mark_keys_restored(&restored_key_shares).await;
         assert!(restore_state.are_all_keys_restored().await);
+    }
+
+    #[tokio::test]
+    async fn test_untar_backup_keys_with_missing_keysets() {
+        let cfg = Arc::new(crate::tests::common::get_backup_config());
+        let staker_address = &crate::endpoints::recovery::get_staker_address(&cfg)
+            .expect("Failed to get staker address");
+        let bls_key_helper = KeyPersistence::<G1Projective>::new(CurveType::BLS);
+        let k256_key_helper = KeyPersistence::<ProjectivePoint>::new(CurveType::K256);
+        let recovery_party = get_test_recovery_party_with_encryption_keys();
+
+        // Make sure that there is at least one ECDSA and one BLS key share.
+        let bls_key: KeyShare = serde_json::from_str(TEST_BLS_KEY_SHARE).unwrap();
+        let k256_key: KeyShare = serde_json::from_str(TEST_ECDSA_KEY_SHARE).unwrap();
+
+        // Use the actual public keys from the key shares as root keys
+        let key_set_root_keys = maplit::hashmap! {
+            CurveType::BLS => vec![bls_key.hex_public_key.clone()],
+            CurveType::K256 => vec![k256_key.hex_public_key.clone()],
+        };
+        let bls_key_share_commitments: KeyShareCommitments<<InnerBls12381G1 as BCA>::Point> =
+            serde_json::from_str(TEST_BLS_KEY_SHARE_COMMITMENT).unwrap();
+        let k256_key_share_commitments: KeyShareCommitments<ProjectivePoint> =
+            serde_json::from_str(TEST_ECDSA_KEY_SHARE_COMMITMENT).unwrap();
+
+        // Make sure the key shares and key share commitments match
+        verify_decrypted_key_share::<InnerBls12381G1>(
+            bls_key_helper
+                .secret_from_hex(&bls_key.hex_private_share)
+                .unwrap(),
+            &bls_key_share_commitments,
+            bls_key.peer_id,
+        )
+        .unwrap();
+
+        verify_decrypted_key_share::<Secp256k1>(
+            k256_key_helper
+                .secret_from_hex(&k256_key.hex_private_share)
+                .unwrap(),
+            &k256_key_share_commitments,
+            k256_key.peer_id,
+        )
+        .unwrap();
+
+        let key_cache = KeyCache::default();
+
+        write_key_share_to_disk(
+            CurveType::BLS,
+            &bls_key.hex_public_key,
+            staker_address,
+            &bls_key.peer_id,
+            333,
+            1,
+            &key_cache,
+            &bls_key,
+        )
+        .await
+        .unwrap();
+        write_key_share_to_disk(
+            CurveType::K256,
+            &k256_key.hex_public_key,
+            staker_address,
+            &k256_key.peer_id,
+            333,
+            1,
+            &key_cache,
+            &k256_key,
+        )
+        .await
+        .unwrap();
+
+        write_key_share_commitments_to_disk(
+            CurveType::BLS,
+            &bls_key.hex_public_key,
+            staker_address,
+            &bls_key.peer_id,
+            333,
+            1,
+            &key_cache,
+            &bls_key_share_commitments,
+        )
+        .await
+        .unwrap();
+        write_key_share_commitments_to_disk(
+            CurveType::K256,
+            &k256_key.hex_public_key,
+            staker_address,
+            &k256_key.peer_id,
+            333,
+            1,
+            &key_cache,
+            &k256_key_share_commitments,
+        )
+        .await
+        .unwrap();
+
+        // Call the function to be tested
+        let blinders = RestoreState::generate_blinders();
+        let peers = SimplePeerCollection(vec![SimplePeer {
+            socket_address: "127.0.0.1".to_string(),
+            peer_id: bls_key.peer_id,
+            staker_address: ethers::types::H160::from_slice(&hex::decode(staker_address).unwrap()),
+            key_hash: 0,
+            kicked: false,
+            version: Version::new(1, 0, 0),
+            realm_id: ethers::prelude::U256::from(1),
+        }]);
+
+        let child = encrypt_and_tar_backup_keys(
+            cfg.clone(),
+            bls_key.peer_id,
+            &key_set_root_keys,
+            &blinders,
+            &recovery_party,
+            &peers,
+            333,
+        )
+        .await
+        .unwrap();
+
+        let restore_state = Arc::new(RestoreState::new());
+        restore_state.set_blinders(blinders);
+        restore_state.set_actively_restoring(true);
+        let key_sets = std::collections::BTreeMap::new();
+        let res = untar_keys_stream(&cfg, &restore_state, &key_sets, child.as_slice()).await;
+        assert!(res.is_err());
+        let e = res.unwrap_err();
+        assert_eq!(
+            e.to_string(),
+            "unexpected error: No matching key set found for the backup's root keys/curves",
+            "Expected error message about missing key set, got: {}",
+            e.to_string()
+        );
     }
 
     // Helper function
@@ -1306,7 +1619,40 @@ mod test {
         blinders.bls_blinder = Some(bls_blinder);
         blinders.k256_blinder = Some(k256_blinder);
         blinders.commit();
-        untar_keys_stream(&cfg, &restore_state, child)
+        // Create a matching key set for the old backup using the public keys from the old key shares
+        // Note: Keys in backups are stored in lowercase, so we need to use lowercase versions
+        let old_bls_key: KeyShare = serde_json::from_str(TEST_OLD_BLS_KEY_SHARE).unwrap();
+        let old_k256_key: KeyShare = serde_json::from_str(TEST_OLD_K256_KEY_SHARE).unwrap();
+        let old_test_key_set = KeySetConfig {
+            identifier: "old-test-keyset".to_string(),
+            description: "Old test key set".to_string(),
+            minimum_threshold: 1,
+            monetary_value: 0,
+            complete_isolation: false,
+            realms: std::collections::HashSet::from([1]),
+            root_keys_by_curve: {
+                let mut map = std::collections::HashMap::new();
+                map.insert(
+                    CurveType::BLS,
+                    vec![old_bls_key.hex_public_key.to_lowercase()],
+                );
+                map.insert(
+                    CurveType::K256,
+                    vec![old_k256_key.hex_public_key.to_lowercase()],
+                );
+                map
+            },
+            root_key_counts: {
+                let mut map = std::collections::HashMap::new();
+                map.insert(CurveType::BLS, 1);
+                map.insert(CurveType::K256, 1);
+                map
+            },
+            recovery_session_id: String::new(),
+        };
+        let mut old_key_sets = std::collections::BTreeMap::new();
+        old_key_sets.insert("old-test-keyset".to_string(), old_test_key_set);
+        untar_keys_stream(&cfg, &restore_state, &old_key_sets, child)
             .await
             .unwrap();
 
@@ -1323,6 +1669,7 @@ mod test {
         let encrypted_k256_key = &k256_eksandds.encrypted_key_share;
 
         // Check that the private shares are correctly decrypted.
+        // Note: bls_key and k256_key were already parsed above for creating the key set
         let bls_key: KeyShare = serde_json::from_str(TEST_OLD_BLS_KEY_SHARE).unwrap();
         let k256_key: KeyShare = serde_json::from_str(TEST_OLD_K256_KEY_SHARE).unwrap();
 
@@ -1340,7 +1687,7 @@ mod test {
             .await
             .unwrap();
 
-        let peer_id = PeerId::try_from(555usize).unwrap();
+        let peer_id = PeerId::try_from(555_usize).unwrap();
         let epoch = 333;
         let restored_key_shares = restore_state
             .try_restore_key_shares(&peer_id, epoch, staker_address, realm_id)

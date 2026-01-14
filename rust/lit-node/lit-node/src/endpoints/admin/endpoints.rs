@@ -268,7 +268,7 @@ pub async fn admin_get_key_backup(
             Some(id) => match key_sets.get(id) {
                 Some(key_set) => Ok(key_set.root_keys_by_curve.clone()),
                 None => Err(
-                    unexpected_err(format!("No key set root keys exist for {}", id), None).handle(),
+                    unexpected_err(format!("No key set root keys exist for {id}"), None).handle(),
                 ),
             },
             None => match key_sets.first_key_value() {
@@ -305,6 +305,7 @@ pub async fn admin_get_key_backup(
 )]
 pub async fn admin_set_key_backup(
     cfg: &State<ReloadableLitConfig>,
+    tss_state: &State<Arc<TssState>>,
     restore_state: &State<Arc<RestoreState>>,
     admin_auth_sig: JsonAuthSigExtended,
     data: Data<'_>,
@@ -318,9 +319,13 @@ pub async fn admin_set_key_backup(
 
     trace!("admin_set_key_backup() - decrypting and untaring file");
 
-    // Unzip the file, which should replace the BLS and ECDSA key material.
+    let current_key_sets = DataVersionReader::read_field_unchecked(
+        &tss_state.chain_data_config_manager.key_sets,
+        |key_sets| key_sets.clone(),
+    );
+
     let stream = data.open(ByteUnit::Gigabyte(u64::MAX));
-    if let Err(e) = untar_keys_stream(&cfg, restore_state, stream).await {
+    if let Err(e) = untar_keys_stream(&cfg, restore_state, &current_key_sets, stream).await {
         return e.handle();
     }
 

@@ -10,14 +10,14 @@ default-members = [
 ]
 # all the things in this workspace (including dev and test stuff)
 members = [
-    "lit-node", 
-    "utils", 
+    "lit-node",
+    "utils",
     "lit-node-common",
     "lit-node-core",
-    "lit-node-testnet", 
-    "shiva", 
-    
-    "lit-sdk"
+    "lit-node-testnet",
+    "shiva",
+    "lit-sdk",
+    "openapi-gen"
 ]
 exclude = ["lit-node-monitor"]
 
@@ -38,9 +38,9 @@ ethers = { version = "2.0.8", features = [
     "legacy"
 ]}
 generic-array = "=1.1.1"
-hd-keys-curves-wasm = { git = "https://github.com/LIT-Protocol/hd-keys-curves-wasm", branch = "pallas", default-features = false, features = ["bls", "k256", "p256", "p384", "curve25519", "ed448", "jubjub", "decaf377", "pasta"] }
+hd-keys-curves-wasm = { version = "1.0.5", default-features = false, features = ["bls", "k256", "p256", "p384", "curve25519", "ed448", "jubjub", "decaf377", "pasta"] }
 hex = "0.4"
-lit-frost = { git = "https://github.com/LIT-Protocol/lit-frost.git", branch = "pallas" }
+lit-frost = { version = "0.4.0" }
 reqwest = { version = "0.11.14", default-features = false, features = ["json", "rustls-tls", "stream"] }
 rand = "0.8"
 rand_core = "0.6"
@@ -53,12 +53,9 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 soteria-rs = { version = "0.3.1", features = ["serde", "elements"] }
 url = { version = "2", features = ["serde"] }
+utoipa = { version = "5", features = ["chrono"] }
 zeroize = { version = "1.8", features = ["derive"] }
-
-[workspace.dependencies.lit-rust-crypto]
-git = "https://github.com/LIT-Protocol/lit-rust-crypto"
-tag = "0.6.0"
-features = [
+lit-rust-crypto = {version = "0.6.0", features = [
     "arithmetic",
     "bits",
     "ecdsa",
@@ -71,7 +68,8 @@ features = [
     "sha",
     "std",
     "zeroize",
-]
+]}
+
 
 [patch.crates-io]
 # needed to force deno_crypto to use v0.7.0-pre and not v0.7.0-rc.0 which for some reason is missing a bunch of stuff from the -pre version
@@ -83,6 +81,7 @@ deno_core = { git = "https://github.com/Lit-Protocol/deno_core", branch = "fix/d
 # Fix libffi build on macOS Sequoia (required by Deno)
 # Upstream issue: https://github.com/tov/libffi-rs/issues/109
 libffi-sys = { git = "https://github.com/integer32llc/libffi-rs", rev = "8df0df577317bdca2c2b5e9ae263ba0e98fa9076" }
+#elliptic-curve-tools = { path = "../../../../mikelodder/elliptic-curve-tools" }
 
 # Please keep all profiles in sync with lit-actions
 [profile.release]

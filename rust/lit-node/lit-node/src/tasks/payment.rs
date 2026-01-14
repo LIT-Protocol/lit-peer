@@ -194,7 +194,7 @@ async fn set_usage_percentage(
         .await
         .map(|_| ())
         .map_err(|e| {
-            let err_msg = format!("Cannot set the usage percentage: {:?}", e);
+            let err_msg = format!("Cannot set the usage percentage: {e:?}");
             unexpected_err(e, Some(err_msg))
         })
 }

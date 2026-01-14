@@ -6,6 +6,7 @@ use std::sync::Arc;
 use std::time::SystemTime;
 use std::{fs, process::Stdio};
 
+use crate::testnet::actions::NetworkState;
 use crate::testnet::contracts::ContractAddresses;
 use crate::testnet::node_config::{CustomNodeRuntimeConfig, generate_custom_node_runtime_config};
 
@@ -616,12 +617,18 @@ pub async fn check_and_load_test_state_cache(
     provider: Arc<Provider<Http>>,
     num_staked: usize,
     num_nodes: usize,
+    network_state: &NetworkState,
     custom_node_runtime_config: &CustomNodeRuntimeConfig,
     is_fault_test: bool,
 ) -> bool {
+    let network_state = match network_state {
+        NetworkState::Restore => "restore",
+        _ => "active",
+    };
+
     let tar_name = format!(
-        "./tests/test_state_cache/{}_{}.tar.gz",
-        num_staked, num_nodes
+        "./tests/test_state_cache/{}_{}_{}.tar.gz",
+        num_staked, num_nodes, network_state
     );
     if !Path::new(&tar_name).exists() {
         info!(
@@ -635,10 +642,16 @@ pub async fn check_and_load_test_state_cache(
     trace!("Block number before loading chain state: {}", block_number);
 
     let root = "./tests/test_state_cache";
-    let tar_name = format!("./{}/{}_{}.tar.gz", root, num_staked, num_nodes);
+    let tar_name = format!(
+        "./{}/{}_{}_{}.tar.gz",
+        root, num_staked, num_nodes, network_state
+    );
 
     lit_core::utils::tar::read_tar_gz_file(&tar_name, &root).expect("Failed to read tar.gz file");
-    let dir_name = format!("./tests/test_state_cache/{}_{}", num_staked, num_nodes);
+    let dir_name = format!(
+        "./tests/test_state_cache/{}_{}_{}",
+        num_staked, num_nodes, network_state
+    );
     let dir = Path::new(&dir_name);
 
     info!("Loading test state from cache: {:?}", dir);
@@ -741,15 +754,21 @@ pub async fn save_to_test_state_cache(
     provider: Arc<Provider<Http>>,
     num_staked_and_joined_validators: usize,
     num_staked_only_validators: usize,
+    network_state: &NetworkState,
 ) {
+    let network_state = match network_state {
+        NetworkState::Restore => "restore",
+        _ => "active",
+    };
+
     let temp_dir_name = format!(
-        "./tests/test_state_cache/{}_{}",
-        num_staked_and_joined_validators, num_staked_only_validators
+        "./tests/test_state_cache/{}_{}_{}",
+        num_staked_and_joined_validators, num_staked_only_validators, network_state
     );
 
     let tar_name = format!(
-        "./tests/test_state_cache/{}_{}.tar.gz",
-        num_staked_and_joined_validators, num_staked_only_validators
+        "./tests/test_state_cache/{}_{}_{}.tar.gz",
+        num_staked_and_joined_validators, num_staked_only_validators, network_state
     );
 
     let dir = Path::new(&temp_dir_name);

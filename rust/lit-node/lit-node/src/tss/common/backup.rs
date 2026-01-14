@@ -140,6 +140,10 @@ fn read_k256_pub_key(bytes: &[u8]) -> Result<k256::ProjectivePoint> {
     helper.pk_from_bytes(bytes)
 }
 
+fn read_pallas_pub_key(bytes: &[u8]) -> Result<pallas::Point> {
+    let helper = KeyPersistence::<pallas::Point>::new(CurveType::RedPallas);
+    helper.pk_from_bytes(bytes)
+}
 pub struct BackupGenerator<V>(pub PhantomData<V>);
 
 impl<V> BackupGenerator<V>
@@ -224,9 +228,14 @@ fn read_decaf377_pub_key(bytes: &[u8]) -> Result<decaf377::Element> {
     helper.pk_from_bytes(bytes)
 }
 
-fn read_pallas_pub_key(bytes: &[u8]) -> Result<pallas::Point> {
-    let helper = KeyPersistence::<pallas::Point>::new(CurveType::RedPallas);
-    helper.pk_from_bytes(bytes)
+pub fn get_peer_id<C: BCA>(share: &EncryptedKeyShare<C>) -> PeerId {
+    if let Some(share_index) = &share.share_index {
+        // Not sure if this is correct. Old share indices start with 0.
+        // However, 0 is not a valid PeerId. Let's use share_index+1,
+        // as this is what we use to have in the lit-recovery tool.
+        return PeerId::from_u16(*share_index + 1);
+    }
+    PeerId(NonZero::<U256>::from_uint(share.peer_id))
 }
 
 #[cfg(test)]
@@ -282,7 +291,7 @@ mod tests {
 
         let key_helper = KeyPersistence::<<C as BCA>::Point>::new(curve_type);
         let private_share = key_helper.secret_to_hex(&private_share);
-        let public_key = key_helper.pk_to_hex(&public_key.into());
+        let public_key = key_helper.pk_to_hex(&public_key);
 
         KeyShare {
             hex_private_share: private_share,
@@ -317,7 +326,7 @@ mod tests {
 
         let key_helper = KeyPersistence::<<C as BCA>::Point>::new(curve_type);
         let private_share = key_helper.secret_to_hex(&shares[0].value);
-        let public_key = key_helper.pk_to_hex(&public_key.into());
+        let public_key = key_helper.pk_to_hex(&public_key);
 
         KeyShare {
             hex_private_share: private_share,
@@ -512,14 +521,4 @@ mod tests {
         .unwrap();
         assert_eq!(secret, decrypted_secret);
     }
-}
-
-pub fn get_peer_id<C: BCA>(share: &EncryptedKeyShare<C>) -> PeerId {
-    if let Some(share_index) = &share.share_index {
-        // Not sure if this is correct. Old share indices start with 0.
-        // However, 0 is not a valid PeerId. Let's use share_index+1,
-        // as this is what we use to have in the lit-recovery tool.
-        return PeerId::from_u16(*share_index + 1);
-    }
-    PeerId(NonZero::<U256>::from_uint(share.peer_id))
 }

@@ -152,7 +152,7 @@ impl DkgEngine {
             self.dkgs.len(),
             self.current_peers.debug_addresses(),
             self.next_peers.debug_addresses(),
-            self.next_dkg_after_restore,
+            self.next_dkg_after_restore.value(),
         );
 
         let self_peer = self.next_peers.peer_at_address(&self.tss_state.addr)?;
@@ -320,7 +320,7 @@ impl DkgEngine {
             }
         }
 
-        let txn_prefix = format!("{}.{}_keyset", root_dkg_id, self.dkg_type);
+        let txn_prefix = format!("{}.{}_keyset1", root_dkg_id, self.dkg_type);
         trace!(
             "Node {} - Using DKG txn prefix: {}, realm_id: {}",
             self_peer.peer_id, txn_prefix, realm_id
@@ -349,8 +349,10 @@ impl DkgEngine {
                 let output_generator = match dkg_data.run() {
                     Ok(generator) => generator,
                     Err(e) => {
-                        error!("Dkg round failed: {:?}, realm_id: {}", e, realm_id);
-                        break;
+                        return Err(unexpected_err(
+                            format!("Dkg round failed: {:?}, realm_id: {}", e, realm_id),
+                            None,
+                        ));
                     }
                 };
                 for output in output_generator.iter() {
@@ -663,6 +665,45 @@ impl DkgEngine {
             }
         };
 
+        if self.next_dkg_after_restore.value() {
+            // if we're doing a next dkg after restore, we should write the keyshare
+            // with the current epoch, incase there are also existing or new DKGs
+            // that need to be run for this epoch, and one or both of them fail.
+            let pubkey = key_state
+                .write_key(
+                    write_key_pubkey.clone(),
+                    pk,
+                    share,
+                    &args.peer_id,
+                    args.dkg_id,
+                    next_epoch - 1,
+                    &active_peers,
+                    staker_address,
+                    args.realm_id,
+                    self.threshold,
+                    &self.tss_state.key_cache,
+                )
+                .await?;
+            debug!(
+                "Saved key share to disk for public key {}, epoch {}, realm {}",
+                pubkey,
+                next_epoch - 1,
+                args.realm_id
+            );
+
+            write_key_share_commitments_to_disk(
+                args.curve_type,
+                &pubkey,
+                staker_address,
+                &args.peer_id,
+                next_epoch - 1,
+                args.realm_id,
+                &self.tss_state.key_cache,
+                &save_commitments,
+            )
+            .await?;
+        }
+
         let pubkey = key_state
             .write_key(
                 write_key_pubkey,
@@ -827,16 +868,14 @@ impl DkgEngine {
                     Ok(Some((private_share, public_key))) => (private_share, public_key),
                     Ok(None) => {
                         let err_msg = format!(
-                            "key share not found on disk for realm {} public key {}",
-                            realm_id, pubkey
+                            "key share not found on disk for realm {realm_id} public key {pubkey}"
                         );
                         error!("{}", err_msg);
                         return Err(unexpected_err(err_msg, None));
                     }
                     Err(e) => {
                         let err_msg = format!(
-                            "Error reading key share for realm {} public key {}",
-                            realm_id, pubkey
+                            "Error reading key share for realm {realm_id} public key {pubkey}"
                         );
                         error!("{}", err_msg);
                         return Err(unexpected_err(e, Some(err_msg)));
@@ -903,8 +942,7 @@ impl DkgEngine {
                     Ok(share) => share,
                     Err(e) => {
                         let err_msg = format!(
-                            "Error reading key share in realm {}, epoch {}, for public key {}",
-                            read_realm_id, read_epoch, pubkey
+                            "Error reading key share in realm {read_realm_id}, epoch {read_epoch}, for public key {pubkey}"
                         );
                         error!("{}", err_msg);
                         error!("Shadow key opts: {:?}", self.shadow_key_opts);
@@ -978,6 +1016,7 @@ impl DkgEngine {
                             .collect::<Vec<_>>()
                     }
                 };
+
                 Ok(Box::new(
                     SecretParticipant::<G>::with_secret(id, &old_share, &parameters, &old_ids)
                         .map_err(|e| {
@@ -1053,7 +1092,7 @@ impl std::fmt::Display for DkgScalar {
             Self::Pallas(scalar) => scalar.to_compressed_hex(),
             Self::Bls12381G1ProofOfPossession(scalar) => scalar.to_compressed_hex(),
         };
-        write!(f, "{}", hex)
+        write!(f, "{hex}")
     }
 }
 

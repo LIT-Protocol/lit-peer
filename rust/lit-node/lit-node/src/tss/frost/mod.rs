@@ -4,6 +4,7 @@ use crate::peers::peer_state::models::SimplePeer;
 use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::hd_keys::get_derived_keyshare;
 use crate::tss::common::traits::signable::Signable;
+use crate::tss::common::utils::validate_and_get_self_peer;
 use crate::{
     error::Result,
     metrics,
@@ -70,10 +71,8 @@ impl FrostState {
         VerifyingShare,
     )> {
         if !signature_scheme.supports_algorithm(SigningAlgorithm::Schnorr) {
-            let msg = format!(
-                "Requested signature scheme {:?} does not support Schnorr",
-                signature_scheme
-            );
+            let msg =
+                format!("Requested signature scheme {signature_scheme:?} does not support Schnorr");
             return Err(unexpected_err_code(
                 "Unsupported signature curve for Schnorr signature",
                 EC::NodeSignatureNotSupported,
@@ -87,7 +86,10 @@ impl FrostState {
 
         // setup signing protocol
         let mut rng = rand::rngs::OsRng;
-        let self_peer = peers.peer_at_address(&self.state.addr)?;
+
+        let own_staker_address = self.state.peer_state.hex_staker_address();
+        let self_peer = validate_and_get_self_peer(peers, &self.state.addr, &own_staker_address)?;
+
         let scheme: Scheme = signing_scheme_to_frost_scheme(signature_scheme)
             .map_err(|e| unexpected_err(e, None))?;
         let identifier = self.peer_id_to_frost_identifier(self_peer.peer_id)?;
@@ -224,14 +226,17 @@ impl Signable for FrostState {
         public_key: Vec<u8>,
         tweak_preimage: Option<Vec<u8>>,
         request_id: Vec<u8>,
-        key_set_id: Option<&str>,
+        key_set_id: &str,
         epoch: Option<u64>,
         nodeset: &[NodeSet],
     ) -> Result<SignableOutput> {
         let txn_prefix = bytes_to_hex(&request_id);
         let peers = self.state.peer_state.peers();
         let signing_peers = peers.peers_for_nodeset(nodeset);
-        let self_peer = peers.peer_at_address(&self.state.addr)?;
+
+        let own_staker_address = self.state.peer_state.hex_staker_address();
+        let self_peer = validate_and_get_self_peer(&peers, &self.state.addr, &own_staker_address)?;
+
         let threshold = nodeset.len();
         let key_id = tweak_preimage.expect_or_err("No hd_key_id provided!")?;
         let realm_id = self.state.peer_state.realm_id();
@@ -239,7 +244,7 @@ impl Signable for FrostState {
         let curve_state = CurveState::new(
             self.state.peer_state.clone(),
             self.signing_scheme.curve_type(),
-            key_set_id.map(String::from),
+            key_set_id,
         );
         let root_pubkeys = curve_state.root_keys()?;
         let (vk, signing_share) = match self.signing_scheme {

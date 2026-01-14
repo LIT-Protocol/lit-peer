@@ -2,11 +2,15 @@
 name = "lit-node-core"
 version = "2.0.1"
 edition.workspace = true
+description = "Core shared utilities for the Lit Node"
+license = "Apache-2.0"
 
 [features]
 default = []
+openapi = ["dep:utoipa"]
 
 [dependencies]
+utoipa = { workspace = true, optional = true }
 ed25519-dalek.workspace = true
 ethabi.workspace = true
 ethers.workspace = true

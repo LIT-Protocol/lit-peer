@@ -236,6 +236,7 @@ library LibStakingStorage {
 
     struct GlobalConfig {
         uint256 tokenRewardPerTokenPerEpoch;
+        uint256[] keyTypes_deprecated;
         uint256 minimumValidatorCount;
         /// @notice Keep this the same as the epoch length for now.
         uint256 rewardEpochDuration;

@@ -77,7 +77,7 @@ impl RestoreState {
             blinders: AtomicShared::from(Shared::new(Self::generate_blinders())),
             actively_restoring: AtomicBool::new(false),
             state: RwLock::new(None),
-            restoring_key_set: AtomicShared::from(Shared::new(KeySetConfig::default())),
+            restoring_key_set: AtomicShared::null(),
         }
     }
 
@@ -93,41 +93,7 @@ impl RestoreState {
             .chain_data_config_manager
             .set_key_sets_from_chain()
             .await?;
-        let default_key_set = DataVersionReader::read_field_unchecked(
-            &tss_state.chain_data_config_manager.generic_config,
-            |generic_config| generic_config.default_key_set.clone(),
-        );
-        let key_set = DataVersionReader::read_field_unchecked(
-            &tss_state.chain_data_config_manager.key_sets,
-            |key_sets| {
-                let key_set = match &default_key_set {
-                    Some(id) => match key_sets.get(id) {
-                        Some(key_set) => key_set.clone(),
-                        None => {
-                            return Err(unexpected_err(
-                                format!(
-                                    "Expected key set config information for {} but it doesn't exist",
-                                    id
-                                ),
-                                None,
-                            ));
-                        }
-                    },
-                    None => match key_sets.first_key_value() {
-                        Some((_id, key_set)) => key_set.clone(),
-                        None => {
-                            return Err(unexpected_err(
-                                "No key sets exist to restore".to_string(),
-                                None,
-                            ));
-                        }
-                    },
-                };
-                Ok(key_set)
-            },
-        )?;
-        debug!("Restoring key set: {:?}", &key_set);
-        DataVersionWriter::store(&self.restoring_key_set, key_set);
+
         Ok(())
     }
 
@@ -169,6 +135,14 @@ impl RestoreState {
         self.assert_actively_restoring()?;
         *self.state.write().await = Some(inner_state);
         Ok(())
+    }
+
+    pub fn set_restoring_key_set(&self, key_set: KeySetConfig) {
+        DataVersionWriter::store(&self.restoring_key_set, key_set);
+    }
+
+    pub fn get_restoring_key_set(&self) -> Option<KeySetConfig> {
+        DataVersionReader::read_field(&self.restoring_key_set, |key_set| Some(key_set.clone()))
     }
 
     pub async fn add_decryption_shares(
@@ -423,11 +397,12 @@ impl RestoreState {
             return false;
         };
 
-        let root_keys_by_curve = {
-            DataVersionReader::new_unchecked(&self.restoring_key_set)
-                .root_keys_by_curve
-                .clone()
+        // If no key set is being restored, return false.
+        let Some(restoring_key_set) = self.get_restoring_key_set() else {
+            return false;
         };
+
+        let root_keys_by_curve = &restoring_key_set.root_keys_by_curve;
 
         let mut restored = true;
         for (curve_type, root_keys) in root_keys_by_curve.iter() {
@@ -564,9 +539,9 @@ impl RestoreState {
     }
 
     pub fn get_expected_recovery_session_id(&self) -> String {
-        DataVersionReader::new_unchecked(&self.restoring_key_set)
-            .recovery_session_id
-            .clone()
+        DataVersionReader::read_field_unchecked(&self.restoring_key_set, |key_set| {
+            key_set.recovery_session_id.clone()
+        })
     }
 
     pub async fn pull_recovered_key_cache(&self) -> Result<KeyCache> {
@@ -752,8 +727,7 @@ impl RestoreState {
         state
             .bls_recovery_data
             .as_ref()
-            .map(|d| d.eks_and_ds.first())
-            .flatten()
+            .and_then(|d| d.eks_and_ds.first())
             .cloned()
     }
 
@@ -765,8 +739,7 @@ impl RestoreState {
         state
             .k256_recovery_data
             .as_ref()
-            .map(|d| d.eks_and_ds.first())
-            .flatten()
+            .and_then(|d| d.eks_and_ds.first())
             .cloned()
     }
 
@@ -1191,13 +1164,21 @@ mod tests {
         inner.threshold = 2;
         inner.bls_recovery_data = Some(CurveRecoveryData {
             encryption_key: bls_enc_key,
-            blinder: restore_state.get_blinders().bls_blinder.unwrap().clone(),
-            eks_and_ds: encrypted_bls_shares,
+            blinder: restore_state.get_blinders().bls_blinder.unwrap(),
+            eks_and_ds: encrypted_bls_shares.clone(),
+            encrypted_key_shares: encrypted_bls_shares
+                .iter()
+                .map(|eks| eks.encrypted_key_share.clone())
+                .collect(),
         });
         inner.k256_recovery_data = Some(CurveRecoveryData {
             encryption_key: k256_enc_key,
-            blinder: restore_state.get_blinders().k256_blinder.unwrap().clone(),
-            eks_and_ds: encrypted_k256_shares,
+            blinder: restore_state.get_blinders().k256_blinder.unwrap(),
+            eks_and_ds: encrypted_k256_shares.clone(),
+            encrypted_key_shares: encrypted_k256_shares
+                .iter()
+                .map(|eks| eks.encrypted_key_share.clone())
+                .collect(),
         });
         restore_state.load_backup(inner).await.unwrap();
 

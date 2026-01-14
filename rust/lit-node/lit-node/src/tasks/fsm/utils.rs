@@ -92,10 +92,7 @@ fn is_compatible_version(
     // Parse version (e.g. "0.2.14"), otherwise known as NODE_VERSION_UNMARKED!
     let version_parts = version.split('.').collect::<Vec<&str>>();
     if version_parts.len() != 3 {
-        return Err(unexpected_err(
-            format!("Invalid version: {}", version),
-            None,
-        ));
+        return Err(unexpected_err(format!("Invalid version: {version}"), None));
     }
     let curr_major = U256::from_dec_str(version_parts[0]).map_err(|e| unexpected_err(e, None))?;
     let curr_minor = U256::from_dec_str(version_parts[1]).map_err(|e| unexpected_err(e, None))?;
@@ -149,6 +146,7 @@ pub(crate) async fn key_share_proofs_check(
     epoch: u64,
     lifecycle_id: u64,
 ) -> Result<()> {
+    let complainer = tss_state.peer_state.self_peer()?;
     if !peers.contains_address(&tss_state.addr) {
         trace!("Peer not in next epoch, skipping key share proofs check");
         return Ok(()); // no need to compute key share proofs
@@ -194,7 +192,12 @@ pub(crate) async fn key_share_proofs_check(
     trace!("Key share proof check - root keys: {:?}", root_keys_map);
 
     for (identifier, map) in &root_keys_map {
-        let noonce = format!("{}-{}-{}", epoch, lifecycle_id, identifier);
+        let noonce = if peers.has_version_lower_than("2.1.8") {
+            format!("{epoch}-{lifecycle_id}")
+        } else {
+            format!("{epoch}-{lifecycle_id}-{identifier}")
+        };
+
         trace!("Key share proofs nonce signed: {}", noonce);
         let proofs =
             compute_key_share_proofs(&noonce, map, &tss_state.addr, peers, realm_id, epoch).await?;
@@ -246,10 +249,9 @@ pub(crate) async fn key_share_proofs_check(
                             .peer_state
                             .complaint_channel
                             .send_async(PeerComplaint {
-                                complainer: tss_state.peer_state.addr.clone(),
+                                complainer: complainer.clone(),
                                 issue: Issue::KeyShareValidationFailure(curve),
-                                peer_node_staker_address: peer.staker_address,
-                                peer_node_socket_address: peer.socket_address.clone(),
+                                against_peer: peer.clone(),
                             })
                             .await
                             .map_err(|e| {
