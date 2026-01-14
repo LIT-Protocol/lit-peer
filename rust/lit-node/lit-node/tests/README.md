@@ -20,6 +20,8 @@ A series of broad tests that provide a santity check of the network ensuring tha
 
 Tests the backup / restore functionality within the nodes.
 
+Special tests for recovery of datil keys.
+
 ### ECDSA
 
 Tests related to using PKPs to sign ECDSA transactions.
