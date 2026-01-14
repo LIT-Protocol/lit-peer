@@ -13,10 +13,24 @@
 //!   `cargo:rerun-if-changed=...` so the embedded hash updates whenever the repo advances.
 //! - For builds outside a git checkout (e.g. source tarballs), packagers can provide
 //!   `GIT_COMMIT_HASH` (injected_hash) and we propagate it into the binary.
+
+use std::path::PathBuf;
 use std::process::Command;
 use std::{env, fs};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let proto_dir = "config/proto/";
+    let proto_file = "config/proto/chatter.proto";
+    let out_dir = PathBuf::from(env::var("OUT_DIR").expect("OUT_DIR is not set"));
+    tonic_build::configure()
+        .protoc_arg("--experimental_allow_proto3_optional")
+        // .type_attribute("NodeHeaderMetaData", "#[derive(serde::Deserialize, serde::Serialize)]")
+        // .type_attribute("NodeRecordHeader", "#[derive(serde::Deserialize, serde::Serialize)]")
+        // .type_attribute("NodeRecord", "#[derive(serde::Deserialize, serde::Serialize)]")
+        // .type_attribute("NodeRecordFooter", "#[derive(serde::Deserialize, serde::Serialize)]")
+        .file_descriptor_set_path(out_dir.join("chatter_descriptor.bin"))
+        .compile_protos(&[proto_file], &[proto_dir])?;
+
     // INSERT GIT COMMIT HASH
     println!("cargo:rerun-if-env-changed=GIT_COMMIT_HASH");
     let injected_hash = env::var("GIT_COMMIT_HASH")
