@@ -366,11 +366,9 @@ async function main() {
     data: string;
     operation: number;
     description: string;
-    priceUSD: number;
-    priceUSDTotal?: number;
-    priceUSDPerNode?: number;
-    priceLITKEY: string;
-    priceLITKEYPerNode?: string;
+    priceUSD: number; // Per-node USD price
+    priceUSDTotal?: number; // Total USD price across all nodes
+    priceLITKEY: string; // Per-node LITKEY price
   }> = [];
 
   // ============================================================================
@@ -465,9 +463,7 @@ async function main() {
       description: `Set Base Network Price - ${PRODUCT_NAMES[productId]}`,
       priceUSD: usdPricePerNode,
       priceUSDTotal: usdPriceTotal,
-      priceUSDPerNode: usdPricePerNode,
       priceLITKEY: priceTokens.toFixed(6),
-      priceLITKEYPerNode: priceTokens.toFixed(6),
     });
 
     // Set max price (10x base price)
@@ -481,9 +477,7 @@ async function main() {
       description: `Set Max Network Price - ${PRODUCT_NAMES[productId]}`,
       priceUSD: maxUsdPricePerNode,
       priceUSDTotal: maxUsdPriceTotal,
-      priceUSDPerNode: maxUsdPricePerNode,
       priceLITKEY: maxPriceTokens.toFixed(6),
-      priceLITKEYPerNode: maxPriceTokens.toFixed(6),
     });
   }
 
@@ -603,9 +597,7 @@ async function main() {
       description: `Set Lit Action Price - ${config.name} ${measurementName}`,
       priceUSD: usdPricePerNode,
       priceUSDTotal: usdPriceTotal,
-      priceUSDPerNode: usdPricePerNode,
       priceLITKEY: priceTokens.toFixed(6),
-      priceLITKEYPerNode: priceTokens.toFixed(6),
     });
   }
 
