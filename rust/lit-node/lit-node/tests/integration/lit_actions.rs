@@ -706,7 +706,8 @@ pub mod litactions {
 
         let ipfs_cid = "QmRwN9GKHvCn4Vk7biqtr6adjXMs7PzzYPCzNCRjPFiDjm";
 
-        let (testnet, validator_collection, end_user) = TestSetupBuilder::default().build().await;
+        let (testnet, validator_collection, end_user) =
+            TestSetupBuilder::default().force_deploy(true).build().await;
         let node_set = validator_collection.random_threshold_nodeset().await;
         let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
         let realm_id = ethers::types::U256::from(1);
@@ -834,7 +835,8 @@ pub mod litactions {
     #[tokio::test]
     async fn sign_as_action() {
         setup_logging();
-        let (_testnet, validator_collection, end_user) = TestSetupBuilder::default().build().await;
+        let (_testnet, validator_collection, end_user) =
+            TestSetupBuilder::default().force_deploy(true).build().await;
         let file_with_path = "./tests/lit_action_scripts/sign_as_lit_action.js";
         let lit_action_code = std::fs::read_to_string(file_with_path).unwrap();
         let action_ipfs_id = lit_sdk::compute_ipfs_hash(&lit_action_code);
