@@ -19,6 +19,8 @@ contract StakingParticipationFacet {
     error CannotReuseCommsKeys(uint256 senderPubKey, uint256 receiverPubKey);
     error InvalidAttestedAddress();
     error ValidatorRegisterAttestedWalletDisabled();
+    error InvalidUncompressedKeyLength(uint256 length);
+    error InvalidUncompressedKeyPrefix(uint8 prefix);
 
     /* ========== VIEWS ========== */
     function s()
@@ -51,9 +53,13 @@ contract StakingParticipationFacet {
         uint256 senderPubKey,
         uint256 receiverPubKey
     ) external {
-        require(attestedPubKey.length == 65, "Invalid uncompressed key length");
+        if (attestedPubKey.length != 65) {
+            revert InvalidUncompressedKeyLength(attestedPubKey.length);
+        }
         uint8 prefix = uint8(attestedPubKey[0]);
-        require(prefix == 0x04, "Invalid uncompressed key prefix");
+        if (prefix != 0x04) {
+            revert InvalidUncompressedKeyPrefix(prefix);
+        }
 
         // Check that the staker address is correct.
         address resolvedAddress = StakingUtilsLib

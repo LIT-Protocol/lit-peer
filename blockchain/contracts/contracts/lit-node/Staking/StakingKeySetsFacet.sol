@@ -11,6 +11,14 @@ import "hardhat/console.sol";
 contract StakingKeySetsFacet {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    error InvalidNewMinimumThreshold(uint256 minimumThreshold);
+    error CountsCannotBeEmpty();
+    error CurvesCannotBeEmpty();
+    error CurvesAndCountsMustBeEqual();
+    error KeyCountsCannotBeSetToZero();
+    error CannotDeleteSpecifiedKeySet();
+    error SpecifiedKeySetNotFoundInList();
+
     modifier onlyOwner() {
         if (msg.sender != LibDiamond.contractOwner())
             revert StakingUtilsLib.CallerNotOwner();
@@ -92,10 +100,10 @@ contract StakingKeySetsFacet {
     function setKeySet(
         LibStakingStorage.KeySetConfig memory update
     ) external onlyOwner {
-        require(
-            update.minimumThreshold > 2,
-            "minimum threshold cannot be less than 3"
-        );
+        if (update.minimumThreshold < 3) {
+            // minimum threshold cannot be less than 3
+            revert InvalidNewMinimumThreshold(update.minimumThreshold);
+        }
 
         LibStakingStorage.GlobalStakingStorage storage gs = s();
         LibPubkeyRouterStorage.PubkeyRouterStorage storage ps = pubkeyRouter();
@@ -111,10 +119,10 @@ contract StakingKeySetsFacet {
                 keySetId
             ];
 
-            require(
-                update.minimumThreshold < config.minimumThreshold,
-                "minimum threshold can only decrease once root keys have been created"
-            );
+            if (update.minimumThreshold > config.minimumThreshold) {
+                // minimum threshold can only decrease or stay the same once root keys have been created
+                revert InvalidNewMinimumThreshold(update.minimumThreshold);
+            }
 
             config.completeIsolation = update.completeIsolation;
             config.description = update.description;
@@ -124,12 +132,15 @@ contract StakingKeySetsFacet {
 
             emit KeySetConfigUpdated(update.identifier);
         } else {
-            require(update.counts.length > 0, "counts cannot be empty");
-            require(update.curves.length > 0, "curves cannot be empty");
-            require(
-                update.curves.length == update.counts.length,
-                "curves and counts must be equal"
-            );
+            if (update.counts.length == 0) {
+                revert CountsCannotBeEmpty();
+            }
+            if (update.curves.length == 0) {
+                revert CurvesCannotBeEmpty();
+            }
+            if (update.curves.length != update.counts.length) {
+                revert CurvesAndCountsMustBeEqual();
+            }
 
             // No keys exist yet so anything except the identifier can be updated
             gs.keySetsConfigs[keySetId].identifier = update.identifier;
@@ -145,7 +156,9 @@ contract StakingKeySetsFacet {
             gs.keySetsConfigs[keySetId].recoverySessionId = update
                 .recoverySessionId;
             for (uint i = 0; i < update.curves.length; i++) {
-                require(update.counts[i] > 0, "key counts cannot be set to 0");
+                if (update.counts[i] == 0) {
+                    revert KeyCountsCannotBeSetToZero();
+                }
                 gs.keySetKeyCounts[keySetId][update.curves[i]] = update.counts[
                     i
                 ];
@@ -166,10 +179,10 @@ contract StakingKeySetsFacet {
     function deleteKeySet(string memory identifier) external onlyOwner {
         LibStakingStorage.GlobalStakingStorage storage gs = s();
         bytes32 keySetId = keccak256(abi.encodePacked(identifier));
-        require(
-            bytes(gs.keySetsConfigs[keySetId].identifier).length > 0,
-            "can't delete the specified key set"
-        );
+        if (bytes(gs.keySetsConfigs[keySetId].identifier).length == 0) {
+            // i believe we're looking up the keyset and making sure it exists
+            revert CannotDeleteSpecifiedKeySet();
+        }
         LibStakingStorage.KeySetConfig memory config = gs.keySetsConfigs[
             keySetId
         ];
@@ -184,7 +197,9 @@ contract StakingKeySetsFacet {
             }
         }
 
-        require(found, "specified key set not found in list");
+        if (!found) {
+            revert SpecifiedKeySetNotFoundInList();
+        }
 
         for (uint i = 0; i < config.counts.length; i++) {
             delete gs.keySetKeyCounts[keySetId][config.curves[i]];

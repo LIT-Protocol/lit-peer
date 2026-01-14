@@ -41,6 +41,7 @@ library StakingUtilsLib {
         address[] validatorsInNextEpoch
     );
     error InvalidSlashPercentage();
+    error NoSharePrice(address stakerAddress, uint256 rewardEpochNumber);
     error CannotStakeZero();
     error CannotMoveToLockedValidatorStateBeforeEpochEnds();
     error NotEnoughValidatorsToSetupKeySet(uint256 validatorCnt, uint256 minimumThreshold);
@@ -758,7 +759,7 @@ library StakingUtilsLib {
         .rewardEpochs[stakerAddress][rewardEpochNumber].validatorSharePrice;
 
         if (initialSharePrice == 0) {
-            revert("no share price");
+            revert NoSharePrice(stakerAddress, rewardEpochNumber);
         }
         uint256 newSharePrice = initialSharePrice -
             FixedPointMathLib.mulWad(initialSharePrice, percentage);

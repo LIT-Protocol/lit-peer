@@ -16,6 +16,7 @@ contract StakingValidatorFacet {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     // errors
+    error OnlyStakingContractCanCall(address caller);
     error ValidatorNotInNextEpoch(address staker);
     error ValidatorAlreadyInNextValidatorSet(address staker);
     error MustBeInActiveOrUnlockedState(LibStakingStorage.States state);
@@ -479,7 +480,7 @@ contract StakingValidatorFacet {
         address stakerAddress
     ) external {
         if (msg.sender != address(this)) {
-            revert("Only the Staking contract can call this function");
+            revert OnlyStakingContractCanCall(msg.sender);
         }
 
         executeRequestToJoin(realmId, stakerAddress);

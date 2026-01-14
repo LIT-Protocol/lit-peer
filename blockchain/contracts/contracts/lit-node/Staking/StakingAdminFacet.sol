@@ -16,6 +16,14 @@ import "hardhat/console.sol";
 contract StakingAdminFacet is StakingCommon {
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    /* ========== ERRORS ========== */
+    error CannotRemoveLastRealm();
+    error CannotRemoveRealmWithValidators(uint256 realmId, uint256 validatorCount);
+    error CannotUnfreezeOnBehalfOfValidators();
+    error MinimumSourceRealmValidatorsRequired(uint256 minimumRequired, uint256 actualCount);
+    error SourceAndTargetValidatorCountsMustMatch(uint256 sourceCount, uint256 targetCount);
+    error NotEnoughNewValidatorsToReplaceShadowNodes(uint256 threshold, uint256 newValidatorCount);
+
     /* ========== Modifier Equivalents ========== */
 
     function onlyOwner() internal view {
@@ -417,7 +425,7 @@ contract StakingAdminFacet is StakingCommon {
         onlyOwner();
         // Immediately revert if the realm is the last one
         if (realms().numRealms() == 1) {
-            revert("Cannot remove the last realm");
+            revert CannotRemoveLastRealm();
         }
 
         // Get current validators in realm
@@ -425,8 +433,9 @@ contract StakingAdminFacet is StakingCommon {
             .validatorsInCurrentEpoch;
 
         // Revert if there are any validators in the realm
-        if (validatorsInRealm.length() > 0) {
-            revert("Realm has validators");
+        uint256 validatorCount = validatorsInRealm.length();
+        if (validatorCount > 0) {
+            revert CannotRemoveRealmWithValidators(realmId, validatorCount);
         }
 
         // Remove realm from storage
@@ -496,7 +505,7 @@ contract StakingAdminFacet is StakingCommon {
         onlyOwner();
         // Do not allow unfreezing on behalf of validators.
         if (operatorStakerAddress == userStakerAddress) {
-            revert("Cannot unfreeze on behalf of validators");
+            revert CannotUnfreezeOnBehalfOfValidators();
         }
 
         _unfreezeStake(userStakerAddress, operatorStakerAddress, stakeId);
@@ -521,13 +530,16 @@ contract StakingAdminFacet is StakingCommon {
         );
 
         if (sourceValidators.length < 3) {
-            revert("Minimum of 3 validators required in source realm.");
+            revert MinimumSourceRealmValidatorsRequired(3, sourceValidators.length);
         }
 
         // check if the source and new validators counts are the same
         // strictly speaking, this isn't required, but it's simplifies the logic and maintains the threshold
         if (sourceValidators.length != target_validators.length) {
-            revert("Source and new validators counts must be the same.");
+            revert SourceAndTargetValidatorCountsMustMatch(
+                sourceValidators.length,
+                target_validators.length
+            );
         }
 
         // set the number validators that will be added to the target realm
@@ -543,7 +555,10 @@ contract StakingAdminFacet is StakingCommon {
 
         // check if there are enough new validators to replace at least the threshold number of shadow nodes
         if (threshold > target_validators.length) {
-            revert("Not enough new validators to replace all shadow nodes");
+            revert NotEnoughNewValidatorsToReplaceShadowNodes(
+                threshold,
+                target_validators.length
+            );
         }
 
         StakingUtilsLib.checkValidatorCountAgainstKeySetsInRealm(
