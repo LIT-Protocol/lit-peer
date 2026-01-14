@@ -155,10 +155,11 @@ pub enum RpcKind {
 pub struct RpcEntry {
     #[serde(default)]
     kind: RpcKind,
-    /// Higher values mean higher priority.
-    /// `0` is the lowest (default) priority.
+    /// Selection priority for this RPC endpoint (higher wins).
+    /// Compared only among healthy endpoints; used as a fallback when none are healthy.
+    /// Defaults to `0`.
     #[serde(default)]
-    priority: i32,
+    priority: u32,
     url: String,
     headers: Option<BTreeMap<String, String>>,
     apikey: Option<String>,
@@ -166,15 +167,14 @@ pub struct RpcEntry {
 
 impl RpcEntry {
     pub fn new(
-        kind: RpcKind,
-        url: String,
-        headers: Option<BTreeMap<String, String>>,
+        kind: RpcKind, url: String, headers: Option<BTreeMap<String, String>>,
         apikey: Option<String>,
     ) -> Self {
         Self { kind, priority: 0, url, headers, apikey }
     }
 
-    pub fn with_priority(mut self, priority: i32) -> Self {
+    /// Sets the selection priority (builder-style).
+    pub fn with_priority(mut self, priority: u32) -> Self {
         self.priority = priority;
         self
     }
@@ -184,7 +184,8 @@ impl RpcEntry {
         &self.url
     }
 
-    pub fn priority(&self) -> i32 {
+    /// Returns the selection priority (higher wins).
+    pub fn priority(&self) -> u32 {
         self.priority
     }
 
