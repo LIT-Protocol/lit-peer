@@ -43,35 +43,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(injected_hash)
     } else {
         // We ask git what the hash is and where to watch for changes.
-        let (git_dir, git_head_hash): (Option<String>, Option<String>) =
-            match Command::new("git")
-                .args(["rev-parse", "--git-dir", "HEAD"])
-                .output()
-            {
-                Ok(output) if output.status.success() => match String::from_utf8(output.stdout) {
-                    Ok(s) => {
-                        let mut lines = s.lines().map(str::trim).filter(|l| !l.is_empty());
-                        let git_dir = lines.next().map(|v| v.to_string());
-                        let git_head_hash = lines.next().map(|v| v.to_string());
-                        (git_dir, git_head_hash)
-                    }
-                    Err(e) => {
-                        eprintln!(
-                            "Invalid UTF-8 output from git with error: {}.  No git commit hash will be inserted...",
-                            e
-                        );
-                        (None, None)
-                    }
-                },
-                Ok(_output) => (None, None), // not a git repo (or HEAD unavailable)
+        let (git_dir, git_head_hash): (Option<String>, Option<String>) = match Command::new("git")
+            .args(["rev-parse", "--git-dir", "HEAD"])
+            .output()
+        {
+            Ok(output) if output.status.success() => match String::from_utf8(output.stdout) {
+                Ok(s) => {
+                    let mut lines = s.lines().map(str::trim).filter(|l| !l.is_empty());
+                    let git_dir = lines.next().map(|v| v.to_string());
+                    let git_head_hash = lines.next().map(|v| v.to_string());
+                    (git_dir, git_head_hash)
+                }
                 Err(e) => {
                     eprintln!(
-                        "Failed to execute git command with error: {}.  No git commit hash will be inserted...",
+                        "Invalid UTF-8 output from git with error: {}.  No git commit hash will be inserted...",
                         e
                     );
                     (None, None)
                 }
-            };
+            },
+            Ok(_output) => (None, None), // not a git repo (or HEAD unavailable)
+            Err(e) => {
+                eprintln!(
+                    "Failed to execute git command with error: {}.  No git commit hash will be inserted...",
+                    e
+                );
+                (None, None)
+            }
+        };
 
         // Watching git's `HEAD` (and its referenced ref) makes the embedded hash update
         // whenever the repo advances.
@@ -80,11 +79,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("cargo:rerun-if-changed={head_path}");
 
             // If HEAD points at a ref, also re-run when that ref file changes.
-            if let Ok(head_contents) = fs::read_to_string(&head_path) {
-                if let Some(ref_path) = head_contents.trim().strip_prefix("ref: ") {
-                    let ref_file = format!("{git_dir}/{ref_path}");
-                    println!("cargo:rerun-if-changed={ref_file}");
-                }
+            if let Ok(head_contents) = fs::read_to_string(&head_path)
+                && let Some(ref_path) = head_contents.trim().strip_prefix("ref: ")
+            {
+                let ref_file = format!("{git_dir}/{ref_path}");
+                println!("cargo:rerun-if-changed={ref_file}");
             }
         }
 
