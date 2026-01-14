@@ -3,11 +3,10 @@ use std::str::FromStr;
 pub use config::LitObservabilityConfig;
 use error::unexpected_err;
 use lit_core::config::LitConfig;
-use logging::init_logger_provider;
+use logging::{ContextAwareOtelLogLayer, CustomEventFormatter, init_logger_provider};
 use metrics::init_metrics_provider;
 use net::init_tonic_exporter_builder;
 use opentelemetry::trace::TracerProvider;
-use opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge;
 
 use opentelemetry_sdk::logs::LoggerProvider;
 use opentelemetry_sdk::metrics::SdkMeterProvider;
@@ -80,8 +79,7 @@ pub async fn create_providers(
     };
     let logger_provider = init_logger_provider(tonic_exporter_builder, resource.clone())?;
 
-    // Create a new OpenTelemetryTracingBridge using the above LoggerProvider.
-    let tracing_bridge_layer = OpenTelemetryTracingBridge::new(&logger_provider);
+    let context_aware_log_layer = ContextAwareOtelLogLayer::new(&logger_provider);
 
     // Add a tracing filter to filter events from crates used by opentelemetry-otlp.
     // The filter levels are set as follows:
@@ -101,10 +99,12 @@ pub async fn create_providers(
         .add_directive("h2=error".parse().unwrap())
         .add_directive("reqwest=error".parse().unwrap());
 
+    let custom_formatter = CustomEventFormatter::default();
+
     let sub = tracing_subscriber::registry()
         .with(level_filter)
-        .with(fmt::layer())
-        .with(tracing_bridge_layer)
+        .with(fmt::layer().event_format(custom_formatter))
+        .with(context_aware_log_layer)
         .with(MetricsLayer::new(meter_provider.clone()))
         .with(OpenTelemetryLayer::new(tracer));
 
