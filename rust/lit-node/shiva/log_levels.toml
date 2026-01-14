@@ -37,7 +37,7 @@ _ = "warn" # default log level for lit_core
 _ = "warn"
 
 [lit_blockchain]
-_ = "warn"
+_ = "trace"
 
 #set to info or lower for debugging rocket startup, and checking raw endpoint requests
 [rocket] 
