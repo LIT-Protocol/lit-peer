@@ -335,6 +335,12 @@ pub trait RpcHealthcheckPoller: Sync {
         let latencies = self.get_latencies().load();
         let resolver = self.get_rpc_resolver().load();
         let entries = resolver.resolve(chain_name.as_ref())?;
+        if entries.is_empty() {
+            return Err(config_err(
+                format!("No RPC entry exists for chain id: {}", chain_name.as_ref()),
+                None,
+            ));
+        }
 
         Ok(select_rpc_entry(entries, &latencies).clone())
     }
