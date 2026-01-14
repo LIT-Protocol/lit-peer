@@ -27,7 +27,13 @@ fn insert_git_commit_hash() -> Result<(), Box<dyn std::error::Error>> {
     println!("Source directory hash: {}", src_hash);
     let git_info_path = Path::new("src/git_info.rs");
     if git_info_path.exists() {
-        let git_info_contents = fs::read_to_string(git_info_path).unwrap();
+        let git_info_contents = match fs::read_to_string(git_info_path) {
+            Ok(contents) => contents,
+            Err(e) => {
+                println!("Failed to read git_info.rs file with error: {e}.  Exiting build.rs ...",);
+                "".to_string()
+            }
+        };
         if git_info_contents.contains(&src_hash) {
             println!("Source directory hash is already in git_info.rs file.  No need to update.");
             return Ok(());
