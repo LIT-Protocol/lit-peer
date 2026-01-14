@@ -158,10 +158,11 @@ impl DatilTestnet {
 
         let pubkey_router_address = self.contracts.pubkey_router.address();
         info!(
-            "Voting for {} root keys on the Datil chain",
-            root_keys.len()
+            "Voting for {} root keys on the Datil chain: {:?}",
+            root_keys.len(),
+            root_keys
         );
-        for node_account in self.node_accounts.iter() {
+        for (idx, node_account) in self.node_accounts.iter().enumerate() {
             let sk = SigningKey::from_bytes(k256::FieldBytes::from_slice(
                 &node_account.node_address_private_key.0,
             ))
@@ -170,6 +171,7 @@ impl DatilTestnet {
             let client = Arc::new(SignerMiddleware::new(self.provider.clone(), node_wallet));
 
             let local_pubkey_router = PubkeyRouter::new(pubkey_router_address, client);
+            info!("Voting for root keys on the Datil chain for staker #{} with node address {:?}", idx + 1, node_account.node_address);
             let func = local_pubkey_router.vote_for_root_keys(staking_address, root_keys.clone());
             let tx = func.send().await.unwrap();
             let _receipt = tx.await.unwrap();
@@ -182,7 +184,7 @@ impl DatilTestnet {
 
     async fn load_state_cache(state_cache_path: String, chain_name: &str, rpc_url: &str) {
         let filename = state_cache_path.clone();
-        info!("Loading chain state from cache: {}", filename);
+        info!("Loading Datil chain state from cache: {}", filename);
 
         let path = Path::new(&filename);
         let mut file = File::open(&path).await.unwrap();
@@ -201,8 +203,8 @@ impl DatilTestnet {
             .await
             .unwrap();
         if !res {
-            panic!("Couldn't load chain state into Datil Anvil...");
+            panic!("Couldn't load Datil chain state into Anvil...");
         }
-        info!("Chain state loaded into Anvil at {}.", rpc_url);
+        info!("Datil chain state loaded into Anvil at {}.", rpc_url);
     }
 }
