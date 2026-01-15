@@ -12,7 +12,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 use std::time::SystemTime;
-use tracing::trace;
+use tracing::{error, trace, warn};
 use url::Url;
 
 use ethers::prelude::*;
@@ -43,8 +43,9 @@ pub struct StandardRpcHealthcheckPoller<'a> {
 
 /// Select the best RPC entry from a non-empty list.
 /// Order: healthy > higher priority > lower latency > lexicographically smaller URL.
-/// Entries missing in `latencies` are treated as unhealthy; if none are healthy, fall back to
-/// highest priority.
+/// Entries missing in `latencies` are treated as unhealthy; if none are healthy, fall back to the
+/// lexicographically smallest URL among default-priority (0) entries.
+/// If that also doesn't exist, print error and return the first entry.
 ///
 /// # Panics
 /// Panics if `entries` is empty. Callers must ensure the list is non-empty.
@@ -73,14 +74,28 @@ fn select_rpc_entry<'a>(
         return entry;
     }
 
-    // No healthy entries - fall back to highest priority regardless of health.
-    // Uses same comparator pattern as healthy path for consistency and readability.
-    entries
+    // No healthy entries. This happens when the healthcheck poller has not completed a cycle but the
+    // contract resolver immediately needs an RPC (e.g. prov bootstrap). In that case, all entries are
+    // default-unhealthy due to missing latency data. We must avoid picking a high-priority replica
+    // that may not exist; instead use the default-priority remote RPC that is most likely to be
+    // available and warn that fallback was used. This makes a priority-0 default entry mandatory
+    // for every chain that may be used during initialization (yellowstone, litChain)
+    let fallback_entry = entries
         .iter()
-        .min_by(|a, b| {
-            Reverse(a.priority()).cmp(&Reverse(b.priority())).then_with(|| a.url().cmp(b.url()))
-        })
-        .expect("entries is non-empty")
+        .filter(|entry| entry.priority() == 0)
+        .min_by(|a, b| a.url().cmp(b.url()));
+
+    if let Some(entry) = fallback_entry {
+        warn!(url = entry.url(), "RPC healthcheck fallback URL selected");
+        return entry;
+    }
+
+    let entry = entries.first().expect("entries is non-empty");
+    error!(
+        url = entry.url(),
+        "No default priority RPC provided; falling back to first entry"
+    );
+    entry
 }
 
 impl<'a> StandardRpcHealthcheckPoller<'a> {
@@ -752,19 +767,22 @@ mod tests {
     }
 
     #[test]
-    fn test_select_rpc_entry_falls_back_to_priority_when_none_healthy() {
-        let e_prio_1 =
-            RpcEntry::new(RpcKind::EVM, "https://p1".into(), None, None).with_priority(1);
-        let e_prio_2 =
-            RpcEntry::new(RpcKind::EVM, "https://p2".into(), None, None).with_priority(2);
+    fn test_select_rpc_entry_falls_back_to_default_priority_when_none_healthy() {
+        let e_default_zeta =
+            RpcEntry::new(RpcKind::EVM, "https://zeta".into(), None, None).with_priority(0);
+        let e_default_alpha =
+            RpcEntry::new(RpcKind::EVM, "https://alpha".into(), None, None).with_priority(0);
+        let e_high_prio =
+            RpcEntry::new(RpcKind::EVM, "https://high".into(), None, None).with_priority(10);
 
-        let entries = vec![e_prio_1.clone(), e_prio_2.clone()];
+        let entries = vec![e_default_zeta.clone(), e_high_prio.clone(), e_default_alpha.clone()];
         let mut latencies = im::hashmap::HashMap::new();
-        latencies.insert(e_prio_1.clone(), Latency::Unhealthy);
-        latencies.insert(e_prio_2.clone(), Latency::Unhealthy);
+        latencies.insert(e_default_zeta.clone(), Latency::Unhealthy);
+        latencies.insert(e_default_alpha.clone(), Latency::Unhealthy);
+        latencies.insert(e_high_prio.clone(), Latency::Unhealthy);
 
         let selected = select_rpc_entry(&entries, &latencies);
-        assert_eq!(selected.url(), e_prio_2.url());
+        assert_eq!(selected.url(), e_default_alpha.url());
     }
 
     #[test]
@@ -783,17 +801,33 @@ mod tests {
     }
 
     #[test]
-    fn test_select_rpc_entry_unknown_entries_fallback_respects_priority() {
-        let e_low_prio =
-            RpcEntry::new(RpcKind::EVM, "https://low".into(), None, None).with_priority(1);
+    fn test_select_rpc_entry_unknown_entries_fallback_prefers_default_priority() {
+        let e_default_beta =
+            RpcEntry::new(RpcKind::EVM, "https://beta".into(), None, None).with_priority(0);
+        let e_default_alpha =
+            RpcEntry::new(RpcKind::EVM, "https://alpha".into(), None, None).with_priority(0);
         let e_high_prio =
             RpcEntry::new(RpcKind::EVM, "https://high".into(), None, None).with_priority(10);
 
-        let entries = vec![e_low_prio.clone(), e_high_prio.clone()];
+        let entries = vec![e_default_beta.clone(), e_high_prio.clone(), e_default_alpha.clone()];
         let latencies = im::hashmap::HashMap::new();
 
         let selected = select_rpc_entry(&entries, &latencies);
-        assert_eq!(selected.url(), e_high_prio.url());
+        assert_eq!(selected.url(), e_default_alpha.url());
+    }
+
+    #[test]
+    fn test_select_rpc_entry_fallback_uses_first_when_no_default_priority() {
+        let e_first =
+            RpcEntry::new(RpcKind::EVM, "https://first".into(), None, None).with_priority(5);
+        let e_second =
+            RpcEntry::new(RpcKind::EVM, "https://second".into(), None, None).with_priority(10);
+
+        let entries = vec![e_first.clone(), e_second.clone()];
+        let latencies = im::hashmap::HashMap::new();
+
+        let selected = select_rpc_entry(&entries, &latencies);
+        assert_eq!(selected.url(), e_first.url());
     }
 
     #[test]
@@ -822,9 +856,9 @@ mod tests {
     #[test]
     fn test_select_rpc_entry_url_tiebreaker_in_fallback_path() {
         let e_alpha = RpcEntry::new(RpcKind::EVM, "https://alpha.example.com".into(), None, None)
-            .with_priority(5);
+            .with_priority(0);
         let e_zeta = RpcEntry::new(RpcKind::EVM, "https://zeta.example.com".into(), None, None)
-            .with_priority(5);
+            .with_priority(0);
 
         for entries in
             [vec![e_alpha.clone(), e_zeta.clone()], vec![e_zeta.clone(), e_alpha.clone()]]
@@ -837,7 +871,7 @@ mod tests {
             assert_eq!(
                 selected.url(),
                 e_alpha.url(),
-                "Fallback path should use same URL tie-breaking as healthy path"
+                "Fallback path should use lexicographically smallest default URL"
             );
         }
     }
