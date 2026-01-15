@@ -424,11 +424,7 @@ impl RpcResolver {
             config.chains().values().flat_map(|v| v.iter()).collect();
 
         latencies.retain(|e, _| rpc_entries.contains(e));
-        for (d, rpc_entry) in config.chains().values().flat_map(|v| {
-            v.iter().enumerate().rev().map(|(i, v)| {
-                (Duration::MAX.saturating_sub(Duration::from_secs(164 + i as u64)), v)
-            })
-        }) {
+        for rpc_entry in config.chains().values().flat_map(|v| v.iter()) {
             if !latencies.contains_key(rpc_entry) {
                 latencies.insert(rpc_entry.clone(), Latency::Unhealthy);
             }
