@@ -80,10 +80,8 @@ fn select_rpc_entry<'a>(
     // that may not exist; instead use the default-priority remote RPC that is most likely to be
     // available and warn that fallback was used. This makes a priority-0 default entry mandatory
     // for every chain that may be used during initialization (yellowstone, litChain)
-    let fallback_entry = entries
-        .iter()
-        .filter(|entry| entry.priority() == 0)
-        .min_by(|a, b| a.url().cmp(b.url()));
+    let fallback_entry =
+        entries.iter().filter(|entry| entry.priority() == 0).min_by(|a, b| a.url().cmp(b.url()));
 
     if let Some(entry) = fallback_entry {
         warn!(url = entry.url(), "RPC healthcheck fallback URL selected");
@@ -91,10 +89,7 @@ fn select_rpc_entry<'a>(
     }
 
     let entry = entries.first().expect("entries is non-empty");
-    error!(
-        url = entry.url(),
-        "No default priority RPC provided; falling back to first entry"
-    );
+    error!(url = entry.url(), "No default priority RPC provided; falling back to first entry");
     entry
 }
 
@@ -333,10 +328,8 @@ pub trait RpcHealthcheckPoller: Sync {
         ArcSwap::from(Arc::new({
             let resolver = rpc_resolver.load();
             let chains = resolver.config.chains();
-            let key_values = chains
-                .values()
-                .flat_map(|v| v.iter())
-                .map(|k| (k.clone(), Latency::Unhealthy));
+            let key_values =
+                chains.values().flat_map(|v| v.iter()).map(|k| (k.clone(), Latency::Unhealthy));
             let mut m = im::hashmap::HashMap::new();
             m.extend(key_values);
             m
