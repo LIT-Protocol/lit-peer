@@ -158,8 +158,9 @@ impl DatilTestnet {
 
         let pubkey_router_address = self.contracts.pubkey_router.address();
         info!(
-            "Voting for {} root keys on the Datil chain: {:?}",
+            "Voting for {} root keys on the pubkey router contract {:?} on the Datil chain: {:?}",
             root_keys.len(),
+            pubkey_router_address,
             root_keys
         );
         for (idx, node_account) in self.node_accounts.iter().enumerate() {
@@ -167,6 +168,8 @@ impl DatilTestnet {
                 &node_account.node_address_private_key.0,
             ))
             .unwrap();
+
+            info!("client private key: {:?}", &node_account.node_address_private_key.0);
             let node_wallet = LocalWallet::from(sk).with_chain_id(self.datil_chain.chain_id());
             let client = Arc::new(SignerMiddleware::new(self.provider.clone(), node_wallet));
 
