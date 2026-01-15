@@ -5,26 +5,27 @@
     "networkName": "yellowstone",
     "newOwnerAddress": "0x046BF7BB88E0e0941358CE3F5A765C9acddA7B9c",
     "newDomainWalletAdminAddress": "0x046BF7BB88E0e0941358CE3F5A765C9acddA7B9c",
-    "numberOfStakedAndJoinedWallets": 6,
+    "numberOfStakedAndJoinedWallets": 7,
     "numberOfStakedOnlyWallets": 0,
     "resolverContractAddress": "TBD",
     "useLitCoreDeploymentResolverContractAddress": true,
     "outputTempFilePath": "./deployed-lit-node-contracts-temp.json",
     "copyNodeConfigsToRustProject": false,
     "ipAddresses": [
-      "108.62.117.203:443",
-      "74.201.72.187:443",
-      "158.69.108.66:443",
-      "173.208.0.35:443",
-      "140.235.158.16:443",
-      "23.105.169.121:443"
+      "173.234.27.235:443",
+      "173.208.0.163:443",
+      "173.208.0.161:443",
+      "64.131.95.76:443",
+      "23.105.38.175:443",
+      "84.32.130.114:443",
+      "173.208.0.35:443"
     ],
     "keyTypes": [1, 2],
     "existingContracts": {
-      "stylusContractP256Address": "0x8ea150155c63b3a2e34b61409fb65e19f1bd48e7",
+      "stylusContractP256Address": "0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF",
       "stylusContractK256Address": "0x28ca4b9b360ed4f918081c921b8a299fd491e96a"
     },
-    "initialEpochState": 0
+    "initialEpochState": 4
   },
   "deployCoreConfig": {
     "environment": "dev",
