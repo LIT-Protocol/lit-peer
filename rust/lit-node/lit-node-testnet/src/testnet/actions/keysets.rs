@@ -213,7 +213,7 @@ impl Actions {
                 return Ok(pubkey_routing_data.key_set_identifier);
             }
         }
-        
+
         let datil_contracts = &self.datil_contracts;
         let pubkey_routing_data: Result<
             lit_blockchain_lite::contracts::pubkey_router::PubkeyRoutingData,

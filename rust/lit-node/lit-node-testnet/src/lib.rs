@@ -363,7 +363,9 @@ impl TestSetupBuilder {
 
         // if this is a datil testnet, set the root keys on the Datil chain ( we may have generated new root keys in the Naga setup )
         if self.setup_datil_keys {
-            info!("Over-writing the root keys on the Datil chain with the Datil keyset keys from the Naga chain.");
+            info!(
+                "Over-writing the root keys on the Datil chain with the Datil keyset keys from the Naga chain."
+            );
             let keyset_id = DEFAULT_DATIL_KEY_SET_NAME;
             let datil_root_keys = testnet
                 .actions()

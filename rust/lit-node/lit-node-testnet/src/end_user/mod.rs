@@ -92,9 +92,9 @@ impl EndUser {
         self.set_wallet_balance_with_provider(provider, amount)
             .await;
 
-            let provider = self.datil_provider.clone();
-            self.set_wallet_balance_with_provider(provider, amount)
-                .await;
+        let provider = self.datil_provider.clone();
+        self.set_wallet_balance_with_provider(provider, amount)
+            .await;
     }
 
     async fn set_wallet_balance_with_provider(&self, provider: Arc<Provider<Http>>, amount: &str) {
@@ -221,7 +221,6 @@ impl EndUser {
     pub fn datil_signing_provider(
         &self,
     ) -> Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
-
         Arc::new(SignerMiddleware::new(
             self.datil_provider.clone(),
             self.wallet.clone(),

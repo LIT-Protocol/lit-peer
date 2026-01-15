@@ -274,7 +274,8 @@ pub async fn test_pkp_hd_sign_generic_key() {
 pub async fn test_pkp_hd_sign_generic_key_datil() {
     crate::common::setup_logging();
     info!("Starting test: test_hd_pkp_sign");
-    let (testnet, validator_collection, mut end_user) = TestSetupBuilder::default().build().await;
+    let (testnet, validator_collection, mut end_user) =
+        TestSetupBuilder::default().force_deploy(true).build().await;
     let (pubkey, _, _) = end_user.new_datil_pkp().await.unwrap();
 
     let scheme = SigningScheme::EcdsaK256Sha256;

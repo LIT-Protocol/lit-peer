@@ -1,4 +1,6 @@
 pub mod actions;
+pub mod anvil_cache;
+pub mod cache_data_store;
 pub mod chain;
 pub mod contracts;
 pub mod contracts_repo;
@@ -11,9 +13,9 @@ use crate::testnet::contracts_repo::{
 };
 use crate::testnet::datil::DatilTestnet;
 
+use self::anvil_cache::check_and_load_test_state_cache;
 use self::chain::ChainTrait;
 use self::contracts::{ContractAddresses, Contracts, StakingContractGlobalConfig};
-use self::contracts_repo::check_and_load_test_state_cache;
 use self::node_config::{CustomNodeRuntimeConfig, generate_custom_node_runtime_config};
 use command_group::GroupChild;
 
@@ -87,7 +89,7 @@ pub struct TestnetBuilder {
     // FIXME: these parameters need to be refactor since conceptually don't belong to Testnet struct.
     custom_node_runtime_config: Option<CustomNodeRuntimeConfig>,
     is_fault_test: bool,
-    register_inactive_validators: bool,    
+    register_inactive_validators: bool,
     datil_testnet_state_cache_path: String,
     datil_testnet_contract_resolver_address: Address,
 }
@@ -105,7 +107,8 @@ impl Default for TestnetBuilder {
             is_fault_test: false,
             register_inactive_validators: false,
             // these values are hardcoded since the datil chain comes from a fixed file in the test_data directory.
-            datil_testnet_state_cache_path: "tests/test_data/datil_cache/datil-anvil-state.hex".to_string(),
+            datil_testnet_state_cache_path: "tests/test_data/datil_cache/datil-anvil-state.hex"
+                .to_string(),
             datil_testnet_contract_resolver_address: Address::from_slice(
                 &hex::decode("5fbdb2315678afecb367f032d93f642f64180aa3")
                     .expect("Failed to decode contract resolver address"),
@@ -378,7 +381,7 @@ impl Testnet {
 
     pub fn actions(&self) -> Actions {
         let contracts = self.contracts.as_ref().unwrap();
-        let datil_contracts =  self.datil_testnet.contracts.clone();
+        let datil_contracts = self.datil_testnet.contracts.clone();
 
         Actions::new(
             contracts.clone(),

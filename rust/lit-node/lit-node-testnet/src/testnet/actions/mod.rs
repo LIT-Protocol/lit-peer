@@ -93,7 +93,7 @@ impl Actions {
         &self.contracts
     }
 
-    pub fn datil_contracts(&self) -> &DatilContracts {            
+    pub fn datil_contracts(&self) -> &DatilContracts {
         &self.datil_contracts
     }
 
