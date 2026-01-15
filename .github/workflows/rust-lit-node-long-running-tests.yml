@@ -51,6 +51,9 @@ jobs:
     needs: build-if-needed
     runs-on: warp-ubuntu-latest-x64-8x # change to LargeRunner to run on github.  Change to self-hosted to run on our own runner.  Change to buildjet-8vcpu-ubuntu-2204 to run on buildjet with 8 cpus.  Change to 8core to use github 8 core runner
     timeout-minutes: 90
+    strategy:
+      matrix:
+        partition: [1, 2]
 
     services:
       anvil:
