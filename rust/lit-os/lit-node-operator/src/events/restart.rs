@@ -4,7 +4,7 @@ use crate::events::EventHandler;
 use lit_blockchain::contracts::host_commands::RestartFilter;
 use lit_cli_os::guest::instance::GuestInstanceItem;
 use std::process::Command;
-use tracing::{info, trace};
+use tracing::info;
 
 use ethers::types::{Address, U256};
 

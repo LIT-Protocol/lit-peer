@@ -38,7 +38,7 @@ use std::collections::BTreeSet;
 use std::iter::FromIterator;
 use std::sync::{Arc, Weak};
 use tonic::transport::Channel;
-use tracing::instrument;
+use tracing::{error, instrument};
 use xor_name::XorName;
 
 #[derive(Debug)]
@@ -111,11 +111,21 @@ impl PeerState {
                 .send()
                 .await
             {
-                let decoded_err = e
-                    .decode_contract_revert::<staking::StakingErrors>()
-                    .expect_or_err("Could not decode staking contract error")?;
+                // This error currently causes the node to fail startup (and typically be restarted by a supervisor like systemd).
+                let decoded_revert = e.decode_contract_revert::<staking::StakingErrors>();
+                error!(
+                    ?staker_address,
+                    ?attested_node_address,
+                    err = ?e,
+                    decoded_revert = ?decoded_revert,
+                    "Attested wallet registration failed"
+                );
+
+                let err_msg = decoded_revert
+                    .map(|d| format!("{:?}", d))
+                    .unwrap_or_else(|| format!("{:?}", e));
                 return Err(unexpected_err_code(
-                    format!("{:?}", decoded_err),
+                    format!("{err_msg:?}"),
                     EC::NodeBlockchainError,
                     Some("Could not register attested wallet".to_string()),
                 ));
@@ -205,11 +215,16 @@ impl PeerState {
     }
 
     pub fn realm_id(&self) -> u64 {
-        DataVersionReader::new_unchecked(&self.chain_data_config_manager.realm_id).as_u64()
+        DataVersionReader::read_field_unchecked(&self.chain_data_config_manager.realm_id, |realm| {
+            realm.as_u64()
+        })
     }
 
     pub fn shadow_realm_id(&self) -> u64 {
-        DataVersionReader::new_unchecked(&self.chain_data_config_manager.shadow_realm_id).as_u64()
+        DataVersionReader::read_field_unchecked(
+            &self.chain_data_config_manager.shadow_realm_id,
+            |realm| realm.as_u64(),
+        )
     }
 
     pub fn peer_id_in_current_epoch(&self) -> Result<PeerId> {
@@ -218,10 +233,10 @@ impl PeerState {
     }
 
     pub fn epoch(&self) -> u64 {
-        DataVersionReader::new_unchecked(
+        DataVersionReader::read_field_unchecked(
             &self.chain_data_config_manager.peers.peers_for_current_epoch,
+            |peers| peers.epoch_number,
         )
-        .epoch_number
     }
 
     #[instrument(level = "debug", skip(self))]
@@ -386,6 +401,33 @@ impl PeerState {
             .map(SimplePeer::from)
             .collect::<Vec<SimplePeer>>()
             .into()
+    }
+
+    pub fn self_peer(&self) -> Result<SimplePeer> {
+        if let Ok(p) = self
+            .peers_in_next_epoch_current_union_including_shadow()
+            .peer_at_address(&self.addr)
+        {
+            Ok(p)
+        } else {
+            let peer_id =
+                match PeerId::from_slice(&self.wallet_keys.verifying_key().to_sec1_bytes()) {
+                    Ok(p) => p,
+                    Err(e) => {
+                        warn!("Failed to convert verifying key to peer id: {:?}", e);
+                        PeerId::NOT_ASSIGNED
+                    }
+                };
+            Ok(SimplePeer {
+                socket_address: self.addr.clone(),
+                peer_id,
+                staker_address: self.staker_address,
+                key_hash: 0,
+                kicked: false,
+                version: crate::version::get_version(),
+                realm_id: U256::zero(),
+            })
+        }
     }
     // get a single Validator struct
     pub fn get_validator_from_node_address(&self, node_address: Address) -> Result<PeerValidator> {

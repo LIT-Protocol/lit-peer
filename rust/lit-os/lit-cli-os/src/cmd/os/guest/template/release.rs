@@ -69,6 +69,8 @@ pub(crate) enum NetworkName {
     DatilProto,
     #[value(name = "naga-prod")]
     NagaProd,
+    #[value(name = "naga-proto")]
+    NagaProto,
     #[value(name = "naga-staging")]
     NagaStaging,
     #[value(name = "naga-test")]
@@ -79,13 +81,14 @@ pub(crate) enum NetworkName {
     InternalDev,
 }
 
-impl NetworkName {
+impl std::fmt::Display for NetworkName {
     /// Converts the enum variant to its owned string representation.
-    pub fn to_string(&self) -> String {
-        self.to_possible_value()
-            .expect("All NetworkName variants have values")
-            .get_name()
-            .to_string()
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.to_possible_value().expect("All NetworkName variants have values").get_name()
+        )
     }
 }
 
@@ -109,13 +112,14 @@ pub(crate) struct GuestTemplateRelease {
     #[arg(long)]
     pub(crate) no_pinning: bool,
     /// GitHub repository in format owner/repo for publishing release information
-    #[arg(long, default_value = "LIT-Protocol/lit-assets")]
+    #[arg(long, default_value = "LIT-Protocol/lit-peer")]
     pub(crate) github_repo: String,
     /// The branch to commit release data to within the repository
     #[arg(long, default_value = "releases-info")]
     pub(crate) data_branch: String,
 }
 
+#[allow(clippy::collapsible_if)]
 pub(crate) async fn handle_cmd_os_guest_template_release(
     cfg: LitConfig, opts: CliGlobalOpts, args: GuestTemplateRelease,
 ) -> bool {
@@ -158,6 +162,7 @@ pub(crate) async fn handle_cmd_os_guest_template_release(
 ///    attempts to authenticate using the `DOCKER_HUB_USERNAME` and `DOCKER_HUB_PASSWORD`
 ///    environment variables.
 /// 3. Pushes the newly-tagged container image to the Docker Hub repository.
+#[allow(clippy::collapsible_if)]
 async fn do_publish_image(image_repo: &str, build_id: &str, release_id: &str) -> Result<()> {
     println!("📦 Pushing build environment image to Docker Hub");
 

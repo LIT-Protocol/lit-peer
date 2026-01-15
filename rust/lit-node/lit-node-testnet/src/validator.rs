@@ -27,6 +27,7 @@ use lit_core::utils::binary::bytes_to_hex;
 use lit_core::utils::toml::SimpleToml;
 use lit_logging::config::ENV_LOGGING_TIMESTAMP;
 use lit_node_core::NodeSet;
+use lit_node_core::response::GenericResponse;
 use url::Url;
 // use lit_node::p2p_comms::web::chatter_server::chatter::chatter_service_client::ChatterServiceClient;
 use rand::Rng;
@@ -36,7 +37,10 @@ use tracing::error;
 use tracing::trace;
 use tracing::{debug, info, warn};
 
-use lit_node_core::response::JsonSDKHandshakeResponse;
+use lit_node_core::response::SDKHandshakeResponseV0;
+
+use crate::DEFAULT_DATIL_KEY_SET_NAME;
+use crate::DEFAULT_KEY_SET_NAME;
 
 use super::testnet::NodeAccount;
 use super::testnet::Testnet;
@@ -45,7 +49,6 @@ use super::testnet::contracts::Contracts;
 use super::testnet::contracts_repo::node_configs_path;
 
 use lit_node_core::CurveType;
-const DEFAULT_KEY_SET_NAME: &str = "naga-keyset1";
 // this is a duplicated value
 pub static INTERNAL_CHATTER_PORT_OFFSET: u16 = 19608;
 
@@ -275,7 +278,10 @@ impl ValidatorCollectionBuilder {
                 "Restoring state to {:?} for realm {}",
                 initial_state, realm_id,
             );
-            testnet.actions().set_state(realm_id, initial_state).await;
+            testnet
+                .actions()
+                .set_state(realm_id, initial_state.clone())
+                .await;
         }
 
         let actions = testnet.actions();
@@ -288,10 +294,14 @@ impl ValidatorCollectionBuilder {
         }
 
         // wait for the root keys to be registered
+        info!(
+            "Waiting for root keys to be registered: {:?}",
+            self.keyset_configs
+        );
         if self.wait_for_root_keys {
             for keyset_config in &self.keyset_configs {
                 actions
-                    .wait_for_root_keys(realm_id, Some(keyset_config.identifier.clone()))
+                    .wait_for_root_keys(realm_id, &keyset_config.identifier)
                     .await;
             }
         }
@@ -301,6 +311,7 @@ impl ValidatorCollectionBuilder {
                 testnet.provider.clone(),
                 testnet.num_staked_and_joined_validators,
                 testnet.num_staked_only_validators,
+                &initial_state,
             )
             .await;
         }
@@ -320,6 +331,7 @@ impl ValidatorCollectionBuilder {
     }
 }
 
+#[derive(Clone)]
 pub struct ValidatorCollection {
     validators: Vec<Validator>,
     actions: Actions,
@@ -416,11 +428,11 @@ impl ValidatorCollection {
         std::cmp::max(3, (port_count * 2) / 3)
     }
 
-    pub fn get_validator_by_idx(&self, idx: usize) -> &Validator {
+    pub fn get_validator_by_index(&self, idx: usize) -> &Validator {
         &self.validators[idx]
     }
 
-    pub fn get_validator_by_idx_mut(&mut self, idx: usize) -> &mut Validator {
+    pub fn get_validator_by_index_as_mut(&mut self, idx: usize) -> &mut Validator {
         &mut self.validators[idx]
     }
 
@@ -430,6 +442,12 @@ impl ValidatorCollection {
 
     pub fn get_validator_by_port(&self, port: usize) -> Option<&Validator> {
         self.validators.iter().find(|v| v.node.port == port)
+    }
+
+    pub fn get_by_staker_address(&self, staker_address: &H160) -> Option<&Validator> {
+        self.validators
+            .iter()
+            .find(|v| v.account.staker_address == *staker_address)
     }
 
     pub async fn get_validator_epochs(&self) -> Result<Vec<(H160, u64)>> {
@@ -491,7 +509,7 @@ impl ValidatorCollection {
             // Check that all the nodes have synced up to chain.
             for keyset_config in &self.keyset_configs {
                 self.actions
-                    .wait_for_root_keys(realm_id, Some(keyset_config.identifier.clone()))
+                    .wait_for_root_keys(realm_id, &keyset_config.identifier)
                     .await;
             }
         }
@@ -540,7 +558,7 @@ impl ValidatorCollection {
         let realm_id = U256::from(realm_id);
         for keyset_config in &self.keyset_configs {
             self.actions
-                .wait_for_root_keys(realm_id, Some(keyset_config.identifier.clone()))
+                .wait_for_root_keys(realm_id, &keyset_config.identifier)
                 .await;
         }
 
@@ -564,7 +582,7 @@ impl ValidatorCollection {
 
         let mut futures = Vec::new();
         for port in ports {
-            futures.push(tokio::spawn(Node::wait_for_node_awake(port)));
+            futures.push(tokio::spawn(Node::wait_for_node_awake(port, true)));
         }
 
         let _l = join_all(futures).await;
@@ -722,7 +740,7 @@ impl ValidatorCollection {
         // they are assumed to already be online as its peers will be sending them messages)
         for idx in random_validators_to_join.clone() {
             let validator = self.validators[idx].borrow_mut();
-            validator.start_node(false, true).await?;
+            validator.start_node_with_option(false, true, false).await?;
         }
 
         // even after the nodes awake, we need to give the rest of the network time to recognize them.
@@ -793,7 +811,7 @@ impl ValidatorCollection {
             .unwrap()
             .into_iter()
             .filter(|f| ports.contains(&f.node.port))
-            .map(|v| v.node_address())
+            .map(|v| v.socket_address())
             .collect();
 
         let nodes_for_epoch2 = nodes_for_epoch.clone();
@@ -819,11 +837,11 @@ impl ValidatorCollection {
         // add the specific validators to the node set - this is generally used for fault tests, and remove from the list to choose the remaining nodes
         for validator in validators_to_include {
             node_set.push(NodeSet {
-                socket_address: validator.node_address(),
+                socket_address: validator.socket_address(),
                 value: 1,
             });
 
-            nodes_for_epoch.retain(|node| node != &validator.node_address());
+            nodes_for_epoch.retain(|node| node != &validator.socket_address());
         }
 
         for _ in 0..validators_to_add {
@@ -856,6 +874,17 @@ impl ValidatorCollection {
                 value: 1,
             })
             .collect()
+    }
+    pub async fn active_node_set(&self) -> Result<Vec<NodeSet>> {
+        Ok(self
+            .get_active_validators()
+            .await?
+            .iter()
+            .map(|v| NodeSet {
+                socket_address: v.public_address(),
+                value: 1,
+            })
+            .collect::<Vec<_>>())
     }
 }
 
@@ -926,14 +955,17 @@ impl ValidatorBuilder {
             node: NodeBuilder::new()
                 .realm_id(self.realm_id)
                 .binary_path(binary_path)
-                .build(node_config_file_path)
+                .build(
+                    node_config_file_path,
+                    self.node_binary_feature_flags.clone(),
+                )
                 .await?,
             account: node_account.clone(),
         });
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Validator {
     node: Node,
     account: NodeAccount,
@@ -963,11 +995,33 @@ impl Validator {
         self.node.ip.to_string() + ":" + &self.node.port.to_string()
     }
 
-    pub fn node_address(&self) -> String {
+    pub fn socket_address(&self) -> String {
         self.node.ip.to_string() + ":" + &self.node.port.to_string()
     }
 
+    pub fn port(&self) -> usize {
+        self.node.port
+    }
+
+    pub fn set_binary_path(&mut self, binary_path: String) {
+        self.node.binary_path = binary_path;
+    }
+
+    pub fn force_search_binary(&mut self) {
+        self.set_binary_path("".to_string());
+    }
+
     pub async fn start_node(&mut self, clean_slate: bool, wait_for_node_awake: bool) -> Result<()> {
+        self.start_node_with_option(clean_slate, wait_for_node_awake, true)
+            .await
+    }
+
+    pub async fn start_node_with_option(
+        &mut self,
+        clean_slate: bool,
+        wait_for_node_awake: bool,
+        require_valid_handshake: bool,
+    ) -> Result<()> {
         if clean_slate {
             // remove the validator-specific files
             trace!(
@@ -987,7 +1041,7 @@ impl Validator {
 
         if wait_for_node_awake {
             // check the node is awake
-            Node::wait_for_node_awake(self.node.port)
+            Node::wait_for_node_awake(self.node.port, require_valid_handshake)
                 .await
                 .map_err(|e| {
                     anyhow::anyhow!("Failed to wait for node to wake up with error: {}", e)
@@ -1192,7 +1246,7 @@ impl NodeBuilder {
         self
     }
 
-    pub async fn build(self, config_file: String) -> Result<Node> {
+    pub async fn build(self, config_file: String, feature_flags: String) -> Result<Node> {
         // if we're in CI, it's already built and in the root
         let path = self
             .binary_path
@@ -1211,6 +1265,7 @@ impl NodeBuilder {
             realm_id: self.realm_id.unwrap_or_else(|| U256::from(1)),
             process: None,
             config_file,
+            feature_flags,
             binary_path: path,
             log_mode: self.log_mode,
             extra_env_vars: self.extra_env_vars,
@@ -1224,6 +1279,7 @@ impl NodeBuilder {
 pub struct Node {
     process: Option<Child>,
     config_file: String,
+    feature_flags: String,
     binary_path: String,
     log_mode: String,
     extra_env_vars: Vec<(String, String)>,
@@ -1245,6 +1301,25 @@ impl std::fmt::Debug for Node {
             .field("ip", &self.ip)
             .field("realm_id", &self.realm_id)
             .finish()
+    }
+}
+
+impl Clone for Node {
+    fn clone(&self) -> Self {
+        tracing::warn!(
+            "Partially cloning a node - the process for the node is not cloned; it can not be stopped or started through this clone."
+        );
+        Self {
+            process: None,
+            config_file: self.config_file.clone(),
+            feature_flags: self.feature_flags.clone(),
+            binary_path: self.binary_path.clone(),
+            log_mode: self.log_mode.clone(),
+            extra_env_vars: self.extra_env_vars.clone(),
+            port: self.port,
+            ip: self.ip,
+            realm_id: self.realm_id,
+        }
     }
 }
 
@@ -1273,6 +1348,11 @@ impl Node {
         if self.process.is_some() {
             warn!("Node {} is already online", self.port);
             return Ok(());
+        }
+
+        if self.binary_path.is_empty() {
+            self.binary_path =
+                Self::get_binary(self.feature_flags.clone(), self.config_file.clone())?;
         }
 
         info!(
@@ -1334,13 +1414,23 @@ impl Node {
         Ok(())
     }
 
-    pub async fn wait_for_node_awake(port: usize) -> Result<()> {
+    pub async fn wait_for_node_awake(port: usize, require_valid_handshake: bool) -> Result<()> {
         // loop until the node is awake
         let mut node_awake = false;
+        let mut require_valid_handshake = require_valid_handshake;
+        let mut attempts = 0;
         while !node_awake {
-            node_awake = Self::check_node_awake(port).await?;
+            node_awake = Self::check_node_awake(port, require_valid_handshake).await?;
             if !node_awake {
                 tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
+                attempts += 1;
+                if attempts > 5 && require_valid_handshake {
+                    info!(
+                        "Node {} is not responding, but we've tried 5 times. Any handshake response will be accepted.",
+                        port
+                    );
+                    require_valid_handshake = false;
+                }
             }
         }
         info!("Node {} is responding", port);
@@ -1348,7 +1438,7 @@ impl Node {
         Ok(())
     }
 
-    pub async fn check_node_awake(port: usize) -> Result<bool> {
+    pub async fn check_node_awake(port: usize, require_valid_handshake: bool) -> Result<bool> {
         let response = Self::handshake(port).await;
 
         if response.is_err() {
@@ -1362,18 +1452,30 @@ impl Node {
 
         let response = response?;
 
-        if response.status() != 200 {
-            info!(
-                "Node {} is responding, but not ready. Status: {:?}",
-                port,
-                response.status()
-            );
-            return Ok(false);
+        let status_code = response.status();
+        if status_code != 200 {
+            if status_code == 400 && !require_valid_handshake {
+                info!(
+                    "Node {} is responding, but not ready. Status: {:?}.  For this test, assuming node is awake.",
+                    port, status_code
+                );
+                return Ok(true);
+            } else {
+                info!(
+                    "Node {} is responding, but not ready. Status: {:?}",
+                    port, status_code
+                );
+
+                return Ok(false);
+            }
         }
 
         let response_text = response.text().await?;
 
-        warn!("Response from node {}: {}", port, response_text);
+        warn!(
+            "Response from node {}: (Status:{}) {}",
+            port, status_code, response_text
+        );
 
         Ok(true)
     }
@@ -1381,7 +1483,9 @@ impl Node {
     async fn handshake(port: usize) -> Result<reqwest::Response, reqwest::Error> {
         let request_id = &uuid::Uuid::new_v4().to_string();
         let cmd = "/web/handshake".to_string();
-        let json_body = r#"{"clientPublicKey":"blah","challenge":"0x1234123412341234123412341234123412341234123412341234123412341234"}"#.to_string();
+        let json_body =
+            r#"{"clientPublicKey":"blah","challenge":"0x123412341234123412341234123412341234"}"#
+                .to_string();
         let client = reqwest::Client::new();
 
         client
@@ -1398,9 +1502,13 @@ impl Node {
         let response = Self::handshake(port).await?;
         let response_text = response.text().await?;
 
-        let handshake_json = serde_json::from_str::<JsonSDKHandshakeResponse>(&response_text)?;
-
-        Ok(handshake_json.epoch)
+        let handshake_json =
+            serde_json::from_str::<GenericResponse<SDKHandshakeResponseV0>>(&response_text)?;
+        let handshake_data = match handshake_json.data {
+            Some(data) => data,
+            None => return Err(anyhow::anyhow!("Failed to get handshake data")),
+        };
+        Ok(handshake_data.epoch)
     }
 
     fn get_node_config_from_file(config_file: &str) -> Result<SimpleToml> {
@@ -1643,13 +1751,10 @@ fn choose_random_nums_in_range(random_nums: usize, min: usize, max: usize) -> Ve
     random_nums_in_range
 }
 
-pub fn get_default_keyset_configs() -> Vec<KeySetConfig> {
-    vec![default_keyset_config()]
-}
 pub fn default_keyset_config() -> KeySetConfig {
     KeySetConfig {
         identifier: DEFAULT_KEY_SET_NAME.to_string(),
-        description: String::new(),
+        description: "Naga Key Set".to_string(),
         minimum_threshold: 3,
         monetary_value: 0,
         complete_isolation: false,
@@ -1658,6 +1763,23 @@ pub fn default_keyset_config() -> KeySetConfig {
         counts: std::iter::once(U256::from(1))
             .chain(CurveType::into_iter().skip(1).map(|_| U256::from(2)))
             .collect(),
-        recovery_party_members: Vec::new(),
+        recovery_session_id: Bytes::from_static(&[]),
+    }
+}
+
+pub fn default_datil_keyset_config(
+    chain_name: &str,
+    hex_contract_resolver_address: &str,
+) -> KeySetConfig {
+    KeySetConfig {
+        identifier: DEFAULT_DATIL_KEY_SET_NAME.to_string(),
+        description: format!("{}|{}", chain_name, hex_contract_resolver_address),
+        minimum_threshold: 3,
+        monetary_value: 0,
+        complete_isolation: false,
+        realms: vec![U256::from(1)],
+        curves: vec![CurveType::BLS.into(), CurveType::K256.into()],
+        counts: vec![U256::from(1), U256::from(2)],
+        recovery_session_id: Bytes::from_static(&[]),
     }
 }

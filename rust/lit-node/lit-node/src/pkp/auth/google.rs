@@ -355,7 +355,7 @@ pub async fn get_google_auth_from_access_token(
     google_access_token: &str,
     http_client: reqwest::Client,
 ) -> error::Result<models::AuthMethodResponse> {
-    let url = format! {"https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={:}", google_access_token};
+    let url = format! {"https://www.googleapis.com/oauth2/v1/tokeninfo?access_token={google_access_token:}"};
     let mut headers = reqwest::header::HeaderMap::new();
     headers.insert(
         "Accept",
@@ -405,7 +405,7 @@ pub async fn get_google_auth_from_access_token(
             .expect_or_err("error_description is not a string")
             .map_err(|e| parser_err(e, None))?;
         return Err(unexpected_err(
-            format!("Error from google: {}", body_val),
+            format!("Error from google: {body_val}"),
             None,
         ));
     }

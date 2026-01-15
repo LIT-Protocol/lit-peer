@@ -6,6 +6,7 @@ use std::sync::Arc;
 use std::time::SystemTime;
 use std::{fs, process::Stdio};
 
+use crate::testnet::actions::NetworkState;
 use crate::testnet::contracts::ContractAddresses;
 use crate::testnet::node_config::{CustomNodeRuntimeConfig, generate_custom_node_runtime_config};
 
@@ -21,8 +22,6 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::process::Command;
-use tokio::fs::File;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 use tracing::{debug, error, info, trace};
 
@@ -354,7 +353,7 @@ pub fn generate_wallet_and_add_as_alias() {
         "scripts/generate_wallet_and_add_as_alias.ts",
     ];
     info!(
-        "Running full command in {}: npx {}",
+        "Running full generate_wallet_and_add_as_alias command in {}: npx {}",
         LITCONTRACTPATH,
         args.join(" ")
     );
@@ -616,12 +615,18 @@ pub async fn check_and_load_test_state_cache(
     provider: Arc<Provider<Http>>,
     num_staked: usize,
     num_nodes: usize,
+    network_state: &NetworkState,
     custom_node_runtime_config: &CustomNodeRuntimeConfig,
     is_fault_test: bool,
 ) -> bool {
+    let network_state = match network_state {
+        NetworkState::Restore => "restore",
+        _ => "active",
+    };
+
     let tar_name = format!(
-        "./tests/test_state_cache/{}_{}.tar.gz",
-        num_staked, num_nodes
+        "./tests/test_state_cache/{}_{}_{}.tar.gz",
+        num_staked, num_nodes, network_state
     );
     if !Path::new(&tar_name).exists() {
         info!(
@@ -635,29 +640,45 @@ pub async fn check_and_load_test_state_cache(
     trace!("Block number before loading chain state: {}", block_number);
 
     let root = "./tests/test_state_cache";
-    let tar_name = format!("./{}/{}_{}.tar.gz", root, num_staked, num_nodes);
+    let tar_name = format!(
+        "./{}/{}_{}_{}.tar.gz",
+        root, num_staked, num_nodes, network_state
+    );
 
     lit_core::utils::tar::read_tar_gz_file(&tar_name, &root).expect("Failed to read tar.gz file");
-    let dir_name = format!("./tests/test_state_cache/{}_{}", num_staked, num_nodes);
+    let dir_name = format!(
+        "./tests/test_state_cache/{}_{}_{}",
+        num_staked, num_nodes, network_state
+    );
     let dir = Path::new(&dir_name);
 
     info!("Loading test state from cache: {:?}", dir);
 
     let filename = "anvil_state.hex".to_string();
     let path = dir.join(&filename);
-    let mut file = File::open(&path).await.unwrap();
-    let mut contents = String::new();
-    file.read_to_string(&mut contents).await.unwrap();
 
-    let params: Vec<String> = vec![contents];
-    let res: bool = provider
-        .request("anvil_loadState", params.clone())
-        .await
-        .unwrap();
-    if !res {
-        error!("Couldn't load chain state into anvil...");
+    if !path.exists() {
+        error!("anvil_state.hex file does not exist in the cache");
         return false;
-    }
+    };
+
+    let contents = match fs::read_to_string(&path) {
+        Ok(contents) => contents,
+        Err(e) => {
+            error!("Failed to read anvil_state.hex file: {}", e);
+            return false;
+        }
+    };
+
+    info!("Contents of anvil_state.hex length: {} ", contents.len());
+    let params: Vec<String> = vec![contents];
+    let res: Result<bool, ProviderError> =
+        provider.request("anvil_loadState", params.clone()).await;
+
+    if let Err(e) = res {
+        error!("Failed to load chain state into anvil: {}", e);
+        return false;
+    };
 
     let block_number = provider.get_block_number().await.unwrap();
     trace!("Block number after loading chain state: {}", block_number);
@@ -741,15 +762,21 @@ pub async fn save_to_test_state_cache(
     provider: Arc<Provider<Http>>,
     num_staked_and_joined_validators: usize,
     num_staked_only_validators: usize,
+    network_state: &NetworkState,
 ) {
+    let network_state = match network_state {
+        NetworkState::Restore => "restore",
+        _ => "active",
+    };
+
     let temp_dir_name = format!(
-        "./tests/test_state_cache/{}_{}",
-        num_staked_and_joined_validators, num_staked_only_validators
+        "./tests/test_state_cache/{}_{}_{}",
+        num_staked_and_joined_validators, num_staked_only_validators, network_state
     );
 
     let tar_name = format!(
-        "./tests/test_state_cache/{}_{}.tar.gz",
-        num_staked_and_joined_validators, num_staked_only_validators
+        "./tests/test_state_cache/{}_{}_{}.tar.gz",
+        num_staked_and_joined_validators, num_staked_only_validators, network_state
     );
 
     let dir = Path::new(&temp_dir_name);
@@ -771,9 +798,7 @@ pub async fn save_to_test_state_cache(
 
     let filename = "anvil_state.hex".to_string();
     let path = dir.join(&filename);
-    let mut file = File::create(&path).await.unwrap();
-    file.write_all(res.as_bytes()).await.unwrap();
-    file.sync_all().await.unwrap();
+    fs::write(&path, res).expect("Failed to write anvil_state.hex file");
 
     // also save the node configs
     info!("Getting node configs to cache...");

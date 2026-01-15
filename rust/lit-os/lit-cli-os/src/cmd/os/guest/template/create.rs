@@ -164,6 +164,7 @@ pub(crate) async fn handle_cmd_os_guest_template_create(
     }
 }
 
+#[allow(clippy::collapsible_if)]
 pub(crate) async fn do_os_guest_template_create(
     cfg: &LitConfig, opts: &CliGlobalOpts, build_type: GuestType,
     common_args: GuestTemplateCreateArgsCommon, _prov_args: Option<GuestTemplateCreateArgsProv>,
@@ -318,7 +319,7 @@ pub(crate) async fn do_os_guest_template_create(
                 network_name: None,
                 no_pinning: common_args.release_no_pinning,
                 push_only: false,
-                github_repo: "LIT-Protocol/lit-assets".to_string(),
+                github_repo: "LIT-Protocol/lit-peer".to_string(),
                 data_branch: "releases-info".to_string(),
             };
 

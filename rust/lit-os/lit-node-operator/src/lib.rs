@@ -5,7 +5,7 @@ pub mod host_commands_listener;
 
 use lit_cli_os::guest::instance::{GuestInstanceItem, find_guest_instances};
 use lit_core::config::LitConfig;
-use tracing::{error, trace};
+use tracing::{debug, error};
 
 pub fn get_instance_item(cfg: &LitConfig) -> GuestInstanceItem {
     match find_guest_instances(cfg, Some("node"), None, None) {

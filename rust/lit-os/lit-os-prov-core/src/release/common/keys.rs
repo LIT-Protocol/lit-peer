@@ -140,7 +140,7 @@ pub fn extract_host_identity_fingerprint(release_dir: &Path) -> Result<Vec<u8>> 
 }
 
 pub fn write_identity_files(
-    dest_dir: &Path, guest_vcpu_type: GuestCpuType, guest_vcpus: u16, assets: &Vec<String>,
+    dest_dir: &Path, guest_vcpu_type: GuestCpuType, guest_vcpus: u16, assets: &[String],
 ) -> Result<()> {
     let mut dest = dest_dir.to_path_buf();
     dest.push("id");
@@ -158,7 +158,7 @@ pub fn write_identity_files(
                     "failed to write AMD SEV-SNP identity files, assets len < 2", None,
                 ));
             }
-            let id_block = assets.get(0).expect_or_err("expected assets.0 to exist")?;
+            let id_block = assets.first().expect_or_err("expected assets.0 to exist")?;
             let auth_info = assets.get(1).expect_or_err("expected assets.1 to exist")?;
 
             let mut auth_info_dest = dest.clone();

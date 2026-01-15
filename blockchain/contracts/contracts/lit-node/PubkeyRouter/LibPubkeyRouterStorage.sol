@@ -32,6 +32,7 @@ library LibPubkeyRouterStorage {
         bytes pubkey;
         uint256 keyType; // 1 = BLS, 2 = ECDSA.  Not doing this in an enum so we can add more keytypes in the future without redeploying.
         bytes32 derivedKeyId;
+        string keySetIdentifier;
     }
 
     struct VoteToRegisterRootKey {
