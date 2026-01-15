@@ -335,9 +335,8 @@ pub trait RpcHealthcheckPoller: Sync {
             let chains = resolver.config.chains();
             let key_values = chains
                 .values()
-                .flat_map(|v| v.iter().rev())
-                .zip((0..).map(|t| Duration::MAX.saturating_sub(Duration::from_secs(t))))
-                .map(|(k, v)| (k.clone(), Latency::Healthy(v)));
+                .flat_map(|v| v.iter())
+                .map(|k| (k.clone(), Latency::Unhealthy));
             let mut m = im::hashmap::HashMap::new();
             m.extend(key_values);
             m
@@ -438,7 +437,7 @@ impl RpcResolver {
             })
         }) {
             if !latencies.contains_key(rpc_entry) {
-                latencies.insert(rpc_entry.clone(), Latency::Healthy(d));
+                latencies.insert(rpc_entry.clone(), Latency::Unhealthy);
             }
         }
 
