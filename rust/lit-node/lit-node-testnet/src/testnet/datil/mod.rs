@@ -14,7 +14,6 @@ use ethers::signers::LocalWallet;
 use ethers::signers::Signer;
 use ethers::signers::Wallet;
 use ethers::types::Address;
-use ethers::types::U256;
 use lit_blockchain::resolver::rpc::ENDPOINT_MANAGER;
 use lit_blockchain::resolver::rpc::RpcHealthcheckPoller;
 use lit_blockchain_lite::contracts::pubkey_router::PubkeyRouter;
@@ -26,7 +25,6 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::fs::File;
 use tokio::io::AsyncReadExt;
-use tracing::error;
 use tracing::info;
 
 use crate::testnet::datil::contracts::DatilContracts;
@@ -54,8 +52,6 @@ impl DatilTestnet {
         contract_resolver_address: Address,
     ) -> Self {
         let datil_chain = Box::new(Anvil::new(total_num_validators, true)) as Box<dyn ChainTrait>;
-        // let is_already_running = is_anvil_running(&datil_chain.rpc_url()).await;
-
         let process = datil_chain.start_chain().await;
 
         let mut cache_data_store = CacheDataStore::from_file_or_new()
@@ -105,32 +101,11 @@ impl DatilTestnet {
 
     pub fn shutdown(&mut self) {
         self.process.kill().unwrap_or_else(|e| {
-            panic!(
-                "Datil testnet process {:?} couldn't be killed: {}",
-                self.process, e
-            )
+            // panic!(
+            //     "Datil testnet process {:?} couldn't be killed: {}",
+            //     self.process, e
+            // )
         });
-    }
-
-    async fn revert_to_snapshot(test_state_cache_path: String, provider: &Provider<Http>) {
-        let path = test_state_cache_path.replace("datil-anvil-state.hex", "anvil-snapshot-id.json");
-        let mut file = File::open(path).await.unwrap();
-        let mut contents: String = String::new();
-        file.read_to_string(&mut contents).await.unwrap();
-        let snapshot_id: U256 = serde_json::from_str(&contents).unwrap();
-        let params: Vec<String> = vec![snapshot_id.to_string()];
-        // revert the chain state to the snapshot id
-        let res: bool = provider
-            .request("evm_revert", params.clone())
-            .await
-            .unwrap();
-        if !res {
-            panic!(
-                "Couldn't revert Datil chain state to snapshot id: {}",
-                snapshot_id
-            );
-        }
-        info!("Datil chain state reverted to snapshot id: {}", snapshot_id);
     }
 
     // load the node accounts from the datil cache - matches the secrets in the cached state dump file.
@@ -177,7 +152,8 @@ impl DatilTestnet {
         &self,
         src_root_keys: Vec<lit_blockchain::contracts::pubkey_router::RootKey>,
     ) {
-        // convert the root keys to the Datil ABI format
+        let staking_address = self.contracts.staking.address();
+
         let datil_root_keys: Vec<RootKey> = src_root_keys
             .iter()
             .map(|rk| RootKey {
@@ -186,46 +162,16 @@ impl DatilTestnet {
             })
             .collect();
 
-        let staking_address = self.contracts.staking.address();
-
-        let existing_root_keys = self
-            .contracts
-            .pubkey_router
-            .get_root_keys(staking_address)
-            .await
-            .unwrap_or_default();
-        info!(
-            "Existing root keys on the Datil chain: {:?}",
-            existing_root_keys
-        );
-
-        let mut all_root_keys_exist = true;
-        for datil_root_key in &datil_root_keys {
-            if existing_root_keys.contains(datil_root_key) {
-                info!(
-                    "Root key already exists on the Datil chain: {:?}",
-                    datil_root_key
-                );
-            } else {
-                all_root_keys_exist = false;
-                info!(
-                    "Root key does not exist on the Datil chain: {:?}",
-                    datil_root_key
-                );
-            }
-        }
-
-        if all_root_keys_exist {
-            info!(
-                "All root keys already exist on the Datil chain.  Skipping reset and vote of new root keys."
-            );
-            return;
-        }
+        let node_addresses: Vec<Address> = self
+            .node_accounts
+            .iter()
+            .map(|na| na.node_address)
+            .collect();
 
         let func = self
             .contracts
             .pubkey_router
-            .admin_reset_root_keys(staking_address);
+            .admin_reset_root_keys(staking_address, node_addresses);
         let tx = func.send().await.unwrap();
         let _receipt = tx.await.unwrap();
         info!("Called admin_reset_root_keys on the Datil chain to clear root keys");
@@ -273,10 +219,6 @@ impl DatilTestnet {
             ))
             .unwrap();
 
-            info!(
-                "client private key: {:?}",
-                &node_account.node_address_private_key.0
-            );
             let node_wallet = LocalWallet::from(sk).with_chain_id(self.datil_chain.chain_id());
             let client = Arc::new(SignerMiddleware::new(self.provider.clone(), node_wallet));
 
@@ -291,9 +233,11 @@ impl DatilTestnet {
             let tx = match func.send().await {
                 Ok(tx) => tx,
                 Err(e) => {
+                    let revert_reason =
+                        lit_blockchain_lite::utils::decode_revert(&e, local_pubkey_router.abi());
                     panic!(
-                        "Failed to send vote for root keys on the Datil chain: {:?}",
-                        e
+                        "Failed to send vote for root keys on the Datil chain: {:?}.  Error: {:?}",
+                        revert_reason, e,
                     );
                 }
             };
