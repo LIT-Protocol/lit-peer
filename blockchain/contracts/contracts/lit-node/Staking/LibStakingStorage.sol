@@ -227,11 +227,11 @@ library LibStakingStorage {
         /// The default key set identifier to use if the realm has more than one
         /// This allows the realm to operate without asking this value from clients
         /// for some operations like session keys and sign as action
-        string defaultKeySet;
     }
 
     struct GlobalConfig {
         uint256 tokenRewardPerTokenPerEpoch;
+        uint256[] keyTypes;
         uint256 minimumValidatorCount;
         /// @notice Keep this the same as the epoch length for now.
         uint256 rewardEpochDuration;

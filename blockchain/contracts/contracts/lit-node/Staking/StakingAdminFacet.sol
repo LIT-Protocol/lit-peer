@@ -357,8 +357,7 @@ contract StakingAdminFacet is StakingCommon {
             maxPresignConcurrency: 2,
             rpcHealthcheckEnabled: true,
             minEpochForRewards: 3,
-            permittedValidatorsOn: false,
-            defaultKeySet: ""
+            permittedValidatorsOn: false
         });
         uint256 epochLengthSeconds = 1 seconds;
 

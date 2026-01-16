@@ -139,13 +139,13 @@ pub fn Validators() -> impl IntoView {
                 let realms2 = realms.clone();
                 realms2.iter().map(|realm|  
                     view! {
-                        <div class="flex rounded outline outline-gray-400 p-3 ml-2 items-center">
+                        <div class="flex rounded outline outline-gray-300 p-2 ml-2 items-center">
                             <div class="flex-1 text-lg font-bold">Realm # {realm.id}</div>
                             <div class="flex-1 text-right pr-2"><NetworkStatus realm_id=realm.id as u64 /></div>
                         </div>
                         <div class="flex flex-wrap gap-2 mt-4">
-                            <div class="flex-1 outline outline-gray-400 rounded p-2 ml-2">
-                                <div class="font-bold border-b border-gray-400 pb-2">Current Nodes</div>                                
+                            <div class="flex-1 outline outline-gray-300 rounded p-2 ml-2">
+                                <div class="font-bold border-b border-color: var(--color-green-400) pb-2">Current Nodes</div>                                
                                 <table class="table w-full">
                                     <TableContent
                                         selection=Selection::Single(selected_index_current)

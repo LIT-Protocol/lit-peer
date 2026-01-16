@@ -51,8 +51,14 @@ contract Staking {
 
         // Global Configuration values across all realms
         // Most of this is related to staking / delegation
+
+        uint256[] memory keyTypes = new uint256[](2);
+        keyTypes[0] = uint256(1); // BLS
+        keyTypes[1] = uint256(2); // ECDSA
+
         s.globalConfig[0] = LibStakingStorage.GlobalConfig({
             tokenRewardPerTokenPerEpoch: (10 ** 18) / 20, // 18 decimal places in token
+            keyTypes: keyTypes,
             rewardEpochDuration: 1 hours,
             maxTimeLock: 4 * 365 days,
             minTimeLock: 90 days,

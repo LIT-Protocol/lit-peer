@@ -124,7 +124,7 @@ pub async fn get_realm_config(realm_id: ethers::types::U256) -> Vec<NetworkConfi
         },
         NetworkConfig {
             name: "default_key_set".to_string(),
-            value: config.default_key_set.to_string(),
+            value:  config.default_key_set.to_string(),
         },
     ];
     rows

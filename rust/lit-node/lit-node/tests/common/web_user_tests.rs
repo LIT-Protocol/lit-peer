@@ -228,7 +228,9 @@ pub async fn test_encryption_decryption_session_sigs(
     })
     .unwrap();
 
-    let node_set = validator_collection.partially_random_threshold_nodeset(validators_to_include).await;
+    let node_set = validator_collection
+        .partially_random_threshold_nodeset(validators_to_include)
+        .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     // Get session sig for auth
     let session_sigs = get_session_sigs_for_auth(

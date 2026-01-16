@@ -636,11 +636,6 @@
               "internalType": "bool",
               "name": "permittedValidatorsOn",
               "type": "bool"
-            },
-            {
-              "internalType": "string",
-              "name": "defaultKeySet",
-              "type": "string"
             }
           ],
           "internalType": "struct LibStakingStorage.RealmConfig",
@@ -1396,6 +1391,11 @@
               "internalType": "uint256",
               "name": "tokenRewardPerTokenPerEpoch",
               "type": "uint256"
+            },
+            {
+              "internalType": "uint256[]",
+              "name": "keyTypes",
+              "type": "uint256[]"
             },
             {
               "internalType": "uint256",
@@ -5917,6 +5917,11 @@
               "type": "uint256"
             },
             {
+              "internalType": "uint256[]",
+              "name": "keyTypes",
+              "type": "uint256[]"
+            },
+            {
               "internalType": "uint256",
               "name": "minimumValidatorCount",
               "type": "uint256"
@@ -6566,11 +6571,6 @@
               "internalType": "bool",
               "name": "permittedValidatorsOn",
               "type": "bool"
-            },
-            {
-              "internalType": "string",
-              "name": "defaultKeySet",
-              "type": "string"
             }
           ],
           "internalType": "struct LibStakingStorage.RealmConfig",

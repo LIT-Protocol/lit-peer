@@ -3539,6 +3539,11 @@ abi_functions.append(&mut __abi_functions_4());
                                     kind: ::ethers::core::abi::ethabi::ParamType::Tuple(
                                         ::std::vec![
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                            ::ethers::core::abi::ethabi::ParamType::Array(
+                                                ::std::boxed::Box::new(
+                                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                                ),
+                                            ),
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
@@ -4830,7 +4835,6 @@ abi_functions.append(&mut __abi_functions_4());
                                             ::ethers::core::abi::ethabi::ParamType::Bool,
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                             ::ethers::core::abi::ethabi::ParamType::Bool,
-                                            ::ethers::core::abi::ethabi::ParamType::String,
                                         ],
                                     ),
                                     internal_type: ::core::option::Option::Some(
@@ -5121,6 +5125,11 @@ abi_functions.append(&mut __abi_functions_4());
                                     kind: ::ethers::core::abi::ethabi::ParamType::Tuple(
                                         ::std::vec![
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                            ::ethers::core::abi::ethabi::ParamType::Array(
+                                                ::std::boxed::Box::new(
+                                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                                ),
+                                            ),
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
@@ -5689,7 +5698,6 @@ abi_functions.append(&mut __abi_functions_4());
                                             ::ethers::core::abi::ethabi::ParamType::Bool,
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                             ::ethers::core::abi::ethabi::ParamType::Bool,
-                                            ::ethers::core::abi::ethabi::ParamType::String,
                                         ],
                                     ),
                                     internal_type: ::core::option::Option::Some(
@@ -10327,13 +10335,13 @@ abi_errors.append(&mut __abi_errors_2());
                 .method_hash([68, 14, 141, 34], (reason, config))
                 .expect("method not found (this should never happen)")
         }
-        ///Calls the contract's `setConfig` (0xd94c412d) function
+        ///Calls the contract's `setConfig` (0x077b0d40) function
         pub fn set_config(
             &self,
             new_config: GlobalConfig,
         ) -> ::ethers::contract::builders::ContractCall<M, ()> {
             self.0
-                .method_hash([217, 76, 65, 45], (new_config,))
+                .method_hash([7, 123, 13, 64], (new_config,))
                 .expect("method not found (this should never happen)")
         }
         ///Calls the contract's `setContractResolver` (0xf95d71b1) function
@@ -10483,14 +10491,14 @@ abi_errors.append(&mut __abi_errors_2());
                 .method_hash([116, 162, 44, 81], (realm_id, permitted_validators_on))
                 .expect("method not found (this should never happen)")
         }
-        ///Calls the contract's `setRealmConfig` (0x006d27b6) function
+        ///Calls the contract's `setRealmConfig` (0x7d35690f) function
         pub fn set_realm_config(
             &self,
             realm_id: ::ethers::core::types::U256,
             new_config: RealmConfig,
         ) -> ::ethers::contract::builders::ContractCall<M, ()> {
             self.0
-                .method_hash([0, 109, 39, 182], (realm_id, new_config))
+                .method_hash([125, 53, 105, 15], (realm_id, new_config))
                 .expect("method not found (this should never happen)")
         }
         ///Calls the contract's `setTokenTotalSupplyStandIn` (0xe941a733) function
@@ -17783,7 +17791,7 @@ abi_errors.append(&mut __abi_errors_2());
         pub reason: ::ethers::core::types::U256,
         pub config: ComplaintConfig,
     }
-    ///Container type for all input parameters for the `setConfig` function with signature `setConfig((uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))` and selector `0xd94c412d`
+    ///Container type for all input parameters for the `setConfig` function with signature `setConfig((uint256,uint256[],uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))` and selector `0x077b0d40`
     #[derive(
         Clone,
         ::ethers::contract::EthCall,
@@ -17793,7 +17801,7 @@ abi_errors.append(&mut __abi_errors_2());
     )]
     #[ethcall(
         name = "setConfig",
-        abi = "setConfig((uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))"
+        abi = "setConfig((uint256,uint256[],uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))"
     )]
     pub struct SetConfigCall {
         pub new_config: GlobalConfig,
@@ -18092,7 +18100,7 @@ abi_errors.append(&mut __abi_errors_2());
         pub realm_id: ::ethers::core::types::U256,
         pub permitted_validators_on: bool,
     }
-    ///Container type for all input parameters for the `setRealmConfig` function with signature `setRealmConfig(uint256,(uint256,uint256,uint256,uint256,uint256,bool,uint256,bool,string))` and selector `0x006d27b6`
+    ///Container type for all input parameters for the `setRealmConfig` function with signature `setRealmConfig(uint256,(uint256,uint256,uint256,uint256,uint256,bool,uint256,bool))` and selector `0x7d35690f`
     #[derive(
         Clone,
         ::ethers::contract::EthCall,
@@ -18107,7 +18115,7 @@ abi_errors.append(&mut __abi_errors_2());
     )]
     #[ethcall(
         name = "setRealmConfig",
-        abi = "setRealmConfig(uint256,(uint256,uint256,uint256,uint256,uint256,bool,uint256,bool,string))"
+        abi = "setRealmConfig(uint256,(uint256,uint256,uint256,uint256,uint256,bool,uint256,bool))"
     )]
     pub struct SetRealmConfigCall {
         pub realm_id: ::ethers::core::types::U256,
@@ -23015,7 +23023,7 @@ abi_errors.append(&mut __abi_errors_2());
         pub start_time: ::ethers::core::types::U256,
         pub last_advance_vote_time: ::ethers::core::types::U256,
     }
-    ///`GlobalConfig(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)`
+    ///`GlobalConfig(uint256,uint256[],uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)`
     #[derive(
         Clone,
         ::ethers::contract::EthAbiType,
@@ -23030,6 +23038,7 @@ abi_errors.append(&mut __abi_errors_2());
     )]
     pub struct GlobalConfig {
         pub token_reward_per_token_per_epoch: ::ethers::core::types::U256,
+        pub key_types: ::std::vec::Vec<::ethers::core::types::U256>,
         pub minimum_validator_count: ::ethers::core::types::U256,
         pub reward_epoch_duration: ::ethers::core::types::U256,
         pub max_time_lock: ::ethers::core::types::U256,
@@ -23119,7 +23128,7 @@ abi_errors.append(&mut __abi_errors_2());
         pub node_address: ::ethers::core::types::Address,
         pub pub_key: UncompressedK256Key,
     }
-    ///`RealmConfig(uint256,uint256,uint256,uint256,uint256,bool,uint256,bool,string)`
+    ///`RealmConfig(uint256,uint256,uint256,uint256,uint256,bool,uint256,bool)`
     #[derive(
         Clone,
         ::ethers::contract::EthAbiType,
@@ -23141,7 +23150,6 @@ abi_errors.append(&mut __abi_errors_2());
         pub rpc_healthcheck_enabled: bool,
         pub min_epoch_for_rewards: ::ethers::core::types::U256,
         pub permitted_validators_on: bool,
-        pub default_key_set: ::std::string::String,
     }
     ///`RewardEpoch(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool)`
     #[derive(
