@@ -3,7 +3,6 @@ pub mod backup_long;
 pub mod signing;
 // pub mod epoch_change;
 pub mod backup;
-pub mod edge_tests;
 pub mod epoch_change_long;
 pub mod lit_actions;
 pub mod session_sigs;
