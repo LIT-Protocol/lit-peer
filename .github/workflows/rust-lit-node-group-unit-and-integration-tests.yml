@@ -55,9 +55,6 @@ jobs:
     needs: build-if-needed
     runs-on: warp-ubuntu-latest-x64-8x # change to LargeRunner to run on github.  Change to self-hosted to run on our own runner.  Change to buildjet-8vcpu-ubuntu-2204 to run on buildjet with 8 cpus
     timeout-minutes: 30
-    strategy:
-      matrix:
-        partition: [1, 2]
 
     services:
       anvil:
@@ -99,7 +96,7 @@ jobs:
       - name: Setup local files for testing
         run: make setup-local-files
       - name: Run unit tests (lib and binaries)
-        run: 'cargo nextest run --final-status-level pass --profile unit-tests --lib --bin lit_node --no-fail-fast --partition count:${{ matrix.partition }}/2 --nocapture --'
+        run: 'cargo nextest run --final-status-level pass --profile unit-tests --lib --bin lit_node --no-fail-fast --nocapture --'
 
   # after the standard build is done, run the integration tests
   lit_node_integration_tests:
