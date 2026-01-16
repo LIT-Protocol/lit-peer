@@ -61,7 +61,6 @@ impl DatilTestnet {
         if cache_data_store.datil_state_is_loaded {
             info!("Datil chain state is already loaded.  Skipping load.");
         } else {
-            info!("Loading Datil chain state from cache: {}", state_cache_path);
             Self::load_state_cache(
                 state_cache_path.clone(),
                 datil_chain.chain_name(),

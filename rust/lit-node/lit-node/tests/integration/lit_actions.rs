@@ -97,8 +97,11 @@ pub mod litactions {
     ) {
         setup_logging();
 
-        let (testnet, validator_collection, mut end_user) =
-            TestSetupBuilder::default().build().await;
+        let force_deploy = file_name.contains("sign_child_lit_action");
+        let (testnet, validator_collection, mut end_user) = TestSetupBuilder::default()
+            .force_deploy(force_deploy)
+            .build()
+            .await;
 
         lit_action_from_file_preloaded(
             use_datil_pkp,
