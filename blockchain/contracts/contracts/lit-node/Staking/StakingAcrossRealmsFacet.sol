@@ -197,5 +197,6 @@ contract StakingAcrossRealmsFacet {
         config.rpcHealthcheckEnabled = newConfig.rpcHealthcheckEnabled;
         config.minEpochForRewards = newConfig.minEpochForRewards;
         config.permittedValidatorsOn = newConfig.permittedValidatorsOn;
+        config.defaultKeySet = newConfig.defaultKeySet;
     }
 }

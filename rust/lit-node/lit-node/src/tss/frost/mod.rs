@@ -4,6 +4,7 @@ use crate::peers::peer_state::models::SimplePeer;
 use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::hd_keys::get_derived_keyshare;
 use crate::tss::common::traits::signable::Signable;
+use crate::tss::common::utils::validate_and_get_self_peer;
 use crate::{
     error::Result,
     metrics,
@@ -85,7 +86,10 @@ impl FrostState {
 
         // setup signing protocol
         let mut rng = rand::rngs::OsRng;
-        let self_peer = peers.peer_at_address(&self.state.addr)?;
+
+        let own_staker_address = self.state.peer_state.hex_staker_address();
+        let self_peer = validate_and_get_self_peer(peers, &self.state.addr, &own_staker_address)?;
+
         let scheme: Scheme = signing_scheme_to_frost_scheme(signature_scheme)
             .map_err(|e| unexpected_err(e, None))?;
         let identifier = self.peer_id_to_frost_identifier(self_peer.peer_id)?;
@@ -229,7 +233,10 @@ impl Signable for FrostState {
         let txn_prefix = bytes_to_hex(&request_id);
         let peers = self.state.peer_state.peers();
         let signing_peers = peers.peers_for_nodeset(nodeset);
-        let self_peer = peers.peer_at_address(&self.state.addr)?;
+
+        let own_staker_address = self.state.peer_state.hex_staker_address();
+        let self_peer = validate_and_get_self_peer(&peers, &self.state.addr, &own_staker_address)?;
+
         let threshold = nodeset.len();
         let key_id = tweak_preimage.expect_or_err("No hd_key_id provided!")?;
         let realm_id = self.state.peer_state.realm_id();
