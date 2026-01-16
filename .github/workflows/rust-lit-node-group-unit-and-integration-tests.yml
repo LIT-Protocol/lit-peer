@@ -220,7 +220,7 @@ jobs:
           cargo nextest run --final-status-level pass --no-capture --
         working-directory: ${{github.workspace}}/rust/lit-node/shiva
       - name: Run acceptance, component and integration tests.
-        run: "~/.cargo/bin/cargo-nextest nextest run --archive-file nextest-archive.tar.zst --final-status-level pass --profile other-tests -E 'test(/^edge/) - test(/long/)' --nocapture --"
+        run: "~/.cargo/bin/cargo-nextest nextest run --archive-file nextest-archive.tar.zst --final-status-level pass --profile integration-tests -E 'test(/^edge/) - test(/long/)' --nocapture --"
  
  
   # AND together the results

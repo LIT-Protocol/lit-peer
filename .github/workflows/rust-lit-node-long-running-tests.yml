@@ -97,4 +97,4 @@ jobs:
       - name: Setup local files for testing
         run: make setup-local-files
       - name: Run long running tests
-        run: "~/.cargo/bin/cargo-nextest nextest run --archive-file nextest-archive.tar.zst --final-status-level pass --profile long-running-tests --nocapture -E 'test(/long/)' --"
+        run: "~/.cargo/bin/cargo-nextest nextest run --archive-file nextest-archive.tar.zst --final-status-level pass --profile long-running-tests --partition count:${{ matrix.partition }}/2 --nocapture -E 'test(/long/)' --"
