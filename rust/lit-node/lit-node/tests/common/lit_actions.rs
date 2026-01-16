@@ -44,7 +44,6 @@ const CALL_CHILD_LIT_ACTION_CODE: &str = "const go = async () => {
         toSign: Array.from(toSign),
         publicKey,
         sigName,
-        keySetId
     }});
   };
   go();";
@@ -242,7 +241,7 @@ pub async fn execute_lit_action_session_sigs(
     epoch: u64,
     key_set_id: String,
 ) -> Result<Vec<GenericResponse<JsonExecutionResponse>>> {
-    info!("executing lit action with session sigs");
+    info!("executing lit action with session sigs.  Lit Action keyset id: {:?}", key_set_id);
     // Generate JSON body for each port
     let nodes = session_sigs_and_node_set
         .iter()

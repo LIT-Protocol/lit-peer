@@ -162,13 +162,12 @@ pub mod litactions {
         let (pubkey, _token_id, _eth_address, key_set_id) = match use_datil_pkp {
             true => {
                 let pubkey = end_user.new_datil_pkp().await.unwrap().0;
-
                 end_user.pkp_by_pubkey(pubkey).info()
             }
             false => end_user.first_pkp().info(),
         };
 
-        info!("key_set_id: {}", key_set_id);
+        info!("lit_action_from_file_preloaded: key_set_id: {}", key_set_id);
 
         let lit_action_code = data_encoding::BASE64.encode(lit_action_code.as_bytes());
         // per above, there are more params than needed for some actions, but they are ignored
