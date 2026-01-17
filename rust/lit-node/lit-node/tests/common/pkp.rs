@@ -152,7 +152,7 @@ pub async fn generate_session_sigs_and_send_signing_requests(
 
     let start = std::time::Instant::now();
     let responses = lit_sdk::PKPSigningRequest::new()
-        .url_prefix(lit_sdk::UrlPrefix::Http)
+        .url_prefix(lit_sdk::UrlPrefix::Https)
         .node_set(
             session_sigs
                 .into_iter()
@@ -176,10 +176,14 @@ pub async fn generate_session_sigs_and_send_signing_requests(
                 .collect(),
         )
         .build()
-        .unwrap()
+        .unwrap_or_else(|e| {
+            panic!("Error building signing request: {:?}", e);
+        })
         .send(&my_secret_key)
         .await
-        .unwrap();
+        .unwrap_or_else(|e| {
+            panic!("Error sending signing request: {:?}", e);
+        });
     debug!("Sign-only time elapsed: {:?}", start.elapsed());
 
     // Send out our signature request to all the nodes.

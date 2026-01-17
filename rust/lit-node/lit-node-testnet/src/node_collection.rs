@@ -6,6 +6,7 @@ use ethers::utils::hex;
 use futures::future::join_all;
 use lit_node_core::response::GenericResponse;
 use lit_node_core::response::SDKHandshakeResponseV0;
+use core::panic::PanicMessage;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt::Debug;
@@ -274,14 +275,18 @@ where
 {
     lit_sdk::HandshakeRequest::new()
         .node_set_from_iter(node_set)
-        .url_prefix(lit_sdk::UrlPrefix::Http)
-        .challenge("0x1234123412341234123412341234123412341234123412341234123412341234".to_string())
+        .url_prefix(lit_sdk::UrlPrefix::Https)
+        .challenge("0x123412341234".to_string())
         .client_public_key("blah".to_string())
         .build()
-        .unwrap()
+        .unwrap_or_else(|e| {
+            panic!("Error building handshake request: {:?}", e);            
+        })
         .send()
-        .await
-        .unwrap()
+        .await.unwrap_or_else(|e| {
+            panic!("Error doing handshake: {:?}", e);
+        })
+        
 }
 
 /// This function is used to hit endpoints with different json bodies per port.

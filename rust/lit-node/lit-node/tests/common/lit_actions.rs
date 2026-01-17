@@ -252,7 +252,7 @@ pub async fn execute_lit_action_session_sigs(
         .collect::<Vec<_>>();
     let my_private_key = OsRng.r#gen();
     let response = lit_sdk::ExecuteFunctionRequest::new()
-        .url_prefix(lit_sdk::UrlPrefix::Http)
+        .url_prefix(lit_sdk::UrlPrefix::Https)
         .node_set(
             session_sigs_and_node_set
                 .iter()
@@ -324,7 +324,7 @@ pub async fn execute_lit_action_auth_sig(
     };
     let my_private_key = OsRng.r#gen();
     let response = lit_sdk::ExecuteFunctionRequest::new()
-        .url_prefix(lit_sdk::UrlPrefix::Http)
+        .url_prefix(lit_sdk::UrlPrefix::Https)
         .node_set(
             node_set
                 .iter()

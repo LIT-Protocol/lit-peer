@@ -51,7 +51,8 @@ pub struct PeerItem {
 }
 
 #[derive(PartialEq, Clone, Default, Debug)]
-pub enum WhichTestnet {
+pub enum TestNetName {
+    NagaTest,
     Hardhat,
     NoChain,
     #[default]
@@ -77,7 +78,7 @@ impl PartialEq for NodeAccount {
 
 #[must_use]
 pub struct TestnetBuilder {
-    which: WhichTestnet,
+    selected_network: TestNetName,
     num_staked_only_validators: usize,
     num_staked_and_joined_validators: usize,
     force_deploy: bool,
@@ -97,7 +98,7 @@ pub struct TestnetBuilder {
 impl Default for TestnetBuilder {
     fn default() -> Self {
         Self {
-            which: WhichTestnet::default(),
+            selected_network: TestNetName::default(),
             num_staked_only_validators: 0,
             num_staked_and_joined_validators: 10,
             force_deploy: false,
@@ -118,8 +119,11 @@ impl Default for TestnetBuilder {
 }
 
 impl TestnetBuilder {
-    pub fn which_testnet(self, which: WhichTestnet) -> Self {
-        Self { which, ..self }
+    pub fn selected_testnet(self, selected_testnet: TestNetName) -> Self {
+        Self {
+            selected_network: selected_testnet,
+            ..self
+        }
     }
 
     pub fn num_staked_only_validators(self, num_staked_only_validators: usize) -> Self {
@@ -192,19 +196,22 @@ impl TestnetBuilder {
     }
 
     pub async fn build(self) -> Testnet {
-        let chain = match self.which {
-            WhichTestnet::Hardhat => {
+        let chain = match self.selected_network {
+            TestNetName::Hardhat => {
                 Box::new(chain::hardhat::Hardhat::new(self.total_num_validators()))
                     as Box<dyn ChainTrait>
             }
-            WhichTestnet::Anvil => {
+            TestNetName::Anvil => {
                 Box::new(chain::anvil::Anvil::new(self.total_num_validators(), false))
                     as Box<dyn ChainTrait>
             }
-            WhichTestnet::NoChain => {
+            TestNetName::NoChain => {
                 Box::new(chain::no_chain::NoChain::new(self.total_num_validators()))
                     as Box<dyn ChainTrait>
             }
+            TestNetName::NagaTest => Box::new(chain::naga::naga_test::NagaTest::new(
+                self.total_num_validators(),
+            )) as Box<dyn ChainTrait>,
         };
 
         let net_process = chain.start_chain().await;
@@ -216,20 +223,20 @@ impl TestnetBuilder {
             ));
 
         let provider_mut = Arc::make_mut(&mut provider);
-
         let provider = Arc::new(provider_mut.set_interval(Duration::from_millis(10)).clone());
-
-        let datil_testnet = DatilTestnet::new(
-            self.total_num_validators(),
-            self.datil_testnet_state_cache_path,
-            self.datil_testnet_contract_resolver_address,
-        )
-        .await;
-
         let mut is_from_cache = false;
-
+        let datil_testnet = DatilTestnet::new(
+                self.total_num_validators(),
+                self.datil_testnet_state_cache_path,
+                self.datil_testnet_contract_resolver_address,
+            )
+            .await;
         // deploy the contracts via script first, so that we can read them when the testnet configuration is loaded.
-        if self.which != WhichTestnet::NoChain {
+        if self.selected_network == TestNetName::Anvil || self.selected_network == TestNetName::Hardhat
+        {
+
+     
+
             // First, determine whether we need to generate custom node runtime config.
             let need_custom_node_runtime_config =
                 self.custom_node_runtime_config.is_some() || self.is_fault_test;
@@ -239,7 +246,7 @@ impl TestnetBuilder {
                 .unwrap_or(Default::default());
             generate_custom_node_runtime_config(
                 self.is_fault_test,
-                &self.which,
+                &self.selected_network,
                 &custom_node_runtime_config,
                 None,
             );
@@ -285,7 +292,7 @@ impl TestnetBuilder {
         Testnet {
             process: net_process,
             rpcurl,
-            which: self.which,
+            selected_network: self.selected_network,
             provider,
             deploy_address,
             chain_name: chain.chain_name().to_string(),
@@ -327,7 +334,7 @@ pub struct Testnet {
     pub chain_name: String,
     pub chain_id: u64,
     pub realm_id: u8,
-    pub which: WhichTestnet,
+    pub selected_network: TestNetName,
     pub provider: Arc<Provider<Http>>,
     pub deploy_address: Address,
     pub node_accounts: Arc<Vec<NodeAccount>>,
@@ -362,17 +369,16 @@ impl Testnet {
     // stop testnet and clean up
     fn stop(&mut self) {
         // return; // uncomment this if you want to keep anvil running
-        if self.which != WhichTestnet::NoChain {
+        if self.selected_network == TestNetName::Anvil || self.selected_network == TestNetName::Hardhat {
             self.process.kill().unwrap_or_else(|e| {
                 panic!(
                     "Testnet process {:?} couldn't be killed: {}",
                     self.process, e
                 )
             });
+
+            self.datil_testnet.shutdown();
         }
-
-        self.datil_testnet.shutdown();
-
         //ps x -o  "%p %r %y %x %c "
         self.process.wait().unwrap();
         // if hardhat or node are spawning something and leaving it running after kill
@@ -387,7 +393,7 @@ impl Testnet {
             contracts.clone(),
             datil_contracts,
             self.deploy_account.signing_provider.clone(),
-            self.which.clone(),
+            self.selected_network.clone(),
             self.deploy_address,
         )
     }
@@ -397,16 +403,24 @@ impl Testnet {
         staking_contract_global_config: Option<StakingContractGlobalConfig>,
         staking_contract_realm_config: Option<StakingContractRealmConfig>,
     ) -> anyhow::Result<TestnetContracts> {
-        let ca = match testnet.existing_config_path.clone() {
-            Some(_path) => {
+
+        let deployer_signing_provider = testnet.deploy_account.signing_provider.clone();
+        let resolver_address = Address::from_slice(&hex_to_bytes("0x0A88e4A0A371F783fCc2dd802f214EAF48D1C6a9").unwrap());
+
+        let ca = match  testnet.selected_network  { 
+            TestNetName::NagaTest => Contracts::contract_addresses_from_resolver_address(resolver_address, deployer_signing_provider).await,
+            _ => { match  testnet.existing_config_path.clone() {           
+
+             Some(path) => {
                 Contracts::contract_addresses_from_resolver_cfg(
-                    _path,
+                    path,
                     testnet.deploy_account.signing_provider.clone(),
                 )
                 .await
             }
             None => contract_addresses_from_deployment().await,
-        };
+            }
+        }};
 
         let deployer_signing_provider = testnet.deploy_account.signing_provider.clone();
 

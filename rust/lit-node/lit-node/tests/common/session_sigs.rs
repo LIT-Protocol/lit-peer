@@ -145,7 +145,7 @@ pub async fn get_pkp_sign(
     if let Some(session_sigs_and_node_set) = session_sigs_and_node_set {
         let my_secret_key = rand::rngs::OsRng.r#gen();
         let response = lit_sdk::PKPSigningRequest::new()
-            .url_prefix(lit_sdk::UrlPrefix::Http)
+            .url_prefix(lit_sdk::UrlPrefix::Https)
             .node_set(
                 session_sigs_and_node_set
                     .iter()
@@ -202,7 +202,7 @@ pub async fn get_pkp_sign(
         };
         let my_secret_key = rand::rngs::OsRng.r#gen();
         let responses = lit_sdk::PKPSigningRequest::new()
-            .url_prefix(lit_sdk::UrlPrefix::Http)
+            .url_prefix(lit_sdk::UrlPrefix::Https)
             .node_set(
                 node_set
                     .iter()

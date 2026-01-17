@@ -345,6 +345,53 @@ pub struct ValidatorCollection {
 }
 
 impl ValidatorCollection {
+    pub async fn new_from_testnet(testnet: &mut Testnet) -> Result<Self> {
+
+        let mut validators = vec![];
+        let actions = testnet.actions();
+        let structs = actions.get_current_validator_structs(U256::from(testnet.realm_id())).await;
+        let staker_mappping = actions.get_current_validator_addresses(structs.iter().map(|v| v.node_address).collect()).await;
+
+        let mut node_accounts = vec![];
+        for validator in structs {
+            let node_account = NodeAccount {
+                    staker_address:  *staker_mappping.get(&validator.node_address).unwrap_or(&Address::zero()),
+                    node_address: validator.node_address,
+                    node_address_private_key: H256::random(),
+                    staker_address_private_key: H256::random(),
+                    coms_keys: lit_node_common::coms_keys::ComsKeys::new(), // we're not using coms keys for naga testnet
+                    signing_provider: testnet.deploy_account.signing_provider.clone(),
+                };
+            node_accounts.push(node_account.clone());
+
+            validators.push(Validator {
+                node: Node {
+                    process: None,
+                    config_file: "".to_string(),
+                    binary_path: "".to_string(),
+                    log_mode: "".to_string(),
+                    extra_env_vars: vec![],
+                    ip: validator.ip.into(),
+                    port: validator.port as usize,
+                    realm_id: U256::from(testnet.realm_id()),
+                    feature_flags: "".to_string(),
+                },
+                account: node_account,
+            });
+        }
+
+        testnet.node_accounts = Arc::new(node_accounts);
+
+        Ok(Self {
+            validators,
+            actions: testnet.actions(),
+            testnet_deployer_signing_provider: testnet.deploy_account.signing_provider.clone(),
+            testnet_node_accounts: testnet.node_accounts.clone(),
+            node_config_folder_path: "".to_string(),
+            keyset_configs: vec![],
+        })
+    }
+
     pub fn validator_count(&self) -> usize {
         self.validators.len()
     }

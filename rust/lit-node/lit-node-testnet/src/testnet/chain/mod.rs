@@ -1,6 +1,7 @@
 pub mod anvil;
 pub mod hardhat;
 pub mod no_chain;
+pub mod naga;
 
 use super::NodeAccount;
 use crate::testnet::contracts_repo::latest_wallet_manifest;

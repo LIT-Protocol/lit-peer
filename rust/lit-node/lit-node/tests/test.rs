@@ -25,3 +25,6 @@ pub mod external;
 
 // edge tests - test the edge cases of the network
 pub mod edge;
+
+// live networks tests - test the live networks
+mod live_networks;

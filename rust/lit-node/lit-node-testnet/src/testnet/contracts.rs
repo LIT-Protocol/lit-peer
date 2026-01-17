@@ -3,8 +3,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use super::SimpleTomlValue;
+use super::TestNetName;
 use super::Testnet;
-use super::WhichTestnet;
 use anyhow::Result;
 
 use ethers::core::k256::ecdsa::SigningKey;
@@ -392,7 +392,7 @@ impl Contracts {
     ) -> Result<Contracts> {
         let contracts = Self::new_contracts(ca, provider.clone()).await;
 
-        if testnet.which != WhichTestnet::NoChain {
+        if testnet.selected_network != TestNetName::NoChain && testnet.selected_network != TestNetName::NagaTest {
             if let Some(staking_contract_global_config) = staking_contract_global_config {
                 Self::update_staking_global_config(
                     contracts.staking.clone(),
@@ -474,7 +474,7 @@ impl Contracts {
         }
     }
 
-    pub async fn contract_addresses_from_resolver(
+    pub async fn contract_addresses_from_resolver_address(
         contract_resolver: Address,
         provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
     ) -> ContractAddresses {
@@ -595,7 +595,7 @@ impl Contracts {
         // get the resolver contract address from the staking contract
         let staking_contract = Staking::new(staking, provider.clone());
         let contract_resolver = staking_contract.contract_resolver().call().await.unwrap();
-        Self::contract_addresses_from_resolver(contract_resolver, provider).await
+        Self::contract_addresses_from_resolver_address(contract_resolver, provider).await
     }
 
     pub async fn new_blank(

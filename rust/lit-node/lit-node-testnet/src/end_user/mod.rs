@@ -4,7 +4,7 @@ mod pkp;
 use ethers::middleware::SignerMiddleware;
 use ethers::providers::{Http, Middleware, Provider, ProviderError};
 use ethers::signers::{LocalWallet, Signer, Wallet};
-use ethers::types::{H160, I256, U256};
+use ethers::types::{H160, I256, TransactionRequest, U256};
 use k256::ecdsa::SigningKey;
 use lit_blockchain::contracts::ledger::{Ledger, LedgerErrors};
 use lit_blockchain::contracts::price_feed::{PriceFeed, PriceFeedErrors};
@@ -19,7 +19,8 @@ use rand_core::OsRng;
 use std::sync::Arc;
 use std::time::Duration;
 const RETRY_WAIT_TIME_MS: u64 = 200;
-const INITIAL_FUNDING_AMOUNT: &str = "100000000000000000000";
+// const INITIAL_FUNDING_AMOUNT: &str = "100000000000000000000";
+const INITIAL_FUNDING_AMOUNT: &str = "2000000000000000000";
 #[derive(Clone, Debug)]
 pub struct EndUser {
     pub wallet: Wallet<SigningKey>,
@@ -88,14 +89,50 @@ impl EndUser {
     }
 
     pub async fn set_wallet_balance(&self, amount: &str) {
-        let provider = self.actions.deployer_provider();
-        self.set_wallet_balance_with_provider(provider, amount)
-            .await;
+        let provider = self.actions.deployer_signing_provider();
 
-        let provider = self.datil_provider.clone();
-        self.set_wallet_balance_with_provider(provider, amount)
-            .await;
+        info!("Deployer provider {:?} balance: {:?}", provider.address(), provider.get_balance(provider.address(), None).await);
+
+        let tx = TransactionRequest::new()            
+            .to(self.wallet.address())
+            .value(U256::from_dec_str(amount).expect("Failed to convert amount to U256"))
+            .from(provider.address());
+
+        let pending_tx = provider.send_transaction(tx, None).await;
+        if let Err(e) = pending_tx {
+            panic!("Couldn't set balance: {:?}", e);
+        }
+        let pending_tx = pending_tx.unwrap().interval(Duration::from_millis(100));
+        let receipt = pending_tx.await.unwrap().expect("No receipt from txn");        
+
+        info!("Transaction receipt: {:?}", receipt);
+        info!("Wallet balance: {:?}", provider.get_balance(self.wallet.address(), None).await);
+        info!("Deployer provider balance: {:?}", provider.get_balance(provider.address(), None).await);
+
+        // let res: Result<(), ProviderError> = provider
+        //     .request(
+        //         "anvil_setBalance",
+        //         [
+        //             format!("0x{}", bytes_to_hex(self.wallet.address())),
+        //             amount.to_string(),
+        //         ],
+        //     )
+        //     .await;
+
+        // if let Err(e) = res {
+        //     panic!("Couldn't set balance: {:?}", e);
+        // }
     }
+
+    // pub async fn set_wallet_balance(&self, amount: &str) {
+    //     let provider = self.actions.deployer_provider();
+    //     self.set_wallet_balance_with_provider(provider, amount)
+    //         .await;
+
+    //     let provider = self.datil_provider.clone();
+    //     self.set_wallet_balance_with_provider(provider, amount)
+    //         .await;
+    // }
 
     async fn set_wallet_balance_with_provider(&self, provider: Arc<Provider<Http>>, amount: &str) {
         let res: Result<(), ProviderError> = provider
@@ -109,7 +146,7 @@ impl EndUser {
             .await;
 
         if let Err(e) = res {
-            panic!("Couldn't set balance: {:?}", e);
+            error!("Couldn't set balance: {:?}", e);
         }
     }
 

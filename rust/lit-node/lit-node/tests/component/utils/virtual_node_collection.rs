@@ -88,7 +88,7 @@ impl VirtualNodeCollection {
             panic!("num_nodes must be greater than 0");
         }
         let testnet = lit_node_testnet::testnet::Testnet::builder()
-            .which_testnet(lit_node_testnet::testnet::WhichTestnet::NoChain)
+            .selected_testnet(lit_node_testnet::testnet::TestNetName::NoChain)
             .build()
             .await;
 

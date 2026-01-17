@@ -9,7 +9,7 @@ use self::testnet::Testnet;
 use self::testnet::node_config::CustomNodeRuntimeConfig;
 use self::validator::ValidatorCollection;
 use crate::testnet::contracts::StakingContractRealmConfig;
-use crate::testnet::{BeforeStartValidatorsFn, StakerAccountSetupMapper};
+use crate::testnet::{BeforeStartValidatorsFn, StakerAccountSetupMapper, TestNetName};
 use crate::{end_user::EndUser, validator::default_datil_keyset_config};
 use ethers::types::U256;
 use futures::future::BoxFuture;
@@ -54,6 +54,7 @@ pub struct TestSetupBuilder {
     before_start_validators_fn: Option<
         Box<dyn BeforeStartValidatorsFn<Future = BoxFuture<'static, Result<(), anyhow::Error>>>>,
     >,
+    selected_network: Option<TestNetName>,
 }
 
 impl Default for TestSetupBuilder {
@@ -82,6 +83,7 @@ impl Default for TestSetupBuilder {
             staker_account_setup_mapper: None,
             low_kick_tolerance: false,
             before_start_validators_fn: None,
+            selected_network: None,
         }
     }
 }
@@ -185,6 +187,12 @@ impl TestSetupBuilder {
         self
     }
 
+    pub fn selected_network(mut self, selected_network: TestNetName) -> Self {
+        self.selected_network = Some(selected_network);
+        self.setup_datil_keys = false;
+        self
+    }
+
     pub fn staker_account_setup_mapper(
         mut self,
         staker_account_setup_mapper: Option<
@@ -253,6 +261,7 @@ impl TestSetupBuilder {
             .custom_node_runtime_config(custom_node_runtime_config)
             .force_deploy(self.force_deploy)
             .staker_account_setup_mapper(self.staker_account_setup_mapper)
+            .selected_testnet(self.selected_network.unwrap_or(TestNetName::Anvil))
             .build()
             .await;
 
@@ -302,7 +311,7 @@ impl TestSetupBuilder {
         // We may be faced with a situation where the caced data already has Datil keys, or it might only have naga keys.
         // If Datil keys are NOT present, we'll need to add them.
 
-        if self.setup_datil_keys {
+        if self.setup_datil_keys  {
             info!("Checking for existing Datil root keys in our cached NAGA chain data.");
             let keyset_id = DEFAULT_DATIL_KEY_SET_NAME;
             let existing_datil_root_keys = testnet
@@ -350,16 +359,25 @@ impl TestSetupBuilder {
                 .expect("Failed to run a required function before starting validators.");
         }
 
-        let validator_collection = ValidatorCollection::builder()
-            .num_staked_nodes(num_staked_nodes)
-            .wait_initial_epoch(self.wait_initial_epoch)
-            .wait_for_root_keys(self.wait_for_root_keys)
-            .node_binary_feature_flags(node_binary_feature_flags)
-            .custom_binary_path(self.custom_binary_path)
-            .asleep_initially_override(self.asleep_initially_override)
-            .build(&testnet)
-            .await
-            .expect("Failed to build validator collection");
+        let validator_collection =   match testnet.selected_network {
+            TestNetName::NagaTest => {
+                ValidatorCollection::new_from_testnet(&mut testnet)
+                .await
+                .expect("Failed to fill validator collection from testnet")
+            }
+            _ => { 
+                ValidatorCollection::builder()
+                    .num_staked_nodes(num_staked_nodes)
+                    .wait_initial_epoch(self.wait_initial_epoch)
+                    .wait_for_root_keys(self.wait_for_root_keys)
+                    .node_binary_feature_flags(node_binary_feature_flags)
+                    .custom_binary_path(self.custom_binary_path)
+                    .asleep_initially_override(self.asleep_initially_override)
+                    .build(&testnet)
+                    .await
+                    .expect("Failed to build validator collection")
+            }
+        };
 
         // if this is a datil testnet, set the root keys on the Datil chain ( we may have generated new root keys in the Naga setup )
         if self.setup_datil_keys {
