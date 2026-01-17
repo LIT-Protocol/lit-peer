@@ -108,6 +108,7 @@ describe('PKPNFT', function () {
           'StakingAcrossRealmsFacet',
           'StakingAdminFacet',
           'StakingKeySetsFacet',
+          'StakingNFTFacet',
         ],
         verifyContracts: false,
         waitForDeployment: false,

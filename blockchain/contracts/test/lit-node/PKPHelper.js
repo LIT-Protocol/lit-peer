@@ -98,6 +98,7 @@ describe('PKPHelper', function () {
           'StakingAdminFacet',
           'StakingAcrossRealmsFacet',
           'StakingKeySetsFacet',
+          'StakingNFTFacet',
         ],
         verifyContracts: false,
         waitForDeployment: false,

@@ -21,6 +21,261 @@ pub mod staking {
             constructor: ::core::option::Option::None,
             functions: ::core::convert::From::from([
                 (
+                    ::std::borrow::ToOwned::to_owned("IS_TEST"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("IS_TEST"),
+                            inputs: ::std::vec![],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Bool,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("bool"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("_generateAddresses"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("_generateAddresses"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("numAddresses"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Address,
+                                        ),
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address[]"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::Pure,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("_generateAddressesWithOffset"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "_generateAddressesWithOffset",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("numAddresses"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("offset"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Address,
+                                        ),
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address[]"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::Pure,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("_generatePubKeys"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("_generatePubKeys"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("stakers"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Bytes,
+                                        ),
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("bytes[]"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::Pure,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("_generateUint256s"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("_generateUint256s"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("numUint256s"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                        ),
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256[]"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::Pure,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("_generateUint256sWithOffset"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "_generateUint256sWithOffset",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("numUint256s"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("offset"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                        ),
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256[]"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::Pure,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("_generateValidators"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "_generateValidators",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("numValidators"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Tuple(
+                                                ::std::vec![
+                                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned(
+                                            "struct SetupAndUtils.TestValidator[]",
+                                        ),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::Pure,
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned("addRealm"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::Function {
@@ -387,13 +642,42 @@ pub mod staking {
                     ],
                 ),
                 (
+                    ::std::borrow::ToOwned::to_owned("approve"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("approve"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("approved"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("tokenId"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::NonPayable,
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned("balanceOf"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::Function {
                             name: ::std::borrow::ToOwned::to_owned("balanceOf"),
                             inputs: ::std::vec![
                                 ::ethers::core::abi::ethabi::Param {
-                                    name: ::std::borrow::ToOwned::to_owned("stakerAddress"),
+                                    name: ::std::borrow::ToOwned::to_owned("owner"),
                                     kind: ::ethers::core::abi::ethabi::ParamType::Address,
                                     internal_type: ::core::option::Option::Some(
                                         ::std::borrow::ToOwned::to_owned("address"),
@@ -1085,6 +1369,119 @@ pub mod staking {
                     ],
                 ),
                 (
+                    ::std::borrow::ToOwned::to_owned("excludeArtifacts"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("excludeArtifacts"),
+                            inputs: ::std::vec![],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned(
+                                        "excludedArtifacts_",
+                                    ),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::String,
+                                        ),
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("string[]"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("excludeContracts"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("excludeContracts"),
+                            inputs: ::std::vec![],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned(
+                                        "excludedContracts_",
+                                    ),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Address,
+                                        ),
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address[]"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("excludeSelectors"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("excludeSelectors"),
+                            inputs: ::std::vec![],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned(
+                                        "excludedSelectors_",
+                                    ),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Tuple(
+                                                ::std::vec![
+                                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                                    ::ethers::core::abi::ethabi::ParamType::Array(
+                                                        ::std::boxed::Box::new(
+                                                            ::ethers::core::abi::ethabi::ParamType::FixedBytes(4usize),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned(
+                                            "struct StdInvariant.FuzzSelector[]",
+                                        ),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("excludeSenders"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("excludeSenders"),
+                            inputs: ::std::vec![],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("excludedSenders_"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Address,
+                                        ),
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address[]"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned("exit"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::Function {
@@ -1213,6 +1610,26 @@ pub mod staking {
                                         ::std::borrow::ToOwned::to_owned(
                                             "struct IDiamondLoupe.Facet[]",
                                         ),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("failed"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("failed"),
+                            inputs: ::std::vec![],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Bool,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("bool"),
                                     ),
                                 },
                             ],
@@ -1520,6 +1937,36 @@ pub mod staking {
                     ],
                 ),
                 (
+                    ::std::borrow::ToOwned::to_owned("getApproved"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("getApproved"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("tokenId"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned("getAttestedPubKey"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::Function {
@@ -1647,6 +2094,47 @@ pub mod staking {
                             inputs: ::std::vec![
                                 ::ethers::core::abi::ethabi::Param {
                                     name: ::std::borrow::ToOwned::to_owned("validatorAddress"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("getEmptyStakeRecordSlots"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "getEmptyStakeRecordSlots",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("userStakerAddress"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned(
+                                        "operatorStakerAddress",
+                                    ),
                                     kind: ::ethers::core::abi::ethabi::ParamType::Address,
                                     internal_type: ::core::option::Option::Some(
                                         ::std::borrow::ToOwned::to_owned("address"),
@@ -1823,6 +2311,7 @@ pub mod staking {
                                             ::ethers::core::abi::ethabi::ParamType::Bool,
                                             ::ethers::core::abi::ethabi::ParamType::Bool,
                                             ::ethers::core::abi::ethabi::ParamType::Address,
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                         ],
                                     ),
                                     internal_type: ::core::option::Option::Some(
@@ -2092,6 +2581,61 @@ pub mod staking {
                                     ),
                                     internal_type: ::core::option::Option::Some(
                                         ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("getMostRecentStakeRecord"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "getMostRecentStakeRecord",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("userStakerAddress"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned(
+                                        "operatorStakerAddress",
+                                    ),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Tuple(
+                                        ::std::vec![
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                            ::ethers::core::abi::ethabi::ParamType::Bool,
+                                            ::ethers::core::abi::ethabi::ParamType::Bool,
+                                            ::ethers::core::abi::ethabi::ParamType::Address,
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                        ],
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned(
+                                            "struct LibStakingStorage.StakeRecord",
+                                        ),
                                     ),
                                 },
                             ],
@@ -2657,6 +3201,7 @@ pub mod staking {
                                             ::ethers::core::abi::ethabi::ParamType::Bool,
                                             ::ethers::core::abi::ethabi::ParamType::Bool,
                                             ::ethers::core::abi::ethabi::ParamType::Address,
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                         ],
                                     ),
                                     internal_type: ::core::option::Option::Some(
@@ -2754,6 +3299,7 @@ pub mod staking {
                                                     ::ethers::core::abi::ethabi::ParamType::Bool,
                                                     ::ethers::core::abi::ethabi::ParamType::Bool,
                                                     ::ethers::core::abi::ethabi::ParamType::Address,
+                                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                                 ],
                                             ),
                                         ),
@@ -2886,6 +3432,7 @@ pub mod staking {
                                             ::ethers::core::abi::ethabi::ParamType::Bool,
                                             ::ethers::core::abi::ethabi::ParamType::Bool,
                                             ::ethers::core::abi::ethabi::ParamType::Address,
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                         ],
                                     ),
                                     internal_type: ::core::option::Option::Some(
@@ -2991,6 +3538,7 @@ pub mod staking {
                                             ::ethers::core::abi::ethabi::ParamType::Bool,
                                             ::ethers::core::abi::ethabi::ParamType::Bool,
                                             ::ethers::core::abi::ethabi::ParamType::Address,
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                         ],
                                     ),
                                     internal_type: ::core::option::Option::Some(
@@ -3928,6 +4476,41 @@ pub mod staking {
                     ],
                 ),
                 (
+                    ::std::borrow::ToOwned::to_owned("isApprovedForAll"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("isApprovedForAll"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("owner"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("operator"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Bool,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("bool"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned("isReadyForNextEpoch"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::Function {
@@ -4655,6 +5238,68 @@ pub mod staking {
                     ],
                 ),
                 (
+                    ::std::borrow::ToOwned::to_owned("ownerOf"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("ownerOf"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("tokenId"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("ownershipChange"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("ownershipChange"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("tokenId"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned("permittedRealmsForValidator"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::Function {
@@ -5063,6 +5708,137 @@ pub mod staking {
                                     ),
                                     internal_type: ::core::option::Option::Some(
                                         ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::NonPayable,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("safeTransferFrom"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("safeTransferFrom"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("from"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("to"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("tokenId"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::NonPayable,
+                        },
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("safeTransferFrom"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("from"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("to"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("tokenId"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("data"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Bytes,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("bytes"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::NonPayable,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("selfStakeBalanceOf"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("selfStakeBalanceOf"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("stakerAddress"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("setApprovalForAll"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("setApprovalForAll"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("operator"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("approved"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Bool,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("bool"),
                                     ),
                                 },
                             ],
@@ -5749,6 +6525,18 @@ pub mod staking {
                     ],
                 ),
                 (
+                    ::std::borrow::ToOwned::to_owned("setUp"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("setUp"),
+                            inputs: ::std::vec![],
+                            outputs: ::std::vec![],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::NonPayable,
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned("setValidatorCommissionRate"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::Function {
@@ -6015,6 +6803,593 @@ pub mod staking {
                             ],
                             constant: ::core::option::Option::None,
                             state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("targetArtifactSelectors"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "targetArtifactSelectors",
+                            ),
+                            inputs: ::std::vec![],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned(
+                                        "targetedArtifactSelectors_",
+                                    ),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Tuple(
+                                                ::std::vec![
+                                                    ::ethers::core::abi::ethabi::ParamType::String,
+                                                    ::ethers::core::abi::ethabi::ParamType::Array(
+                                                        ::std::boxed::Box::new(
+                                                            ::ethers::core::abi::ethabi::ParamType::FixedBytes(4usize),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned(
+                                            "struct StdInvariant.FuzzArtifactSelector[]",
+                                        ),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("targetArtifacts"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("targetArtifacts"),
+                            inputs: ::std::vec![],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned(
+                                        "targetedArtifacts_",
+                                    ),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::String,
+                                        ),
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("string[]"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("targetContracts"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("targetContracts"),
+                            inputs: ::std::vec![],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned(
+                                        "targetedContracts_",
+                                    ),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Address,
+                                        ),
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address[]"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("targetInterfaces"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("targetInterfaces"),
+                            inputs: ::std::vec![],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned(
+                                        "targetedInterfaces_",
+                                    ),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Tuple(
+                                                ::std::vec![
+                                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                                    ::ethers::core::abi::ethabi::ParamType::Array(
+                                                        ::std::boxed::Box::new(
+                                                            ::ethers::core::abi::ethabi::ParamType::String,
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned(
+                                            "struct StdInvariant.FuzzInterface[]",
+                                        ),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("targetSelectors"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("targetSelectors"),
+                            inputs: ::std::vec![],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned(
+                                        "targetedSelectors_",
+                                    ),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Tuple(
+                                                ::std::vec![
+                                                    ::ethers::core::abi::ethabi::ParamType::Address,
+                                                    ::ethers::core::abi::ethabi::ParamType::Array(
+                                                        ::std::boxed::Box::new(
+                                                            ::ethers::core::abi::ethabi::ParamType::FixedBytes(4usize),
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned(
+                                            "struct StdInvariant.FuzzSelector[]",
+                                        ),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("targetSenders"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("targetSenders"),
+                            inputs: ::std::vec![],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("targetedSenders_"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Address,
+                                        ),
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address[]"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("test_Stake"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("test_Stake"),
+                            inputs: ::std::vec![],
+                            outputs: ::std::vec![],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::NonPayable,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("test_StakeAndTransfer"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "test_StakeAndTransfer",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("isSafeTransfer"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Bool,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("bool"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::NonPayable,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned(
+                        "test_StakeAndTransfer_ClaimRewards",
+                    ),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "test_StakeAndTransfer_ClaimRewards",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("isSafeTransfer"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Bool,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("bool"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::NonPayable,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned(
+                        "test_StakeAndTransfer_ReceiverMutatesStakeRecord",
+                    ),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "test_StakeAndTransfer_ReceiverMutatesStakeRecord",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("isSafeTransfer"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Bool,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("bool"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("operation"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::NonPayable,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned(
+                        "test_StakeAndTransfer_RevertNotOwner",
+                    ),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "test_StakeAndTransfer_RevertNotOwner",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("isSafeTransfer"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Bool,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("bool"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::NonPayable,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned(
+                        "test_StakeAndTransfer_TokenOwnerByIndex",
+                    ),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "test_StakeAndTransfer_TokenOwnerByIndex",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("isSafeTransfer"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Bool,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("bool"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::NonPayable,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("test_StakeAndTransfer_Withdraw"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "test_StakeAndTransfer_Withdraw",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("isSafeTransfer"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Bool,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("bool"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned(
+                                        "isUnfreezeBeforeTransfer",
+                                    ),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Bool,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("bool"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::NonPayable,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("test_StakeApproveAndTransfer"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "test_StakeApproveAndTransfer",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("isSafeTransfer"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Bool,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("bool"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::NonPayable,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned(
+                        "test_StakeApproveForAllAndTransfer",
+                    ),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "test_StakeApproveForAllAndTransfer",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("isSafeTransfer"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Bool,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("bool"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::NonPayable,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("test_StakeMax_TransferShouldFail"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "test_StakeMax_TransferShouldFail",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("isSafeTransfer"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Bool,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("bool"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::NonPayable,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("test_Stake_MutateStakeRecord"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "test_Stake_MutateStakeRecord",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("operation"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::NonPayable,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("tokenOfOwnerByIndex"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "tokenOfOwnerByIndex",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("owner"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("index"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("tokenToStakeRecord"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("tokenToStakeRecord"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("tokenId"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Tuple(
+                                        ::std::vec![
+                                            ::ethers::core::abi::ethabi::ParamType::Address,
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                        ],
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned(
+                                            "struct LibStakingStorage.MappedStakeRecord",
+                                        ),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("totalSupply"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("totalSupply"),
+                            inputs: ::std::vec![],
+                            outputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::View,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("transferFrom"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Function {
+                            name: ::std::borrow::ToOwned::to_owned("transferFrom"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("from"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("to"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("address"),
+                                    ),
+                                },
+                                ::ethers::core::abi::ethabi::Param {
+                                    name: ::std::borrow::ToOwned::to_owned("tokenId"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    internal_type: ::core::option::Option::Some(
+                                        ::std::borrow::ToOwned::to_owned("uint256"),
+                                    ),
+                                },
+                            ],
+                            outputs: ::std::vec![],
+                            constant: ::core::option::Option::None,
+                            state_mutability: ::ethers::core::abi::ethabi::StateMutability::NonPayable,
                         },
                     ],
                 ),
@@ -6329,6 +7704,60 @@ pub mod staking {
                                     kind: ::ethers::core::abi::ethabi::ParamType::Uint(
                                         256usize,
                                     ),
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("Approval"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("Approval"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("owner"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    indexed: true,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("approved"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    indexed: true,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("tokenId"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    indexed: true,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("ApprovalForAll"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("ApprovalForAll"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("owner"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    indexed: true,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("operator"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    indexed: true,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("approved"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Bool,
                                     indexed: false,
                                 },
                             ],
@@ -6878,6 +8307,19 @@ pub mod staking {
                             name: ::std::borrow::ToOwned::to_owned("RequestToJoin"),
                             inputs: ::std::vec![
                                 ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("validatorId"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    indexed: true,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("RequestToJoin"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
                                     name: ::std::borrow::ToOwned::to_owned("staker"),
                                     kind: ::ethers::core::abi::ethabi::ParamType::Address,
                                     indexed: true,
@@ -7070,6 +8512,35 @@ pub mod staking {
                             ],
                             anonymous: false,
                         },
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "StakeRewardsClaimed",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("validatorId"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    indexed: false,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("recordId"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    indexed: false,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("rewards"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
                     ],
                 ),
                 (
@@ -7123,6 +8594,34 @@ pub mod staking {
                                     name: ::std::borrow::ToOwned::to_owned("newState"),
                                     kind: ::ethers::core::abi::ethabi::ParamType::Uint(8usize),
                                     indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("Transfer"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("Transfer"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("from"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    indexed: true,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("to"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    indexed: true,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("tokenId"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    indexed: true,
                                 },
                             ],
                             anonymous: false,
@@ -7369,6 +8868,445 @@ pub mod staking {
                                     kind: ::ethers::core::abi::ethabi::ParamType::Uint(
                                         256usize,
                                     ),
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("log"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("log"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("log_address"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("log_address"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("log_array"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("log_array"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("val"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                        ),
+                                    ),
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("log_array"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("val"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Int(256usize),
+                                        ),
+                                    ),
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("log_array"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("val"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Address,
+                                        ),
+                                    ),
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("log_bytes"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("log_bytes"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Bytes,
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("log_bytes32"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("log_bytes32"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::FixedBytes(
+                                        32usize,
+                                    ),
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("log_int"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("log_int"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Int(256usize),
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("log_named_address"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("log_named_address"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("key"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
+                                    indexed: false,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("val"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Address,
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("log_named_array"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("log_named_array"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("key"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
+                                    indexed: false,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("val"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                        ),
+                                    ),
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("log_named_array"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("key"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
+                                    indexed: false,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("val"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Int(256usize),
+                                        ),
+                                    ),
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("log_named_array"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("key"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
+                                    indexed: false,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("val"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Array(
+                                        ::std::boxed::Box::new(
+                                            ::ethers::core::abi::ethabi::ParamType::Address,
+                                        ),
+                                    ),
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("log_named_bytes"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("log_named_bytes"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("key"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
+                                    indexed: false,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("val"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Bytes,
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("log_named_bytes32"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("log_named_bytes32"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("key"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
+                                    indexed: false,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("val"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::FixedBytes(
+                                        32usize,
+                                    ),
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("log_named_decimal_int"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "log_named_decimal_int",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("key"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
+                                    indexed: false,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("val"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Int(256usize),
+                                    indexed: false,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("decimals"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("log_named_decimal_uint"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "log_named_decimal_uint",
+                            ),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("key"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
+                                    indexed: false,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("val"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    indexed: false,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("decimals"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("log_named_int"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("log_named_int"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("key"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
+                                    indexed: false,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("val"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Int(256usize),
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("log_named_string"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("log_named_string"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("key"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
+                                    indexed: false,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("val"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("log_named_uint"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("log_named_uint"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("key"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
+                                    indexed: false,
+                                },
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::borrow::ToOwned::to_owned("val"),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("log_string"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("log_string"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("log_uint"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("log_uint"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Uint(
+                                        256usize,
+                                    ),
+                                    indexed: false,
+                                },
+                            ],
+                            anonymous: false,
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("logs"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::Event {
+                            name: ::std::borrow::ToOwned::to_owned("logs"),
+                            inputs: ::std::vec![
+                                ::ethers::core::abi::ethabi::EventParam {
+                                    name: ::std::string::String::new(),
+                                    kind: ::ethers::core::abi::ethabi::ParamType::Bytes,
                                     indexed: false,
                                 },
                             ],
@@ -7816,6 +9754,30 @@ pub mod staking {
                     ],
                 ),
                 (
+                    ::std::borrow::ToOwned::to_owned("ERC721ReceiverRejectedTokens"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "ERC721ReceiverRejectedTokens",
+                            ),
+                            inputs: ::std::vec![],
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned(
+                        "ERC721TransferToNonERC721ReceiverImplementer",
+                    ),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "ERC721TransferToNonERC721ReceiverImplementer",
+                            ),
+                            inputs: ::std::vec![],
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned("IncorrectFacetCutAction"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::AbiError {
@@ -8153,6 +10115,17 @@ pub mod staking {
                     ],
                 ),
                 (
+                    ::std::borrow::ToOwned::to_owned("NoEmptyStakeRecordSlots"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned(
+                                "NoEmptyStakeRecordSlots",
+                            ),
+                            inputs: ::std::vec![],
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned("NoEmptyStakingSlot"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::AbiError {
@@ -8189,6 +10162,15 @@ pub mod staking {
                             name: ::std::borrow::ToOwned::to_owned(
                                 "NodeAddressNotFoundForStaker",
                             ),
+                            inputs: ::std::vec![],
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("NotApprovedOrOwner"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned("NotApprovedOrOwner"),
                             inputs: ::std::vec![],
                         },
                     ],
@@ -8370,6 +10352,15 @@ pub mod staking {
                     ],
                 ),
                 (
+                    ::std::borrow::ToOwned::to_owned("NotOwner"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned("NotOwner"),
+                            inputs: ::std::vec![],
+                        },
+                    ],
+                ),
+                (
                     ::std::borrow::ToOwned::to_owned("RealmIdNotFound"),
                     ::std::vec![
                         ::ethers::core::abi::ethabi::AbiError {
@@ -8414,6 +10405,15 @@ pub mod staking {
                             name: ::std::borrow::ToOwned::to_owned(
                                 "RewardsMustBeClaimed",
                             ),
+                            inputs: ::std::vec![],
+                        },
+                    ],
+                ),
+                (
+                    ::std::borrow::ToOwned::to_owned("SameAddress"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned("SameAddress"),
                             inputs: ::std::vec![],
                         },
                     ],
@@ -8835,6 +10835,15 @@ pub mod staking {
                         },
                     ],
                 ),
+                (
+                    ::std::borrow::ToOwned::to_owned("ZeroAddress"),
+                    ::std::vec![
+                        ::ethers::core::abi::ethabi::AbiError {
+                            name: ::std::borrow::ToOwned::to_owned("ZeroAddress"),
+                            inputs: ::std::vec![],
+                        },
+                    ],
+                ),
             ]),
             receive: false,
             fallback: false,
@@ -8880,6 +10889,86 @@ pub mod staking {
                     client,
                 ),
             )
+        }
+        ///Calls the contract's `IS_TEST` (0xfa7626d4) function
+        pub fn is_test(&self) -> ::ethers::contract::builders::ContractCall<M, bool> {
+            self.0
+                .method_hash([250, 118, 38, 212], ())
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `_generateAddresses` (0x678ac78a) function
+        pub fn generate_addresses(
+            &self,
+            num_addresses: ::ethers::core::types::U256,
+        ) -> ::ethers::contract::builders::ContractCall<
+            M,
+            ::std::vec::Vec<::ethers::core::types::Address>,
+        > {
+            self.0
+                .method_hash([103, 138, 199, 138], num_addresses)
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `_generateAddressesWithOffset` (0xa5187b2b) function
+        pub fn generate_addresses_with_offset(
+            &self,
+            num_addresses: ::ethers::core::types::U256,
+            offset: ::ethers::core::types::U256,
+        ) -> ::ethers::contract::builders::ContractCall<
+            M,
+            ::std::vec::Vec<::ethers::core::types::Address>,
+        > {
+            self.0
+                .method_hash([165, 24, 123, 43], (num_addresses, offset))
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `_generatePubKeys` (0xfed0a77b) function
+        pub fn generate_pub_keys(
+            &self,
+            stakers: ::ethers::core::types::U256,
+        ) -> ::ethers::contract::builders::ContractCall<
+            M,
+            ::std::vec::Vec<::ethers::core::types::Bytes>,
+        > {
+            self.0
+                .method_hash([254, 208, 167, 123], stakers)
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `_generateUint256s` (0xae517f4d) function
+        pub fn generate_uint_25_6s(
+            &self,
+            num_uint_25_6s: ::ethers::core::types::U256,
+        ) -> ::ethers::contract::builders::ContractCall<
+            M,
+            ::std::vec::Vec<::ethers::core::types::U256>,
+        > {
+            self.0
+                .method_hash([174, 81, 127, 77], num_uint_25_6s)
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `_generateUint256sWithOffset` (0xfb9d55b8) function
+        pub fn generate_uint_25_6s_with_offset(
+            &self,
+            num_uint_25_6s: ::ethers::core::types::U256,
+            offset: ::ethers::core::types::U256,
+        ) -> ::ethers::contract::builders::ContractCall<
+            M,
+            ::std::vec::Vec<::ethers::core::types::U256>,
+        > {
+            self.0
+                .method_hash([251, 157, 85, 184], (num_uint_25_6s, offset))
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `_generateValidators` (0xc5344d40) function
+        pub fn generate_validators(
+            &self,
+            num_validators: ::ethers::core::types::U256,
+        ) -> ::ethers::contract::builders::ContractCall<
+            M,
+            ::std::vec::Vec<TestValidator>,
+        > {
+            self.0
+                .method_hash([197, 52, 77, 64], num_validators)
+                .expect("method not found (this should never happen)")
         }
         ///Calls the contract's `addRealm` (0x472a7d89) function
         pub fn add_realm(
@@ -9003,13 +11092,23 @@ pub mod staking {
                 .method_hash([243, 184, 119, 121], realm_id)
                 .expect("method not found (this should never happen)")
         }
+        ///Calls the contract's `approve` (0x095ea7b3) function
+        pub fn approve(
+            &self,
+            approved: ::ethers::core::types::Address,
+            token_id: ::ethers::core::types::U256,
+        ) -> ::ethers::contract::builders::ContractCall<M, ()> {
+            self.0
+                .method_hash([9, 94, 167, 179], (approved, token_id))
+                .expect("method not found (this should never happen)")
+        }
         ///Calls the contract's `balanceOf` (0x70a08231) function
         pub fn balance_of(
             &self,
-            staker_address: ::ethers::core::types::Address,
+            owner: ::ethers::core::types::Address,
         ) -> ::ethers::contract::builders::ContractCall<M, ::ethers::core::types::U256> {
             self.0
-                .method_hash([112, 160, 130, 49], staker_address)
+                .method_hash([112, 160, 130, 49], owner)
                 .expect("method not found (this should never happen)")
         }
         ///Calls the contract's `calculateRewardsPerDay` (0x9be372e0) function
@@ -9209,6 +11308,50 @@ pub mod staking {
                 .method_hash([84, 135, 197, 119], realm_id)
                 .expect("method not found (this should never happen)")
         }
+        ///Calls the contract's `excludeArtifacts` (0xb5508aa9) function
+        pub fn exclude_artifacts(
+            &self,
+        ) -> ::ethers::contract::builders::ContractCall<
+            M,
+            ::std::vec::Vec<::std::string::String>,
+        > {
+            self.0
+                .method_hash([181, 80, 138, 169], ())
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `excludeContracts` (0xe20c9f71) function
+        pub fn exclude_contracts(
+            &self,
+        ) -> ::ethers::contract::builders::ContractCall<
+            M,
+            ::std::vec::Vec<::ethers::core::types::Address>,
+        > {
+            self.0
+                .method_hash([226, 12, 159, 113], ())
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `excludeSelectors` (0xb0464fdc) function
+        pub fn exclude_selectors(
+            &self,
+        ) -> ::ethers::contract::builders::ContractCall<
+            M,
+            ::std::vec::Vec<FuzzSelector>,
+        > {
+            self.0
+                .method_hash([176, 70, 79, 220], ())
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `excludeSenders` (0x1ed7831c) function
+        pub fn exclude_senders(
+            &self,
+        ) -> ::ethers::contract::builders::ContractCall<
+            M,
+            ::std::vec::Vec<::ethers::core::types::Address>,
+        > {
+            self.0
+                .method_hash([30, 215, 131, 28], ())
+                .expect("method not found (this should never happen)")
+        }
         ///Calls the contract's `exit` (0xe9fad8ee) function
         pub fn exit(&self) -> ::ethers::contract::builders::ContractCall<M, ()> {
             self.0
@@ -9253,6 +11396,12 @@ pub mod staking {
         ) -> ::ethers::contract::builders::ContractCall<M, ::std::vec::Vec<Facet>> {
             self.0
                 .method_hash([122, 14, 214, 39], ())
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `failed` (0xba414fa6) function
+        pub fn failed(&self) -> ::ethers::contract::builders::ContractCall<M, bool> {
+            self.0
+                .method_hash([186, 65, 79, 166], ())
                 .expect("method not found (this should never happen)")
         }
         ///Calls the contract's `getActiveUnkickedValidatorCount` (0x7a808c0d) function
@@ -9330,6 +11479,18 @@ pub mod staking {
                 .method_hash([243, 81, 58, 55], ())
                 .expect("method not found (this should never happen)")
         }
+        ///Calls the contract's `getApproved` (0x081812fc) function
+        pub fn get_approved(
+            &self,
+            token_id: ::ethers::core::types::U256,
+        ) -> ::ethers::contract::builders::ContractCall<
+            M,
+            ::ethers::core::types::Address,
+        > {
+            self.0
+                .method_hash([8, 24, 18, 252], token_id)
+                .expect("method not found (this should never happen)")
+        }
         ///Calls the contract's `getAttestedPubKey` (0xe9332ea7) function
         pub fn get_attested_pub_key(
             &self,
@@ -9372,6 +11533,19 @@ pub mod staking {
         ) -> ::ethers::contract::builders::ContractCall<M, ::ethers::core::types::U256> {
             self.0
                 .method_hash([140, 60, 207, 76], validator_address)
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `getEmptyStakeRecordSlots` (0xa6f67c51) function
+        pub fn get_empty_stake_record_slots(
+            &self,
+            user_staker_address: ::ethers::core::types::Address,
+            operator_staker_address: ::ethers::core::types::Address,
+        ) -> ::ethers::contract::builders::ContractCall<M, ::ethers::core::types::U256> {
+            self.0
+                .method_hash(
+                    [166, 246, 124, 81],
+                    (user_staker_address, operator_staker_address),
+                )
                 .expect("method not found (this should never happen)")
         }
         ///Calls the contract's `getKeySet` (0xa305e5fe) function
@@ -9493,6 +11667,19 @@ pub mod staking {
         ) -> ::ethers::contract::builders::ContractCall<M, ::ethers::core::types::U256> {
             self.0
                 .method_hash([217, 187, 210, 120], ())
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `getMostRecentStakeRecord` (0x7d0f412f) function
+        pub fn get_most_recent_stake_record(
+            &self,
+            user_staker_address: ::ethers::core::types::Address,
+            operator_staker_address: ::ethers::core::types::Address,
+        ) -> ::ethers::contract::builders::ContractCall<M, StakeRecord> {
+            self.0
+                .method_hash(
+                    [125, 15, 65, 47],
+                    (user_staker_address, operator_staker_address),
+                )
                 .expect("method not found (this should never happen)")
         }
         ///Calls the contract's `getNodeAttestedPubKeyMappings` (0x88790aee) function
@@ -9693,7 +11880,7 @@ pub mod staking {
                 .method_hash([70, 21, 213, 233], node_count)
                 .expect("method not found (this should never happen)")
         }
-        ///Calls the contract's `getTimelockInEpoch` (0xf16bbde3) function
+        ///Calls the contract's `getTimelockInEpoch` (0x2db912e4) function
         pub fn get_timelock_in_epoch(
             &self,
             staker_address: ::ethers::core::types::Address,
@@ -9702,7 +11889,7 @@ pub mod staking {
         ) -> ::ethers::contract::builders::ContractCall<M, ::ethers::core::types::U256> {
             self.0
                 .method_hash(
-                    [241, 107, 189, 227],
+                    [45, 185, 18, 228],
                     (staker_address, stake_record, reward_epoch_number),
                 )
                 .expect("method not found (this should never happen)")
@@ -9726,7 +11913,7 @@ pub mod staking {
                 .method_hash([75, 148, 245, 14], ())
                 .expect("method not found (this should never happen)")
         }
-        ///Calls the contract's `getTokensStaked` (0x5e91a664) function
+        ///Calls the contract's `getTokensStaked` (0x0fd78304) function
         pub fn get_tokens_staked(
             &self,
             staker_address: ::ethers::core::types::Address,
@@ -9735,7 +11922,7 @@ pub mod staking {
         ) -> ::ethers::contract::builders::ContractCall<M, ::ethers::core::types::U256> {
             self.0
                 .method_hash(
-                    [94, 145, 166, 100],
+                    [15, 215, 131, 4],
                     (staker_address, stake_record, reward_epoch_number),
                 )
                 .expect("method not found (this should never happen)")
@@ -9985,6 +12172,16 @@ pub mod staking {
                 .method_hash([38, 252, 111, 155], (realm_id, staker_address))
                 .expect("method not found (this should never happen)")
         }
+        ///Calls the contract's `isApprovedForAll` (0xe985e9c5) function
+        pub fn is_approved_for_all(
+            &self,
+            owner: ::ethers::core::types::Address,
+            operator: ::ethers::core::types::Address,
+        ) -> ::ethers::contract::builders::ContractCall<M, bool> {
+            self.0
+                .method_hash([233, 133, 233, 197], (owner, operator))
+                .expect("method not found (this should never happen)")
+        }
         ///Calls the contract's `isReadyForNextEpoch` (0x7fecc451) function
         pub fn is_ready_for_next_epoch(
             &self,
@@ -10223,6 +12420,27 @@ pub mod staking {
                 .method_hash([141, 165, 203, 91], ())
                 .expect("method not found (this should never happen)")
         }
+        ///Calls the contract's `ownerOf` (0x6352211e) function
+        pub fn owner_of(
+            &self,
+            token_id: ::ethers::core::types::U256,
+        ) -> ::ethers::contract::builders::ContractCall<
+            M,
+            ::ethers::core::types::Address,
+        > {
+            self.0
+                .method_hash([99, 82, 33, 30], token_id)
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `ownershipChange` (0x23857d51) function
+        pub fn ownership_change(
+            &self,
+            token_id: ::ethers::core::types::U256,
+        ) -> ::ethers::contract::builders::ContractCall<M, ::ethers::core::types::U256> {
+            self.0
+                .method_hash([35, 133, 125, 81], token_id)
+                .expect("method not found (this should never happen)")
+        }
         ///Calls the contract's `permittedRealmsForValidator` (0xe718ff4c) function
         pub fn permitted_realms_for_validator(
             &self,
@@ -10361,6 +12579,48 @@ pub mod staking {
         ) -> ::ethers::contract::builders::ContractCall<M, ()> {
             self.0
                 .method_hash([198, 240, 76, 187], realm_id)
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `safeTransferFrom` (0x42842e0e) function
+        pub fn safe_transfer_from(
+            &self,
+            from: ::ethers::core::types::Address,
+            to: ::ethers::core::types::Address,
+            token_id: ::ethers::core::types::U256,
+        ) -> ::ethers::contract::builders::ContractCall<M, ()> {
+            self.0
+                .method_hash([66, 132, 46, 14], (from, to, token_id))
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `safeTransferFrom` (0xb88d4fde) function
+        pub fn safe_transfer_from_with_from_and_to_and_data(
+            &self,
+            from: ::ethers::core::types::Address,
+            to: ::ethers::core::types::Address,
+            token_id: ::ethers::core::types::U256,
+            data: ::ethers::core::types::Bytes,
+        ) -> ::ethers::contract::builders::ContractCall<M, ()> {
+            self.0
+                .method_hash([184, 141, 79, 222], (from, to, token_id, data))
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `selfStakeBalanceOf` (0xeddf837a) function
+        pub fn self_stake_balance_of(
+            &self,
+            staker_address: ::ethers::core::types::Address,
+        ) -> ::ethers::contract::builders::ContractCall<M, ::ethers::core::types::U256> {
+            self.0
+                .method_hash([237, 223, 131, 122], staker_address)
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `setApprovalForAll` (0xa22cb465) function
+        pub fn set_approval_for_all(
+            &self,
+            operator: ::ethers::core::types::Address,
+            approved: bool,
+        ) -> ::ethers::contract::builders::ContractCall<M, ()> {
+            self.0
+                .method_hash([162, 44, 180, 101], (operator, approved))
                 .expect("method not found (this should never happen)")
         }
         ///Calls the contract's `setComplaintConfig` (0x440e8d22) function
@@ -10557,6 +12817,12 @@ pub mod staking {
                 .method_hash([218, 116, 34, 40], forwarder)
                 .expect("method not found (this should never happen)")
         }
+        ///Calls the contract's `setUp` (0x0a9254e4) function
+        pub fn set_up(&self) -> ::ethers::contract::builders::ContractCall<M, ()> {
+            self.0
+                .method_hash([10, 146, 84, 228], ())
+                .expect("method not found (this should never happen)")
+        }
         ///Calls the contract's `setValidatorCommissionRate` (0x7149ab58) function
         pub fn set_validator_commission_rate(
             &self,
@@ -10644,6 +12910,211 @@ pub mod staking {
                 .method_hash([1, 255, 201, 167], interface_id)
                 .expect("method not found (this should never happen)")
         }
+        ///Calls the contract's `targetArtifactSelectors` (0x66d9a9a0) function
+        pub fn target_artifact_selectors(
+            &self,
+        ) -> ::ethers::contract::builders::ContractCall<
+            M,
+            ::std::vec::Vec<FuzzArtifactSelector>,
+        > {
+            self.0
+                .method_hash([102, 217, 169, 160], ())
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `targetArtifacts` (0x85226c81) function
+        pub fn target_artifacts(
+            &self,
+        ) -> ::ethers::contract::builders::ContractCall<
+            M,
+            ::std::vec::Vec<::std::string::String>,
+        > {
+            self.0
+                .method_hash([133, 34, 108, 129], ())
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `targetContracts` (0x3f7286f4) function
+        pub fn target_contracts(
+            &self,
+        ) -> ::ethers::contract::builders::ContractCall<
+            M,
+            ::std::vec::Vec<::ethers::core::types::Address>,
+        > {
+            self.0
+                .method_hash([63, 114, 134, 244], ())
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `targetInterfaces` (0x2ade3880) function
+        pub fn target_interfaces(
+            &self,
+        ) -> ::ethers::contract::builders::ContractCall<
+            M,
+            ::std::vec::Vec<FuzzInterface>,
+        > {
+            self.0
+                .method_hash([42, 222, 56, 128], ())
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `targetSelectors` (0x916a17c6) function
+        pub fn target_selectors(
+            &self,
+        ) -> ::ethers::contract::builders::ContractCall<
+            M,
+            ::std::vec::Vec<FuzzSelector>,
+        > {
+            self.0
+                .method_hash([145, 106, 23, 198], ())
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `targetSenders` (0x3e5e3c23) function
+        pub fn target_senders(
+            &self,
+        ) -> ::ethers::contract::builders::ContractCall<
+            M,
+            ::std::vec::Vec<::ethers::core::types::Address>,
+        > {
+            self.0
+                .method_hash([62, 94, 60, 35], ())
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `test_Stake` (0xdbab1cd7) function
+        pub fn test_stake(&self) -> ::ethers::contract::builders::ContractCall<M, ()> {
+            self.0
+                .method_hash([219, 171, 28, 215], ())
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `test_StakeAndTransfer` (0xaaedca62) function
+        pub fn test_stake_and_transfer(
+            &self,
+            is_safe_transfer: bool,
+        ) -> ::ethers::contract::builders::ContractCall<M, ()> {
+            self.0
+                .method_hash([170, 237, 202, 98], is_safe_transfer)
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `test_StakeAndTransfer_ClaimRewards` (0x96007d44) function
+        pub fn test_stake_and_transfer_claim_rewards(
+            &self,
+            is_safe_transfer: bool,
+        ) -> ::ethers::contract::builders::ContractCall<M, ()> {
+            self.0
+                .method_hash([150, 0, 125, 68], is_safe_transfer)
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `test_StakeAndTransfer_ReceiverMutatesStakeRecord` (0x6239b4f7) function
+        pub fn test_stake_and_transfer_receiver_mutates_stake_record(
+            &self,
+            is_safe_transfer: bool,
+            operation: ::ethers::core::types::U256,
+        ) -> ::ethers::contract::builders::ContractCall<M, ()> {
+            self.0
+                .method_hash([98, 57, 180, 247], (is_safe_transfer, operation))
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `test_StakeAndTransfer_RevertNotOwner` (0x5ad8b9a9) function
+        pub fn test_stake_and_transfer_revert_not_owner(
+            &self,
+            is_safe_transfer: bool,
+        ) -> ::ethers::contract::builders::ContractCall<M, ()> {
+            self.0
+                .method_hash([90, 216, 185, 169], is_safe_transfer)
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `test_StakeAndTransfer_TokenOwnerByIndex` (0xa7319b44) function
+        pub fn test_stake_and_transfer_token_owner_by_index(
+            &self,
+            is_safe_transfer: bool,
+        ) -> ::ethers::contract::builders::ContractCall<M, ()> {
+            self.0
+                .method_hash([167, 49, 155, 68], is_safe_transfer)
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `test_StakeAndTransfer_Withdraw` (0x86ef1d4d) function
+        pub fn test_stake_and_transfer_withdraw(
+            &self,
+            is_safe_transfer: bool,
+            is_unfreeze_before_transfer: bool,
+        ) -> ::ethers::contract::builders::ContractCall<M, ()> {
+            self.0
+                .method_hash(
+                    [134, 239, 29, 77],
+                    (is_safe_transfer, is_unfreeze_before_transfer),
+                )
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `test_StakeApproveAndTransfer` (0x22e7a7ac) function
+        pub fn test_stake_approve_and_transfer(
+            &self,
+            is_safe_transfer: bool,
+        ) -> ::ethers::contract::builders::ContractCall<M, ()> {
+            self.0
+                .method_hash([34, 231, 167, 172], is_safe_transfer)
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `test_StakeApproveForAllAndTransfer` (0x78854e37) function
+        pub fn test_stake_approve_for_all_and_transfer(
+            &self,
+            is_safe_transfer: bool,
+        ) -> ::ethers::contract::builders::ContractCall<M, ()> {
+            self.0
+                .method_hash([120, 133, 78, 55], is_safe_transfer)
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `test_StakeMax_TransferShouldFail` (0xb29fabc7) function
+        pub fn test_stake_max_transfer_should_fail(
+            &self,
+            is_safe_transfer: bool,
+        ) -> ::ethers::contract::builders::ContractCall<M, ()> {
+            self.0
+                .method_hash([178, 159, 171, 199], is_safe_transfer)
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `test_Stake_MutateStakeRecord` (0xa90bb850) function
+        pub fn test_stake_mutate_stake_record(
+            &self,
+            operation: ::ethers::core::types::U256,
+        ) -> ::ethers::contract::builders::ContractCall<M, ()> {
+            self.0
+                .method_hash([169, 11, 184, 80], operation)
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `tokenOfOwnerByIndex` (0x2f745c59) function
+        pub fn token_of_owner_by_index(
+            &self,
+            owner: ::ethers::core::types::Address,
+            index: ::ethers::core::types::U256,
+        ) -> ::ethers::contract::builders::ContractCall<M, ::ethers::core::types::U256> {
+            self.0
+                .method_hash([47, 116, 92, 89], (owner, index))
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `tokenToStakeRecord` (0xf0e2d9b5) function
+        pub fn token_to_stake_record(
+            &self,
+            token_id: ::ethers::core::types::U256,
+        ) -> ::ethers::contract::builders::ContractCall<M, MappedStakeRecord> {
+            self.0
+                .method_hash([240, 226, 217, 181], token_id)
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `totalSupply` (0x18160ddd) function
+        pub fn total_supply(
+            &self,
+        ) -> ::ethers::contract::builders::ContractCall<M, ::ethers::core::types::U256> {
+            self.0
+                .method_hash([24, 22, 13, 221], ())
+                .expect("method not found (this should never happen)")
+        }
+        ///Calls the contract's `transferFrom` (0x23b872dd) function
+        pub fn transfer_from(
+            &self,
+            from: ::ethers::core::types::Address,
+            to: ::ethers::core::types::Address,
+            token_id: ::ethers::core::types::U256,
+        ) -> ::ethers::contract::builders::ContractCall<M, ()> {
+            self.0
+                .method_hash([35, 184, 114, 221], (from, to, token_id))
+                .expect("method not found (this should never happen)")
+        }
         ///Calls the contract's `transferOwnership` (0xf2fde38b) function
         pub fn transfer_ownership(
             &self,
@@ -10728,6 +13199,26 @@ pub mod staking {
             ::std::sync::Arc<M>,
             M,
             AdvancedEpochFilter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `Approval` event
+        pub fn approval_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            ApprovalFilter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `ApprovalForAll` event
+        pub fn approval_for_all_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            ApprovalForAllFilter,
         > {
             self.0.event()
         }
@@ -10912,12 +13403,22 @@ pub mod staking {
             self.0.event()
         }
         ///Gets the contract's `RequestToJoin` event
-        pub fn request_to_join_filter(
+        pub fn request_to_join_1_filter(
             &self,
         ) -> ::ethers::contract::builders::Event<
             ::std::sync::Arc<M>,
             M,
-            RequestToJoinFilter,
+            RequestToJoin1Filter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `RequestToJoin` event
+        pub fn request_to_join_2_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            RequestToJoin2Filter,
         > {
             self.0.event()
         }
@@ -10982,12 +13483,22 @@ pub mod staking {
             self.0.event()
         }
         ///Gets the contract's `StakeRewardsClaimed` event
-        pub fn stake_rewards_claimed_filter(
+        pub fn stake_rewards_claimed_1_filter(
             &self,
         ) -> ::ethers::contract::builders::Event<
             ::std::sync::Arc<M>,
             M,
-            StakeRewardsClaimedFilter,
+            StakeRewardsClaimed1Filter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `StakeRewardsClaimed` event
+        pub fn stake_rewards_claimed_2_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            StakeRewardsClaimed2Filter,
         > {
             self.0.event()
         }
@@ -11014,6 +13525,16 @@ pub mod staking {
             ::std::sync::Arc<M>,
             M,
             StateChangedFilter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `Transfer` event
+        pub fn transfer_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            TransferFilter,
         > {
             self.0.event()
         }
@@ -11115,6 +13636,210 @@ pub mod staking {
             M,
             WithdrawnFilter,
         > {
+            self.0.event()
+        }
+        ///Gets the contract's `log` event
+        pub fn log_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<::std::sync::Arc<M>, M, LogFilter> {
+            self.0.event()
+        }
+        ///Gets the contract's `log_address` event
+        pub fn log_address_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            LogAddressFilter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `log_array` event
+        pub fn log_array_1_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            LogArray1Filter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `log_array` event
+        pub fn log_array_2_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            LogArray2Filter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `log_array` event
+        pub fn log_array_3_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            LogArray3Filter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `log_bytes` event
+        pub fn log_bytes_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            LogBytesFilter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `log_bytes32` event
+        pub fn log_bytes_32_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            LogBytes32Filter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `log_int` event
+        pub fn log_int_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<::std::sync::Arc<M>, M, LogIntFilter> {
+            self.0.event()
+        }
+        ///Gets the contract's `log_named_address` event
+        pub fn log_named_address_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            LogNamedAddressFilter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `log_named_array` event
+        pub fn log_named_array_1_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            LogNamedArray1Filter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `log_named_array` event
+        pub fn log_named_array_2_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            LogNamedArray2Filter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `log_named_array` event
+        pub fn log_named_array_3_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            LogNamedArray3Filter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `log_named_bytes` event
+        pub fn log_named_bytes_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            LogNamedBytesFilter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `log_named_bytes32` event
+        pub fn log_named_bytes_32_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            LogNamedBytes32Filter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `log_named_decimal_int` event
+        pub fn log_named_decimal_int_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            LogNamedDecimalIntFilter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `log_named_decimal_uint` event
+        pub fn log_named_decimal_uint_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            LogNamedDecimalUintFilter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `log_named_int` event
+        pub fn log_named_int_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            LogNamedIntFilter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `log_named_string` event
+        pub fn log_named_string_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            LogNamedStringFilter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `log_named_uint` event
+        pub fn log_named_uint_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            LogNamedUintFilter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `log_string` event
+        pub fn log_string_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<
+            ::std::sync::Arc<M>,
+            M,
+            LogStringFilter,
+        > {
+            self.0.event()
+        }
+        ///Gets the contract's `log_uint` event
+        pub fn log_uint_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<::std::sync::Arc<M>, M, LogUintFilter> {
+            self.0.event()
+        }
+        ///Gets the contract's `logs` event
+        pub fn logs_filter(
+            &self,
+        ) -> ::ethers::contract::builders::Event<::std::sync::Arc<M>, M, LogsFilter> {
             self.0.event()
         }
         /// Returns an `Event` builder for all the events of this contract.
@@ -11589,6 +14314,42 @@ pub mod staking {
     pub struct CouldNotMapNodeAddressToStakerAddress {
         pub node_address: ::ethers::core::types::Address,
     }
+    ///Custom Error type `ERC721ReceiverRejectedTokens` with signature `ERC721ReceiverRejectedTokens()` and selector `0x9e64a6c4`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "ERC721ReceiverRejectedTokens",
+        abi = "ERC721ReceiverRejectedTokens()"
+    )]
+    pub struct ERC721ReceiverRejectedTokens;
+    ///Custom Error type `ERC721TransferToNonERC721ReceiverImplementer` with signature `ERC721TransferToNonERC721ReceiverImplementer()` and selector `0x1ad78a40`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(
+        name = "ERC721TransferToNonERC721ReceiverImplementer",
+        abi = "ERC721TransferToNonERC721ReceiverImplementer()"
+    )]
+    pub struct ERC721TransferToNonERC721ReceiverImplementer;
     ///Custom Error type `IncorrectFacetCutAction` with signature `IncorrectFacetCutAction(uint8)` and selector `0x7fe9a41e`
     #[derive(
         Clone,
@@ -11916,6 +14677,21 @@ pub mod staking {
         pub contract_address: ::ethers::core::types::Address,
         pub message: ::std::string::String,
     }
+    ///Custom Error type `NoEmptyStakeRecordSlots` with signature `NoEmptyStakeRecordSlots()` and selector `0x6330eb87`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(name = "NoEmptyStakeRecordSlots", abi = "NoEmptyStakeRecordSlots()")]
+    pub struct NoEmptyStakeRecordSlots;
     ///Custom Error type `NoEmptyStakingSlot` with signature `NoEmptyStakingSlot()` and selector `0xc3b03baa`
     #[derive(
         Clone,
@@ -11969,6 +14745,21 @@ pub mod staking {
         abi = "NodeAddressNotFoundForStaker()"
     )]
     pub struct NodeAddressNotFoundForStaker;
+    ///Custom Error type `NotApprovedOrOwner` with signature `NotApprovedOrOwner()` and selector `0xe433766c`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(name = "NotApprovedOrOwner", abi = "NotApprovedOrOwner()")]
+    pub struct NotApprovedOrOwner;
     ///Custom Error type `NotContractOwner` with signature `NotContractOwner(address,address)` and selector `0xff4127cb`
     #[derive(
         Clone,
@@ -12073,6 +14864,21 @@ pub mod staking {
         pub next_ready_validator_count: ::ethers::core::types::U256,
         pub minimum_validator_count_to_be_ready: ::ethers::core::types::U256,
     }
+    ///Custom Error type `NotOwner` with signature `NotOwner()` and selector `0x30cd7471`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(name = "NotOwner", abi = "NotOwner()")]
+    pub struct NotOwner;
     ///Custom Error type `RealmIdNotFound` with signature `RealmIdNotFound(address)` and selector `0x4d1e0bab`
     #[derive(
         Clone,
@@ -12125,6 +14931,21 @@ pub mod staking {
     )]
     #[etherror(name = "RewardsMustBeClaimed", abi = "RewardsMustBeClaimed()")]
     pub struct RewardsMustBeClaimed;
+    ///Custom Error type `SameAddress` with signature `SameAddress()` and selector `0x367558c3`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(name = "SameAddress", abi = "SameAddress()")]
+    pub struct SameAddress;
     ///Custom Error type `SignaledReadyForWrongEpochNumber` with signature `SignaledReadyForWrongEpochNumber(uint256,uint256)` and selector `0x068cde2a`
     #[derive(
         Clone,
@@ -12453,6 +15274,21 @@ pub mod staking {
     pub struct ValueMustBeNonzero {
         pub value_name: ::std::string::String,
     }
+    ///Custom Error type `ZeroAddress` with signature `ZeroAddress()` and selector `0xd92e233d`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthError,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[etherror(name = "ZeroAddress", abi = "ZeroAddress()")]
+    pub struct ZeroAddress;
     ///Container type for all of the contract's custom errors
     #[derive(
         Clone,
@@ -12500,6 +15336,10 @@ pub mod staking {
         CannotWithdrawZero(CannotWithdrawZero),
         CheckpointAheadOfCurrentEpoch(CheckpointAheadOfCurrentEpoch),
         CouldNotMapNodeAddressToStakerAddress(CouldNotMapNodeAddressToStakerAddress),
+        ERC721ReceiverRejectedTokens(ERC721ReceiverRejectedTokens),
+        ERC721TransferToNonERC721ReceiverImplementer(
+            ERC721TransferToNonERC721ReceiverImplementer,
+        ),
         IncorrectFacetCutAction(IncorrectFacetCutAction),
         InitializationFunctionReverted(InitializationFunctionReverted),
         InsufficientSelfStake(InsufficientSelfStake),
@@ -12522,9 +15362,11 @@ pub mod staking {
         MustBeValidatorInNextEpochToKick(MustBeValidatorInNextEpochToKick),
         NewTimeLockMustBeGreaterThanCurrent(NewTimeLockMustBeGreaterThanCurrent),
         NoBytecodeAtAddress(NoBytecodeAtAddress),
+        NoEmptyStakeRecordSlots(NoEmptyStakeRecordSlots),
         NoEmptyStakingSlot(NoEmptyStakingSlot),
         NoSelectorsProvidedForFacetForCut(NoSelectorsProvidedForFacetForCut),
         NodeAddressNotFoundForStaker(NodeAddressNotFoundForStaker),
+        NotApprovedOrOwner(NotApprovedOrOwner),
         NotContractOwner(NotContractOwner),
         NotEnoughTimeElapsedForTimeoutSinceLastEpoch(
             NotEnoughTimeElapsedForTimeoutSinceLastEpoch,
@@ -12532,9 +15374,11 @@ pub mod staking {
         NotEnoughTimeElapsedSinceLastEpoch(NotEnoughTimeElapsedSinceLastEpoch),
         NotEnoughValidatorsInNextEpoch(NotEnoughValidatorsInNextEpoch),
         NotEnoughValidatorsReadyForNextEpoch(NotEnoughValidatorsReadyForNextEpoch),
+        NotOwner(NotOwner),
         RealmIdNotFound(RealmIdNotFound),
         RemoveFacetAddressMustBeZeroAddress(RemoveFacetAddressMustBeZeroAddress),
         RewardsMustBeClaimed(RewardsMustBeClaimed),
+        SameAddress(SameAddress),
         SignaledReadyForWrongEpochNumber(SignaledReadyForWrongEpochNumber),
         SlashingMustOccurInSameRealm(SlashingMustOccurInSameRealm),
         StakeAmountNotMet(StakeAmountNotMet),
@@ -12552,6 +15396,7 @@ pub mod staking {
         ValidatorNotRegistered(ValidatorNotRegistered),
         ValidatorRegisterAttestedWalletDisabled(ValidatorRegisterAttestedWalletDisabled),
         ValueMustBeNonzero(ValueMustBeNonzero),
+        ZeroAddress(ZeroAddress),
         /// The standard solidity revert string, with selector
         /// Error(string) -- 0x08c379a0
         RevertString(::std::string::String),
@@ -12697,6 +15542,16 @@ pub mod staking {
             ) {
                 return Ok(Self::CouldNotMapNodeAddressToStakerAddress(decoded));
             }
+            if let Ok(decoded) = <ERC721ReceiverRejectedTokens as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::ERC721ReceiverRejectedTokens(decoded));
+            }
+            if let Ok(decoded) = <ERC721TransferToNonERC721ReceiverImplementer as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::ERC721TransferToNonERC721ReceiverImplementer(decoded));
+            }
             if let Ok(decoded) = <IncorrectFacetCutAction as ::ethers::core::abi::AbiDecode>::decode(
                 data,
             ) {
@@ -12793,6 +15648,11 @@ pub mod staking {
             ) {
                 return Ok(Self::NoBytecodeAtAddress(decoded));
             }
+            if let Ok(decoded) = <NoEmptyStakeRecordSlots as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::NoEmptyStakeRecordSlots(decoded));
+            }
             if let Ok(decoded) = <NoEmptyStakingSlot as ::ethers::core::abi::AbiDecode>::decode(
                 data,
             ) {
@@ -12807,6 +15667,11 @@ pub mod staking {
                 data,
             ) {
                 return Ok(Self::NodeAddressNotFoundForStaker(decoded));
+            }
+            if let Ok(decoded) = <NotApprovedOrOwner as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::NotApprovedOrOwner(decoded));
             }
             if let Ok(decoded) = <NotContractOwner as ::ethers::core::abi::AbiDecode>::decode(
                 data,
@@ -12833,6 +15698,11 @@ pub mod staking {
             ) {
                 return Ok(Self::NotEnoughValidatorsReadyForNextEpoch(decoded));
             }
+            if let Ok(decoded) = <NotOwner as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::NotOwner(decoded));
+            }
             if let Ok(decoded) = <RealmIdNotFound as ::ethers::core::abi::AbiDecode>::decode(
                 data,
             ) {
@@ -12847,6 +15717,11 @@ pub mod staking {
                 data,
             ) {
                 return Ok(Self::RewardsMustBeClaimed(decoded));
+            }
+            if let Ok(decoded) = <SameAddress as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::SameAddress(decoded));
             }
             if let Ok(decoded) = <SignaledReadyForWrongEpochNumber as ::ethers::core::abi::AbiDecode>::decode(
                 data,
@@ -12933,6 +15808,11 @@ pub mod staking {
             ) {
                 return Ok(Self::ValueMustBeNonzero(decoded));
             }
+            if let Ok(decoded) = <ZeroAddress as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::ZeroAddress(decoded));
+            }
             Err(::ethers::core::abi::Error::InvalidData.into())
         }
     }
@@ -13014,6 +15894,12 @@ pub mod staking {
                 Self::CouldNotMapNodeAddressToStakerAddress(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
+                Self::ERC721ReceiverRejectedTokens(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::ERC721TransferToNonERC721ReceiverImplementer(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::IncorrectFacetCutAction(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
@@ -13068,6 +15954,9 @@ pub mod staking {
                 Self::NoBytecodeAtAddress(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
+                Self::NoEmptyStakeRecordSlots(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::NoEmptyStakingSlot(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
@@ -13075,6 +15964,9 @@ pub mod staking {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::NodeAddressNotFoundForStaker(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::NotApprovedOrOwner(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::NotContractOwner(element) => {
@@ -13092,6 +15984,9 @@ pub mod staking {
                 Self::NotEnoughValidatorsReadyForNextEpoch(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
+                Self::NotOwner(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::RealmIdNotFound(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
@@ -13099,6 +15994,9 @@ pub mod staking {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::RewardsMustBeClaimed(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::SameAddress(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::SignaledReadyForWrongEpochNumber(element) => {
@@ -13150,6 +16048,9 @@ pub mod staking {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::ValueMustBeNonzero(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::ZeroAddress(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::RevertString(s) => ::ethers::core::abi::AbiEncode::encode(s),
@@ -13261,6 +16162,14 @@ pub mod staking {
                     true
                 }
                 _ if selector
+                    == <ERC721ReceiverRejectedTokens as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
+                    == <ERC721TransferToNonERC721ReceiverImplementer as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
                     == <IncorrectFacetCutAction as ::ethers::contract::EthError>::selector() => {
                     true
                 }
@@ -13331,6 +16240,10 @@ pub mod staking {
                     true
                 }
                 _ if selector
+                    == <NoEmptyStakeRecordSlots as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
                     == <NoEmptyStakingSlot as ::ethers::contract::EthError>::selector() => {
                     true
                 }
@@ -13340,6 +16253,10 @@ pub mod staking {
                 }
                 _ if selector
                     == <NodeAddressNotFoundForStaker as ::ethers::contract::EthError>::selector() => {
+                    true
+                }
+                _ if selector
+                    == <NotApprovedOrOwner as ::ethers::contract::EthError>::selector() => {
                     true
                 }
                 _ if selector
@@ -13363,6 +16280,8 @@ pub mod staking {
                     true
                 }
                 _ if selector
+                    == <NotOwner as ::ethers::contract::EthError>::selector() => true,
+                _ if selector
                     == <RealmIdNotFound as ::ethers::contract::EthError>::selector() => {
                     true
                 }
@@ -13374,6 +16293,8 @@ pub mod staking {
                     == <RewardsMustBeClaimed as ::ethers::contract::EthError>::selector() => {
                     true
                 }
+                _ if selector
+                    == <SameAddress as ::ethers::contract::EthError>::selector() => true,
                 _ if selector
                     == <SignaledReadyForWrongEpochNumber as ::ethers::contract::EthError>::selector() => {
                     true
@@ -13442,6 +16363,8 @@ pub mod staking {
                     == <ValueMustBeNonzero as ::ethers::contract::EthError>::selector() => {
                     true
                 }
+                _ if selector
+                    == <ZeroAddress as ::ethers::contract::EthError>::selector() => true,
                 _ => false,
             }
         }
@@ -13516,6 +16439,12 @@ pub mod staking {
                 Self::CouldNotMapNodeAddressToStakerAddress(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
+                Self::ERC721ReceiverRejectedTokens(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::ERC721TransferToNonERC721ReceiverImplementer(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
                 Self::IncorrectFacetCutAction(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
@@ -13564,6 +16493,9 @@ pub mod staking {
                 Self::NoBytecodeAtAddress(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
+                Self::NoEmptyStakeRecordSlots(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
                 Self::NoEmptyStakingSlot(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
@@ -13571,6 +16503,9 @@ pub mod staking {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::NodeAddressNotFoundForStaker(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::NotApprovedOrOwner(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::NotContractOwner(element) => ::core::fmt::Display::fmt(element, f),
@@ -13586,6 +16521,7 @@ pub mod staking {
                 Self::NotEnoughValidatorsReadyForNextEpoch(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
+                Self::NotOwner(element) => ::core::fmt::Display::fmt(element, f),
                 Self::RealmIdNotFound(element) => ::core::fmt::Display::fmt(element, f),
                 Self::RemoveFacetAddressMustBeZeroAddress(element) => {
                     ::core::fmt::Display::fmt(element, f)
@@ -13593,6 +16529,7 @@ pub mod staking {
                 Self::RewardsMustBeClaimed(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
+                Self::SameAddress(element) => ::core::fmt::Display::fmt(element, f),
                 Self::SignaledReadyForWrongEpochNumber(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
@@ -13638,6 +16575,7 @@ pub mod staking {
                 Self::ValueMustBeNonzero(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
+                Self::ZeroAddress(element) => ::core::fmt::Display::fmt(element, f),
                 Self::RevertString(s) => ::core::fmt::Display::fmt(s, f),
             }
         }
@@ -13781,6 +16719,17 @@ pub mod staking {
             Self::CouldNotMapNodeAddressToStakerAddress(value)
         }
     }
+    impl ::core::convert::From<ERC721ReceiverRejectedTokens> for StakingErrors {
+        fn from(value: ERC721ReceiverRejectedTokens) -> Self {
+            Self::ERC721ReceiverRejectedTokens(value)
+        }
+    }
+    impl ::core::convert::From<ERC721TransferToNonERC721ReceiverImplementer>
+    for StakingErrors {
+        fn from(value: ERC721TransferToNonERC721ReceiverImplementer) -> Self {
+            Self::ERC721TransferToNonERC721ReceiverImplementer(value)
+        }
+    }
     impl ::core::convert::From<IncorrectFacetCutAction> for StakingErrors {
         fn from(value: IncorrectFacetCutAction) -> Self {
             Self::IncorrectFacetCutAction(value)
@@ -13876,6 +16825,11 @@ pub mod staking {
             Self::NoBytecodeAtAddress(value)
         }
     }
+    impl ::core::convert::From<NoEmptyStakeRecordSlots> for StakingErrors {
+        fn from(value: NoEmptyStakeRecordSlots) -> Self {
+            Self::NoEmptyStakeRecordSlots(value)
+        }
+    }
     impl ::core::convert::From<NoEmptyStakingSlot> for StakingErrors {
         fn from(value: NoEmptyStakingSlot) -> Self {
             Self::NoEmptyStakingSlot(value)
@@ -13889,6 +16843,11 @@ pub mod staking {
     impl ::core::convert::From<NodeAddressNotFoundForStaker> for StakingErrors {
         fn from(value: NodeAddressNotFoundForStaker) -> Self {
             Self::NodeAddressNotFoundForStaker(value)
+        }
+    }
+    impl ::core::convert::From<NotApprovedOrOwner> for StakingErrors {
+        fn from(value: NotApprovedOrOwner) -> Self {
+            Self::NotApprovedOrOwner(value)
         }
     }
     impl ::core::convert::From<NotContractOwner> for StakingErrors {
@@ -13917,6 +16876,11 @@ pub mod staking {
             Self::NotEnoughValidatorsReadyForNextEpoch(value)
         }
     }
+    impl ::core::convert::From<NotOwner> for StakingErrors {
+        fn from(value: NotOwner) -> Self {
+            Self::NotOwner(value)
+        }
+    }
     impl ::core::convert::From<RealmIdNotFound> for StakingErrors {
         fn from(value: RealmIdNotFound) -> Self {
             Self::RealmIdNotFound(value)
@@ -13930,6 +16894,11 @@ pub mod staking {
     impl ::core::convert::From<RewardsMustBeClaimed> for StakingErrors {
         fn from(value: RewardsMustBeClaimed) -> Self {
             Self::RewardsMustBeClaimed(value)
+        }
+    }
+    impl ::core::convert::From<SameAddress> for StakingErrors {
+        fn from(value: SameAddress) -> Self {
+            Self::SameAddress(value)
         }
     }
     impl ::core::convert::From<SignaledReadyForWrongEpochNumber> for StakingErrors {
@@ -14018,6 +16987,11 @@ pub mod staking {
             Self::ValueMustBeNonzero(value)
         }
     }
+    impl ::core::convert::From<ZeroAddress> for StakingErrors {
+        fn from(value: ZeroAddress) -> Self {
+            Self::ZeroAddress(value)
+        }
+    }
     #[derive(
         Clone,
         ::ethers::contract::EthEvent,
@@ -14034,6 +17008,47 @@ pub mod staking {
     pub struct AdvancedEpochFilter {
         pub realm_id: ::ethers::core::types::U256,
         pub epoch_number: ::ethers::core::types::U256,
+    }
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "Approval", abi = "Approval(address,address,uint256)")]
+    pub struct ApprovalFilter {
+        #[ethevent(indexed)]
+        pub owner: ::ethers::core::types::Address,
+        #[ethevent(indexed)]
+        pub approved: ::ethers::core::types::Address,
+        #[ethevent(indexed)]
+        pub token_id: ::ethers::core::types::U256,
+    }
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "ApprovalForAll", abi = "ApprovalForAll(address,address,bool)")]
+    pub struct ApprovalForAllFilter {
+        #[ethevent(indexed)]
+        pub owner: ::ethers::core::types::Address,
+        #[ethevent(indexed)]
+        pub operator: ::ethers::core::types::Address,
+        pub approved: bool,
     }
     #[derive(
         Clone,
@@ -14389,8 +17404,25 @@ pub mod staking {
         Eq,
         Hash
     )]
+    #[ethevent(name = "RequestToJoin", abi = "RequestToJoin(uint256)")]
+    pub struct RequestToJoin1Filter {
+        #[ethevent(indexed)]
+        pub validator_id: ::ethers::core::types::U256,
+    }
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
     #[ethevent(name = "RequestToJoin", abi = "RequestToJoin(address)")]
-    pub struct RequestToJoinFilter {
+    pub struct RequestToJoin2Filter {
         #[ethevent(indexed)]
         pub staker: ::ethers::core::types::Address,
     }
@@ -14518,12 +17550,33 @@ pub mod staking {
         name = "StakeRewardsClaimed",
         abi = "StakeRewardsClaimed(address,uint256,uint256,uint256,uint256)"
     )]
-    pub struct StakeRewardsClaimedFilter {
+    pub struct StakeRewardsClaimed1Filter {
         pub staker_address: ::ethers::core::types::Address,
         pub record_id: ::ethers::core::types::U256,
         pub rewards: ::ethers::core::types::U256,
         pub from_epoch: ::ethers::core::types::U256,
         pub to_epoch: ::ethers::core::types::U256,
+    }
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(
+        name = "StakeRewardsClaimed",
+        abi = "StakeRewardsClaimed(uint256,uint256,uint256)"
+    )]
+    pub struct StakeRewardsClaimed2Filter {
+        pub validator_id: ::ethers::core::types::U256,
+        pub record_id: ::ethers::core::types::U256,
+        pub rewards: ::ethers::core::types::U256,
     }
     #[derive(
         Clone,
@@ -14574,6 +17627,27 @@ pub mod staking {
     #[ethevent(name = "StateChanged", abi = "StateChanged(uint8)")]
     pub struct StateChangedFilter {
         pub new_state: u8,
+    }
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "Transfer", abi = "Transfer(address,address,uint256)")]
+    pub struct TransferFilter {
+        #[ethevent(indexed)]
+        pub from: ::ethers::core::types::Address,
+        #[ethevent(indexed)]
+        pub to: ::ethers::core::types::Address,
+        #[ethevent(indexed)]
+        pub token_id: ::ethers::core::types::U256,
     }
     #[derive(
         Clone,
@@ -14769,6 +17843,361 @@ pub mod staking {
         pub staker: ::ethers::core::types::Address,
         pub amount: ::ethers::core::types::U256,
     }
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "log", abi = "log(string)")]
+    pub struct LogFilter(pub ::std::string::String);
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "log_address", abi = "log_address(address)")]
+    pub struct LogAddressFilter(pub ::ethers::core::types::Address);
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "log_array", abi = "log_array(uint256[])")]
+    pub struct LogArray1Filter {
+        pub val: ::std::vec::Vec<::ethers::core::types::U256>,
+    }
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "log_array", abi = "log_array(int256[])")]
+    pub struct LogArray2Filter {
+        pub val: ::std::vec::Vec<::ethers::core::types::I256>,
+    }
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "log_array", abi = "log_array(address[])")]
+    pub struct LogArray3Filter {
+        pub val: ::std::vec::Vec<::ethers::core::types::Address>,
+    }
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "log_bytes", abi = "log_bytes(bytes)")]
+    pub struct LogBytesFilter(pub ::ethers::core::types::Bytes);
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "log_bytes32", abi = "log_bytes32(bytes32)")]
+    pub struct LogBytes32Filter(pub [u8; 32]);
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "log_int", abi = "log_int(int256)")]
+    pub struct LogIntFilter(pub ::ethers::core::types::I256);
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "log_named_address", abi = "log_named_address(string,address)")]
+    pub struct LogNamedAddressFilter {
+        pub key: ::std::string::String,
+        pub val: ::ethers::core::types::Address,
+    }
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "log_named_array", abi = "log_named_array(string,uint256[])")]
+    pub struct LogNamedArray1Filter {
+        pub key: ::std::string::String,
+        pub val: ::std::vec::Vec<::ethers::core::types::U256>,
+    }
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "log_named_array", abi = "log_named_array(string,int256[])")]
+    pub struct LogNamedArray2Filter {
+        pub key: ::std::string::String,
+        pub val: ::std::vec::Vec<::ethers::core::types::I256>,
+    }
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "log_named_array", abi = "log_named_array(string,address[])")]
+    pub struct LogNamedArray3Filter {
+        pub key: ::std::string::String,
+        pub val: ::std::vec::Vec<::ethers::core::types::Address>,
+    }
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "log_named_bytes", abi = "log_named_bytes(string,bytes)")]
+    pub struct LogNamedBytesFilter {
+        pub key: ::std::string::String,
+        pub val: ::ethers::core::types::Bytes,
+    }
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "log_named_bytes32", abi = "log_named_bytes32(string,bytes32)")]
+    pub struct LogNamedBytes32Filter {
+        pub key: ::std::string::String,
+        pub val: [u8; 32],
+    }
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(
+        name = "log_named_decimal_int",
+        abi = "log_named_decimal_int(string,int256,uint256)"
+    )]
+    pub struct LogNamedDecimalIntFilter {
+        pub key: ::std::string::String,
+        pub val: ::ethers::core::types::I256,
+        pub decimals: ::ethers::core::types::U256,
+    }
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(
+        name = "log_named_decimal_uint",
+        abi = "log_named_decimal_uint(string,uint256,uint256)"
+    )]
+    pub struct LogNamedDecimalUintFilter {
+        pub key: ::std::string::String,
+        pub val: ::ethers::core::types::U256,
+        pub decimals: ::ethers::core::types::U256,
+    }
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "log_named_int", abi = "log_named_int(string,int256)")]
+    pub struct LogNamedIntFilter {
+        pub key: ::std::string::String,
+        pub val: ::ethers::core::types::I256,
+    }
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "log_named_string", abi = "log_named_string(string,string)")]
+    pub struct LogNamedStringFilter {
+        pub key: ::std::string::String,
+        pub val: ::std::string::String,
+    }
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "log_named_uint", abi = "log_named_uint(string,uint256)")]
+    pub struct LogNamedUintFilter {
+        pub key: ::std::string::String,
+        pub val: ::ethers::core::types::U256,
+    }
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "log_string", abi = "log_string(string)")]
+    pub struct LogStringFilter(pub ::std::string::String);
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "log_uint", abi = "log_uint(uint256)")]
+    pub struct LogUintFilter(pub ::ethers::core::types::U256);
+    #[derive(
+        Clone,
+        ::ethers::contract::EthEvent,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethevent(name = "logs", abi = "logs(bytes)")]
+    pub struct LogsFilter(pub ::ethers::core::types::Bytes);
     ///Container type for all of the contract's events
     #[derive(
         Clone,
@@ -14782,6 +18211,8 @@ pub mod staking {
     )]
     pub enum StakingEvents {
         AdvancedEpochFilter(AdvancedEpochFilter),
+        ApprovalFilter(ApprovalFilter),
+        ApprovalForAllFilter(ApprovalForAllFilter),
         AttestedWalletRegisteredFilter(AttestedWalletRegisteredFilter),
         ClearOfflinePhaseDataFilter(ClearOfflinePhaseDataFilter),
         ComplaintConfigSetFilter(ComplaintConfigSetFilter),
@@ -14800,17 +18231,20 @@ pub mod staking {
         OwnershipTransferredFilter(OwnershipTransferredFilter),
         ReadyForNextEpochFilter(ReadyForNextEpochFilter),
         RecoveredFilter(RecoveredFilter),
-        RequestToJoinFilter(RequestToJoinFilter),
+        RequestToJoin1Filter(RequestToJoin1Filter),
+        RequestToJoin2Filter(RequestToJoin2Filter),
         RequestToLeaveFilter(RequestToLeaveFilter),
         ResolverContractAddressSetFilter(ResolverContractAddressSetFilter),
         RewardsDurationUpdatedFilter(RewardsDurationUpdatedFilter),
         StakeRecordCreatedFilter(StakeRecordCreatedFilter),
         StakeRecordRemovedFilter(StakeRecordRemovedFilter),
         StakeRecordUpdatedFilter(StakeRecordUpdatedFilter),
-        StakeRewardsClaimedFilter(StakeRewardsClaimedFilter),
+        StakeRewardsClaimed1Filter(StakeRewardsClaimed1Filter),
+        StakeRewardsClaimed2Filter(StakeRewardsClaimed2Filter),
         StakedFilter(StakedFilter),
         StakingTokenSetFilter(StakingTokenSetFilter),
         StateChangedFilter(StateChangedFilter),
+        TransferFilter(TransferFilter),
         TrustedForwarderSetFilter(TrustedForwarderSetFilter),
         ValidatorBannedFilter(ValidatorBannedFilter),
         ValidatorCommissionClaimedFilter(ValidatorCommissionClaimedFilter),
@@ -14821,6 +18255,28 @@ pub mod staking {
         VoteToAdvanceTimeOutElapsedFilter(VoteToAdvanceTimeOutElapsedFilter),
         VotedToKickValidatorInNextEpochFilter(VotedToKickValidatorInNextEpochFilter),
         WithdrawnFilter(WithdrawnFilter),
+        LogFilter(LogFilter),
+        LogAddressFilter(LogAddressFilter),
+        LogArray1Filter(LogArray1Filter),
+        LogArray2Filter(LogArray2Filter),
+        LogArray3Filter(LogArray3Filter),
+        LogBytesFilter(LogBytesFilter),
+        LogBytes32Filter(LogBytes32Filter),
+        LogIntFilter(LogIntFilter),
+        LogNamedAddressFilter(LogNamedAddressFilter),
+        LogNamedArray1Filter(LogNamedArray1Filter),
+        LogNamedArray2Filter(LogNamedArray2Filter),
+        LogNamedArray3Filter(LogNamedArray3Filter),
+        LogNamedBytesFilter(LogNamedBytesFilter),
+        LogNamedBytes32Filter(LogNamedBytes32Filter),
+        LogNamedDecimalIntFilter(LogNamedDecimalIntFilter),
+        LogNamedDecimalUintFilter(LogNamedDecimalUintFilter),
+        LogNamedIntFilter(LogNamedIntFilter),
+        LogNamedStringFilter(LogNamedStringFilter),
+        LogNamedUintFilter(LogNamedUintFilter),
+        LogStringFilter(LogStringFilter),
+        LogUintFilter(LogUintFilter),
+        LogsFilter(LogsFilter),
     }
     impl ::ethers::contract::EthLogDecode for StakingEvents {
         fn decode_log(
@@ -14828,6 +18284,12 @@ pub mod staking {
         ) -> ::core::result::Result<Self, ::ethers::core::abi::Error> {
             if let Ok(decoded) = AdvancedEpochFilter::decode_log(log) {
                 return Ok(StakingEvents::AdvancedEpochFilter(decoded));
+            }
+            if let Ok(decoded) = ApprovalFilter::decode_log(log) {
+                return Ok(StakingEvents::ApprovalFilter(decoded));
+            }
+            if let Ok(decoded) = ApprovalForAllFilter::decode_log(log) {
+                return Ok(StakingEvents::ApprovalForAllFilter(decoded));
             }
             if let Ok(decoded) = AttestedWalletRegisteredFilter::decode_log(log) {
                 return Ok(StakingEvents::AttestedWalletRegisteredFilter(decoded));
@@ -14883,8 +18345,11 @@ pub mod staking {
             if let Ok(decoded) = RecoveredFilter::decode_log(log) {
                 return Ok(StakingEvents::RecoveredFilter(decoded));
             }
-            if let Ok(decoded) = RequestToJoinFilter::decode_log(log) {
-                return Ok(StakingEvents::RequestToJoinFilter(decoded));
+            if let Ok(decoded) = RequestToJoin1Filter::decode_log(log) {
+                return Ok(StakingEvents::RequestToJoin1Filter(decoded));
+            }
+            if let Ok(decoded) = RequestToJoin2Filter::decode_log(log) {
+                return Ok(StakingEvents::RequestToJoin2Filter(decoded));
             }
             if let Ok(decoded) = RequestToLeaveFilter::decode_log(log) {
                 return Ok(StakingEvents::RequestToLeaveFilter(decoded));
@@ -14904,8 +18369,11 @@ pub mod staking {
             if let Ok(decoded) = StakeRecordUpdatedFilter::decode_log(log) {
                 return Ok(StakingEvents::StakeRecordUpdatedFilter(decoded));
             }
-            if let Ok(decoded) = StakeRewardsClaimedFilter::decode_log(log) {
-                return Ok(StakingEvents::StakeRewardsClaimedFilter(decoded));
+            if let Ok(decoded) = StakeRewardsClaimed1Filter::decode_log(log) {
+                return Ok(StakingEvents::StakeRewardsClaimed1Filter(decoded));
+            }
+            if let Ok(decoded) = StakeRewardsClaimed2Filter::decode_log(log) {
+                return Ok(StakingEvents::StakeRewardsClaimed2Filter(decoded));
             }
             if let Ok(decoded) = StakedFilter::decode_log(log) {
                 return Ok(StakingEvents::StakedFilter(decoded));
@@ -14915,6 +18383,9 @@ pub mod staking {
             }
             if let Ok(decoded) = StateChangedFilter::decode_log(log) {
                 return Ok(StakingEvents::StateChangedFilter(decoded));
+            }
+            if let Ok(decoded) = TransferFilter::decode_log(log) {
+                return Ok(StakingEvents::TransferFilter(decoded));
             }
             if let Ok(decoded) = TrustedForwarderSetFilter::decode_log(log) {
                 return Ok(StakingEvents::TrustedForwarderSetFilter(decoded));
@@ -14946,6 +18417,72 @@ pub mod staking {
             if let Ok(decoded) = WithdrawnFilter::decode_log(log) {
                 return Ok(StakingEvents::WithdrawnFilter(decoded));
             }
+            if let Ok(decoded) = LogFilter::decode_log(log) {
+                return Ok(StakingEvents::LogFilter(decoded));
+            }
+            if let Ok(decoded) = LogAddressFilter::decode_log(log) {
+                return Ok(StakingEvents::LogAddressFilter(decoded));
+            }
+            if let Ok(decoded) = LogArray1Filter::decode_log(log) {
+                return Ok(StakingEvents::LogArray1Filter(decoded));
+            }
+            if let Ok(decoded) = LogArray2Filter::decode_log(log) {
+                return Ok(StakingEvents::LogArray2Filter(decoded));
+            }
+            if let Ok(decoded) = LogArray3Filter::decode_log(log) {
+                return Ok(StakingEvents::LogArray3Filter(decoded));
+            }
+            if let Ok(decoded) = LogBytesFilter::decode_log(log) {
+                return Ok(StakingEvents::LogBytesFilter(decoded));
+            }
+            if let Ok(decoded) = LogBytes32Filter::decode_log(log) {
+                return Ok(StakingEvents::LogBytes32Filter(decoded));
+            }
+            if let Ok(decoded) = LogIntFilter::decode_log(log) {
+                return Ok(StakingEvents::LogIntFilter(decoded));
+            }
+            if let Ok(decoded) = LogNamedAddressFilter::decode_log(log) {
+                return Ok(StakingEvents::LogNamedAddressFilter(decoded));
+            }
+            if let Ok(decoded) = LogNamedArray1Filter::decode_log(log) {
+                return Ok(StakingEvents::LogNamedArray1Filter(decoded));
+            }
+            if let Ok(decoded) = LogNamedArray2Filter::decode_log(log) {
+                return Ok(StakingEvents::LogNamedArray2Filter(decoded));
+            }
+            if let Ok(decoded) = LogNamedArray3Filter::decode_log(log) {
+                return Ok(StakingEvents::LogNamedArray3Filter(decoded));
+            }
+            if let Ok(decoded) = LogNamedBytesFilter::decode_log(log) {
+                return Ok(StakingEvents::LogNamedBytesFilter(decoded));
+            }
+            if let Ok(decoded) = LogNamedBytes32Filter::decode_log(log) {
+                return Ok(StakingEvents::LogNamedBytes32Filter(decoded));
+            }
+            if let Ok(decoded) = LogNamedDecimalIntFilter::decode_log(log) {
+                return Ok(StakingEvents::LogNamedDecimalIntFilter(decoded));
+            }
+            if let Ok(decoded) = LogNamedDecimalUintFilter::decode_log(log) {
+                return Ok(StakingEvents::LogNamedDecimalUintFilter(decoded));
+            }
+            if let Ok(decoded) = LogNamedIntFilter::decode_log(log) {
+                return Ok(StakingEvents::LogNamedIntFilter(decoded));
+            }
+            if let Ok(decoded) = LogNamedStringFilter::decode_log(log) {
+                return Ok(StakingEvents::LogNamedStringFilter(decoded));
+            }
+            if let Ok(decoded) = LogNamedUintFilter::decode_log(log) {
+                return Ok(StakingEvents::LogNamedUintFilter(decoded));
+            }
+            if let Ok(decoded) = LogStringFilter::decode_log(log) {
+                return Ok(StakingEvents::LogStringFilter(decoded));
+            }
+            if let Ok(decoded) = LogUintFilter::decode_log(log) {
+                return Ok(StakingEvents::LogUintFilter(decoded));
+            }
+            if let Ok(decoded) = LogsFilter::decode_log(log) {
+                return Ok(StakingEvents::LogsFilter(decoded));
+            }
             Err(::ethers::core::abi::Error::InvalidData)
         }
     }
@@ -14953,6 +18490,10 @@ pub mod staking {
         fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
             match self {
                 Self::AdvancedEpochFilter(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::ApprovalFilter(element) => ::core::fmt::Display::fmt(element, f),
+                Self::ApprovalForAllFilter(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::AttestedWalletRegisteredFilter(element) => {
@@ -15001,7 +18542,10 @@ pub mod staking {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::RecoveredFilter(element) => ::core::fmt::Display::fmt(element, f),
-                Self::RequestToJoinFilter(element) => {
+                Self::RequestToJoin1Filter(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::RequestToJoin2Filter(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::RequestToLeaveFilter(element) => {
@@ -15022,7 +18566,10 @@ pub mod staking {
                 Self::StakeRecordUpdatedFilter(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
-                Self::StakeRewardsClaimedFilter(element) => {
+                Self::StakeRewardsClaimed1Filter(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::StakeRewardsClaimed2Filter(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::StakedFilter(element) => ::core::fmt::Display::fmt(element, f),
@@ -15032,6 +18579,7 @@ pub mod staking {
                 Self::StateChangedFilter(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
+                Self::TransferFilter(element) => ::core::fmt::Display::fmt(element, f),
                 Self::TrustedForwarderSetFilter(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
@@ -15060,12 +18608,64 @@ pub mod staking {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::WithdrawnFilter(element) => ::core::fmt::Display::fmt(element, f),
+                Self::LogFilter(element) => ::core::fmt::Display::fmt(element, f),
+                Self::LogAddressFilter(element) => ::core::fmt::Display::fmt(element, f),
+                Self::LogArray1Filter(element) => ::core::fmt::Display::fmt(element, f),
+                Self::LogArray2Filter(element) => ::core::fmt::Display::fmt(element, f),
+                Self::LogArray3Filter(element) => ::core::fmt::Display::fmt(element, f),
+                Self::LogBytesFilter(element) => ::core::fmt::Display::fmt(element, f),
+                Self::LogBytes32Filter(element) => ::core::fmt::Display::fmt(element, f),
+                Self::LogIntFilter(element) => ::core::fmt::Display::fmt(element, f),
+                Self::LogNamedAddressFilter(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::LogNamedArray1Filter(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::LogNamedArray2Filter(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::LogNamedArray3Filter(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::LogNamedBytesFilter(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::LogNamedBytes32Filter(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::LogNamedDecimalIntFilter(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::LogNamedDecimalUintFilter(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::LogNamedIntFilter(element) => ::core::fmt::Display::fmt(element, f),
+                Self::LogNamedStringFilter(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::LogNamedUintFilter(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::LogStringFilter(element) => ::core::fmt::Display::fmt(element, f),
+                Self::LogUintFilter(element) => ::core::fmt::Display::fmt(element, f),
+                Self::LogsFilter(element) => ::core::fmt::Display::fmt(element, f),
             }
         }
     }
     impl ::core::convert::From<AdvancedEpochFilter> for StakingEvents {
         fn from(value: AdvancedEpochFilter) -> Self {
             Self::AdvancedEpochFilter(value)
+        }
+    }
+    impl ::core::convert::From<ApprovalFilter> for StakingEvents {
+        fn from(value: ApprovalFilter) -> Self {
+            Self::ApprovalFilter(value)
+        }
+    }
+    impl ::core::convert::From<ApprovalForAllFilter> for StakingEvents {
+        fn from(value: ApprovalForAllFilter) -> Self {
+            Self::ApprovalForAllFilter(value)
         }
     }
     impl ::core::convert::From<AttestedWalletRegisteredFilter> for StakingEvents {
@@ -15158,9 +18758,14 @@ pub mod staking {
             Self::RecoveredFilter(value)
         }
     }
-    impl ::core::convert::From<RequestToJoinFilter> for StakingEvents {
-        fn from(value: RequestToJoinFilter) -> Self {
-            Self::RequestToJoinFilter(value)
+    impl ::core::convert::From<RequestToJoin1Filter> for StakingEvents {
+        fn from(value: RequestToJoin1Filter) -> Self {
+            Self::RequestToJoin1Filter(value)
+        }
+    }
+    impl ::core::convert::From<RequestToJoin2Filter> for StakingEvents {
+        fn from(value: RequestToJoin2Filter) -> Self {
+            Self::RequestToJoin2Filter(value)
         }
     }
     impl ::core::convert::From<RequestToLeaveFilter> for StakingEvents {
@@ -15193,9 +18798,14 @@ pub mod staking {
             Self::StakeRecordUpdatedFilter(value)
         }
     }
-    impl ::core::convert::From<StakeRewardsClaimedFilter> for StakingEvents {
-        fn from(value: StakeRewardsClaimedFilter) -> Self {
-            Self::StakeRewardsClaimedFilter(value)
+    impl ::core::convert::From<StakeRewardsClaimed1Filter> for StakingEvents {
+        fn from(value: StakeRewardsClaimed1Filter) -> Self {
+            Self::StakeRewardsClaimed1Filter(value)
+        }
+    }
+    impl ::core::convert::From<StakeRewardsClaimed2Filter> for StakingEvents {
+        fn from(value: StakeRewardsClaimed2Filter) -> Self {
+            Self::StakeRewardsClaimed2Filter(value)
         }
     }
     impl ::core::convert::From<StakedFilter> for StakingEvents {
@@ -15211,6 +18821,11 @@ pub mod staking {
     impl ::core::convert::From<StateChangedFilter> for StakingEvents {
         fn from(value: StateChangedFilter) -> Self {
             Self::StateChangedFilter(value)
+        }
+    }
+    impl ::core::convert::From<TransferFilter> for StakingEvents {
+        fn from(value: TransferFilter) -> Self {
+            Self::TransferFilter(value)
         }
     }
     impl ::core::convert::From<TrustedForwarderSetFilter> for StakingEvents {
@@ -15262,6 +18877,241 @@ pub mod staking {
         fn from(value: WithdrawnFilter) -> Self {
             Self::WithdrawnFilter(value)
         }
+    }
+    impl ::core::convert::From<LogFilter> for StakingEvents {
+        fn from(value: LogFilter) -> Self {
+            Self::LogFilter(value)
+        }
+    }
+    impl ::core::convert::From<LogAddressFilter> for StakingEvents {
+        fn from(value: LogAddressFilter) -> Self {
+            Self::LogAddressFilter(value)
+        }
+    }
+    impl ::core::convert::From<LogArray1Filter> for StakingEvents {
+        fn from(value: LogArray1Filter) -> Self {
+            Self::LogArray1Filter(value)
+        }
+    }
+    impl ::core::convert::From<LogArray2Filter> for StakingEvents {
+        fn from(value: LogArray2Filter) -> Self {
+            Self::LogArray2Filter(value)
+        }
+    }
+    impl ::core::convert::From<LogArray3Filter> for StakingEvents {
+        fn from(value: LogArray3Filter) -> Self {
+            Self::LogArray3Filter(value)
+        }
+    }
+    impl ::core::convert::From<LogBytesFilter> for StakingEvents {
+        fn from(value: LogBytesFilter) -> Self {
+            Self::LogBytesFilter(value)
+        }
+    }
+    impl ::core::convert::From<LogBytes32Filter> for StakingEvents {
+        fn from(value: LogBytes32Filter) -> Self {
+            Self::LogBytes32Filter(value)
+        }
+    }
+    impl ::core::convert::From<LogIntFilter> for StakingEvents {
+        fn from(value: LogIntFilter) -> Self {
+            Self::LogIntFilter(value)
+        }
+    }
+    impl ::core::convert::From<LogNamedAddressFilter> for StakingEvents {
+        fn from(value: LogNamedAddressFilter) -> Self {
+            Self::LogNamedAddressFilter(value)
+        }
+    }
+    impl ::core::convert::From<LogNamedArray1Filter> for StakingEvents {
+        fn from(value: LogNamedArray1Filter) -> Self {
+            Self::LogNamedArray1Filter(value)
+        }
+    }
+    impl ::core::convert::From<LogNamedArray2Filter> for StakingEvents {
+        fn from(value: LogNamedArray2Filter) -> Self {
+            Self::LogNamedArray2Filter(value)
+        }
+    }
+    impl ::core::convert::From<LogNamedArray3Filter> for StakingEvents {
+        fn from(value: LogNamedArray3Filter) -> Self {
+            Self::LogNamedArray3Filter(value)
+        }
+    }
+    impl ::core::convert::From<LogNamedBytesFilter> for StakingEvents {
+        fn from(value: LogNamedBytesFilter) -> Self {
+            Self::LogNamedBytesFilter(value)
+        }
+    }
+    impl ::core::convert::From<LogNamedBytes32Filter> for StakingEvents {
+        fn from(value: LogNamedBytes32Filter) -> Self {
+            Self::LogNamedBytes32Filter(value)
+        }
+    }
+    impl ::core::convert::From<LogNamedDecimalIntFilter> for StakingEvents {
+        fn from(value: LogNamedDecimalIntFilter) -> Self {
+            Self::LogNamedDecimalIntFilter(value)
+        }
+    }
+    impl ::core::convert::From<LogNamedDecimalUintFilter> for StakingEvents {
+        fn from(value: LogNamedDecimalUintFilter) -> Self {
+            Self::LogNamedDecimalUintFilter(value)
+        }
+    }
+    impl ::core::convert::From<LogNamedIntFilter> for StakingEvents {
+        fn from(value: LogNamedIntFilter) -> Self {
+            Self::LogNamedIntFilter(value)
+        }
+    }
+    impl ::core::convert::From<LogNamedStringFilter> for StakingEvents {
+        fn from(value: LogNamedStringFilter) -> Self {
+            Self::LogNamedStringFilter(value)
+        }
+    }
+    impl ::core::convert::From<LogNamedUintFilter> for StakingEvents {
+        fn from(value: LogNamedUintFilter) -> Self {
+            Self::LogNamedUintFilter(value)
+        }
+    }
+    impl ::core::convert::From<LogStringFilter> for StakingEvents {
+        fn from(value: LogStringFilter) -> Self {
+            Self::LogStringFilter(value)
+        }
+    }
+    impl ::core::convert::From<LogUintFilter> for StakingEvents {
+        fn from(value: LogUintFilter) -> Self {
+            Self::LogUintFilter(value)
+        }
+    }
+    impl ::core::convert::From<LogsFilter> for StakingEvents {
+        fn from(value: LogsFilter) -> Self {
+            Self::LogsFilter(value)
+        }
+    }
+    ///Container type for all input parameters for the `IS_TEST` function with signature `IS_TEST()` and selector `0xfa7626d4`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "IS_TEST", abi = "IS_TEST()")]
+    pub struct IsTestCall;
+    ///Container type for all input parameters for the `_generateAddresses` function with signature `_generateAddresses(uint256)` and selector `0x678ac78a`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "_generateAddresses", abi = "_generateAddresses(uint256)")]
+    pub struct GenerateAddressesCall {
+        pub num_addresses: ::ethers::core::types::U256,
+    }
+    ///Container type for all input parameters for the `_generateAddressesWithOffset` function with signature `_generateAddressesWithOffset(uint256,uint256)` and selector `0xa5187b2b`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(
+        name = "_generateAddressesWithOffset",
+        abi = "_generateAddressesWithOffset(uint256,uint256)"
+    )]
+    pub struct GenerateAddressesWithOffsetCall {
+        pub num_addresses: ::ethers::core::types::U256,
+        pub offset: ::ethers::core::types::U256,
+    }
+    ///Container type for all input parameters for the `_generatePubKeys` function with signature `_generatePubKeys(uint256)` and selector `0xfed0a77b`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "_generatePubKeys", abi = "_generatePubKeys(uint256)")]
+    pub struct GeneratePubKeysCall {
+        pub stakers: ::ethers::core::types::U256,
+    }
+    ///Container type for all input parameters for the `_generateUint256s` function with signature `_generateUint256s(uint256)` and selector `0xae517f4d`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "_generateUint256s", abi = "_generateUint256s(uint256)")]
+    pub struct GenerateUint256SCall {
+        pub num_uint_25_6s: ::ethers::core::types::U256,
+    }
+    ///Container type for all input parameters for the `_generateUint256sWithOffset` function with signature `_generateUint256sWithOffset(uint256,uint256)` and selector `0xfb9d55b8`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(
+        name = "_generateUint256sWithOffset",
+        abi = "_generateUint256sWithOffset(uint256,uint256)"
+    )]
+    pub struct GenerateUint256SWithOffsetCall {
+        pub num_uint_25_6s: ::ethers::core::types::U256,
+        pub offset: ::ethers::core::types::U256,
+    }
+    ///Container type for all input parameters for the `_generateValidators` function with signature `_generateValidators(uint256)` and selector `0xc5344d40`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "_generateValidators", abi = "_generateValidators(uint256)")]
+    pub struct GenerateValidatorsCall {
+        pub num_validators: ::ethers::core::types::U256,
     }
     ///Container type for all input parameters for the `addRealm` function with signature `addRealm()` and selector `0x472a7d89`
     #[derive(
@@ -15489,6 +19339,24 @@ pub mod staking {
     pub struct AdvanceEpochCall {
         pub realm_id: ::ethers::core::types::U256,
     }
+    ///Container type for all input parameters for the `approve` function with signature `approve(address,uint256)` and selector `0x095ea7b3`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "approve", abi = "approve(address,uint256)")]
+    pub struct ApproveCall {
+        pub approved: ::ethers::core::types::Address,
+        pub token_id: ::ethers::core::types::U256,
+    }
     ///Container type for all input parameters for the `balanceOf` function with signature `balanceOf(address)` and selector `0x70a08231`
     #[derive(
         Clone,
@@ -15504,7 +19372,7 @@ pub mod staking {
     )]
     #[ethcall(name = "balanceOf", abi = "balanceOf(address)")]
     pub struct BalanceOfCall {
-        pub staker_address: ::ethers::core::types::Address,
+        pub owner: ::ethers::core::types::Address,
     }
     ///Container type for all input parameters for the `calculateRewardsPerDay` function with signature `calculateRewardsPerDay((uint256,uint256,address[],uint256))` and selector `0x9be372e0`
     #[derive(
@@ -15876,6 +19744,66 @@ pub mod staking {
     pub struct EpochCall {
         pub realm_id: ::ethers::core::types::U256,
     }
+    ///Container type for all input parameters for the `excludeArtifacts` function with signature `excludeArtifacts()` and selector `0xb5508aa9`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "excludeArtifacts", abi = "excludeArtifacts()")]
+    pub struct ExcludeArtifactsCall;
+    ///Container type for all input parameters for the `excludeContracts` function with signature `excludeContracts()` and selector `0xe20c9f71`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "excludeContracts", abi = "excludeContracts()")]
+    pub struct ExcludeContractsCall;
+    ///Container type for all input parameters for the `excludeSelectors` function with signature `excludeSelectors()` and selector `0xb0464fdc`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "excludeSelectors", abi = "excludeSelectors()")]
+    pub struct ExcludeSelectorsCall;
+    ///Container type for all input parameters for the `excludeSenders` function with signature `excludeSenders()` and selector `0x1ed7831c`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "excludeSenders", abi = "excludeSenders()")]
+    pub struct ExcludeSendersCall;
     ///Container type for all input parameters for the `exit` function with signature `exit()` and selector `0xe9fad8ee`
     #[derive(
         Clone,
@@ -15955,6 +19883,21 @@ pub mod staking {
     )]
     #[ethcall(name = "facets", abi = "facets()")]
     pub struct FacetsCall;
+    ///Container type for all input parameters for the `failed` function with signature `failed()` and selector `0xba414fa6`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "failed", abi = "failed()")]
+    pub struct FailedCall;
     ///Container type for all input parameters for the `getActiveUnkickedValidatorCount` function with signature `getActiveUnkickedValidatorCount(uint256)` and selector `0x7a808c0d`
     #[derive(
         Clone,
@@ -16080,6 +20023,23 @@ pub mod staking {
     )]
     #[ethcall(name = "getAllValidators", abi = "getAllValidators()")]
     pub struct GetAllValidatorsCall;
+    ///Container type for all input parameters for the `getApproved` function with signature `getApproved(uint256)` and selector `0x081812fc`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "getApproved", abi = "getApproved(uint256)")]
+    pub struct GetApprovedCall {
+        pub token_id: ::ethers::core::types::U256,
+    }
     ///Container type for all input parameters for the `getAttestedPubKey` function with signature `getAttestedPubKey(address)` and selector `0xe9332ea7`
     #[derive(
         Clone,
@@ -16158,6 +20118,27 @@ pub mod staking {
     )]
     pub struct GetDelegatedStakersWithUnfreezingStakesCountCall {
         pub validator_address: ::ethers::core::types::Address,
+    }
+    ///Container type for all input parameters for the `getEmptyStakeRecordSlots` function with signature `getEmptyStakeRecordSlots(address,address)` and selector `0xa6f67c51`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(
+        name = "getEmptyStakeRecordSlots",
+        abi = "getEmptyStakeRecordSlots(address,address)"
+    )]
+    pub struct GetEmptyStakeRecordSlotsCall {
+        pub user_staker_address: ::ethers::core::types::Address,
+        pub operator_staker_address: ::ethers::core::types::Address,
     }
     ///Container type for all input parameters for the `getKeySet` function with signature `getKeySet(string)` and selector `0xa305e5fe`
     #[derive(
@@ -16369,6 +20350,27 @@ pub mod staking {
     )]
     #[ethcall(name = "getMinimumStake", abi = "getMinimumStake()")]
     pub struct GetMinimumStakeCall;
+    ///Container type for all input parameters for the `getMostRecentStakeRecord` function with signature `getMostRecentStakeRecord(address,address)` and selector `0x7d0f412f`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(
+        name = "getMostRecentStakeRecord",
+        abi = "getMostRecentStakeRecord(address,address)"
+    )]
+    pub struct GetMostRecentStakeRecordCall {
+        pub user_staker_address: ::ethers::core::types::Address,
+        pub operator_staker_address: ::ethers::core::types::Address,
+    }
     ///Container type for all input parameters for the `getNodeAttestedPubKeyMappings` function with signature `getNodeAttestedPubKeyMappings(address[])` and selector `0x88790aee`
     #[derive(
         Clone,
@@ -16714,7 +20716,7 @@ pub mod staking {
     pub struct GetThresholdCall {
         pub node_count: ::ethers::core::types::U256,
     }
-    ///Container type for all input parameters for the `getTimelockInEpoch` function with signature `getTimelockInEpoch(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address),uint256)` and selector `0xf16bbde3`
+    ///Container type for all input parameters for the `getTimelockInEpoch` function with signature `getTimelockInEpoch(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address,uint256),uint256)` and selector `0x2db912e4`
     #[derive(
         Clone,
         ::ethers::contract::EthCall,
@@ -16729,7 +20731,7 @@ pub mod staking {
     )]
     #[ethcall(
         name = "getTimelockInEpoch",
-        abi = "getTimelockInEpoch(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address),uint256)"
+        abi = "getTimelockInEpoch(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address,uint256),uint256)"
     )]
     pub struct GetTimelockInEpochCall {
         pub staker_address: ::ethers::core::types::Address,
@@ -16766,7 +20768,7 @@ pub mod staking {
     )]
     #[ethcall(name = "getTokenPrice", abi = "getTokenPrice()")]
     pub struct GetTokenPriceCall;
-    ///Container type for all input parameters for the `getTokensStaked` function with signature `getTokensStaked(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address),uint256)` and selector `0x5e91a664`
+    ///Container type for all input parameters for the `getTokensStaked` function with signature `getTokensStaked(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address,uint256),uint256)` and selector `0x0fd78304`
     #[derive(
         Clone,
         ::ethers::contract::EthCall,
@@ -16781,7 +20783,7 @@ pub mod staking {
     )]
     #[ethcall(
         name = "getTokensStaked",
-        abi = "getTokensStaked(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address),uint256)"
+        abi = "getTokensStaked(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address,uint256),uint256)"
     )]
     pub struct GetTokensStakedCall {
         pub staker_address: ::ethers::core::types::Address,
@@ -17199,6 +21201,24 @@ pub mod staking {
     pub struct IsActiveValidatorForNextEpochCall {
         pub realm_id: ::ethers::core::types::U256,
         pub staker_address: ::ethers::core::types::Address,
+    }
+    ///Container type for all input parameters for the `isApprovedForAll` function with signature `isApprovedForAll(address,address)` and selector `0xe985e9c5`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "isApprovedForAll", abi = "isApprovedForAll(address,address)")]
+    pub struct IsApprovedForAllCall {
+        pub owner: ::ethers::core::types::Address,
+        pub operator: ::ethers::core::types::Address,
     }
     ///Container type for all input parameters for the `isReadyForNextEpoch` function with signature `isReadyForNextEpoch(uint256)` and selector `0x7fecc451`
     #[derive(
@@ -17627,6 +21647,40 @@ pub mod staking {
     )]
     #[ethcall(name = "owner", abi = "owner()")]
     pub struct OwnerCall;
+    ///Container type for all input parameters for the `ownerOf` function with signature `ownerOf(uint256)` and selector `0x6352211e`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "ownerOf", abi = "ownerOf(uint256)")]
+    pub struct OwnerOfCall {
+        pub token_id: ::ethers::core::types::U256,
+    }
+    ///Container type for all input parameters for the `ownershipChange` function with signature `ownershipChange(uint256)` and selector `0x23857d51`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "ownershipChange", abi = "ownershipChange(uint256)")]
+    pub struct OwnershipChangeCall {
+        pub token_id: ::ethers::core::types::U256,
+    }
     ///Container type for all input parameters for the `permittedRealmsForValidator` function with signature `permittedRealmsForValidator(address)` and selector `0xe718ff4c`
     #[derive(
         Clone,
@@ -17869,6 +21923,86 @@ pub mod staking {
     #[ethcall(name = "requestToLeaveAsNode", abi = "requestToLeaveAsNode(uint256)")]
     pub struct RequestToLeaveAsNodeCall {
         pub realm_id: ::ethers::core::types::U256,
+    }
+    ///Container type for all input parameters for the `safeTransferFrom` function with signature `safeTransferFrom(address,address,uint256)` and selector `0x42842e0e`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(
+        name = "safeTransferFrom",
+        abi = "safeTransferFrom(address,address,uint256)"
+    )]
+    pub struct SafeTransferFromCall {
+        pub from: ::ethers::core::types::Address,
+        pub to: ::ethers::core::types::Address,
+        pub token_id: ::ethers::core::types::U256,
+    }
+    ///Container type for all input parameters for the `safeTransferFrom` function with signature `safeTransferFrom(address,address,uint256,bytes)` and selector `0xb88d4fde`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(
+        name = "safeTransferFrom",
+        abi = "safeTransferFrom(address,address,uint256,bytes)"
+    )]
+    pub struct SafeTransferFromWithFromAndToAndDataCall {
+        pub from: ::ethers::core::types::Address,
+        pub to: ::ethers::core::types::Address,
+        pub token_id: ::ethers::core::types::U256,
+        pub data: ::ethers::core::types::Bytes,
+    }
+    ///Container type for all input parameters for the `selfStakeBalanceOf` function with signature `selfStakeBalanceOf(address)` and selector `0xeddf837a`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "selfStakeBalanceOf", abi = "selfStakeBalanceOf(address)")]
+    pub struct SelfStakeBalanceOfCall {
+        pub staker_address: ::ethers::core::types::Address,
+    }
+    ///Container type for all input parameters for the `setApprovalForAll` function with signature `setApprovalForAll(address,bool)` and selector `0xa22cb465`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "setApprovalForAll", abi = "setApprovalForAll(address,bool)")]
+    pub struct SetApprovalForAllCall {
+        pub operator: ::ethers::core::types::Address,
+        pub approved: bool,
     }
     ///Container type for all input parameters for the `setComplaintConfig` function with signature `setComplaintConfig(uint256,(uint256,uint256,uint256,uint256))` and selector `0x440e8d22`
     #[derive(
@@ -18258,6 +22392,21 @@ pub mod staking {
     pub struct SetTrustedForwarderCall {
         pub forwarder: ::ethers::core::types::Address,
     }
+    ///Container type for all input parameters for the `setUp` function with signature `setUp()` and selector `0x0a9254e4`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "setUp", abi = "setUp()")]
+    pub struct SetUpCall;
     ///Container type for all input parameters for the `setValidatorCommissionRate` function with signature `setValidatorCommissionRate(uint256)` and selector `0x7149ab58`
     #[derive(
         Clone,
@@ -18415,6 +22564,382 @@ pub mod staking {
     pub struct SupportsInterfaceCall {
         pub interface_id: [u8; 4],
     }
+    ///Container type for all input parameters for the `targetArtifactSelectors` function with signature `targetArtifactSelectors()` and selector `0x66d9a9a0`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "targetArtifactSelectors", abi = "targetArtifactSelectors()")]
+    pub struct TargetArtifactSelectorsCall;
+    ///Container type for all input parameters for the `targetArtifacts` function with signature `targetArtifacts()` and selector `0x85226c81`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "targetArtifacts", abi = "targetArtifacts()")]
+    pub struct TargetArtifactsCall;
+    ///Container type for all input parameters for the `targetContracts` function with signature `targetContracts()` and selector `0x3f7286f4`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "targetContracts", abi = "targetContracts()")]
+    pub struct TargetContractsCall;
+    ///Container type for all input parameters for the `targetInterfaces` function with signature `targetInterfaces()` and selector `0x2ade3880`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "targetInterfaces", abi = "targetInterfaces()")]
+    pub struct TargetInterfacesCall;
+    ///Container type for all input parameters for the `targetSelectors` function with signature `targetSelectors()` and selector `0x916a17c6`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "targetSelectors", abi = "targetSelectors()")]
+    pub struct TargetSelectorsCall;
+    ///Container type for all input parameters for the `targetSenders` function with signature `targetSenders()` and selector `0x3e5e3c23`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "targetSenders", abi = "targetSenders()")]
+    pub struct TargetSendersCall;
+    ///Container type for all input parameters for the `test_Stake` function with signature `test_Stake()` and selector `0xdbab1cd7`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "test_Stake", abi = "test_Stake()")]
+    pub struct TestStakeCall;
+    ///Container type for all input parameters for the `test_StakeAndTransfer` function with signature `test_StakeAndTransfer(bool)` and selector `0xaaedca62`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "test_StakeAndTransfer", abi = "test_StakeAndTransfer(bool)")]
+    pub struct TestStakeAndTransferCall {
+        pub is_safe_transfer: bool,
+    }
+    ///Container type for all input parameters for the `test_StakeAndTransfer_ClaimRewards` function with signature `test_StakeAndTransfer_ClaimRewards(bool)` and selector `0x96007d44`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(
+        name = "test_StakeAndTransfer_ClaimRewards",
+        abi = "test_StakeAndTransfer_ClaimRewards(bool)"
+    )]
+    pub struct TestStakeAndTransferClaimRewardsCall {
+        pub is_safe_transfer: bool,
+    }
+    ///Container type for all input parameters for the `test_StakeAndTransfer_ReceiverMutatesStakeRecord` function with signature `test_StakeAndTransfer_ReceiverMutatesStakeRecord(bool,uint256)` and selector `0x6239b4f7`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(
+        name = "test_StakeAndTransfer_ReceiverMutatesStakeRecord",
+        abi = "test_StakeAndTransfer_ReceiverMutatesStakeRecord(bool,uint256)"
+    )]
+    pub struct TestStakeAndTransferReceiverMutatesStakeRecordCall {
+        pub is_safe_transfer: bool,
+        pub operation: ::ethers::core::types::U256,
+    }
+    ///Container type for all input parameters for the `test_StakeAndTransfer_RevertNotOwner` function with signature `test_StakeAndTransfer_RevertNotOwner(bool)` and selector `0x5ad8b9a9`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(
+        name = "test_StakeAndTransfer_RevertNotOwner",
+        abi = "test_StakeAndTransfer_RevertNotOwner(bool)"
+    )]
+    pub struct TestStakeAndTransferRevertNotOwnerCall {
+        pub is_safe_transfer: bool,
+    }
+    ///Container type for all input parameters for the `test_StakeAndTransfer_TokenOwnerByIndex` function with signature `test_StakeAndTransfer_TokenOwnerByIndex(bool)` and selector `0xa7319b44`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(
+        name = "test_StakeAndTransfer_TokenOwnerByIndex",
+        abi = "test_StakeAndTransfer_TokenOwnerByIndex(bool)"
+    )]
+    pub struct TestStakeAndTransferTokenOwnerByIndexCall {
+        pub is_safe_transfer: bool,
+    }
+    ///Container type for all input parameters for the `test_StakeAndTransfer_Withdraw` function with signature `test_StakeAndTransfer_Withdraw(bool,bool)` and selector `0x86ef1d4d`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(
+        name = "test_StakeAndTransfer_Withdraw",
+        abi = "test_StakeAndTransfer_Withdraw(bool,bool)"
+    )]
+    pub struct TestStakeAndTransferWithdrawCall {
+        pub is_safe_transfer: bool,
+        pub is_unfreeze_before_transfer: bool,
+    }
+    ///Container type for all input parameters for the `test_StakeApproveAndTransfer` function with signature `test_StakeApproveAndTransfer(bool)` and selector `0x22e7a7ac`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(
+        name = "test_StakeApproveAndTransfer",
+        abi = "test_StakeApproveAndTransfer(bool)"
+    )]
+    pub struct TestStakeApproveAndTransferCall {
+        pub is_safe_transfer: bool,
+    }
+    ///Container type for all input parameters for the `test_StakeApproveForAllAndTransfer` function with signature `test_StakeApproveForAllAndTransfer(bool)` and selector `0x78854e37`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(
+        name = "test_StakeApproveForAllAndTransfer",
+        abi = "test_StakeApproveForAllAndTransfer(bool)"
+    )]
+    pub struct TestStakeApproveForAllAndTransferCall {
+        pub is_safe_transfer: bool,
+    }
+    ///Container type for all input parameters for the `test_StakeMax_TransferShouldFail` function with signature `test_StakeMax_TransferShouldFail(bool)` and selector `0xb29fabc7`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(
+        name = "test_StakeMax_TransferShouldFail",
+        abi = "test_StakeMax_TransferShouldFail(bool)"
+    )]
+    pub struct TestStakeMaxTransferShouldFailCall {
+        pub is_safe_transfer: bool,
+    }
+    ///Container type for all input parameters for the `test_Stake_MutateStakeRecord` function with signature `test_Stake_MutateStakeRecord(uint256)` and selector `0xa90bb850`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(
+        name = "test_Stake_MutateStakeRecord",
+        abi = "test_Stake_MutateStakeRecord(uint256)"
+    )]
+    pub struct TestStakeMutateStakeRecordCall {
+        pub operation: ::ethers::core::types::U256,
+    }
+    ///Container type for all input parameters for the `tokenOfOwnerByIndex` function with signature `tokenOfOwnerByIndex(address,uint256)` and selector `0x2f745c59`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(
+        name = "tokenOfOwnerByIndex",
+        abi = "tokenOfOwnerByIndex(address,uint256)"
+    )]
+    pub struct TokenOfOwnerByIndexCall {
+        pub owner: ::ethers::core::types::Address,
+        pub index: ::ethers::core::types::U256,
+    }
+    ///Container type for all input parameters for the `tokenToStakeRecord` function with signature `tokenToStakeRecord(uint256)` and selector `0xf0e2d9b5`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "tokenToStakeRecord", abi = "tokenToStakeRecord(uint256)")]
+    pub struct TokenToStakeRecordCall {
+        pub token_id: ::ethers::core::types::U256,
+    }
+    ///Container type for all input parameters for the `totalSupply` function with signature `totalSupply()` and selector `0x18160ddd`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "totalSupply", abi = "totalSupply()")]
+    pub struct TotalSupplyCall;
+    ///Container type for all input parameters for the `transferFrom` function with signature `transferFrom(address,address,uint256)` and selector `0x23b872dd`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthCall,
+        ::ethers::contract::EthDisplay,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    #[ethcall(name = "transferFrom", abi = "transferFrom(address,address,uint256)")]
+    pub struct TransferFromCall {
+        pub from: ::ethers::core::types::Address,
+        pub to: ::ethers::core::types::Address,
+        pub token_id: ::ethers::core::types::U256,
+    }
     ///Container type for all input parameters for the `transferOwnership` function with signature `transferOwnership(address)` and selector `0xf2fde38b`
     #[derive(
         Clone,
@@ -18556,6 +23081,13 @@ pub mod staking {
         serde::Deserialize,
     )]
     pub enum StakingCalls {
+        IsTest(IsTestCall),
+        GenerateAddresses(GenerateAddressesCall),
+        GenerateAddressesWithOffset(GenerateAddressesWithOffsetCall),
+        GeneratePubKeys(GeneratePubKeysCall),
+        GenerateUint256S(GenerateUint256SCall),
+        GenerateUint256SWithOffset(GenerateUint256SWithOffsetCall),
+        GenerateValidators(GenerateValidatorsCall),
         AddRealm(AddRealmCall),
         AdminKickValidatorInNextEpoch(AdminKickValidatorInNextEpochCall),
         AdminRejoinValidator(AdminRejoinValidatorCall),
@@ -18569,6 +23101,7 @@ pub mod staking {
         AdminStakeForUser(AdminStakeForUserCall),
         AdminUnfreezeForUser(AdminUnfreezeForUserCall),
         AdvanceEpoch(AdvanceEpochCall),
+        Approve(ApproveCall),
         BalanceOf(BalanceOfCall),
         CalculateRewardsPerDay(CalculateRewardsPerDayCall),
         CalculateStakeWeight(CalculateStakeWeightCall),
@@ -18593,11 +23126,16 @@ pub mod staking {
         EmitClearOfflinePhaseData(EmitClearOfflinePhaseDataCall),
         EmitCountOfflinePhaseData(EmitCountOfflinePhaseDataCall),
         Epoch(EpochCall),
+        ExcludeArtifacts(ExcludeArtifactsCall),
+        ExcludeContracts(ExcludeContractsCall),
+        ExcludeSelectors(ExcludeSelectorsCall),
+        ExcludeSenders(ExcludeSendersCall),
         Exit(ExitCall),
         FacetAddress(FacetAddressCall),
         FacetAddresses(FacetAddressesCall),
         FacetFunctionSelectors(FacetFunctionSelectorsCall),
         Facets(FacetsCall),
+        Failed(FailedCall),
         GetActiveUnkickedValidatorCount(GetActiveUnkickedValidatorCountCall),
         GetActiveUnkickedValidatorStructs(GetActiveUnkickedValidatorStructsCall),
         GetActiveUnkickedValidatorStructsAndCounts(
@@ -18607,6 +23145,7 @@ pub mod staking {
         GetAllReserveValidators(GetAllReserveValidatorsCall),
         GetAllUnkickedValidators(GetAllUnkickedValidatorsCall),
         GetAllValidators(GetAllValidatorsCall),
+        GetApproved(GetApprovedCall),
         GetAttestedPubKey(GetAttestedPubKeyCall),
         GetCurrentRealmIdForStakerAddress(GetCurrentRealmIdForStakerAddressCall),
         GetDelegatedStakersWithUnfreezingStakes(
@@ -18615,6 +23154,7 @@ pub mod staking {
         GetDelegatedStakersWithUnfreezingStakesCount(
             GetDelegatedStakersWithUnfreezingStakesCountCall,
         ),
+        GetEmptyStakeRecordSlots(GetEmptyStakeRecordSlotsCall),
         GetKeySet(GetKeySetCall),
         GetKeyTypes(GetKeyTypesCall),
         GetKickedValidators(GetKickedValidatorsCall),
@@ -18628,6 +23168,7 @@ pub mod staking {
         GetMinVersionString(GetMinVersionStringCall),
         GetMinimumSelfStake(GetMinimumSelfStakeCall),
         GetMinimumStake(GetMinimumStakeCall),
+        GetMostRecentStakeRecord(GetMostRecentStakeRecordCall),
         GetNodeAttestedPubKeyMappings(GetNodeAttestedPubKeyMappingsCall),
         GetNodeDemerits(GetNodeDemeritsCall),
         GetNodeStakerAddressMappings(GetNodeStakerAddressMappingsCall),
@@ -18675,6 +23216,7 @@ pub mod staking {
             IsActiveValidatorByNodeAddressForNextEpochCall,
         ),
         IsActiveValidatorForNextEpoch(IsActiveValidatorForNextEpochCall),
+        IsApprovedForAll(IsApprovedForAllCall),
         IsReadyForNextEpoch(IsReadyForNextEpochCall),
         IsRecentValidator(IsRecentValidatorCall),
         IsRecentValidatorWithRealmId(IsRecentValidatorWithRealmIdCall),
@@ -18701,6 +23243,8 @@ pub mod staking {
         NumRealms(NumRealmsCall),
         OperatorAddressToStakerAddress(OperatorAddressToStakerAddressCall),
         Owner(OwnerCall),
+        OwnerOf(OwnerOfCall),
+        OwnershipChange(OwnershipChangeCall),
         PermittedRealmsForValidator(PermittedRealmsForValidatorCall),
         PermittedValidators(PermittedValidatorsCall),
         Pow(PowCall),
@@ -18714,6 +23258,10 @@ pub mod staking {
         RequestToJoinAsNode(RequestToJoinAsNodeCall),
         RequestToLeave(RequestToLeaveCall),
         RequestToLeaveAsNode(RequestToLeaveAsNodeCall),
+        SafeTransferFrom(SafeTransferFromCall),
+        SafeTransferFromWithFromAndToAndData(SafeTransferFromWithFromAndToAndDataCall),
+        SelfStakeBalanceOf(SelfStakeBalanceOfCall),
+        SetApprovalForAll(SetApprovalForAllCall),
         SetComplaintConfig(SetComplaintConfigCall),
         SetConfig(SetConfigCall),
         SetContractResolver(SetContractResolverCall),
@@ -18734,6 +23282,7 @@ pub mod staking {
         SetRealmConfig(SetRealmConfigCall),
         SetTokenTotalSupplyStandIn(SetTokenTotalSupplyStandInCall),
         SetTrustedForwarder(SetTrustedForwarderCall),
+        SetUp(SetUpCall),
         SetValidatorCommissionRate(SetValidatorCommissionRateCall),
         ShouldKickValidator(ShouldKickValidatorCall),
         SignalReadyForNextEpoch(SignalReadyForNextEpochCall),
@@ -18742,6 +23291,29 @@ pub mod staking {
         StakerToValidatorsTheyStakedTo(StakerToValidatorsTheyStakedToCall),
         State(StateCall),
         SupportsInterface(SupportsInterfaceCall),
+        TargetArtifactSelectors(TargetArtifactSelectorsCall),
+        TargetArtifacts(TargetArtifactsCall),
+        TargetContracts(TargetContractsCall),
+        TargetInterfaces(TargetInterfacesCall),
+        TargetSelectors(TargetSelectorsCall),
+        TargetSenders(TargetSendersCall),
+        TestStake(TestStakeCall),
+        TestStakeAndTransfer(TestStakeAndTransferCall),
+        TestStakeAndTransferClaimRewards(TestStakeAndTransferClaimRewardsCall),
+        TestStakeAndTransferReceiverMutatesStakeRecord(
+            TestStakeAndTransferReceiverMutatesStakeRecordCall,
+        ),
+        TestStakeAndTransferRevertNotOwner(TestStakeAndTransferRevertNotOwnerCall),
+        TestStakeAndTransferTokenOwnerByIndex(TestStakeAndTransferTokenOwnerByIndexCall),
+        TestStakeAndTransferWithdraw(TestStakeAndTransferWithdrawCall),
+        TestStakeApproveAndTransfer(TestStakeApproveAndTransferCall),
+        TestStakeApproveForAllAndTransfer(TestStakeApproveForAllAndTransferCall),
+        TestStakeMaxTransferShouldFail(TestStakeMaxTransferShouldFailCall),
+        TestStakeMutateStakeRecord(TestStakeMutateStakeRecordCall),
+        TokenOfOwnerByIndex(TokenOfOwnerByIndexCall),
+        TokenToStakeRecord(TokenToStakeRecordCall),
+        TotalSupply(TotalSupplyCall),
+        TransferFrom(TransferFromCall),
         TransferOwnership(TransferOwnershipCall),
         UnfreezeStake(UnfreezeStakeCall),
         ValidatorSelfStakeWillExpire(ValidatorSelfStakeWillExpireCall),
@@ -18755,6 +23327,41 @@ pub mod staking {
             data: impl AsRef<[u8]>,
         ) -> ::core::result::Result<Self, ::ethers::core::abi::AbiError> {
             let data = data.as_ref();
+            if let Ok(decoded) = <IsTestCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::IsTest(decoded));
+            }
+            if let Ok(decoded) = <GenerateAddressesCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::GenerateAddresses(decoded));
+            }
+            if let Ok(decoded) = <GenerateAddressesWithOffsetCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::GenerateAddressesWithOffset(decoded));
+            }
+            if let Ok(decoded) = <GeneratePubKeysCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::GeneratePubKeys(decoded));
+            }
+            if let Ok(decoded) = <GenerateUint256SCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::GenerateUint256S(decoded));
+            }
+            if let Ok(decoded) = <GenerateUint256SWithOffsetCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::GenerateUint256SWithOffset(decoded));
+            }
+            if let Ok(decoded) = <GenerateValidatorsCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::GenerateValidators(decoded));
+            }
             if let Ok(decoded) = <AddRealmCall as ::ethers::core::abi::AbiDecode>::decode(
                 data,
             ) {
@@ -18811,6 +23418,11 @@ pub mod staking {
                 data,
             ) {
                 return Ok(Self::AdvanceEpoch(decoded));
+            }
+            if let Ok(decoded) = <ApproveCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::Approve(decoded));
             }
             if let Ok(decoded) = <BalanceOfCall as ::ethers::core::abi::AbiDecode>::decode(
                 data,
@@ -18912,6 +23524,26 @@ pub mod staking {
             ) {
                 return Ok(Self::Epoch(decoded));
             }
+            if let Ok(decoded) = <ExcludeArtifactsCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::ExcludeArtifacts(decoded));
+            }
+            if let Ok(decoded) = <ExcludeContractsCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::ExcludeContracts(decoded));
+            }
+            if let Ok(decoded) = <ExcludeSelectorsCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::ExcludeSelectors(decoded));
+            }
+            if let Ok(decoded) = <ExcludeSendersCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::ExcludeSenders(decoded));
+            }
             if let Ok(decoded) = <ExitCall as ::ethers::core::abi::AbiDecode>::decode(
                 data,
             ) {
@@ -18936,6 +23568,11 @@ pub mod staking {
                 data,
             ) {
                 return Ok(Self::Facets(decoded));
+            }
+            if let Ok(decoded) = <FailedCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::Failed(decoded));
             }
             if let Ok(decoded) = <GetActiveUnkickedValidatorCountCall as ::ethers::core::abi::AbiDecode>::decode(
                 data,
@@ -18972,6 +23609,11 @@ pub mod staking {
             ) {
                 return Ok(Self::GetAllValidators(decoded));
             }
+            if let Ok(decoded) = <GetApprovedCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::GetApproved(decoded));
+            }
             if let Ok(decoded) = <GetAttestedPubKeyCall as ::ethers::core::abi::AbiDecode>::decode(
                 data,
             ) {
@@ -18991,6 +23633,11 @@ pub mod staking {
                 data,
             ) {
                 return Ok(Self::GetDelegatedStakersWithUnfreezingStakesCount(decoded));
+            }
+            if let Ok(decoded) = <GetEmptyStakeRecordSlotsCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::GetEmptyStakeRecordSlots(decoded));
             }
             if let Ok(decoded) = <GetKeySetCall as ::ethers::core::abi::AbiDecode>::decode(
                 data,
@@ -19056,6 +23703,11 @@ pub mod staking {
                 data,
             ) {
                 return Ok(Self::GetMinimumStake(decoded));
+            }
+            if let Ok(decoded) = <GetMostRecentStakeRecordCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::GetMostRecentStakeRecord(decoded));
             }
             if let Ok(decoded) = <GetNodeAttestedPubKeyMappingsCall as ::ethers::core::abi::AbiDecode>::decode(
                 data,
@@ -19272,6 +23924,11 @@ pub mod staking {
             ) {
                 return Ok(Self::IsActiveValidatorForNextEpoch(decoded));
             }
+            if let Ok(decoded) = <IsApprovedForAllCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::IsApprovedForAll(decoded));
+            }
             if let Ok(decoded) = <IsReadyForNextEpochCall as ::ethers::core::abi::AbiDecode>::decode(
                 data,
             ) {
@@ -19392,6 +24049,16 @@ pub mod staking {
             ) {
                 return Ok(Self::Owner(decoded));
             }
+            if let Ok(decoded) = <OwnerOfCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::OwnerOf(decoded));
+            }
+            if let Ok(decoded) = <OwnershipChangeCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::OwnershipChange(decoded));
+            }
             if let Ok(decoded) = <PermittedRealmsForValidatorCall as ::ethers::core::abi::AbiDecode>::decode(
                 data,
             ) {
@@ -19456,6 +24123,26 @@ pub mod staking {
                 data,
             ) {
                 return Ok(Self::RequestToLeaveAsNode(decoded));
+            }
+            if let Ok(decoded) = <SafeTransferFromCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::SafeTransferFrom(decoded));
+            }
+            if let Ok(decoded) = <SafeTransferFromWithFromAndToAndDataCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::SafeTransferFromWithFromAndToAndData(decoded));
+            }
+            if let Ok(decoded) = <SelfStakeBalanceOfCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::SelfStakeBalanceOf(decoded));
+            }
+            if let Ok(decoded) = <SetApprovalForAllCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::SetApprovalForAll(decoded));
             }
             if let Ok(decoded) = <SetComplaintConfigCall as ::ethers::core::abi::AbiDecode>::decode(
                 data,
@@ -19557,6 +24244,11 @@ pub mod staking {
             ) {
                 return Ok(Self::SetTrustedForwarder(decoded));
             }
+            if let Ok(decoded) = <SetUpCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::SetUp(decoded));
+            }
             if let Ok(decoded) = <SetValidatorCommissionRateCall as ::ethers::core::abi::AbiDecode>::decode(
                 data,
             ) {
@@ -19596,6 +24288,111 @@ pub mod staking {
                 data,
             ) {
                 return Ok(Self::SupportsInterface(decoded));
+            }
+            if let Ok(decoded) = <TargetArtifactSelectorsCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TargetArtifactSelectors(decoded));
+            }
+            if let Ok(decoded) = <TargetArtifactsCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TargetArtifacts(decoded));
+            }
+            if let Ok(decoded) = <TargetContractsCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TargetContracts(decoded));
+            }
+            if let Ok(decoded) = <TargetInterfacesCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TargetInterfaces(decoded));
+            }
+            if let Ok(decoded) = <TargetSelectorsCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TargetSelectors(decoded));
+            }
+            if let Ok(decoded) = <TargetSendersCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TargetSenders(decoded));
+            }
+            if let Ok(decoded) = <TestStakeCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TestStake(decoded));
+            }
+            if let Ok(decoded) = <TestStakeAndTransferCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TestStakeAndTransfer(decoded));
+            }
+            if let Ok(decoded) = <TestStakeAndTransferClaimRewardsCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TestStakeAndTransferClaimRewards(decoded));
+            }
+            if let Ok(decoded) = <TestStakeAndTransferReceiverMutatesStakeRecordCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TestStakeAndTransferReceiverMutatesStakeRecord(decoded));
+            }
+            if let Ok(decoded) = <TestStakeAndTransferRevertNotOwnerCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TestStakeAndTransferRevertNotOwner(decoded));
+            }
+            if let Ok(decoded) = <TestStakeAndTransferTokenOwnerByIndexCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TestStakeAndTransferTokenOwnerByIndex(decoded));
+            }
+            if let Ok(decoded) = <TestStakeAndTransferWithdrawCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TestStakeAndTransferWithdraw(decoded));
+            }
+            if let Ok(decoded) = <TestStakeApproveAndTransferCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TestStakeApproveAndTransfer(decoded));
+            }
+            if let Ok(decoded) = <TestStakeApproveForAllAndTransferCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TestStakeApproveForAllAndTransfer(decoded));
+            }
+            if let Ok(decoded) = <TestStakeMaxTransferShouldFailCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TestStakeMaxTransferShouldFail(decoded));
+            }
+            if let Ok(decoded) = <TestStakeMutateStakeRecordCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TestStakeMutateStakeRecord(decoded));
+            }
+            if let Ok(decoded) = <TokenOfOwnerByIndexCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TokenOfOwnerByIndex(decoded));
+            }
+            if let Ok(decoded) = <TokenToStakeRecordCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TokenToStakeRecord(decoded));
+            }
+            if let Ok(decoded) = <TotalSupplyCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TotalSupply(decoded));
+            }
+            if let Ok(decoded) = <TransferFromCall as ::ethers::core::abi::AbiDecode>::decode(
+                data,
+            ) {
+                return Ok(Self::TransferFrom(decoded));
             }
             if let Ok(decoded) = <TransferOwnershipCall as ::ethers::core::abi::AbiDecode>::decode(
                 data,
@@ -19638,6 +24435,25 @@ pub mod staking {
     impl ::ethers::core::abi::AbiEncode for StakingCalls {
         fn encode(self) -> Vec<u8> {
             match self {
+                Self::IsTest(element) => ::ethers::core::abi::AbiEncode::encode(element),
+                Self::GenerateAddresses(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::GenerateAddressesWithOffset(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::GeneratePubKeys(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::GenerateUint256S(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::GenerateUint256SWithOffset(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::GenerateValidators(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::AddRealm(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
@@ -19671,6 +24487,7 @@ pub mod staking {
                 Self::AdvanceEpoch(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
+                Self::Approve(element) => ::ethers::core::abi::AbiEncode::encode(element),
                 Self::BalanceOf(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
@@ -19729,6 +24546,18 @@ pub mod staking {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::Epoch(element) => ::ethers::core::abi::AbiEncode::encode(element),
+                Self::ExcludeArtifacts(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::ExcludeContracts(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::ExcludeSelectors(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::ExcludeSenders(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::Exit(element) => ::ethers::core::abi::AbiEncode::encode(element),
                 Self::FacetAddress(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
@@ -19740,6 +24569,7 @@ pub mod staking {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::Facets(element) => ::ethers::core::abi::AbiEncode::encode(element),
+                Self::Failed(element) => ::ethers::core::abi::AbiEncode::encode(element),
                 Self::GetActiveUnkickedValidatorCount(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
@@ -19761,6 +24591,9 @@ pub mod staking {
                 Self::GetAllValidators(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
+                Self::GetApproved(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::GetAttestedPubKey(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
@@ -19771,6 +24604,9 @@ pub mod staking {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::GetDelegatedStakersWithUnfreezingStakesCount(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::GetEmptyStakeRecordSlots(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::GetKeySet(element) => {
@@ -19810,6 +24646,9 @@ pub mod staking {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::GetMinimumStake(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::GetMostRecentStakeRecord(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::GetNodeAttestedPubKeyMappings(element) => {
@@ -19941,6 +24780,9 @@ pub mod staking {
                 Self::IsActiveValidatorForNextEpoch(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
+                Self::IsApprovedForAll(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::IsReadyForNextEpoch(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
@@ -20009,6 +24851,10 @@ pub mod staking {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::Owner(element) => ::ethers::core::abi::AbiEncode::encode(element),
+                Self::OwnerOf(element) => ::ethers::core::abi::AbiEncode::encode(element),
+                Self::OwnershipChange(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
                 Self::PermittedRealmsForValidator(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
@@ -20044,6 +24890,18 @@ pub mod staking {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::RequestToLeaveAsNode(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::SafeTransferFrom(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::SafeTransferFromWithFromAndToAndData(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::SelfStakeBalanceOf(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::SetApprovalForAll(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::SetComplaintConfig(element) => {
@@ -20106,6 +24964,7 @@ pub mod staking {
                 Self::SetTrustedForwarder(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
+                Self::SetUp(element) => ::ethers::core::abi::AbiEncode::encode(element),
                 Self::SetValidatorCommissionRate(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
@@ -20124,6 +24983,69 @@ pub mod staking {
                 }
                 Self::State(element) => ::ethers::core::abi::AbiEncode::encode(element),
                 Self::SupportsInterface(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TargetArtifactSelectors(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TargetArtifacts(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TargetContracts(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TargetInterfaces(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TargetSelectors(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TargetSenders(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TestStake(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TestStakeAndTransfer(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TestStakeAndTransferClaimRewards(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TestStakeAndTransferReceiverMutatesStakeRecord(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TestStakeAndTransferRevertNotOwner(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TestStakeAndTransferTokenOwnerByIndex(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TestStakeAndTransferWithdraw(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TestStakeApproveAndTransfer(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TestStakeApproveForAllAndTransfer(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TestStakeMaxTransferShouldFail(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TestStakeMutateStakeRecord(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TokenOfOwnerByIndex(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TokenToStakeRecord(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TotalSupply(element) => {
+                    ::ethers::core::abi::AbiEncode::encode(element)
+                }
+                Self::TransferFrom(element) => {
                     ::ethers::core::abi::AbiEncode::encode(element)
                 }
                 Self::TransferOwnership(element) => {
@@ -20153,6 +25075,19 @@ pub mod staking {
     impl ::core::fmt::Display for StakingCalls {
         fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
             match self {
+                Self::IsTest(element) => ::core::fmt::Display::fmt(element, f),
+                Self::GenerateAddresses(element) => ::core::fmt::Display::fmt(element, f),
+                Self::GenerateAddressesWithOffset(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::GeneratePubKeys(element) => ::core::fmt::Display::fmt(element, f),
+                Self::GenerateUint256S(element) => ::core::fmt::Display::fmt(element, f),
+                Self::GenerateUint256SWithOffset(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::GenerateValidators(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
                 Self::AddRealm(element) => ::core::fmt::Display::fmt(element, f),
                 Self::AdminKickValidatorInNextEpoch(element) => {
                     ::core::fmt::Display::fmt(element, f)
@@ -20180,6 +25115,7 @@ pub mod staking {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::AdvanceEpoch(element) => ::core::fmt::Display::fmt(element, f),
+                Self::Approve(element) => ::core::fmt::Display::fmt(element, f),
                 Self::BalanceOf(element) => ::core::fmt::Display::fmt(element, f),
                 Self::CalculateRewardsPerDay(element) => {
                     ::core::fmt::Display::fmt(element, f)
@@ -20224,6 +25160,10 @@ pub mod staking {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::Epoch(element) => ::core::fmt::Display::fmt(element, f),
+                Self::ExcludeArtifacts(element) => ::core::fmt::Display::fmt(element, f),
+                Self::ExcludeContracts(element) => ::core::fmt::Display::fmt(element, f),
+                Self::ExcludeSelectors(element) => ::core::fmt::Display::fmt(element, f),
+                Self::ExcludeSenders(element) => ::core::fmt::Display::fmt(element, f),
                 Self::Exit(element) => ::core::fmt::Display::fmt(element, f),
                 Self::FacetAddress(element) => ::core::fmt::Display::fmt(element, f),
                 Self::FacetAddresses(element) => ::core::fmt::Display::fmt(element, f),
@@ -20231,6 +25171,7 @@ pub mod staking {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::Facets(element) => ::core::fmt::Display::fmt(element, f),
+                Self::Failed(element) => ::core::fmt::Display::fmt(element, f),
                 Self::GetActiveUnkickedValidatorCount(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
@@ -20250,6 +25191,7 @@ pub mod staking {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::GetAllValidators(element) => ::core::fmt::Display::fmt(element, f),
+                Self::GetApproved(element) => ::core::fmt::Display::fmt(element, f),
                 Self::GetAttestedPubKey(element) => ::core::fmt::Display::fmt(element, f),
                 Self::GetCurrentRealmIdForStakerAddress(element) => {
                     ::core::fmt::Display::fmt(element, f)
@@ -20258,6 +25200,9 @@ pub mod staking {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::GetDelegatedStakersWithUnfreezingStakesCount(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::GetEmptyStakeRecordSlots(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::GetKeySet(element) => ::core::fmt::Display::fmt(element, f),
@@ -20285,6 +25230,9 @@ pub mod staking {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::GetMinimumStake(element) => ::core::fmt::Display::fmt(element, f),
+                Self::GetMostRecentStakeRecord(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
                 Self::GetNodeAttestedPubKeyMappings(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
@@ -20396,6 +25344,7 @@ pub mod staking {
                 Self::IsActiveValidatorForNextEpoch(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
+                Self::IsApprovedForAll(element) => ::core::fmt::Display::fmt(element, f),
                 Self::IsReadyForNextEpoch(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
@@ -20446,6 +25395,8 @@ pub mod staking {
                     ::core::fmt::Display::fmt(element, f)
                 }
                 Self::Owner(element) => ::core::fmt::Display::fmt(element, f),
+                Self::OwnerOf(element) => ::core::fmt::Display::fmt(element, f),
+                Self::OwnershipChange(element) => ::core::fmt::Display::fmt(element, f),
                 Self::PermittedRealmsForValidator(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
@@ -20473,6 +25424,14 @@ pub mod staking {
                 Self::RequestToLeaveAsNode(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
+                Self::SafeTransferFrom(element) => ::core::fmt::Display::fmt(element, f),
+                Self::SafeTransferFromWithFromAndToAndData(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::SelfStakeBalanceOf(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::SetApprovalForAll(element) => ::core::fmt::Display::fmt(element, f),
                 Self::SetComplaintConfig(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
@@ -20513,6 +25472,7 @@ pub mod staking {
                 Self::SetTrustedForwarder(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
+                Self::SetUp(element) => ::core::fmt::Display::fmt(element, f),
                 Self::SetValidatorCommissionRate(element) => {
                     ::core::fmt::Display::fmt(element, f)
                 }
@@ -20529,6 +25489,53 @@ pub mod staking {
                 }
                 Self::State(element) => ::core::fmt::Display::fmt(element, f),
                 Self::SupportsInterface(element) => ::core::fmt::Display::fmt(element, f),
+                Self::TargetArtifactSelectors(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::TargetArtifacts(element) => ::core::fmt::Display::fmt(element, f),
+                Self::TargetContracts(element) => ::core::fmt::Display::fmt(element, f),
+                Self::TargetInterfaces(element) => ::core::fmt::Display::fmt(element, f),
+                Self::TargetSelectors(element) => ::core::fmt::Display::fmt(element, f),
+                Self::TargetSenders(element) => ::core::fmt::Display::fmt(element, f),
+                Self::TestStake(element) => ::core::fmt::Display::fmt(element, f),
+                Self::TestStakeAndTransfer(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::TestStakeAndTransferClaimRewards(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::TestStakeAndTransferReceiverMutatesStakeRecord(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::TestStakeAndTransferRevertNotOwner(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::TestStakeAndTransferTokenOwnerByIndex(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::TestStakeAndTransferWithdraw(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::TestStakeApproveAndTransfer(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::TestStakeApproveForAllAndTransfer(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::TestStakeMaxTransferShouldFail(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::TestStakeMutateStakeRecord(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::TokenOfOwnerByIndex(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::TokenToStakeRecord(element) => {
+                    ::core::fmt::Display::fmt(element, f)
+                }
+                Self::TotalSupply(element) => ::core::fmt::Display::fmt(element, f),
+                Self::TransferFrom(element) => ::core::fmt::Display::fmt(element, f),
                 Self::TransferOwnership(element) => ::core::fmt::Display::fmt(element, f),
                 Self::UnfreezeStake(element) => ::core::fmt::Display::fmt(element, f),
                 Self::ValidatorSelfStakeWillExpire(element) => {
@@ -20543,6 +25550,41 @@ pub mod staking {
                 }
                 Self::Withdraw(element) => ::core::fmt::Display::fmt(element, f),
             }
+        }
+    }
+    impl ::core::convert::From<IsTestCall> for StakingCalls {
+        fn from(value: IsTestCall) -> Self {
+            Self::IsTest(value)
+        }
+    }
+    impl ::core::convert::From<GenerateAddressesCall> for StakingCalls {
+        fn from(value: GenerateAddressesCall) -> Self {
+            Self::GenerateAddresses(value)
+        }
+    }
+    impl ::core::convert::From<GenerateAddressesWithOffsetCall> for StakingCalls {
+        fn from(value: GenerateAddressesWithOffsetCall) -> Self {
+            Self::GenerateAddressesWithOffset(value)
+        }
+    }
+    impl ::core::convert::From<GeneratePubKeysCall> for StakingCalls {
+        fn from(value: GeneratePubKeysCall) -> Self {
+            Self::GeneratePubKeys(value)
+        }
+    }
+    impl ::core::convert::From<GenerateUint256SCall> for StakingCalls {
+        fn from(value: GenerateUint256SCall) -> Self {
+            Self::GenerateUint256S(value)
+        }
+    }
+    impl ::core::convert::From<GenerateUint256SWithOffsetCall> for StakingCalls {
+        fn from(value: GenerateUint256SWithOffsetCall) -> Self {
+            Self::GenerateUint256SWithOffset(value)
+        }
+    }
+    impl ::core::convert::From<GenerateValidatorsCall> for StakingCalls {
+        fn from(value: GenerateValidatorsCall) -> Self {
+            Self::GenerateValidators(value)
         }
     }
     impl ::core::convert::From<AddRealmCall> for StakingCalls {
@@ -20599,6 +25641,11 @@ pub mod staking {
     impl ::core::convert::From<AdvanceEpochCall> for StakingCalls {
         fn from(value: AdvanceEpochCall) -> Self {
             Self::AdvanceEpoch(value)
+        }
+    }
+    impl ::core::convert::From<ApproveCall> for StakingCalls {
+        fn from(value: ApproveCall) -> Self {
+            Self::Approve(value)
         }
     }
     impl ::core::convert::From<BalanceOfCall> for StakingCalls {
@@ -20703,6 +25750,26 @@ pub mod staking {
             Self::Epoch(value)
         }
     }
+    impl ::core::convert::From<ExcludeArtifactsCall> for StakingCalls {
+        fn from(value: ExcludeArtifactsCall) -> Self {
+            Self::ExcludeArtifacts(value)
+        }
+    }
+    impl ::core::convert::From<ExcludeContractsCall> for StakingCalls {
+        fn from(value: ExcludeContractsCall) -> Self {
+            Self::ExcludeContracts(value)
+        }
+    }
+    impl ::core::convert::From<ExcludeSelectorsCall> for StakingCalls {
+        fn from(value: ExcludeSelectorsCall) -> Self {
+            Self::ExcludeSelectors(value)
+        }
+    }
+    impl ::core::convert::From<ExcludeSendersCall> for StakingCalls {
+        fn from(value: ExcludeSendersCall) -> Self {
+            Self::ExcludeSenders(value)
+        }
+    }
     impl ::core::convert::From<ExitCall> for StakingCalls {
         fn from(value: ExitCall) -> Self {
             Self::Exit(value)
@@ -20726,6 +25793,11 @@ pub mod staking {
     impl ::core::convert::From<FacetsCall> for StakingCalls {
         fn from(value: FacetsCall) -> Self {
             Self::Facets(value)
+        }
+    }
+    impl ::core::convert::From<FailedCall> for StakingCalls {
+        fn from(value: FailedCall) -> Self {
+            Self::Failed(value)
         }
     }
     impl ::core::convert::From<GetActiveUnkickedValidatorCountCall> for StakingCalls {
@@ -20764,6 +25836,11 @@ pub mod staking {
             Self::GetAllValidators(value)
         }
     }
+    impl ::core::convert::From<GetApprovedCall> for StakingCalls {
+        fn from(value: GetApprovedCall) -> Self {
+            Self::GetApproved(value)
+        }
+    }
     impl ::core::convert::From<GetAttestedPubKeyCall> for StakingCalls {
         fn from(value: GetAttestedPubKeyCall) -> Self {
             Self::GetAttestedPubKey(value)
@@ -20784,6 +25861,11 @@ pub mod staking {
     for StakingCalls {
         fn from(value: GetDelegatedStakersWithUnfreezingStakesCountCall) -> Self {
             Self::GetDelegatedStakersWithUnfreezingStakesCount(value)
+        }
+    }
+    impl ::core::convert::From<GetEmptyStakeRecordSlotsCall> for StakingCalls {
+        fn from(value: GetEmptyStakeRecordSlotsCall) -> Self {
+            Self::GetEmptyStakeRecordSlots(value)
         }
     }
     impl ::core::convert::From<GetKeySetCall> for StakingCalls {
@@ -20849,6 +25931,11 @@ pub mod staking {
     impl ::core::convert::From<GetMinimumStakeCall> for StakingCalls {
         fn from(value: GetMinimumStakeCall) -> Self {
             Self::GetMinimumStake(value)
+        }
+    }
+    impl ::core::convert::From<GetMostRecentStakeRecordCall> for StakingCalls {
+        fn from(value: GetMostRecentStakeRecordCall) -> Self {
+            Self::GetMostRecentStakeRecord(value)
         }
     }
     impl ::core::convert::From<GetNodeAttestedPubKeyMappingsCall> for StakingCalls {
@@ -21068,6 +26155,11 @@ pub mod staking {
             Self::IsActiveValidatorForNextEpoch(value)
         }
     }
+    impl ::core::convert::From<IsApprovedForAllCall> for StakingCalls {
+        fn from(value: IsApprovedForAllCall) -> Self {
+            Self::IsApprovedForAll(value)
+        }
+    }
     impl ::core::convert::From<IsReadyForNextEpochCall> for StakingCalls {
         fn from(value: IsReadyForNextEpochCall) -> Self {
             Self::IsReadyForNextEpoch(value)
@@ -21189,6 +26281,16 @@ pub mod staking {
             Self::Owner(value)
         }
     }
+    impl ::core::convert::From<OwnerOfCall> for StakingCalls {
+        fn from(value: OwnerOfCall) -> Self {
+            Self::OwnerOf(value)
+        }
+    }
+    impl ::core::convert::From<OwnershipChangeCall> for StakingCalls {
+        fn from(value: OwnershipChangeCall) -> Self {
+            Self::OwnershipChange(value)
+        }
+    }
     impl ::core::convert::From<PermittedRealmsForValidatorCall> for StakingCalls {
         fn from(value: PermittedRealmsForValidatorCall) -> Self {
             Self::PermittedRealmsForValidator(value)
@@ -21252,6 +26354,27 @@ pub mod staking {
     impl ::core::convert::From<RequestToLeaveAsNodeCall> for StakingCalls {
         fn from(value: RequestToLeaveAsNodeCall) -> Self {
             Self::RequestToLeaveAsNode(value)
+        }
+    }
+    impl ::core::convert::From<SafeTransferFromCall> for StakingCalls {
+        fn from(value: SafeTransferFromCall) -> Self {
+            Self::SafeTransferFrom(value)
+        }
+    }
+    impl ::core::convert::From<SafeTransferFromWithFromAndToAndDataCall>
+    for StakingCalls {
+        fn from(value: SafeTransferFromWithFromAndToAndDataCall) -> Self {
+            Self::SafeTransferFromWithFromAndToAndData(value)
+        }
+    }
+    impl ::core::convert::From<SelfStakeBalanceOfCall> for StakingCalls {
+        fn from(value: SelfStakeBalanceOfCall) -> Self {
+            Self::SelfStakeBalanceOf(value)
+        }
+    }
+    impl ::core::convert::From<SetApprovalForAllCall> for StakingCalls {
+        fn from(value: SetApprovalForAllCall) -> Self {
+            Self::SetApprovalForAll(value)
         }
     }
     impl ::core::convert::From<SetComplaintConfigCall> for StakingCalls {
@@ -21354,6 +26477,11 @@ pub mod staking {
             Self::SetTrustedForwarder(value)
         }
     }
+    impl ::core::convert::From<SetUpCall> for StakingCalls {
+        fn from(value: SetUpCall) -> Self {
+            Self::SetUp(value)
+        }
+    }
     impl ::core::convert::From<SetValidatorCommissionRateCall> for StakingCalls {
         fn from(value: SetValidatorCommissionRateCall) -> Self {
             Self::SetValidatorCommissionRate(value)
@@ -21394,6 +26522,113 @@ pub mod staking {
             Self::SupportsInterface(value)
         }
     }
+    impl ::core::convert::From<TargetArtifactSelectorsCall> for StakingCalls {
+        fn from(value: TargetArtifactSelectorsCall) -> Self {
+            Self::TargetArtifactSelectors(value)
+        }
+    }
+    impl ::core::convert::From<TargetArtifactsCall> for StakingCalls {
+        fn from(value: TargetArtifactsCall) -> Self {
+            Self::TargetArtifacts(value)
+        }
+    }
+    impl ::core::convert::From<TargetContractsCall> for StakingCalls {
+        fn from(value: TargetContractsCall) -> Self {
+            Self::TargetContracts(value)
+        }
+    }
+    impl ::core::convert::From<TargetInterfacesCall> for StakingCalls {
+        fn from(value: TargetInterfacesCall) -> Self {
+            Self::TargetInterfaces(value)
+        }
+    }
+    impl ::core::convert::From<TargetSelectorsCall> for StakingCalls {
+        fn from(value: TargetSelectorsCall) -> Self {
+            Self::TargetSelectors(value)
+        }
+    }
+    impl ::core::convert::From<TargetSendersCall> for StakingCalls {
+        fn from(value: TargetSendersCall) -> Self {
+            Self::TargetSenders(value)
+        }
+    }
+    impl ::core::convert::From<TestStakeCall> for StakingCalls {
+        fn from(value: TestStakeCall) -> Self {
+            Self::TestStake(value)
+        }
+    }
+    impl ::core::convert::From<TestStakeAndTransferCall> for StakingCalls {
+        fn from(value: TestStakeAndTransferCall) -> Self {
+            Self::TestStakeAndTransfer(value)
+        }
+    }
+    impl ::core::convert::From<TestStakeAndTransferClaimRewardsCall> for StakingCalls {
+        fn from(value: TestStakeAndTransferClaimRewardsCall) -> Self {
+            Self::TestStakeAndTransferClaimRewards(value)
+        }
+    }
+    impl ::core::convert::From<TestStakeAndTransferReceiverMutatesStakeRecordCall>
+    for StakingCalls {
+        fn from(value: TestStakeAndTransferReceiverMutatesStakeRecordCall) -> Self {
+            Self::TestStakeAndTransferReceiverMutatesStakeRecord(value)
+        }
+    }
+    impl ::core::convert::From<TestStakeAndTransferRevertNotOwnerCall> for StakingCalls {
+        fn from(value: TestStakeAndTransferRevertNotOwnerCall) -> Self {
+            Self::TestStakeAndTransferRevertNotOwner(value)
+        }
+    }
+    impl ::core::convert::From<TestStakeAndTransferTokenOwnerByIndexCall>
+    for StakingCalls {
+        fn from(value: TestStakeAndTransferTokenOwnerByIndexCall) -> Self {
+            Self::TestStakeAndTransferTokenOwnerByIndex(value)
+        }
+    }
+    impl ::core::convert::From<TestStakeAndTransferWithdrawCall> for StakingCalls {
+        fn from(value: TestStakeAndTransferWithdrawCall) -> Self {
+            Self::TestStakeAndTransferWithdraw(value)
+        }
+    }
+    impl ::core::convert::From<TestStakeApproveAndTransferCall> for StakingCalls {
+        fn from(value: TestStakeApproveAndTransferCall) -> Self {
+            Self::TestStakeApproveAndTransfer(value)
+        }
+    }
+    impl ::core::convert::From<TestStakeApproveForAllAndTransferCall> for StakingCalls {
+        fn from(value: TestStakeApproveForAllAndTransferCall) -> Self {
+            Self::TestStakeApproveForAllAndTransfer(value)
+        }
+    }
+    impl ::core::convert::From<TestStakeMaxTransferShouldFailCall> for StakingCalls {
+        fn from(value: TestStakeMaxTransferShouldFailCall) -> Self {
+            Self::TestStakeMaxTransferShouldFail(value)
+        }
+    }
+    impl ::core::convert::From<TestStakeMutateStakeRecordCall> for StakingCalls {
+        fn from(value: TestStakeMutateStakeRecordCall) -> Self {
+            Self::TestStakeMutateStakeRecord(value)
+        }
+    }
+    impl ::core::convert::From<TokenOfOwnerByIndexCall> for StakingCalls {
+        fn from(value: TokenOfOwnerByIndexCall) -> Self {
+            Self::TokenOfOwnerByIndex(value)
+        }
+    }
+    impl ::core::convert::From<TokenToStakeRecordCall> for StakingCalls {
+        fn from(value: TokenToStakeRecordCall) -> Self {
+            Self::TokenToStakeRecord(value)
+        }
+    }
+    impl ::core::convert::From<TotalSupplyCall> for StakingCalls {
+        fn from(value: TotalSupplyCall) -> Self {
+            Self::TotalSupply(value)
+        }
+    }
+    impl ::core::convert::From<TransferFromCall> for StakingCalls {
+        fn from(value: TransferFromCall) -> Self {
+            Self::TransferFrom(value)
+        }
+    }
     impl ::core::convert::From<TransferOwnershipCall> for StakingCalls {
         fn from(value: TransferOwnershipCall) -> Self {
             Self::TransferOwnership(value)
@@ -21429,6 +26664,110 @@ pub mod staking {
             Self::Withdraw(value)
         }
     }
+    ///Container type for all return fields from the `IS_TEST` function with signature `IS_TEST()` and selector `0xfa7626d4`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct IsTestReturn(pub bool);
+    ///Container type for all return fields from the `_generateAddresses` function with signature `_generateAddresses(uint256)` and selector `0x678ac78a`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct GenerateAddressesReturn(
+        pub ::std::vec::Vec<::ethers::core::types::Address>,
+    );
+    ///Container type for all return fields from the `_generateAddressesWithOffset` function with signature `_generateAddressesWithOffset(uint256,uint256)` and selector `0xa5187b2b`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct GenerateAddressesWithOffsetReturn(
+        pub ::std::vec::Vec<::ethers::core::types::Address>,
+    );
+    ///Container type for all return fields from the `_generatePubKeys` function with signature `_generatePubKeys(uint256)` and selector `0xfed0a77b`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct GeneratePubKeysReturn(pub ::std::vec::Vec<::ethers::core::types::Bytes>);
+    ///Container type for all return fields from the `_generateUint256s` function with signature `_generateUint256s(uint256)` and selector `0xae517f4d`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct GenerateUint256SReturn(pub ::std::vec::Vec<::ethers::core::types::U256>);
+    ///Container type for all return fields from the `_generateUint256sWithOffset` function with signature `_generateUint256sWithOffset(uint256,uint256)` and selector `0xfb9d55b8`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct GenerateUint256SWithOffsetReturn(
+        pub ::std::vec::Vec<::ethers::core::types::U256>,
+    );
+    ///Container type for all return fields from the `_generateValidators` function with signature `_generateValidators(uint256)` and selector `0xc5344d40`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct GenerateValidatorsReturn(pub ::std::vec::Vec<TestValidator>);
     ///Container type for all return fields from the `addRealm` function with signature `addRealm()` and selector `0x472a7d89`
     #[derive(
         Clone,
@@ -21603,6 +26942,70 @@ pub mod staking {
         Hash
     )]
     pub struct EpochReturn(pub Epoch);
+    ///Container type for all return fields from the `excludeArtifacts` function with signature `excludeArtifacts()` and selector `0xb5508aa9`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct ExcludeArtifactsReturn {
+        pub excluded_artifacts: ::std::vec::Vec<::std::string::String>,
+    }
+    ///Container type for all return fields from the `excludeContracts` function with signature `excludeContracts()` and selector `0xe20c9f71`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct ExcludeContractsReturn {
+        pub excluded_contracts: ::std::vec::Vec<::ethers::core::types::Address>,
+    }
+    ///Container type for all return fields from the `excludeSelectors` function with signature `excludeSelectors()` and selector `0xb0464fdc`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct ExcludeSelectorsReturn {
+        pub excluded_selectors: ::std::vec::Vec<FuzzSelector>,
+    }
+    ///Container type for all return fields from the `excludeSenders` function with signature `excludeSenders()` and selector `0x1ed7831c`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct ExcludeSendersReturn {
+        pub excluded_senders: ::std::vec::Vec<::ethers::core::types::Address>,
+    }
     ///Container type for all return fields from the `facetAddress` function with signature `facetAddress(bytes4)` and selector `0xcdffacc6`
     #[derive(
         Clone,
@@ -21667,6 +27070,20 @@ pub mod staking {
     pub struct FacetsReturn {
         pub facets: ::std::vec::Vec<Facet>,
     }
+    ///Container type for all return fields from the `failed` function with signature `failed()` and selector `0xba414fa6`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct FailedReturn(pub bool);
     ///Container type for all return fields from the `getActiveUnkickedValidatorCount` function with signature `getActiveUnkickedValidatorCount(uint256)` and selector `0x7a808c0d`
     #[derive(
         Clone,
@@ -21767,6 +27184,20 @@ pub mod staking {
     pub struct GetAllValidatorsReturn(
         pub ::std::vec::Vec<::ethers::core::types::Address>,
     );
+    ///Container type for all return fields from the `getApproved` function with signature `getApproved(uint256)` and selector `0x081812fc`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct GetApprovedReturn(pub ::ethers::core::types::Address);
     ///Container type for all return fields from the `getAttestedPubKey` function with signature `getAttestedPubKey(address)` and selector `0xe9332ea7`
     #[derive(
         Clone,
@@ -21827,6 +27258,20 @@ pub mod staking {
     pub struct GetDelegatedStakersWithUnfreezingStakesCountReturn(
         pub ::ethers::core::types::U256,
     );
+    ///Container type for all return fields from the `getEmptyStakeRecordSlots` function with signature `getEmptyStakeRecordSlots(address,address)` and selector `0xa6f67c51`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct GetEmptyStakeRecordSlotsReturn(pub ::ethers::core::types::U256);
     ///Container type for all return fields from the `getKeySet` function with signature `getKeySet(string)` and selector `0xa305e5fe`
     #[derive(
         Clone,
@@ -22014,6 +27459,20 @@ pub mod staking {
         Hash
     )]
     pub struct GetMinimumStakeReturn(pub ::ethers::core::types::U256);
+    ///Container type for all return fields from the `getMostRecentStakeRecord` function with signature `getMostRecentStakeRecord(address,address)` and selector `0x7d0f412f`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct GetMostRecentStakeRecordReturn(pub StakeRecord);
     ///Container type for all return fields from the `getNodeAttestedPubKeyMappings` function with signature `getNodeAttestedPubKeyMappings(address[])` and selector `0x88790aee`
     #[derive(
         Clone,
@@ -22272,7 +27731,7 @@ pub mod staking {
         Hash
     )]
     pub struct GetThresholdReturn(pub ::ethers::core::types::U256);
-    ///Container type for all return fields from the `getTimelockInEpoch` function with signature `getTimelockInEpoch(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address),uint256)` and selector `0xf16bbde3`
+    ///Container type for all return fields from the `getTimelockInEpoch` function with signature `getTimelockInEpoch(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address,uint256),uint256)` and selector `0x2db912e4`
     #[derive(
         Clone,
         ::ethers::contract::EthAbiType,
@@ -22314,7 +27773,7 @@ pub mod staking {
         Hash
     )]
     pub struct GetTokenPriceReturn(pub ::ethers::core::types::U256);
-    ///Container type for all return fields from the `getTokensStaked` function with signature `getTokensStaked(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address),uint256)` and selector `0x5e91a664`
+    ///Container type for all return fields from the `getTokensStaked` function with signature `getTokensStaked(address,(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address,uint256),uint256)` and selector `0x0fd78304`
     #[derive(
         Clone,
         ::ethers::contract::EthAbiType,
@@ -22561,6 +28020,20 @@ pub mod staking {
         Hash
     )]
     pub struct IsActiveValidatorForNextEpochReturn(pub bool);
+    ///Container type for all return fields from the `isApprovedForAll` function with signature `isApprovedForAll(address,address)` and selector `0xe985e9c5`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct IsApprovedForAllReturn(pub bool);
     ///Container type for all return fields from the `isReadyForNextEpoch` function with signature `isReadyForNextEpoch(uint256)` and selector `0x7fecc451`
     #[derive(
         Clone,
@@ -22859,6 +28332,34 @@ pub mod staking {
     pub struct OwnerReturn {
         pub owner: ::ethers::core::types::Address,
     }
+    ///Container type for all return fields from the `ownerOf` function with signature `ownerOf(uint256)` and selector `0x6352211e`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct OwnerOfReturn(pub ::ethers::core::types::Address);
+    ///Container type for all return fields from the `ownershipChange` function with signature `ownershipChange(uint256)` and selector `0x23857d51`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct OwnershipChangeReturn(pub ::ethers::core::types::U256);
     ///Container type for all return fields from the `permittedRealmsForValidator` function with signature `permittedRealmsForValidator(address)` and selector `0xe718ff4c`
     #[derive(
         Clone,
@@ -22933,6 +28434,20 @@ pub mod staking {
         Hash
     )]
     pub struct RealmConfigReturn(pub RealmConfig);
+    ///Container type for all return fields from the `selfStakeBalanceOf` function with signature `selfStakeBalanceOf(address)` and selector `0xeddf837a`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct SelfStakeBalanceOfReturn(pub ::ethers::core::types::U256);
     ///Container type for all return fields from the `shouldKickValidator` function with signature `shouldKickValidator(uint256,address)` and selector `0x1e966b97`
     #[derive(
         Clone,
@@ -22991,6 +28506,144 @@ pub mod staking {
         Hash
     )]
     pub struct SupportsInterfaceReturn(pub bool);
+    ///Container type for all return fields from the `targetArtifactSelectors` function with signature `targetArtifactSelectors()` and selector `0x66d9a9a0`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct TargetArtifactSelectorsReturn {
+        pub targeted_artifact_selectors: ::std::vec::Vec<FuzzArtifactSelector>,
+    }
+    ///Container type for all return fields from the `targetArtifacts` function with signature `targetArtifacts()` and selector `0x85226c81`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct TargetArtifactsReturn {
+        pub targeted_artifacts: ::std::vec::Vec<::std::string::String>,
+    }
+    ///Container type for all return fields from the `targetContracts` function with signature `targetContracts()` and selector `0x3f7286f4`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct TargetContractsReturn {
+        pub targeted_contracts: ::std::vec::Vec<::ethers::core::types::Address>,
+    }
+    ///Container type for all return fields from the `targetInterfaces` function with signature `targetInterfaces()` and selector `0x2ade3880`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct TargetInterfacesReturn {
+        pub targeted_interfaces: ::std::vec::Vec<FuzzInterface>,
+    }
+    ///Container type for all return fields from the `targetSelectors` function with signature `targetSelectors()` and selector `0x916a17c6`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct TargetSelectorsReturn {
+        pub targeted_selectors: ::std::vec::Vec<FuzzSelector>,
+    }
+    ///Container type for all return fields from the `targetSenders` function with signature `targetSenders()` and selector `0x3e5e3c23`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct TargetSendersReturn {
+        pub targeted_senders: ::std::vec::Vec<::ethers::core::types::Address>,
+    }
+    ///Container type for all return fields from the `tokenOfOwnerByIndex` function with signature `tokenOfOwnerByIndex(address,uint256)` and selector `0x2f745c59`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct TokenOfOwnerByIndexReturn(pub ::ethers::core::types::U256);
+    ///Container type for all return fields from the `tokenToStakeRecord` function with signature `tokenToStakeRecord(uint256)` and selector `0xf0e2d9b5`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct TokenToStakeRecordReturn(pub MappedStakeRecord);
+    ///Container type for all return fields from the `totalSupply` function with signature `totalSupply()` and selector `0x18160ddd`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct TotalSupplyReturn(pub ::ethers::core::types::U256);
     ///Container type for all return fields from the `validatorSelfStakeWillExpire` function with signature `validatorSelfStakeWillExpire(uint256,address,bool)` and selector `0xbb8b437f`
     #[derive(
         Clone,
@@ -23240,6 +28893,23 @@ pub mod staking {
         pub max_retries: ::ethers::core::types::U256,
         pub async_actions_enabled: bool,
     }
+    ///`MappedStakeRecord(address,uint256)`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct MappedStakeRecord {
+        pub operator_staker_address: ::ethers::core::types::Address,
+        pub stake_record_id: ::ethers::core::types::U256,
+    }
     ///`PubKeyMapping(address,(uint256,uint256))`
     #[derive(
         Clone,
@@ -23324,7 +28994,7 @@ pub mod staking {
         pub validators_in_current_epoch: ::std::vec::Vec<::ethers::core::types::Address>,
         pub actual_epoch_length: ::ethers::core::types::U256,
     }
-    ///`StakeRecord(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address)`
+    ///`StakeRecord(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,bool,address,uint256)`
     #[derive(
         Clone,
         ::ethers::contract::EthAbiType,
@@ -23348,6 +29018,7 @@ pub mod staking {
         pub loaded: bool,
         pub frozen: bool,
         pub attribution_address: ::ethers::core::types::Address,
+        pub token_id: ::ethers::core::types::U256,
     }
     ///`UncompressedK256Key(uint256,uint256)`
     #[derive(
@@ -23416,5 +29087,73 @@ pub mod staking {
         pub major: ::ethers::core::types::U256,
         pub minor: ::ethers::core::types::U256,
         pub patch: ::ethers::core::types::U256,
+    }
+    ///`TestValidator(address,uint256)`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct TestValidator {
+        pub staker_address: ::ethers::core::types::Address,
+        pub comms_key: ::ethers::core::types::U256,
+    }
+    ///`FuzzArtifactSelector(string,bytes4[])`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct FuzzArtifactSelector {
+        pub artifact: ::std::string::String,
+        pub selectors: ::std::vec::Vec<[u8; 4]>,
+    }
+    ///`FuzzInterface(address,string[])`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct FuzzInterface {
+        pub addr: ::ethers::core::types::Address,
+        pub artifacts: ::std::vec::Vec<::std::string::String>,
+    }
+    ///`FuzzSelector(address,bytes4[])`
+    #[derive(
+        Clone,
+        ::ethers::contract::EthAbiType,
+        ::ethers::contract::EthAbiCodec,
+        serde::Serialize,
+        serde::Deserialize,
+        Default,
+        Debug,
+        PartialEq,
+        Eq,
+        Hash
+    )]
+    pub struct FuzzSelector {
+        pub addr: ::ethers::core::types::Address,
+        pub selectors: ::std::vec::Vec<[u8; 4]>,
     }
 }

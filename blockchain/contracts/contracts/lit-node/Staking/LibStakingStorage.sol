@@ -25,6 +25,7 @@ library LibStakingStorage {
 
     bytes32 constant GLOBAL_STAKING_POSITION =
         keccak256("global.staking.storage");
+    bytes32 constant NFT_STORAGE_POSITION = keccak256("nft.storage");
 
     enum States {
         Active,
@@ -61,6 +62,8 @@ library LibStakingStorage {
         /// attributed to at the time of creation via Validator.delegatedStakeAmount and Validator.delegatedStakeWeight
         /// fields.
         address attributionAddress;
+        /// @notice The token ID of the NFT that the stake record is associated with.
+        uint256 tokenId;
     }
 
     struct StakerVault {
@@ -416,6 +419,27 @@ library LibStakingStorage {
         bool asyncActionsEnabled;
     }
 
+    struct MappedStakeRecord {
+        address operatorStakerAddress;
+        uint256 stakeRecordId;
+    }
+
+    struct NFTStorage {
+        mapping(bytes4 => bool) supportedInterfaces;
+        mapping(address => uint256) ownerToTokenCount;
+        // Mapping from owner to index to tokenId
+        mapping(address => mapping(uint256 => uint256)) ownerToIndexToToken;
+        mapping(uint256 => address) tokenToOwner;
+        mapping(uint256 => address) tokenToApprovals;
+        // Mapping from tokenId to index in owner's token list
+        mapping(uint256 => uint256) tokenToOwnerIndex;
+        mapping(address => mapping(address => bool)) ownerToOperators;
+        // Mapping from tokenId to the block number of the ownership change
+        mapping(uint256 => uint256) ownershipChange;
+        mapping(uint256 => MappedStakeRecord) tokenToStakeRecord;
+        uint256 tokenCount;
+    }
+
     function getStakingStorage()
         internal
         pure
@@ -439,6 +463,17 @@ library LibStakingStorage {
         }
 
         bytes32 position = keccak256(abi.encode(realmId));
+        assembly {
+            storageStruct.slot := position
+        }
+    }
+
+    function getNFTStorage()
+        internal
+        pure
+        returns (NFTStorage storage storageStruct)
+    {
+        bytes32 position = NFT_STORAGE_POSITION;
         assembly {
             storageStruct.slot := position
         }

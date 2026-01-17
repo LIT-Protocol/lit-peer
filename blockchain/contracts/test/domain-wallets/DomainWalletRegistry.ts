@@ -155,6 +155,7 @@ describe('DomainWalletRegistry', function () {
           'StakingAdminFacet',
           'StakingAcrossRealmsFacet',
           'StakingKeySetsFacet',
+          'StakingNFTFacet',
         ],
         verifyContracts: false,
         waitForDeployment: false,

@@ -104,6 +104,7 @@ describe('PKPPermissions', function () {
           'StakingAcrossRealmsFacet',
           'StakingAdminFacet',
           'StakingKeySetsFacet',
+          'StakingNFTFacet',
         ],
         verifyContracts: false,
         waitForDeployment: false,
