@@ -281,7 +281,6 @@ where
         false => Ipv4Addr::from_bits(u32::from_str_radix(socket_address.split(":").nth(0).unwrap(), 10).unwrap()).to_string()
     };
 
-    info!("socket_address: {:?}", socket_address);
     lit_sdk::HandshakeRequest::new()
         .node_set_from_iter(node_set)
         .url_prefix(lit_sdk::UrlPrefix::from_socket_address(&socket_address))

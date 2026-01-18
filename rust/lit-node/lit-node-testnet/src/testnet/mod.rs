@@ -52,7 +52,7 @@ pub struct PeerItem {
 
 #[derive(PartialEq, Clone, Default, Debug)]
 pub enum TestNetName {
-    NagaTest,
+    Naga,
     Hardhat,
     NoChain,
     #[default]
@@ -209,9 +209,9 @@ impl TestnetBuilder {
                 Box::new(chain::no_chain::NoChain::new(self.total_num_validators()))
                     as Box<dyn ChainTrait>
             }
-            TestNetName::NagaTest => Box::new(chain::naga::naga_test::NagaTest::new(
+            TestNetName::Naga => Box::new(chain::naga::Naga::new(
                 self.total_num_validators(),
-            )) as Box<dyn ChainTrait>,
+            ).await) as Box<dyn ChainTrait>,
         };
 
         let net_process = chain.start_chain().await;
@@ -226,17 +226,15 @@ impl TestnetBuilder {
         let provider = Arc::new(provider_mut.set_interval(Duration::from_millis(10)).clone());
         let mut is_from_cache = false;
         let datil_testnet = DatilTestnet::new(
-                self.total_num_validators(),
-                self.datil_testnet_state_cache_path,
-                self.datil_testnet_contract_resolver_address,
-            )
-            .await;
+            self.total_num_validators(),
+            self.datil_testnet_state_cache_path,
+            self.datil_testnet_contract_resolver_address,
+        )
+        .await;
         // deploy the contracts via script first, so that we can read them when the testnet configuration is loaded.
-        if self.selected_network == TestNetName::Anvil || self.selected_network == TestNetName::Hardhat
+        if self.selected_network == TestNetName::Anvil
+            || self.selected_network == TestNetName::Hardhat
         {
-
-     
-
             // First, determine whether we need to generate custom node runtime config.
             let need_custom_node_runtime_config =
                 self.custom_node_runtime_config.is_some() || self.is_fault_test;
@@ -372,25 +370,21 @@ impl Testnet {
         match self.process.as_mut() {
             Some(process) => {
                 process.kill().unwrap_or_else(|e| {
-                    panic!(
-                        "Testnet process {:?} couldn't be killed: {}",
-                        process, e
-                    )
+                    panic!("Testnet process {:?} couldn't be killed: {}", process, e)
                 });
                 //ps x -o  "%p %r %y %x %c "
                 process.wait().unwrap_or_else(|e| {
-                    panic!(
-                        "Testnet process {:?} couldn't be waited on: {}",
-                        process, e
-                    )
+                    panic!("Testnet process {:?} couldn't be waited on: {}", process, e)
                 });
             }
             None => {
-                info!("Testnet is an onchain testnet, was never started, or already exists, so there is no process to kill");
+                info!(
+                    "Testnet is an on chain testnet, was never started, or already exists, so there is no process to kill."
+                );
             }
         }
 
-        self.datil_testnet.shutdown();        
+        self.datil_testnet.shutdown();
         // if hardhat or node are spawning something and leaving it running after kill
         // Command::new("pkill").arg("node").spawn().unwrap();
     }
@@ -413,24 +407,30 @@ impl Testnet {
         staking_contract_global_config: Option<StakingContractGlobalConfig>,
         staking_contract_realm_config: Option<StakingContractRealmConfig>,
     ) -> anyhow::Result<TestnetContracts> {
-
         let deployer_signing_provider = testnet.deploy_account.signing_provider.clone();
-        let resolver_address = Address::from_slice(&hex_to_bytes("0x0A88e4A0A371F783fCc2dd802f214EAF48D1C6a9").unwrap());
+        
 
-        let ca = match  testnet.selected_network  { 
-            TestNetName::NagaTest => Contracts::contract_addresses_from_resolver_address(resolver_address, deployer_signing_provider).await,
-            _ => { match  testnet.existing_config_path.clone() {           
+        let ca = match testnet.selected_network {
+            TestNetName::Naga => {
 
-             Some(path) => {
-                Contracts::contract_addresses_from_resolver_cfg(
-                    path,
-                    testnet.deploy_account.signing_provider.clone(),
+                let n = chain::naga::Naga::new(0).await;            
+                Contracts::contract_addresses_from_resolver_address(
+                    n.contract_resolver_address(),
+                    deployer_signing_provider,
                 )
                 .await
             }
-            None => contract_addresses_from_deployment().await,
-            }
-        }};
+            _ => match testnet.existing_config_path.clone() {
+                Some(path) => {
+                    Contracts::contract_addresses_from_resolver_cfg(
+                        path,
+                        testnet.deploy_account.signing_provider.clone(),
+                    )
+                    .await
+                }
+                None => contract_addresses_from_deployment().await,
+            },
+        };
 
         let deployer_signing_provider = testnet.deploy_account.signing_provider.clone();
 

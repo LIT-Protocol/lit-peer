@@ -13,9 +13,7 @@ use lit_blockchain::resolver::rpc::{ENDPOINT_MANAGER, RpcHealthcheckPoller};
 use lit_core::utils::binary::hex_to_bytes;
 use lit_core::utils::toml::SimpleToml;
 use lit_node_common::coms_keys::ComsKeys;
-
 use std::collections::HashMap;
-
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -40,6 +38,10 @@ pub trait ChainTrait: Send + Sync {
         ENDPOINT_MANAGER
             .get_provider(chain_id)
             .expect("invalid chain id")
+    }
+
+    fn contract_resolver_address(&self) -> Address {
+        Address::zero()
     }
 
     fn reuse_config_path(&self) -> Option<String> {
@@ -143,6 +145,7 @@ pub trait ChainTrait: Send + Sync {
         }
     }
 }
+
 
 // we require a {chain_name}.toml file to be present in the ./config directory with a structure that looks like this:
 // [deployer]

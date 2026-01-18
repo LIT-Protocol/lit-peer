@@ -5,22 +5,19 @@ use std::error::Error;
 use std::fs;
 use std::io::BufReader;
 use std::net::Ipv4Addr;
-use std::path::PathBuf;
-use std::process::Child;
-use std::process::Command;
+use std::path::{Path, PathBuf};
+use std::process::{Child, Command};
 use std::sync::Arc;
 
 use anyhow::Result;
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::middleware::SignerMiddleware;
 use ethers::prelude::*;
-use ethers::providers::Http;
-use ethers::providers::Provider;
+use ethers::providers::{Http, Provider};
 use ethers::signers::Wallet;
 use futures::future::join_all;
 use lit_attestation::attestation::ENV_ATTESTATION_TYPE_OVERRIDE;
-use lit_blockchain::contracts::staking::KeySetConfig;
-use lit_blockchain::contracts::staking::Staking;
+use lit_blockchain::contracts::staking::{Staking, KeySetConfig};
 use lit_core::config::ENV_LIT_CONFIG_FILE;
 use lit_core::error::Unexpected;
 use lit_core::utils::binary::bytes_to_hex;
@@ -32,7 +29,6 @@ use url::Url;
 // use lit_node::p2p_comms::web::chatter_server::chatter::chatter_service_client::ChatterServiceClient;
 use rand::Rng;
 use std::fs::File;
-use std::path::Path;
 use tracing::error;
 use tracing::trace;
 use tracing::{debug, info, warn};
@@ -257,10 +253,6 @@ impl ValidatorCollectionBuilder {
             } else {
                 // only start the nodes meant to be awake.
                 if !asleep_initially.contains(&idx) {
-                    // to avoid breaking old tests, explicit check if the testnet is configured to register inactive validators.
-                    // if testnet.register_inactive_validators {
-                    //     validator.set_node_info_without_joining(&actions).await?;
-                    // }
                     validator.start_node(true, false).await?;
                     validator_ports_to_check_awake.push(validator.node.port);
                 }
@@ -1138,31 +1130,6 @@ impl Validator {
 
         Ok(())
     }
-
-    // pub async fn set_node_info_without_joining(&self, actions: &Actions) -> Result<()> {
-    //     info!(
-    //         "Node {} (s:{} / n:{}) is updating ip/port/details info.",
-    //         self.node.port, self.account.staker_address, self.account.node_address,
-    //     );
-    //
-    //     let staking = Staking::<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>::new(
-    //         actions.contracts().staking.address(),
-    //         self.account.signing_provider.clone(),
-    //     );
-    //
-    //     let cc = staking.set_ip_port_node_address_and_communication_pub_keys(
-    //         self.node.ip.into(),
-    //         0,
-    //         self.node.port as u32,
-    //         self.account.node_address,
-    //         U256::from(self.account.coms_keys.sender_public_key().to_bytes()),
-    //         U256::from(self.account.coms_keys.receiver_public_key().to_bytes()),
-    //     );
-    //     Contracts::process_contract_call_with_delay(cc, "update node info without joining", 10)
-    //         .await;
-    //
-    //     Ok(())
-    // }
 
     pub fn is_node_offline(&mut self) -> bool {
         if let Some(child) = self.node.process.as_mut() {

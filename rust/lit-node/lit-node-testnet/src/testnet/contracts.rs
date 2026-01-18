@@ -392,7 +392,7 @@ impl Contracts {
     ) -> Result<Contracts> {
         let contracts = Self::new_contracts(ca, provider.clone()).await;
 
-        if testnet.selected_network != TestNetName::NoChain && testnet.selected_network != TestNetName::NagaTest {
+        if testnet.selected_network != TestNetName::NoChain && testnet.selected_network != TestNetName::Naga {
             if let Some(staking_contract_global_config) = staking_contract_global_config {
                 Self::update_staking_global_config(
                     contracts.staking.clone(),

@@ -100,7 +100,7 @@ pub mod litactions {
 
         let force_deploy = file_name.contains("sign_child_lit_action");
         let (testnet, validator_collection, mut end_user) = TestSetupBuilder::default()
-            .selected_network(TestNetName::NagaTest)
+            .selected_network(TestNetName::Naga)
             .force_deploy(force_deploy)
             .build()
             .await;
@@ -698,7 +698,7 @@ pub mod litactions {
         let ipfs_cid = "QmRwN9GKHvCn4Vk7biqtr6adjXMs7PzzYPCzNCRjPFiDjm";
 
         let (testnet, validator_collection, end_user) = TestSetupBuilder::default()
-            .selected_network(TestNetName::NagaTest)
+            .selected_network(TestNetName::Naga)
             .build()
             .await;
         let node_set = validator_collection.random_threshold_nodeset().await;

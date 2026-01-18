@@ -188,8 +188,11 @@ impl TestSetupBuilder {
     }
 
     pub fn selected_network(mut self, selected_network: TestNetName) -> Self {
+        if selected_network == TestNetName::Naga {
+            self.force_deploy = false;
+            self.setup_datil_keys = false;
+        };
         self.selected_network = Some(selected_network);
-        self.setup_datil_keys = false;
         self
     }
 
@@ -232,12 +235,17 @@ impl TestSetupBuilder {
         self
     }
 
-    pub async fn build(self) -> (Testnet, ValidatorCollection, EndUser) {
+    pub async fn build(mut self) -> (Testnet, ValidatorCollection, EndUser) {
         let node_keys_path = Path::new("./node_keys");
         if node_keys_path.exists() {
             fs::remove_dir_all(node_keys_path).unwrap();
         }
         fs::create_dir_all(node_keys_path).unwrap();
+
+        if fs::exists("live_testnet.toml").unwrap_or(false) {
+            self = self.selected_network(TestNetName::Naga);
+        };
+
 
         let signing_round_timeout_ms = if self.signing_round_timeout.is_some() {
             self.signing_round_timeout
@@ -245,6 +253,7 @@ impl TestSetupBuilder {
             // if not in CI, set a default signing round timeout of 8000ms
             Some("8000".to_string())
         };
+
 
         let custom_node_runtime_config = CustomNodeRuntimeConfig::builder()
             .enable_payment(self.enable_payment)
@@ -311,7 +320,7 @@ impl TestSetupBuilder {
         // We may be faced with a situation where the caced data already has Datil keys, or it might only have naga keys.
         // If Datil keys are NOT present, we'll need to add them.
 
-        if self.setup_datil_keys  {
+        if self.setup_datil_keys {
             info!("Checking for existing Datil root keys in our cached NAGA chain data.");
             let keyset_id = DEFAULT_DATIL_KEY_SET_NAME;
             let existing_datil_root_keys = testnet
@@ -359,24 +368,20 @@ impl TestSetupBuilder {
                 .expect("Failed to run a required function before starting validators.");
         }
 
-        let validator_collection =   match testnet.selected_network {
-            TestNetName::NagaTest => {
-                ValidatorCollection::new_from_testnet(&mut testnet)
+        let validator_collection = match testnet.selected_network {
+            TestNetName::Naga => ValidatorCollection::new_from_testnet(&mut testnet)
                 .await
-                .expect("Failed to fill validator collection from testnet")
-            }
-            _ => { 
-                ValidatorCollection::builder()
-                    .num_staked_nodes(num_staked_nodes)
-                    .wait_initial_epoch(self.wait_initial_epoch)
-                    .wait_for_root_keys(self.wait_for_root_keys)
-                    .node_binary_feature_flags(node_binary_feature_flags)
-                    .custom_binary_path(self.custom_binary_path)
-                    .asleep_initially_override(self.asleep_initially_override)
-                    .build(&testnet)
-                    .await
-                    .expect("Failed to build validator collection")
-            }
+                .expect("Failed to fill validator collection from testnet"),
+            _ => ValidatorCollection::builder()
+                .num_staked_nodes(num_staked_nodes)
+                .wait_initial_epoch(self.wait_initial_epoch)
+                .wait_for_root_keys(self.wait_for_root_keys)
+                .node_binary_feature_flags(node_binary_feature_flags)
+                .custom_binary_path(self.custom_binary_path)
+                .asleep_initially_override(self.asleep_initially_override)
+                .build(&testnet)
+                .await
+                .expect("Failed to build validator collection"),
         };
 
         // if this is a datil testnet, set the root keys on the Datil chain ( we may have generated new root keys in the Naga setup )

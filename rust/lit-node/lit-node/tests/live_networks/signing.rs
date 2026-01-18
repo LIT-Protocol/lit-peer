@@ -48,7 +48,7 @@ pub async fn test_pkp_hd_sign_generic_key() {
     crate::common::setup_logging();
     info!("Starting test: test_hd_pkp_sign");
     let (testnet, validator_collection, end_user) = TestSetupBuilder::default()
-        .selected_network(TestNetName::NagaTest)
+        .selected_network(TestNetName::Naga)
         .build()
         .await;
     let pubkey = end_user.first_pkp().pubkey.clone();
@@ -409,7 +409,7 @@ pub async fn eoa_session_sig_with_mgb_pkp_signing() {
     info!("Starting test: eoa_session_sig_with_mgb_pkp_signing");
 
     let (testnet, validator_collection, end_user) = TestSetupBuilder::default()
-        .selected_network(TestNetName::NagaTest)
+        .selected_network(TestNetName::Naga)
         .build()
         .await;
 
