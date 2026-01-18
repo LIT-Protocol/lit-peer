@@ -25,6 +25,7 @@ pub struct EndUser {
     pkps: Vec<Pkp>,
     provider: Arc<Provider<Http>>,
     datil_provider: Arc<Provider<Http>>,
+    datil_deployer_provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
 }
 
 #[derive(Debug, Clone)]
@@ -52,6 +53,7 @@ impl EndUser {
             pkps: vec![],
             provider,
             datil_provider,
+            datil_deployer_provider: testnet.datil_testnet.deployer_signing_provider.clone(),
         }
     }
 
@@ -87,6 +89,12 @@ impl EndUser {
 
     pub async fn set_wallet_balance(&self, amount: &str) {
         let provider = self.actions.deployer_signing_provider();
+        self.set_wallet_balance_internal(amount, provider).await;
+        let provider = self.datil_deployer_provider.clone();
+        self.set_wallet_balance_internal(amount, provider).await;
+    }
+
+    async fn set_wallet_balance_internal(&self, amount: &str, provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>) {
 
         info!("Deployer provider {:?} balance: {:?}", provider.address(), provider.get_balance(provider.address(), None).await);
 
@@ -104,9 +112,7 @@ impl EndUser {
 
         info!("Transaction receipt: {:?}", receipt);
         info!("Wallet balance: {:?}", provider.get_balance(self.wallet.address(), None).await);
-        info!("Deployer provider balance: {:?}", provider.get_balance(provider.address(), None).await);
-
-       
+        info!("Deployer provider balance: {:?}", provider.get_balance(provider.address(), None).await);       
     }
 
     pub async fn fetch_price_from_feed(&self, product_id: u64) -> Vec<U256> {

@@ -16,7 +16,7 @@ impl Pkp {
 
         let pkpnft_address = end_user.actions().datil_contracts().pkpnft.address();
 
-        let client = Arc::new(end_user.datil_signing_provider().clone());
+        let client = Arc::new(            end_user.datil_signing_provider().clone());
 
         let pkpnft = PKPNFT::new(pkpnft_address, client);
 
