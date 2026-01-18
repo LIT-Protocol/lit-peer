@@ -251,7 +251,7 @@ impl TestSetupBuilder {
             self.signing_round_timeout
         } else {
             // if not in CI, set a default signing round timeout of 8000ms
-            Some("8000".to_string())
+            Some("15000".to_string())
         };
 
 

@@ -16,8 +16,9 @@ use rand_core::OsRng;
 use std::sync::Arc;
 use std::time::Duration;
 const RETRY_WAIT_TIME_MS: u64 = 200;
-// const INITIAL_FUNDING_AMOUNT: &str = "100000000000000000000";
-const INITIAL_FUNDING_AMOUNT: &str = "2000000000000000000";
+const INITIAL_FUNDING_AMOUNT: &str = "100000000000000000000";
+// const INITIAL_FUNDING_AMOUNT: &str = "2000000000000000000";
+
 #[derive(Clone, Debug)]
 pub struct EndUser {
     pub wallet: Wallet<SigningKey>,
