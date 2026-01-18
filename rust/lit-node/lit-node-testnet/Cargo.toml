@@ -4,6 +4,10 @@ version = "0.1.0"
 edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[[bin]]
+name = "permissions-router-check"
+path = "src/permissions_router_check.rs"
+
 [features]
 # this needs to happen at runtime, so is just a place holder for now.
 sign_test = ["lit-actions"] #enables unsafe endpoint allowing a test to use a PK directly .
