@@ -11,6 +11,76 @@ use tracing::{debug, error, info};
 use super::Pkp;
 
 impl Pkp {
+    pub async fn new_datil(end_user: &EndUser, key_set_id: &str) -> Result<Self, anyhow::Error> {
+        let key_type: U256 = U256::from(2); // 2 is ECDSA key type
+
+        let pkpnft_address = end_user.actions().datil_contracts().pkpnft.address();
+
+        let client = Arc::new(end_user.datil_signing_provider().clone());
+
+        let pkpnft = PKPNFT::new(pkpnft_address, client);
+
+        info!("Minting a new PKP on the Datil test chain.");
+        let mint_cost = pkpnft.mint_cost().call().await?;
+        info!("Mint cost: {:}", mint_cost);
+
+        let mint_tx = pkpnft.mint_next(key_type).value(mint_cost);
+
+        let receipt = mint_tx
+            .send()
+            .await
+            .map_err(|e| {
+                let revert_msg = format!(
+                    "Failed to send Datil PKP mint transaction: {}",
+                    decode_revert(&e, end_user.actions().datil_contracts().pkpnft.abi())
+                );
+                error!(revert_msg);
+                anyhow::anyhow!(revert_msg)
+            })?
+            .await
+            .map_err(|e| {
+                let revert_msg = format!(
+                    "Failed while waiting for Datil PKP mint confirmation: {}",
+                    e
+                );
+                error!(revert_msg);
+                anyhow::anyhow!(revert_msg)
+            })?
+            .ok_or_else(|| anyhow::anyhow!("Transaction failed - no receipt generated"))?;
+
+        if receipt.logs.is_empty() {
+            return Err(anyhow::anyhow!("Transaction receipt contains no logs"));
+        }
+        let token_id = receipt.logs[0].topics[1];
+        let token_id = U256::from(token_id.as_bytes());
+
+        let r = end_user
+            .actions()
+            .datil_contracts()
+            .pubkey_router
+            .get_pubkey(token_id)
+            .call()
+            .await?;
+        let pubkey = bytes_to_hex(r);
+
+        let eth_address = pkpnft.get_eth_address(token_id).call().await?;
+
+        info!(
+            "Minted Datil PKP with token id: {} / pubkey : {} / eth address: {:?}",
+            token_id, &pubkey, eth_address
+        );
+
+        Ok(Pkp {
+            signing_provider: end_user.datil_signing_provider().clone(),
+            actions: Arc::new(end_user.actions().clone()),
+            pubkey: pubkey.clone(),
+            token_id,
+            eth_address,
+            key_set_id: key_set_id.to_string(),
+            is_datil: true,
+        })
+    }
+
     #[doc = "Grant an address permission to use a PKP"]
     pub async fn add_permitted_address_to_pkp_datil(
         &self,

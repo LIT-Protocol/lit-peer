@@ -6,10 +6,10 @@ use ethers::utils::hex;
 use futures::future::join_all;
 use lit_node_core::response::GenericResponse;
 use lit_node_core::response::SDKHandshakeResponseV0;
-use core::panic::PanicMessage;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt::Debug;
+use std::net::Ipv4Addr;
 use tracing::error;
 use tracing::info;
 use tracing::trace;
@@ -276,7 +276,12 @@ where
  
     let ns = node_set.clone();
     let socket_address = ns.last().unwrap().socket_address.clone();
+    let socket_address = match socket_address.contains(".") {
+        true => socket_address,
+        false => Ipv4Addr::from_bits(u32::from_str_radix(socket_address.split(":").nth(0).unwrap(), 10).unwrap()).to_string()
+    };
 
+    info!("socket_address: {:?}", socket_address);
     lit_sdk::HandshakeRequest::new()
         .node_set_from_iter(node_set)
         .url_prefix(lit_sdk::UrlPrefix::from_socket_address(&socket_address))

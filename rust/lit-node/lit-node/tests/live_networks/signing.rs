@@ -5,8 +5,8 @@ use ethers::signers::to_eip155_v;
 use ethers::types::Address;
 use ethers::types::{TransactionRequest, U256};
 use lit_blockchain::contracts::pkpnft::PKPNFT;
-use lit_node_testnet::TestSetupBuilder;
 use lit_node_testnet::end_user::EndUser;
+use lit_node_testnet::{DEFAULT_DATIL_KEY_SET_NAME, TestSetupBuilder};
 
 use lit_node_core::SigningScheme;
 use lit_node_testnet::node_collection::get_identity_pubkeys_from_node_set;
@@ -63,7 +63,11 @@ pub async fn test_pkp_hd_sign_generic_key_datil() {
     crate::common::setup_logging();
     info!("Starting test: test_hd_pkp_sign");
     let (testnet, validator_collection, mut end_user) = TestSetupBuilder::default().build().await;
-    let (pubkey, _, _) = end_user.new_datil_pkp().await.unwrap();
+    let pubkey = end_user
+        .new_pkp(DEFAULT_DATIL_KEY_SET_NAME)
+        .await
+        .unwrap()
+        .0;
 
     let scheme = SigningScheme::EcdsaK256Sha256;
     let result = simple_single_sign_with_hd_key(

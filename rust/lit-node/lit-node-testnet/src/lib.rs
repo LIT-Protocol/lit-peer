@@ -401,7 +401,7 @@ impl TestSetupBuilder {
                 end_user.deposit_to_wallet_ledger_default().await;
             }
         }
-        let r = end_user.new_pkp().await;
+        let r = end_user.new_pkp(DEFAULT_KEY_SET_NAME).await;
         if let Err(e) = r {
             panic!("Error minting PKP: {:?}", e);
         }
