@@ -146,7 +146,7 @@ impl Pkp {
             self.token_id, to_address
         );
 
-        let pkpnft_address = self.actions.contracts().pkpnft.address();
+        let pkpnft_address = self.actions.datil_contracts().pkpnft.address();
         let pkpnft = PKPNFT::new(pkpnft_address, self.signing_provider.clone());
 
         let cc = pkpnft.transfer_from(
@@ -159,7 +159,7 @@ impl Pkp {
             let e = tx.unwrap_err();
             info!(
                 "Decoded error: {}",
-                decode_revert(&e, self.actions.contracts().pkpnft.abi()).to_string()
+                decode_revert(&e, self.actions.datil_contracts().pkpnft.abi()).to_string()
             );
             error!("Error sending transfer PKP: {:?}", e);
             return Err(anyhow::anyhow!("Error transferring PKP - sending tx"));
@@ -192,7 +192,7 @@ impl Pkp {
             ipfs_cid
         );
 
-        let pkp_permissions_address = self.actions.contracts().pkp_permissions.address();
+        let pkp_permissions_address = self.actions.datil_contracts().pkp_permissions.address();
         let pkp_permissions =
             PKPPermissions::new(pkp_permissions_address, self.signing_provider.clone());
         let pacc = pkp_permissions.add_permitted_action(
@@ -228,7 +228,7 @@ impl Pkp {
             self.token_id, ipfs_cid
         );
 
-        let pkp_permissions_address = self.actions.contracts().pkp_permissions.address();
+        let pkp_permissions_address = self.actions.datil_contracts().pkp_permissions.address();
         let pkp_permissions =
             PKPPermissions::new(pkp_permissions_address, self.signing_provider.clone());
         let is_permitted = pkp_permissions
@@ -254,7 +254,7 @@ impl Pkp {
         };
         debug!("Address Auth method to permit: {:?}", address_auth_method);
 
-        let pkp_permissions_address = self.actions.contracts().pkp_permissions.address();
+        let pkp_permissions_address = self.actions.datil_contracts().pkp_permissions.address();
         let pkp_permissions =
             PKPPermissions::new(pkp_permissions_address, self.signing_provider.clone());
         let paam = pkp_permissions.add_permitted_auth_method(
@@ -363,7 +363,7 @@ impl Pkp {
     }
 
     pub async fn burn_pkp_datil(&self) -> Result<bool, anyhow::Error> {
-        let pkpnft_address = self.actions.contracts().pkpnft.address();
+        let pkpnft_address = self.actions.datil_contracts().pkpnft.address();
         let pkpnft = PKPNFT::new(pkpnft_address, self.signing_provider.clone());
 
         let cc = pkpnft.burn(self.token_id);

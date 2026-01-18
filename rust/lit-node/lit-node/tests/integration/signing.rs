@@ -289,7 +289,7 @@ pub async fn test_sign_single_ecdsa_key(key_set_name: &str) {
     )
     .await;
 
-    assert!(result, "Failed to sign with Datil PKP");
+    assert!(result, "Failed to sign with {key_set_name} PKP");
 
     drop(testnet);
 }
