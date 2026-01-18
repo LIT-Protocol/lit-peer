@@ -146,13 +146,15 @@ pub async fn generate_session_sigs_and_send_signing_requests(
         None,
         None,
     );
-    let nodes = node_set.keys().cloned().collect::<Vec<NodeSet>>();
+    let nodesets = node_set.keys().cloned().collect::<Vec<NodeSet>>();
 
     let my_secret_key = rand::rngs::OsRng.r#gen();
 
     let start = std::time::Instant::now();
     let responses = lit_sdk::PKPSigningRequest::new()
-        .url_prefix(lit_sdk::UrlPrefix::Https)
+        .url_prefix(lit_sdk::UrlPrefix::from_socket_address(
+            &nodesets.first().unwrap().socket_address,
+        ))
         .node_set(
             session_sigs
                 .into_iter()
@@ -164,7 +166,7 @@ pub async fn generate_session_sigs_and_send_signing_requests(
                         auth_methods: None,
                         signing_scheme,
                         epoch,
-                        node_set: nodes.clone(),
+                        node_set: nodesets.clone(),
                         key_set_id: key_set_id.to_string(),
                     };
                     lit_sdk::EndpointRequest {

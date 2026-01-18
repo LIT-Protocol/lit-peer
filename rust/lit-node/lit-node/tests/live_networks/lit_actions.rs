@@ -52,33 +52,33 @@ pub mod litactions {
         &[LaPC::Broadcasts, LaPC::Decrypts, LaPC::ContractCalls];
     const LAPC_BC: &[LitActionPriceComponent] = &[LaPC::Broadcasts, LaPC::ContractCalls];
     const LAPC_SB: &[LitActionPriceComponent] = &[LaPC::Signatures, LaPC::Broadcasts];
-    const LA_DATIL: bool = true;
-    const LA_NAGA: bool = false;
+    const IS_DATIL: bool = true;
+    const IS_NAGA: bool = false;
     // Notes:
     // - The 2 tests inside test_pkp_permissions_is_cid_registered_and_can_it_sign, is covered by "sign_child_lit_action" & "fail_sign_non_hashed_message".
     // - The original encrypt test wasn't a good integration test - it attempted to compare against a known pubkey, but integration tests generate new keys each time.  encrypt & decrypt tests cover this functionality.
 
-    #[test_case(LA_NAGA,"broadcast_and_collect", &[LaPC::Broadcasts], &all_response_match, &standard_acc, true, "*", true)]
-    #[test_case(LA_NAGA,"check_conditions_with_auth_sig", &[LaPC::ContractCalls], &all_response_match, &standard_acc, true, "true", true)]
-    #[test_case(LA_NAGA,"check_conditions_without_auth_sig", &[LaPC::ContractCalls], &all_response_match, &standard_acc, false,  "true", true)]
-    #[test_case(LA_NAGA,"current_ipfs_id_substitution", LAPC_DBC, &all_response_match, &ipfs_acc, true, "hello this is a test", true)]
-    #[test_case(LA_NAGA,"decrypt_and_combine_with_access_denied",LAPC_BC, &action_failed_with_error, &impossible_acc, true, "Access control conditions check failed", false)]
-    #[test_case(LA_NAGA,"decrypt_and_combine_with_auth_sig", LAPC_DBC, &all_response_match, &standard_acc, true, "hello this is a test", true)]
-    #[test_case(LA_NAGA,"decrypt_and_combine_without_auth_sig", LAPC_DBC, &all_response_match, &standard_acc, false, "*", true)]
-    #[test_case(LA_NAGA,"decrypt_to_single_node", LAPC_DBC, &single_valid, &standard_acc, true, "hello this is a test", true)]
-    #[test_case(LA_NAGA,"get_rpc_url", &[], &all_response_match, &standard_acc,true, "https://api.node.glif.io/rpc/v1", true)]
-    #[test_case(LA_NAGA,"multiple_sign_and_combine_ecdsa", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
-    #[test_case(LA_DATIL,"multiple_sign_and_combine_ecdsa", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
-    #[test_case(LA_NAGA,"multiple_sign_and_combine_ed25519", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
-    #[test_case(LA_NAGA,"multiple_sign_and_combine_blsg1", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
-    #[test_case(LA_NAGA,"run_once_and_collect_responses", &[LaPC::Broadcasts, LaPC::Fetches], &all_response_match, &standard_acc,true, "*", true)]
-    #[test_case(LA_NAGA,"run_once", &[LaPC::Fetches], &all_response_match, &standard_acc,true, "*", true)]
-    #[test_case(LA_NAGA,"sign_and_combine_ecdsa", LAPC_SB, &all_response_match, &standard_acc,true, "*", true)]
-    #[test_case(LA_DATIL,"sign_and_combine_ecdsa", LAPC_SB, &all_response_match, &standard_acc,true, "*", true)]
-    #[test_case(LA_NAGA,"sign_hello_world", &[LaPC::Signatures], &valid_sign_no_combine, &standard_acc, true, "", false)]
-    #[test_case(LA_DATIL,"sign_hello_world", &[LaPC::Signatures], &valid_sign_no_combine, &standard_acc, true, "", false)]
-    #[test_case(LA_NAGA,"sign_child_lit_action", &[LaPC::Signatures, LaPC::CallDepth], &valid_sign_no_combine, &standard_acc, true, "", false)]
-    #[test_case(LA_NAGA,"fail_sign_non_hashed_message", &[LaPC::Signatures], &action_failed_with_error, &standard_acc, true, "Message length to be signed is not 32 bytes", false)]
+    #[test_case(IS_NAGA,"broadcast_and_collect", &[LaPC::Broadcasts], &all_response_match, &standard_acc, true, "*", true)]
+    #[test_case(IS_NAGA,"check_conditions_with_auth_sig", &[LaPC::ContractCalls], &all_response_match, &standard_acc, true, "true", true)]
+    #[test_case(IS_NAGA,"check_conditions_without_auth_sig", &[LaPC::ContractCalls], &all_response_match, &standard_acc, false,  "true", true)]
+    #[test_case(IS_NAGA,"current_ipfs_id_substitution", LAPC_DBC, &all_response_match, &ipfs_acc, true, "hello this is a test", true)]
+    #[test_case(IS_NAGA,"decrypt_and_combine_with_access_denied",LAPC_BC, &action_failed_with_error, &impossible_acc, true, "Access control conditions check failed", false)]
+    #[test_case(IS_NAGA,"decrypt_and_combine_with_auth_sig", LAPC_DBC, &all_response_match, &standard_acc, true, "hello this is a test", true)]
+    #[test_case(IS_NAGA,"decrypt_and_combine_without_auth_sig", LAPC_DBC, &all_response_match, &standard_acc, false, "*", true)]
+    #[test_case(IS_NAGA,"decrypt_to_single_node", LAPC_DBC, &single_valid, &standard_acc, true, "hello this is a test", true)]
+    #[test_case(IS_NAGA,"get_rpc_url", &[], &all_response_match, &standard_acc,true, "https://api.node.glif.io/rpc/v1", true)]
+    #[test_case(IS_NAGA,"multiple_sign_and_combine_ecdsa", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
+    #[test_case(IS_DATIL,"multiple_sign_and_combine_ecdsa", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
+    #[test_case(IS_NAGA,"multiple_sign_and_combine_ed25519", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
+    #[test_case(IS_NAGA,"multiple_sign_and_combine_blsg1", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
+    #[test_case(IS_NAGA,"run_once_and_collect_responses", &[LaPC::Broadcasts, LaPC::Fetches], &all_response_match, &standard_acc,true, "*", true)]
+    #[test_case(IS_NAGA,"run_once", &[LaPC::Fetches], &all_response_match, &standard_acc,true, "*", true)]
+    #[test_case(IS_NAGA,"sign_and_combine_ecdsa", LAPC_SB, &all_response_match, &standard_acc,true, "*", true)]
+    #[test_case(IS_DATIL,"sign_and_combine_ecdsa", LAPC_SB, &all_response_match, &standard_acc,true, "*", true)]
+    #[test_case(IS_NAGA,"sign_hello_world", &[LaPC::Signatures], &valid_sign_no_combine, &standard_acc, true, "", false)]
+    #[test_case(IS_DATIL,"sign_hello_world", &[LaPC::Signatures], &valid_sign_no_combine, &standard_acc, true, "", false)]
+    #[test_case(IS_NAGA,"sign_child_lit_action", &[LaPC::Signatures, LaPC::CallDepth], &valid_sign_no_combine, &standard_acc, true, "", false)]
+    #[test_case(IS_NAGA,"fail_sign_non_hashed_message", &[LaPC::Signatures], &action_failed_with_error, &standard_acc, true, "Message length to be signed is not 32 bytes", false)]
     #[tokio::test]
     // #[ignore]
     pub async fn lit_action_from_file(
@@ -98,7 +98,8 @@ pub mod litactions {
         setup_logging();
 
         let force_deploy = file_name.contains("sign_child_lit_action");
-        let (testnet, validator_collection, mut end_user) = TestSetupBuilder::default().selected_network(TestNetName::NagaTest)
+        let (testnet, validator_collection, mut end_user) = TestSetupBuilder::default()
+            .selected_network(TestNetName::NagaTest)
             .force_deploy(force_deploy)
             .build()
             .await;
@@ -698,7 +699,10 @@ pub mod litactions {
 
         let ipfs_cid = "QmRwN9GKHvCn4Vk7biqtr6adjXMs7PzzYPCzNCRjPFiDjm";
 
-        let (testnet, validator_collection, end_user) = TestSetupBuilder::default().build().await;
+        let (testnet, validator_collection, end_user) = TestSetupBuilder::default()
+            .selected_network(TestNetName::NagaTest)
+            .build()
+            .await;
         let node_set = validator_collection.random_threshold_nodeset().await;
         let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
         let realm_id = ethers::types::U256::from(1);

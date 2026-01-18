@@ -37,7 +37,7 @@ pub struct DatilNodeAccount {
     pub staker_address_private_key: ethers::types::H256,
 }
 pub struct DatilTestnet {
-    process: GroupChild,
+    process: Option<GroupChild>,
     pub datil_chain: Box<dyn ChainTrait>,
     pub provider: Arc<Provider<Http>>,
     pub node_accounts: Arc<Vec<NodeAccount>>,
@@ -99,12 +99,19 @@ impl DatilTestnet {
     }
 
     pub fn shutdown(&mut self) {
-        self.process.kill().unwrap_or_else(|e| {
-            // panic!(
-            //     "Datil testnet process {:?} couldn't be killed: {}",
-            //     self.process, e
-            // )
-        });
+        match self.process.as_mut() {
+            Some( process) => {
+                process.kill().unwrap_or_else(|e| {
+                    panic!(
+                        "Datil testnet process {:?} couldn't be killed: {}",
+                        process, e
+                    )
+                });
+            }
+            None => {
+                info!("Datil testnet process not running");
+            }
+        }
     }
 
     // load the node accounts from the datil cache - matches the secrets in the cached state dump file.

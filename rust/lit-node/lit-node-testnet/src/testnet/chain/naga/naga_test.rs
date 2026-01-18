@@ -2,9 +2,7 @@ use crate::testnet::NodeAccount;
 use crate::testnet::chain::anvil::first_anvil_account;
 
 use super::super::ChainTrait;
-use command_group::{CommandGroup, GroupChild}; 
-use std::process::Command;
-
+use command_group::GroupChild; 
 use ethers::prelude::*;
 use ethers::signers::LocalWallet;
 use lit_node_common::coms_keys::ComsKeys;
@@ -46,12 +44,8 @@ impl ChainTrait for NagaTest {
     }
 
     // This is where we'll load default values from GitHub.
-    async fn start_chain(&self) -> GroupChild {        
-
-        return Command::new("/bin/bash")
-            .args(["-c", "echo '*** NagaTest is already running ***'"])
-            .group_spawn()
-            .expect("Could not spawn echo process");
+    async fn start_chain(&self) -> Option<GroupChild> {        
+        None
     }
 
     // Yes, this is the same first anvil account.  It'll be used as a fake deployer account for the naga testnet.

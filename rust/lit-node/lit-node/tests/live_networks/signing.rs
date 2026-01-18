@@ -1,9 +1,9 @@
 use crate::common::ecdsa::{sign_with_hd_key, simple_single_sign_with_hd_key};
 use crate::common::pkp::{generate_session_sigs_and_send_signing_requests, sign_with_pkp_request};
 use ethers::signers::Signer;
+use ethers::signers::to_eip155_v;
 use ethers::types::Address;
-use ethers::types::{ TransactionRequest, U256};
-use ethers:: signers::to_eip155_v;
+use ethers::types::{TransactionRequest, U256};
 use lit_blockchain::contracts::pkpnft::PKPNFT;
 use lit_node_testnet::TestSetupBuilder;
 use lit_node_testnet::end_user::EndUser;
@@ -38,8 +38,8 @@ const ALL_SIGNING_SCHEMES: [SigningScheme; 15] = [
 ];
 
 const MINIMAL_SIGNING_SCHEMES: [SigningScheme; 2] = [
-    SigningScheme::EcdsaK256Sha256,  // standard ECDSA on secp256k1 with SHA-256   (ETH COMPATIBLE EVMS)
-    SigningScheme::SchnorrEd25519Sha512,  // standard Schnorr on ed25519 with SHA-512  (SOLANA COMPATIBLE)
+    SigningScheme::EcdsaK256Sha256, // standard ECDSA on secp256k1 with SHA-256   (ETH COMPATIBLE EVMS)
+    SigningScheme::SchnorrEd25519Sha512, // standard Schnorr on ed25519 with SHA-512  (SOLANA COMPATIBLE)
 ];
 #[tokio::test]
 #[doc = "Primary test to ensure that the network can sign with a PKP key.  It goes through the process of spinning up the network, minting a new PKP, and then signing with it."]
@@ -47,7 +47,10 @@ const MINIMAL_SIGNING_SCHEMES: [SigningScheme; 2] = [
 pub async fn test_pkp_hd_sign_generic_key() {
     crate::common::setup_logging();
     info!("Starting test: test_hd_pkp_sign");
-    let (testnet, validator_collection, end_user) = TestSetupBuilder::default().selected_network(TestNetName::NagaTest).build().await;
+    let (testnet, validator_collection, end_user) = TestSetupBuilder::default()
+        .selected_network(TestNetName::NagaTest)
+        .build()
+        .await;
     let pubkey = end_user.first_pkp().pubkey.clone();
     sign_with_minimal_curve_types(&validator_collection, &end_user, pubkey.clone()).await;
     drop(testnet);
@@ -184,7 +187,7 @@ pub async fn sign_with_minimal_curve_types(
             end_user,
             pubkey.clone(),
             scheme,
-            &vec![]
+            &vec![],
         )
         .await;
         assert!(result, "Failed to sign with all nodes up.");
@@ -401,7 +404,10 @@ pub async fn eoa_session_sig_with_mgb_pkp_signing() {
     crate::common::setup_logging();
     info!("Starting test: eoa_session_sig_with_mgb_pkp_signing");
 
-    let (testnet, validator_collection, end_user) = TestSetupBuilder::default().build().await;
+    let (testnet, validator_collection, end_user) = TestSetupBuilder::default()
+        .selected_network(TestNetName::NagaTest)
+        .build()
+        .await;
 
     info!("end user pkp info: {:?}", end_user.first_pkp().info());
     let (pubkey, token_id, pkp_address, _key_set_id) = end_user.first_pkp().info().clone();

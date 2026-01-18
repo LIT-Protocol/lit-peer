@@ -62,7 +62,7 @@ impl ChainTrait for Anvil {
         }
     }
 
-    async fn start_chain(&self) -> GroupChild {
+    async fn start_chain(&self) -> Option<GroupChild> {
         compile_contracts();
 
         let mut cache_data_store = CacheDataStore::from_file_or_new()
@@ -84,22 +84,15 @@ impl ChainTrait for Anvil {
                 );
             }
 
-            return Command::new("/bin/bash")
-                .args(["-c", "echo '*** anvil is already running in CI ***'"])
-                .group_spawn()
-                .expect("Could not spawn echo process");
+            return None;
         }
 
         if is_anvil_running(&self.rpc_url()).await {
             if self.port == 8549 {
                 info!("Datil Anvil is already running.  Skipping kill.");
-
                 cache_data_store.set_anvil_is_running(true);
                 let _ = cache_data_store.save().await; // if it fails we reset.
-                return Command::new("/bin/bash")
-                    .args(["-c", "echo '*** anvil is already running in CI ***'"])
-                    .group_spawn()
-                    .expect("Could not spawn echo process");
+                return None;
             } else {
                 info!("anvil is already running.  Attempting to kill");
                 Command::new("pkill")
@@ -153,7 +146,7 @@ impl ChainTrait for Anvil {
             let _ = cache_data_store.save().await; // if it fails we reset.
         }
 
-        rv
+        Some(rv)
     }
 
     // for hardhat and no_chain, this trait function should be overriden.

@@ -26,7 +26,7 @@ pub trait ChainTrait: Send + Sync {
     // fn accounts(&self) -> Arc<Vec<NodeAccount>>;
     fn num_nodes(&self) -> usize;
 
-    async fn start_chain(&self) -> GroupChild;
+    async fn start_chain(&self) -> Option<GroupChild>;
 
     fn rpc_url(&self) -> String {
         let chain_id = self.chain_name();

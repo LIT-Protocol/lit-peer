@@ -328,7 +328,7 @@ impl TestnetContracts {
 }
 
 pub struct Testnet {
-    process: GroupChild,
+    process: Option<GroupChild>,
     pub datil_testnet: DatilTestnet,
     pub rpcurl: String, //http://localhost:8545
     pub chain_name: String,
@@ -369,18 +369,28 @@ impl Testnet {
     // stop testnet and clean up
     fn stop(&mut self) {
         // return; // uncomment this if you want to keep anvil running
-        if self.selected_network == TestNetName::Anvil || self.selected_network == TestNetName::Hardhat {
-            self.process.kill().unwrap_or_else(|e| {
-                panic!(
-                    "Testnet process {:?} couldn't be killed: {}",
-                    self.process, e
-                )
-            });
-
-            self.datil_testnet.shutdown();
+        match self.process.as_mut() {
+            Some(process) => {
+                process.kill().unwrap_or_else(|e| {
+                    panic!(
+                        "Testnet process {:?} couldn't be killed: {}",
+                        process, e
+                    )
+                });
+                //ps x -o  "%p %r %y %x %c "
+                process.wait().unwrap_or_else(|e| {
+                    panic!(
+                        "Testnet process {:?} couldn't be waited on: {}",
+                        process, e
+                    )
+                });
+            }
+            None => {
+                info!("Testnet is an onchain testnet, was never started, or already exists, so there is no process to kill");
+            }
         }
-        //ps x -o  "%p %r %y %x %c "
-        self.process.wait().unwrap();
+
+        self.datil_testnet.shutdown();        
         // if hardhat or node are spawning something and leaving it running after kill
         // Command::new("pkill").arg("node").spawn().unwrap();
     }
