@@ -543,7 +543,7 @@ async function deployLitNodeContracts(deployNodeConfig) {
   realmConfig.defaultKeySet = DEFAULT_KEY_SET_NAME;
   tx = await stakingContract.setRealmConfig(1, realmConfig);
   await tx.wait();
-  
+
   // set the default keyset config
   let defaultKeysetConfig = {
     identifier: DEFAULT_KEY_SET_NAME,
