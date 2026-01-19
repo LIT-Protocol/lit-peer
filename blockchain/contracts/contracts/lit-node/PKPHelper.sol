@@ -248,6 +248,8 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
             value: msg.value
         }(params.keyType, params.keySetId);
 
+        PKPPermissionsFacet pkpPermissions = PKPPermissionsFacet(getPkpPermissionsAddress());
+
         // sanity checking array lengths
         require(
             params.permittedIpfsCIDs.length ==
@@ -278,7 +280,7 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
         // permit the action
         if (params.permittedIpfsCIDs.length != 0) {
             for (uint256 i = 0; i < params.permittedIpfsCIDs.length; i++) {
-                PKPPermissionsFacet(getPkpPermissionsAddress())
+                pkpPermissions
                     .addPermittedAction(
                         tokenId,
                         params.permittedIpfsCIDs[i],
@@ -290,7 +292,7 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
         // permit the address
         if (params.permittedAddresses.length != 0) {
             for (uint256 i = 0; i < params.permittedAddresses.length; i++) {
-                PKPPermissionsFacet(getPkpPermissionsAddress())
+                pkpPermissions
                     .addPermittedAddress(
                         tokenId,
                         params.permittedAddresses[i],
@@ -306,7 +308,7 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
                 i < params.permittedAuthMethodTypes.length;
                 i++
             ) {
-                PKPPermissionsFacet(getPkpPermissionsAddress())
+                pkpPermissions
                     .addPermittedAuthMethod(
                         tokenId,
                         LibPKPPermissionsStorage.AuthMethod(
@@ -319,12 +321,12 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
             }
         }
 
-        address pkpEthAddress = PKPPermissionsFacet(getPkpPermissionsAddress())
+        address pkpEthAddress = pkpPermissions
             .getEthAddress(tokenId);
 
         // add the pkp eth address as a permitted address
         if (params.addPkpEthAddressAsPermittedAddress) {
-            PKPPermissionsFacet(getPkpPermissionsAddress()).addPermittedAddress(
+            pkpPermissions.addPermittedAddress(
                 tokenId,
                 pkpEthAddress,
                 new uint256[](0)
@@ -442,6 +444,8 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
             claimMaterial.stakingContractAddress
         );
 
+        PKPPermissionsFacet pkpPermissions = PKPPermissionsFacet(getPkpPermissionsAddress());
+
         require(
             authMethodData.permittedIpfsCIDs.length ==
                 authMethodData.permittedIpfsCIDScopes.length,
@@ -475,7 +479,7 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
                 i < authMethodData.permittedIpfsCIDs.length;
                 i++
             ) {
-                PKPPermissionsFacet(getPkpPermissionsAddress())
+                pkpPermissions
                     .addPermittedAction(
                         tokenId,
                         authMethodData.permittedIpfsCIDs[i],
@@ -491,7 +495,7 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
                 i < authMethodData.permittedAddresses.length;
                 i++
             ) {
-                PKPPermissionsFacet(getPkpPermissionsAddress())
+                pkpPermissions
                     .addPermittedAddress(
                         tokenId,
                         authMethodData.permittedAddresses[i],
@@ -507,7 +511,7 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
                 i < authMethodData.permittedAuthMethodTypes.length;
                 i++
             ) {
-                PKPPermissionsFacet(getPkpPermissionsAddress())
+                pkpPermissions
                     .addPermittedAuthMethod(
                         tokenId,
                         LibPKPPermissionsStorage.AuthMethod(
@@ -520,12 +524,12 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
             }
         }
 
-        address pkpEthAddress = PKPPermissionsFacet(getPkpPermissionsAddress())
+        address pkpEthAddress = pkpPermissions
             .getEthAddress(tokenId);
 
         // add the pkp eth address as a permitted address
         if (authMethodData.addPkpEthAddressAsPermittedAddress) {
-            PKPPermissionsFacet(getPkpPermissionsAddress()).addPermittedAddress(
+            pkpPermissions.addPermittedAddress(
                 tokenId,
                 pkpEthAddress,
                 new uint256[](0)
