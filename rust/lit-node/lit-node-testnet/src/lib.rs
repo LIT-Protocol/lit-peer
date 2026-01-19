@@ -269,7 +269,6 @@ impl TestSetupBuilder {
             .epoch_length(self.epoch_length)
             .max_presign_count_u64(self.max_presign_count)
             .min_presign_count_u64(self.min_presign_count)
-            .default_key_set(Some(DEFAULT_KEY_SET_NAME.to_string()))
             .build();
 
         info!(
