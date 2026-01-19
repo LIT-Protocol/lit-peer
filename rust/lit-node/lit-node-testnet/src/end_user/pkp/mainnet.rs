@@ -381,16 +381,17 @@ impl Pkp {
         info!("Minting a new PKP using helper contract on the mainnet test chain.");
         let mint_cost = pkpnft.mint_cost().call().await?;
 
-
-        
+        let empty_u256_array: Vec<U256> = vec![];
+        let empty_double_u256_array: Vec<Vec<U256>> = vec![];
+        let empty_bytes_array: Vec<ethers::types::Bytes> = vec![];
         let mint_tx = pkp_helper
             .mint_next_and_add_auth_methods(
                 key_type,
                 key_set_id.to_string(),
-                [].to_vec(),
-                vec![],
-                vec![],
-                [[].to_vec()].to_vec(),
+                empty_u256_array,
+                empty_bytes_array.clone(),
+                empty_bytes_array,
+                empty_double_u256_array,
                 false,
                 false,
             )

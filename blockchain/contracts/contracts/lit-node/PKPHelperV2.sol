@@ -5,6 +5,7 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import { ContractResolver } from "../lit-core/ContractResolver.sol";
 import { PKPNFTFacet } from "./PKPNFT/PKPNFTFacet.sol";
+import { PubkeyRouterViewsFacet } from "./PubkeyRouter/PubkeyRouterViewsFacet.sol";
 import "hardhat/console.sol";
 
 import { LibPKPPermissionsStorage } from "./PKPPermissions/LibPKPPermissionsStorage.sol";
@@ -73,6 +74,13 @@ contract PKPHelperV2 is Ownable, IERC721Receiver {
             );
     }
 
+    function getPubkeyRouterAddress() public view returns (address) {
+        return
+            contractResolver.getContract(
+                contractResolver.PUB_KEY_ROUTER_CONTRACT(),
+                env
+            );
+    }
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     function mintNextAndAddAuthMethods(
@@ -88,6 +96,8 @@ contract PKPHelperV2 is Ownable, IERC721Receiver {
         uint256 tokenId = PKPNFTFacet(getPkpNftAddress()).mintNext{
             value: msg.value
         }(params.keyType, params.keySetId);
+
+        PKPPermissionsFacet pkpPermissions = PKPPermissionsFacet(getPkpPermissionsAddress());
 
         require(
             params.permittedAuthMethodTypes.length ==
@@ -112,7 +122,7 @@ contract PKPHelperV2 is Ownable, IERC721Receiver {
                 i < params.permittedAuthMethodTypes.length;
                 i++
             ) {
-                PKPPermissionsFacet(getPkpPermissionsAddress())
+                pkpPermissions
                     .addPermittedAuthMethod(
                         tokenId,
                         LibPKPPermissionsStorage.AuthMethod(
@@ -125,12 +135,12 @@ contract PKPHelperV2 is Ownable, IERC721Receiver {
             }
         }
 
-        address pkpEthAddress = PKPPermissionsFacet(getPkpPermissionsAddress())
+        address pkpEthAddress = PubkeyRouterViewsFacet(getPubkeyRouterAddress())
             .getEthAddress(tokenId);
 
         // add the pkp eth address as a permitted address
         if (params.addPkpEthAddressAsPermittedAddress) {
-            PKPPermissionsFacet(getPkpPermissionsAddress()).addPermittedAddress(
+                pkpPermissions.addPermittedAddress(
                 tokenId,
                 pkpEthAddress,
                 params.pkpEthAddressScopes

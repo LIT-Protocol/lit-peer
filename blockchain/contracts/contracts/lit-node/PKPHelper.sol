@@ -9,6 +9,7 @@ import { Base64 } from "@openzeppelin/contracts/utils/Base64.sol";
 import { IERC721Receiver } from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import { ContractResolver } from "../lit-core/ContractResolver.sol";
 import { PKPNFTFacet } from "./PKPNFT/PKPNFTFacet.sol";
+import { PubkeyRouterViewsFacet } from "./PubkeyRouter/PubkeyRouterViewsFacet.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "hardhat/console.sol";
 
@@ -108,6 +109,13 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
             );
     }
 
+    function getPubkeyRouterAddress() public view returns (address) {
+        return
+            contractResolver.getContract(
+                contractResolver.PUB_KEY_ROUTER_CONTRACT(),
+                env
+            );
+    }
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     function mintNextAndAddAuthMethods(
@@ -120,6 +128,7 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
         bool addPkpEthAddressAsPermittedAddress,
         bool sendPkpToItself
     ) public payable returns (uint256) {
+
         MintNextAndAddAuthMethodsWithTypesParams
             memory params = MintNextAndAddAuthMethodsWithTypesParams({
                 keyType: keyType,
@@ -198,7 +207,7 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
             }
         }
 
-        address pkpEthAddress = PKPPermissionsFacet(getPkpPermissionsAddress())
+        address pkpEthAddress = PubkeyRouterViewsFacet(getPubkeyRouterAddress())
             .getEthAddress(tokenId);
 
         // add the pkp eth address as a permitted address
@@ -243,6 +252,7 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
     function mintNextAndAddAuthMethodsWithTypes(
         MintNextAndAddAuthMethodsWithTypesParams memory params
     ) public payable returns (uint256) {
+
         // mint the nft and forward the funds
         uint256 tokenId = PKPNFTFacet(getPkpNftAddress()).mintNext{
             value: msg.value
@@ -321,7 +331,7 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
             }
         }
 
-        address pkpEthAddress = pkpPermissions
+        address pkpEthAddress = PubkeyRouterViewsFacet(getPubkeyRouterAddress())
             .getEthAddress(tokenId);
 
         // add the pkp eth address as a permitted address
@@ -524,7 +534,7 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
             }
         }
 
-        address pkpEthAddress = pkpPermissions
+        address pkpEthAddress = PubkeyRouterViewsFacet(getPubkeyRouterAddress())
             .getEthAddress(tokenId);
 
         // add the pkp eth address as a permitted address

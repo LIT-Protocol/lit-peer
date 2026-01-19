@@ -25,7 +25,8 @@ async fn test_everything_as_web_user() {
 #[tokio::test]
 async fn test_web_user_with_auth_methods() {
     crate::common::setup_logging();
-    let (_testnet, validator_collection, mut end_user) = TestSetupBuilder::default().build().await;
+    let (_testnet, validator_collection, mut end_user) =
+        TestSetupBuilder::default().force_deploy(true).build().await;
 
     let auth_methods = vec![];
 
