@@ -97,7 +97,9 @@ contract PKPHelperV2 is Ownable, IERC721Receiver {
             value: msg.value
         }(params.keyType, params.keySetId);
 
-        PKPPermissionsFacet pkpPermissions = PKPPermissionsFacet(getPkpPermissionsAddress());
+        PKPPermissionsFacet pkpPermissions = PKPPermissionsFacet(
+            getPkpPermissionsAddress()
+        );
 
         require(
             params.permittedAuthMethodTypes.length ==
@@ -122,16 +124,15 @@ contract PKPHelperV2 is Ownable, IERC721Receiver {
                 i < params.permittedAuthMethodTypes.length;
                 i++
             ) {
-                pkpPermissions
-                    .addPermittedAuthMethod(
-                        tokenId,
-                        LibPKPPermissionsStorage.AuthMethod(
-                            params.permittedAuthMethodTypes[i],
-                            params.permittedAuthMethodIds[i],
-                            params.permittedAuthMethodPubkeys[i]
-                        ),
-                        params.permittedAuthMethodScopes[i]
-                    );
+                pkpPermissions.addPermittedAuthMethod(
+                    tokenId,
+                    LibPKPPermissionsStorage.AuthMethod(
+                        params.permittedAuthMethodTypes[i],
+                        params.permittedAuthMethodIds[i],
+                        params.permittedAuthMethodPubkeys[i]
+                    ),
+                    params.permittedAuthMethodScopes[i]
+                );
             }
         }
 
@@ -140,7 +141,7 @@ contract PKPHelperV2 is Ownable, IERC721Receiver {
 
         // add the pkp eth address as a permitted address
         if (params.addPkpEthAddressAsPermittedAddress) {
-                pkpPermissions.addPermittedAddress(
+            pkpPermissions.addPermittedAddress(
                 tokenId,
                 pkpEthAddress,
                 params.pkpEthAddressScopes

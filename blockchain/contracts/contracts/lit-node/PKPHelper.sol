@@ -128,7 +128,6 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
         bool addPkpEthAddressAsPermittedAddress,
         bool sendPkpToItself
     ) public payable returns (uint256) {
-
         MintNextAndAddAuthMethodsWithTypesParams
             memory params = MintNextAndAddAuthMethodsWithTypesParams({
                 keyType: keyType,
@@ -252,13 +251,14 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
     function mintNextAndAddAuthMethodsWithTypes(
         MintNextAndAddAuthMethodsWithTypesParams memory params
     ) public payable returns (uint256) {
-
         // mint the nft and forward the funds
         uint256 tokenId = PKPNFTFacet(getPkpNftAddress()).mintNext{
             value: msg.value
         }(params.keyType, params.keySetId);
 
-        PKPPermissionsFacet pkpPermissions = PKPPermissionsFacet(getPkpPermissionsAddress());
+        PKPPermissionsFacet pkpPermissions = PKPPermissionsFacet(
+            getPkpPermissionsAddress()
+        );
 
         // sanity checking array lengths
         require(
@@ -290,24 +290,22 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
         // permit the action
         if (params.permittedIpfsCIDs.length != 0) {
             for (uint256 i = 0; i < params.permittedIpfsCIDs.length; i++) {
-                pkpPermissions
-                    .addPermittedAction(
-                        tokenId,
-                        params.permittedIpfsCIDs[i],
-                        params.permittedIpfsCIDScopes[i]
-                    );
+                pkpPermissions.addPermittedAction(
+                    tokenId,
+                    params.permittedIpfsCIDs[i],
+                    params.permittedIpfsCIDScopes[i]
+                );
             }
         }
 
         // permit the address
         if (params.permittedAddresses.length != 0) {
             for (uint256 i = 0; i < params.permittedAddresses.length; i++) {
-                pkpPermissions
-                    .addPermittedAddress(
-                        tokenId,
-                        params.permittedAddresses[i],
-                        params.permittedAddressesScopes[i]
-                    );
+                pkpPermissions.addPermittedAddress(
+                    tokenId,
+                    params.permittedAddresses[i],
+                    params.permittedAddressesScopes[i]
+                );
             }
         }
 
@@ -318,16 +316,15 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
                 i < params.permittedAuthMethodTypes.length;
                 i++
             ) {
-                pkpPermissions
-                    .addPermittedAuthMethod(
-                        tokenId,
-                        LibPKPPermissionsStorage.AuthMethod(
-                            params.permittedAuthMethodTypes[i],
-                            params.permittedAuthMethodIds[i],
-                            params.permittedAuthMethodPubkeys[i]
-                        ),
-                        params.permittedAuthMethodScopes[i]
-                    );
+                pkpPermissions.addPermittedAuthMethod(
+                    tokenId,
+                    LibPKPPermissionsStorage.AuthMethod(
+                        params.permittedAuthMethodTypes[i],
+                        params.permittedAuthMethodIds[i],
+                        params.permittedAuthMethodPubkeys[i]
+                    ),
+                    params.permittedAuthMethodScopes[i]
+                );
             }
         }
 
@@ -454,7 +451,9 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
             claimMaterial.stakingContractAddress
         );
 
-        PKPPermissionsFacet pkpPermissions = PKPPermissionsFacet(getPkpPermissionsAddress());
+        PKPPermissionsFacet pkpPermissions = PKPPermissionsFacet(
+            getPkpPermissionsAddress()
+        );
 
         require(
             authMethodData.permittedIpfsCIDs.length ==
@@ -489,12 +488,11 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
                 i < authMethodData.permittedIpfsCIDs.length;
                 i++
             ) {
-                pkpPermissions
-                    .addPermittedAction(
-                        tokenId,
-                        authMethodData.permittedIpfsCIDs[i],
-                        authMethodData.permittedIpfsCIDScopes[i]
-                    );
+                pkpPermissions.addPermittedAction(
+                    tokenId,
+                    authMethodData.permittedIpfsCIDs[i],
+                    authMethodData.permittedIpfsCIDScopes[i]
+                );
             }
         }
 
@@ -505,12 +503,11 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
                 i < authMethodData.permittedAddresses.length;
                 i++
             ) {
-                pkpPermissions
-                    .addPermittedAddress(
-                        tokenId,
-                        authMethodData.permittedAddresses[i],
-                        authMethodData.permittedAddressScopes[i]
-                    );
+                pkpPermissions.addPermittedAddress(
+                    tokenId,
+                    authMethodData.permittedAddresses[i],
+                    authMethodData.permittedAddressScopes[i]
+                );
             }
         }
 
@@ -521,16 +518,15 @@ contract PKPHelper is Ownable, IERC721Receiver, AccessControl {
                 i < authMethodData.permittedAuthMethodTypes.length;
                 i++
             ) {
-                pkpPermissions
-                    .addPermittedAuthMethod(
-                        tokenId,
-                        LibPKPPermissionsStorage.AuthMethod(
-                            authMethodData.permittedAuthMethodTypes[i],
-                            authMethodData.permittedAuthMethodIds[i],
-                            authMethodData.permittedAuthMethodPubkeys[i]
-                        ),
-                        authMethodData.permittedAuthMethodScopes[i]
-                    );
+                pkpPermissions.addPermittedAuthMethod(
+                    tokenId,
+                    LibPKPPermissionsStorage.AuthMethod(
+                        authMethodData.permittedAuthMethodTypes[i],
+                        authMethodData.permittedAuthMethodIds[i],
+                        authMethodData.permittedAuthMethodPubkeys[i]
+                    ),
+                    authMethodData.permittedAuthMethodScopes[i]
+                );
             }
         }
 
