@@ -2,13 +2,13 @@ use crate::testnet::NodeAccount;
 use crate::testnet::chain::anvil::first_anvil_account;
 
 use super::super::ChainTrait;
-use command_group::GroupChild; 
+use command_group::GroupChild;
 use ethers::prelude::*;
 use ethers::signers::LocalWallet;
 use lit_node_common::coms_keys::ComsKeys;
-use std::sync::Arc;
 use std::fs;
 use std::path::Path;
+use std::sync::Arc;
 use toml_edit::DocumentMut;
 use tracing::info;
 
@@ -25,9 +25,10 @@ pub struct Naga {
 
 impl Naga {
     pub async fn new(num_nodes: usize) -> impl ChainTrait {
-
         let std_warning = "Please ensure the contents of this file are valid, or remove it entirely to run tests against a selected local network.";
-        info!("Found live configuration file live_testnet.toml. Getting configuration values for testing...");
+        info!(
+            "Found live configuration file live_testnet.toml. Getting configuration values for testing..."
+        );
         let toml_path = Path::new("live_testnet.toml");
         let toml_contents = fs::read_to_string(toml_path).unwrap_or_default();
         if toml_contents.is_empty() {
@@ -56,17 +57,66 @@ impl Naga {
 
         for network in networks {
             if let Some(config) = toml_document[&network].as_table() {
-                name = config.get("name").expect(format!("name is required for network {network}. {}", std_warning).as_str()).to_string();
-                chain_id = config.get("chain_id").expect(format!("chain_id is required for network {network}. {}", std_warning).as_str()).as_str().unwrap().parse::<u64>().unwrap();
-                chain_name = config.get("chain_name").expect(format!("chain_name is required for network {network}. {}", std_warning).as_str()).to_string();
-                rpc_url = config.get("rpc_url").expect(format!("rpc_url is required for network {network}. {}", std_warning).as_str()).to_string();
-                contract_resolver_address = config.get("contract_resolver_address").expect(format!("contract_resolver_address is required for network {network}. {}", std_warning).as_str()).as_str().unwrap().parse::<Address>().unwrap();
+                name = config
+                    .get("name")
+                    .expect(
+                        format!("name is required for network {network}. {}", std_warning).as_str(),
+                    )
+                    .to_string();
+                chain_id = config
+                    .get("chain_id")
+                    .expect(
+                        format!(
+                            "chain_id is required for network {network}. {}",
+                            std_warning
+                        )
+                        .as_str(),
+                    )
+                    .as_str()
+                    .unwrap()
+                    .parse::<u64>()
+                    .unwrap();
+                chain_name = config
+                    .get("chain_name")
+                    .expect(
+                        format!(
+                            "chain_name is required for network {network}. {}",
+                            std_warning
+                        )
+                        .as_str(),
+                    )
+                    .to_string();
+                rpc_url = config
+                    .get("rpc_url")
+                    .expect(
+                        format!("rpc_url is required for network {network}. {}", std_warning)
+                            .as_str(),
+                    )
+                    .to_string();
+                contract_resolver_address = config
+                    .get("contract_resolver_address")
+                    .expect(
+                        format!(
+                            "contract_resolver_address is required for network {network}. {}",
+                            std_warning
+                        )
+                        .as_str(),
+                    )
+                    .as_str()
+                    .unwrap()
+                    .parse::<Address>()
+                    .unwrap();
             } else {
                 panic!("No configuration found for network {network}. {std_warning}");
             };
-        };
+        }
 
-        if name.is_empty() || chain_id == 0 || chain_name.is_empty() || rpc_url.is_empty() || contract_resolver_address == Address::zero() {
+        if name.is_empty()
+            || chain_id == 0
+            || chain_name.is_empty()
+            || rpc_url.is_empty()
+            || contract_resolver_address == Address::zero()
+        {
             panic!("Invalid configuration found in live_testnet.toml. {std_warning}");
         }
 
@@ -87,7 +137,6 @@ impl Naga {
         self.contract_resolver_address
     }
 }
-
 
 use async_trait::async_trait;
 // impl chain for NagaTest
@@ -113,8 +162,13 @@ impl ChainTrait for Naga {
     }
 
     // This is where we'll load default values from GitHub.
-    async fn start_chain(&self) -> Option<GroupChild> {        
-        info!("Network {} on chain {} should already exist at {}. ", self.name, self.chain_name(), self.rpc_url());
+    async fn start_chain(&self) -> Option<GroupChild> {
+        info!(
+            "Network {} on chain {} should already exist at {}. ",
+            self.name,
+            self.chain_name(),
+            self.rpc_url()
+        );
         None
     }
 
@@ -122,11 +176,11 @@ impl ChainTrait for Naga {
     // This means it'll need to be funded by the testnet faucet found at faucet.litprotocol.com.
     // The wallet address for this key is 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266.
     fn deployer(&self) -> NodeAccount {
-       first_anvil_account(self.chain_id(), self.chain_name())
+        first_anvil_account(self.chain_id(), self.chain_name())
     }
 
     fn accounts(&self) -> Arc<Vec<NodeAccount>> {
-        let mut accounts: Vec<NodeAccount> = Vec::new();        
+        let mut accounts: Vec<NodeAccount> = Vec::new();
         for _i in 0..self.num_nodes {
             let wallet = self.wallet.clone();
             let provider = self.rpc_provider().clone();

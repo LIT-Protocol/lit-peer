@@ -8,6 +8,7 @@ use k256::ecdsa::SigningKey;
 use lit_blockchain::contracts::ledger::{Ledger, LedgerErrors};
 use lit_blockchain::contracts::price_feed::{PriceFeed, PriceFeedErrors};
 use lit_blockchain::util::decode_revert;
+use lit_node_core::AuthMethod;
 use tracing::{error, info, trace};
 
 use crate::testnet::Testnet;
@@ -95,11 +96,18 @@ impl EndUser {
         self.set_wallet_balance_internal(amount, provider).await;
     }
 
-    async fn set_wallet_balance_internal(&self, amount: &str, provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>) {
+    async fn set_wallet_balance_internal(
+        &self,
+        amount: &str,
+        provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
+    ) {
+        info!(
+            "Deployer provider {:?} balance: {:?}",
+            provider.address(),
+            provider.get_balance(provider.address(), None).await
+        );
 
-        info!("Deployer provider {:?} balance: {:?}", provider.address(), provider.get_balance(provider.address(), None).await);
-
-        let tx = TransactionRequest::new()            
+        let tx = TransactionRequest::new()
             .to(self.wallet.address())
             .value(U256::from_dec_str(amount).expect("Failed to convert amount to U256"))
             .from(provider.address());
@@ -109,11 +117,17 @@ impl EndUser {
             panic!("Couldn't set balance: {:?}", e);
         }
         let pending_tx = pending_tx.unwrap().interval(Duration::from_millis(100));
-        let receipt = pending_tx.await.unwrap().expect("No receipt from txn");        
+        let receipt = pending_tx.await.unwrap().expect("No receipt from txn");
 
         info!("Transaction receipt: {:?}", receipt);
-        info!("Wallet balance: {:?}", provider.get_balance(self.wallet.address(), None).await);
-        info!("Deployer provider balance: {:?}", provider.get_balance(provider.address(), None).await);       
+        info!(
+            "Wallet balance: {:?}",
+            provider.get_balance(self.wallet.address(), None).await
+        );
+        info!(
+            "Deployer provider balance: {:?}",
+            provider.get_balance(provider.address(), None).await
+        );
     }
 
     pub async fn fetch_price_from_feed(&self, product_id: u64) -> Vec<U256> {
@@ -374,9 +388,17 @@ impl EndUser {
         user_stable_balance
     }
 
-    pub async fn new_pkp(&mut self, key_set_id: &str) -> Result<(String, U256, H160, String), anyhow::Error> {
+    pub async fn new_pkp(
+        &mut self,
+        key_set_id: &str,
+    ) -> Result<(String, U256, H160, String), anyhow::Error> {
         let pkp = Pkp::new(self, key_set_id).await?;
-        let pkp_info = (pkp.pubkey.clone(), pkp.token_id, pkp.eth_address.clone(), pkp.key_set_id.clone());
+        let pkp_info = (
+            pkp.pubkey.clone(),
+            pkp.token_id,
+            pkp.eth_address.clone(),
+            pkp.key_set_id.clone(),
+        );
         self.pkps.push(pkp);
         Ok(pkp_info)
     }
@@ -403,6 +425,16 @@ impl EndUser {
             .await?;
 
         Ok((pubkey, token_id, eth_address, key_set_id))
+    }
+
+    pub async fn new_pkp_and_add_auth_methods(
+        &mut self,
+        key_set_id: &str,
+        auth_methods: &[AuthMethod],
+    ) -> Result<(String, U256, H160, String), anyhow::Error> {
+        let pkp = Pkp::new_pkp_with_auth_methods(&self, key_set_id).await?;
+
+        Ok((pkp.pubkey, pkp.token_id, pkp.eth_address, pkp.key_set_id))
     }
 
     pub async fn mint_grant_and_burn_next_pkp(

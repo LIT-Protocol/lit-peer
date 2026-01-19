@@ -1,7 +1,7 @@
 pub mod anvil;
 pub mod hardhat;
-pub mod no_chain;
 pub mod naga;
+pub mod no_chain;
 
 use super::NodeAccount;
 use crate::testnet::contracts_repo::latest_wallet_manifest;
@@ -145,7 +145,6 @@ pub trait ChainTrait: Send + Sync {
         }
     }
 }
-
 
 // we require a {chain_name}.toml file to be present in the ./config directory with a structure that looks like this:
 // [deployer]

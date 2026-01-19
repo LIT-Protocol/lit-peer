@@ -209,9 +209,10 @@ impl TestnetBuilder {
                 Box::new(chain::no_chain::NoChain::new(self.total_num_validators()))
                     as Box<dyn ChainTrait>
             }
-            TestNetName::Naga => Box::new(chain::naga::Naga::new(
-                self.total_num_validators(),
-            ).await) as Box<dyn ChainTrait>,
+            TestNetName::Naga => {
+                Box::new(chain::naga::Naga::new(self.total_num_validators()).await)
+                    as Box<dyn ChainTrait>
+            }
         };
 
         let net_process = chain.start_chain().await;
@@ -408,12 +409,10 @@ impl Testnet {
         staking_contract_realm_config: Option<StakingContractRealmConfig>,
     ) -> anyhow::Result<TestnetContracts> {
         let deployer_signing_provider = testnet.deploy_account.signing_provider.clone();
-        
 
         let ca = match testnet.selected_network {
             TestNetName::Naga => {
-
-                let n = chain::naga::Naga::new(0).await;            
+                let n = chain::naga::Naga::new(0).await;
                 Contracts::contract_addresses_from_resolver_address(
                     n.contract_resolver_address(),
                     deployer_signing_provider,

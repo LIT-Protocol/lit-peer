@@ -17,7 +17,7 @@ use ethers::providers::{Http, Provider};
 use ethers::signers::Wallet;
 use futures::future::join_all;
 use lit_attestation::attestation::ENV_ATTESTATION_TYPE_OVERRIDE;
-use lit_blockchain::contracts::staking::{Staking, KeySetConfig};
+use lit_blockchain::contracts::staking::{KeySetConfig, Staking};
 use lit_core::config::ENV_LIT_CONFIG_FILE;
 use lit_core::error::Unexpected;
 use lit_core::utils::binary::bytes_to_hex;
@@ -338,22 +338,27 @@ pub struct ValidatorCollection {
 
 impl ValidatorCollection {
     pub async fn new_from_testnet(testnet: &mut Testnet) -> Result<Self> {
-
         let mut validators = vec![];
         let actions = testnet.actions();
-        let structs = actions.get_current_validator_structs(U256::from(testnet.realm_id())).await;
-        let staker_mappping = actions.get_current_validator_addresses(structs.iter().map(|v| v.node_address).collect()).await;
+        let structs = actions
+            .get_current_validator_structs(U256::from(testnet.realm_id()))
+            .await;
+        let staker_mappping = actions
+            .get_current_validator_addresses(structs.iter().map(|v| v.node_address).collect())
+            .await;
 
         let mut node_accounts = vec![];
         for validator in structs {
             let node_account = NodeAccount {
-                    staker_address:  *staker_mappping.get(&validator.node_address).unwrap_or(&Address::zero()),
-                    node_address: validator.node_address,
-                    node_address_private_key: H256::random(),
-                    staker_address_private_key: H256::random(),
-                    coms_keys: lit_node_common::coms_keys::ComsKeys::new(), // we're not using coms keys for naga testnet
-                    signing_provider: testnet.deploy_account.signing_provider.clone(),
-                };
+                staker_address: *staker_mappping
+                    .get(&validator.node_address)
+                    .unwrap_or(&Address::zero()),
+                node_address: validator.node_address,
+                node_address_private_key: H256::random(),
+                staker_address_private_key: H256::random(),
+                coms_keys: lit_node_common::coms_keys::ComsKeys::new(), // we're not using coms keys for naga testnet
+                signing_provider: testnet.deploy_account.signing_provider.clone(),
+            };
             node_accounts.push(node_account.clone());
 
             validators.push(Validator {
