@@ -380,6 +380,7 @@ impl Pkp {
         let pkp_helper = PKPHelper::new(pkp_helper_address, client.clone());
         info!("Minting a new PKP using helper contract on the mainnet test chain.");
         let mint_cost = pkpnft.mint_cost().call().await?;
+        let mint_cost = mint_cost * 2;
 
         let mint_tx = pkp_helper
             .mint_next_and_add_auth_methods(
@@ -398,16 +399,17 @@ impl Pkp {
             .send()
             .await
             .map_err(|e| {
+                error!("Error sending PKP Helper mint transaction: {:?}", e);
                 let revert_msg = format!(
-                    "Failed to send PKP mint transaction: {}",
-                    decode_revert(&e, end_user.actions().contracts().pkpnft.abi())
+                    "Failed to send PKP Helper mint transaction: {}",
+                    decode_revert(&e, end_user.actions().contracts().pkp_helper.abi())
                 );
                 error!(revert_msg);
                 anyhow::anyhow!(revert_msg)
             })?
             .await
             .map_err(|e| {
-                let revert_msg = format!("Failed while waiting for PKP mint confirmation: {}", e);
+                let revert_msg = format!("Failed while waiting for PKP Helper mint confirmation: {}", e);
                 error!(revert_msg);
                 anyhow::anyhow!(revert_msg)
             })?
