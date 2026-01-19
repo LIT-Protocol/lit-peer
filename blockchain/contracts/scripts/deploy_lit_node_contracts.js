@@ -537,7 +537,7 @@ async function deployLitNodeContracts(deployNodeConfig) {
   // Create a default realm
   tx = await stakingContract.addRealm();
   await tx.wait();
-  let realmConfig = stakingContract.RealmConfig(1);
+  let realmConfig = stakingContract.realmConfig(1);
 
   // Ensure the default keyset is set
   realmConfig.defaultKeySet = DEFAULT_KEY_SET_NAME;

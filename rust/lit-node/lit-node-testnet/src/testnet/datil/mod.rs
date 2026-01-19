@@ -171,7 +171,11 @@ impl DatilTestnet {
             let client = Arc::new(SignerMiddleware::new(self.provider.clone(), node_wallet));
 
             let local_pubkey_router = PubkeyRouter::new(pubkey_router_address, client);
-            info!("Voting for root keys on the Datil chain for staker #{} with node address {:?}", idx + 1, node_account.node_address);
+            info!(
+                "Voting for root keys on the Datil chain for staker #{} with node address {:?}",
+                idx + 1,
+                node_account.node_address
+            );
             let func = local_pubkey_router.vote_for_root_keys(staking_address, root_keys.clone());
             let tx = func.send().await.unwrap();
             let _receipt = tx.await.unwrap();
