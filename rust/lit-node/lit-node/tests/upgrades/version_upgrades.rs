@@ -93,6 +93,11 @@ async fn test_version_upgrade_against_old_version(
         upgrade_step_data.initial_node_versions
     );
 
+    info!(
+        "Initial node count: {}",
+        upgrade_step_data.initial_node_count
+    );
+
     // Assert all node versions are the same.
     assert!(
         upgrade_step_data

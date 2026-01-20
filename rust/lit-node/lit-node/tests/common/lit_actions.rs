@@ -469,9 +469,9 @@ pub async fn generate_pkp_check_is_permitted_pkp_action(
     }
 
     let cfg = lit_node_common::config::load_cfg().expect("failed to load LitConfig");
-    let loaded_config = &cfg.load_full();
+    let _loaded_config = &cfg.load_full();
 
-    let (pkp_pubkey, token_id, _, _) = end_user.first_pkp().info();
+    let (pkp_pubkey, _token_id, _, _) = end_user.first_pkp().info();
 
     let pkp = end_user.pkp_by_pubkey(pkp_pubkey);
     let res = pkp
