@@ -62,7 +62,7 @@ impl ChainTrait for Anvil {
         }
     }
 
-    async fn start_chain(&self) -> GroupChild {
+    async fn start_chain(&self) -> Option<GroupChild> {
         compile_contracts();
 
         let mut cache_data_store = CacheDataStore::from_file_or_new()
@@ -84,22 +84,15 @@ impl ChainTrait for Anvil {
                 );
             }
 
-            return Command::new("/bin/bash")
-                .args(["-c", "echo '*** anvil is already running in CI ***'"])
-                .group_spawn()
-                .expect("Could not spawn echo process");
+            return None;
         }
 
         if is_anvil_running(&self.rpc_url()).await {
             if self.port == 8549 {
                 info!("Datil Anvil is already running.  Skipping kill.");
-
                 cache_data_store.set_anvil_is_running(true);
                 let _ = cache_data_store.save().await; // if it fails we reset.
-                return Command::new("/bin/bash")
-                    .args(["-c", "echo '*** anvil is already running in CI ***'"])
-                    .group_spawn()
-                    .expect("Could not spawn echo process");
+                return None;
             } else {
                 info!("anvil is already running.  Attempting to kill");
                 Command::new("pkill")
@@ -153,35 +146,12 @@ impl ChainTrait for Anvil {
             let _ = cache_data_store.save().await; // if it fails we reset.
         }
 
-        rv
+        Some(rv)
     }
 
     // for hardhat and no_chain, this trait function should be overriden.
     fn deployer(&self) -> NodeAccount {
-        let secret = first_anvil_account_private_key();
-
-        let sk =
-            SigningKey::from(SecretKey::from_bytes(k256::FieldBytes::from_slice(&secret)).unwrap());
-        let private_key = H256::from_slice(&sk.to_bytes());
-
-        let wallet = LocalWallet::from(sk).with_chain_id(self.chain_id());
-        let address = wallet.address();
-        let provider = ENDPOINT_MANAGER.get_provider(self.chain_name()).unwrap();
-
-        let signing_provider = Arc::new(SignerMiddleware::new(provider, wallet));
-
-        let coms_keys = ComsKeys::new();
-
-        let staker_address = address;
-
-        NodeAccount {
-            node_address: Address::zero(),
-            signing_provider,
-            node_address_private_key: H256::zero(),
-            staker_address_private_key: private_key,
-            staker_address,
-            coms_keys,
-        }
+        first_anvil_account(self.chain_id(), self.chain_name())
     }
 }
 
@@ -211,4 +181,31 @@ async fn has_anvil_started<A: ToSocketAddrs + ?Sized>(host: &A, waitfor: Duratio
 
 pub fn first_anvil_account_private_key() -> Vec<u8> {
     hex_to_bytes("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80").unwrap()
+}
+
+pub fn first_anvil_account(chain_id: u64, chain_name: &str) -> NodeAccount {
+    let secret = first_anvil_account_private_key();
+
+    let sk =
+        SigningKey::from(SecretKey::from_bytes(k256::FieldBytes::from_slice(&secret)).unwrap());
+    let private_key = H256::from_slice(&sk.to_bytes());
+
+    let wallet = LocalWallet::from(sk).with_chain_id(chain_id);
+    let address = wallet.address();
+    let provider = ENDPOINT_MANAGER.get_provider(chain_name).unwrap();
+
+    let signing_provider = Arc::new(SignerMiddleware::new(provider, wallet));
+
+    let coms_keys = ComsKeys::new();
+
+    let staker_address = address;
+
+    NodeAccount {
+        node_address: Address::zero(),
+        signing_provider,
+        node_address_private_key: H256::zero(),
+        staker_address_private_key: private_key,
+        staker_address,
+        coms_keys,
+    }
 }

@@ -6,8 +6,8 @@ use ethers::types::Address;
 use ethers::types::{H160, TransactionRequest, U256};
 use ethers::{providers::Middleware, signers::to_eip155_v};
 use lit_blockchain::contracts::pkpnft::PKPNFT;
-use lit_node_testnet::TestSetupBuilder;
 use lit_node_testnet::end_user::EndUser;
+use lit_node_testnet::{DEFAULT_DATIL_KEY_SET_NAME, DEFAULT_KEY_SET_NAME, TestSetupBuilder};
 
 use lit_node_core::SigningScheme;
 use lit_node_testnet::node_collection::get_identity_pubkeys_from_node_set;
@@ -268,14 +268,16 @@ pub async fn test_pkp_hd_sign_generic_key() {
     drop(testnet);
 }
 
+#[test_case(DEFAULT_DATIL_KEY_SET_NAME; "Datil Keyset PKP")]
+#[test_case(DEFAULT_KEY_SET_NAME; "Naga Keyset 1 PKP")]
 #[tokio::test]
-#[doc = "Primary test to ensure that the network can sign with a Datil PKP key.  It goes through the process of spinning up the network, minting a new Datil PKP, and then signing with it."]
+#[doc = "Primary test to ensure that the network can sign using ECDSA with a PKP key.  It goes through the process of spinning up the network, minting a new PKP, and then signing with it."]
 #[ignore] // we can run this locally, but epoch change tests below already implement this test.
-pub async fn test_pkp_hd_sign_generic_key_datil() {
+pub async fn test_sign_single_ecdsa_key(key_set_name: &str) {
     crate::common::setup_logging();
     info!("Starting test: test_hd_pkp_sign");
     let (testnet, validator_collection, mut end_user) = TestSetupBuilder::default().build().await;
-    let (pubkey, _, _) = end_user.new_datil_pkp().await.unwrap();
+    let pubkey = end_user.new_pkp(key_set_name).await.unwrap().0;
 
     let scheme = SigningScheme::EcdsaK256Sha256;
     let result = simple_single_sign_with_hd_key(
@@ -287,7 +289,7 @@ pub async fn test_pkp_hd_sign_generic_key_datil() {
     )
     .await;
 
-    assert!(result, "Failed to sign with Datil PKP");
+    assert!(result, "Failed to sign with {key_set_name} PKP");
 
     drop(testnet);
 }

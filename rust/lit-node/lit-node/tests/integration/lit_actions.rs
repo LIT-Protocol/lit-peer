@@ -19,6 +19,7 @@ pub mod litactions {
         LitResourcePrefix, SigningScheme, UnifiedAccessControlCondition,
         UnifiedAccessControlConditionItem, constants::CHAIN_LOCALCHAIN,
     };
+    use lit_node_testnet::DEFAULT_DATIL_KEY_SET_NAME;
     use lit_node_testnet::end_user::EndUser;
     use lit_node_testnet::testnet::Testnet;
     use lit_node_testnet::validator::ValidatorCollection;
@@ -163,10 +164,7 @@ pub mod litactions {
             .await;
 
         let (pubkey, _token_id, _eth_address, key_set_id) = match use_datil_pkp {
-            true => {
-                let pubkey = end_user.new_datil_pkp().await.unwrap().0;
-                end_user.pkp_by_pubkey(pubkey).info()
-            }
+            true => end_user.new_pkp(DEFAULT_DATIL_KEY_SET_NAME).await.unwrap(),
             false => end_user.first_pkp().info(),
         };
 
@@ -767,12 +765,11 @@ pub mod litactions {
                     .await;
 
                 let _ = second_owner_end_user
-                    .new_pkp()
+                    .new_pkp(DEFAULT_KEY_SET_NAME)
                     .await
                     .expect("Could not mint next pkp");
-                let second_owner_pkp_info = second_owner_end_user.first_pkp().info();
-                let second_owner_pkp_pubkey = second_owner_pkp_info.0;
-                let second_owner_pkp_eth_address = second_owner_pkp_info.2;
+                let (second_owner_pkp_pubkey, _, second_owner_pkp_eth_address, _) =
+                    second_owner_end_user.first_pkp().info();
 
                 info!("get_session_sigs_and_node_set_for_pkp");
                 get_session_sigs_and_node_set_for_pkp(

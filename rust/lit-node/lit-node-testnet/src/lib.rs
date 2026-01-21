@@ -9,7 +9,7 @@ use self::testnet::Testnet;
 use self::testnet::node_config::CustomNodeRuntimeConfig;
 use self::validator::ValidatorCollection;
 use crate::testnet::contracts::StakingContractRealmConfig;
-use crate::testnet::{BeforeStartValidatorsFn, StakerAccountSetupMapper};
+use crate::testnet::{BeforeStartValidatorsFn, StakerAccountSetupMapper, TestNetName};
 use crate::{end_user::EndUser, validator::default_datil_keyset_config};
 use ethers::types::U256;
 use futures::future::BoxFuture;
@@ -54,6 +54,7 @@ pub struct TestSetupBuilder {
     before_start_validators_fn: Option<
         Box<dyn BeforeStartValidatorsFn<Future = BoxFuture<'static, Result<(), anyhow::Error>>>>,
     >,
+    selected_network: Option<TestNetName>,
 }
 
 impl Default for TestSetupBuilder {
@@ -82,6 +83,7 @@ impl Default for TestSetupBuilder {
             staker_account_setup_mapper: None,
             low_kick_tolerance: false,
             before_start_validators_fn: None,
+            selected_network: None,
         }
     }
 }
@@ -185,6 +187,15 @@ impl TestSetupBuilder {
         self
     }
 
+    pub fn selected_network(mut self, selected_network: TestNetName) -> Self {
+        if selected_network == TestNetName::Naga {
+            self.force_deploy = false;
+            self.setup_datil_keys = false;
+        };
+        self.selected_network = Some(selected_network);
+        self
+    }
+
     pub fn staker_account_setup_mapper(
         mut self,
         staker_account_setup_mapper: Option<
@@ -224,18 +235,22 @@ impl TestSetupBuilder {
         self
     }
 
-    pub async fn build(self) -> (Testnet, ValidatorCollection, EndUser) {
+    pub async fn build(mut self) -> (Testnet, ValidatorCollection, EndUser) {
         let node_keys_path = Path::new("./node_keys");
         if node_keys_path.exists() {
             fs::remove_dir_all(node_keys_path).unwrap();
         }
         fs::create_dir_all(node_keys_path).unwrap();
 
+        if fs::exists("live_testnet.toml").unwrap_or(false) {
+            self = self.selected_network(TestNetName::Naga);
+        };
+
         let signing_round_timeout_ms = if self.signing_round_timeout.is_some() {
             self.signing_round_timeout
         } else {
-            // if not in CI, set a default signing round timeout of 8000ms
-            Some("8000".to_string())
+            // if not in CI, set a default signing round timeout of 15000ms
+            Some("15000".to_string())
         };
 
         let custom_node_runtime_config = CustomNodeRuntimeConfig::builder()
@@ -253,6 +268,7 @@ impl TestSetupBuilder {
             .custom_node_runtime_config(custom_node_runtime_config)
             .force_deploy(self.force_deploy)
             .staker_account_setup_mapper(self.staker_account_setup_mapper)
+            .selected_testnet(self.selected_network.unwrap_or(TestNetName::Anvil))
             .build()
             .await;
 
@@ -349,16 +365,21 @@ impl TestSetupBuilder {
                 .expect("Failed to run a required function before starting validators.");
         }
 
-        let validator_collection = ValidatorCollection::builder()
-            .num_staked_nodes(num_staked_nodes)
-            .wait_initial_epoch(self.wait_initial_epoch)
-            .wait_for_root_keys(self.wait_for_root_keys)
-            .node_binary_feature_flags(node_binary_feature_flags)
-            .custom_binary_path(self.custom_binary_path)
-            .asleep_initially_override(self.asleep_initially_override)
-            .build(&testnet)
-            .await
-            .expect("Failed to build validator collection");
+        let validator_collection = match testnet.selected_network {
+            TestNetName::Naga => ValidatorCollection::new_from_testnet(&mut testnet)
+                .await
+                .expect("Failed to fill validator collection from testnet"),
+            _ => ValidatorCollection::builder()
+                .num_staked_nodes(num_staked_nodes)
+                .wait_initial_epoch(self.wait_initial_epoch)
+                .wait_for_root_keys(self.wait_for_root_keys)
+                .node_binary_feature_flags(node_binary_feature_flags)
+                .custom_binary_path(self.custom_binary_path)
+                .asleep_initially_override(self.asleep_initially_override)
+                .build(&testnet)
+                .await
+                .expect("Failed to build validator collection"),
+        };
 
         // if this is a datil testnet, set the root keys on the Datil chain ( we may have generated new root keys in the Naga setup )
         if self.setup_datil_keys {
@@ -382,7 +403,7 @@ impl TestSetupBuilder {
                 end_user.deposit_to_wallet_ledger_default().await;
             }
         }
-        let r = end_user.new_pkp().await;
+        let r = end_user.new_pkp(DEFAULT_KEY_SET_NAME).await;
         if let Err(e) = r {
             panic!("Error minting PKP: {:?}", e);
         }

@@ -9,6 +9,7 @@ use lit_node_core::response::SDKHandshakeResponseV0;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt::Debug;
+use std::net::Ipv4Addr;
 use tracing::error;
 use tracing::info;
 use tracing::trace;
@@ -158,7 +159,7 @@ pub async fn get_network_pubkey(actions: &Actions) -> String {
 
 pub async fn get_network_pubkey_from_node_set<'a, I>(node_set: I) -> String
 where
-    I: Iterator<Item = &'a NodeSet>,
+    I: Iterator<Item = &'a NodeSet> + Clone,
 {
     let response = do_handshake(node_set).await;
     let results = response.results();
@@ -270,18 +271,32 @@ pub async fn get_node_versions(node_set: &Vec<NodeSet>) -> Vec<String> {
 
 async fn do_handshake<'a, I>(node_set: I) -> lit_sdk::HandshakeResponse
 where
-    I: Iterator<Item = &'a NodeSet>,
+    I: Iterator<Item = &'a NodeSet> + Clone,
 {
+    let ns = node_set.clone();
+    let socket_address = ns.last().unwrap().socket_address.clone();
+    let socket_address = match socket_address.contains(".") {
+        true => socket_address,
+        false => Ipv4Addr::from_bits(
+            u32::from_str_radix(socket_address.split(":").nth(0).unwrap(), 10).unwrap(),
+        )
+        .to_string(),
+    };
+
     lit_sdk::HandshakeRequest::new()
         .node_set_from_iter(node_set)
-        .url_prefix(lit_sdk::UrlPrefix::Http)
-        .challenge("0x1234123412341234123412341234123412341234123412341234123412341234".to_string())
+        .url_prefix(lit_sdk::UrlPrefix::from_socket_address(&socket_address))
+        .challenge("0x123412341234".to_string())
         .client_public_key("blah".to_string())
         .build()
-        .unwrap()
+        .unwrap_or_else(|e| {
+            panic!("Error building handshake request: {:?}", e);
+        })
         .send()
         .await
-        .unwrap()
+        .unwrap_or_else(|e| {
+            panic!("Error doing handshake: {:?}", e);
+        })
 }
 
 /// This function is used to hit endpoints with different json bodies per port.

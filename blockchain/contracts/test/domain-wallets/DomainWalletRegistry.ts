@@ -198,7 +198,6 @@ describe('DomainWalletRegistry', function () {
       pkpPermissionsContract: pkpPermissionsFacet,
       pkpNftMetadataContract: pkpNftMetadata,
       pubkeyRouterContract: pubkeyRouter,
-      pubkeyRouterViewsContract: pubkeyRouterViews,
       hdKeyDeriverContract: keyDeriver,
       stakingContract: stakingFacet,
       tokenContract: token,

@@ -112,7 +112,7 @@ pub async fn check_and_load_test_state_cache(
             fs::copy(entry.path(), &dest_path).unwrap();
             generate_custom_node_runtime_config(
                 is_fault_test,
-                &crate::testnet::WhichTestnet::Anvil,
+                &crate::testnet::TestNetName::Anvil,
                 custom_node_runtime_config,
                 Some(dest_path.to_str().unwrap().to_string()),
             );
