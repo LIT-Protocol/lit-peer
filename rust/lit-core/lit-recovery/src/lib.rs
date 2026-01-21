@@ -582,7 +582,6 @@ impl LitRecovery {
             }
             Commands::SetConfig { address, chain_id, rpc_url, env } => {
                 let config = self.config.load();
-
                 let new_config = Arc::new(RecoveryConfig {
                     resolver_address: Some(address.clone()),
                     chain_id: Some(chain_id),

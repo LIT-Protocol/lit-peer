@@ -1,13 +1,18 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+/// Abilities that can be granted via authentication signatures.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum LitAbility {
-    // Used by top level auth sigs
+    /// Ability to decrypt data protected by access control conditions.
     AccessControlConditionDecryption,
+    /// Ability to sign data protected by access control conditions.
     AccessControlConditionSigning,
+    /// Ability to use PKP (Programmable Key Pair) for signing.
     PKPSigning,
+    /// Ability to execute Lit Actions (serverless functions).
     LitActionExecution,
+    /// Ability to delegate payment for operations.
     PaymentDelegationAuth,
 }
 

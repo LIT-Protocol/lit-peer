@@ -53,7 +53,6 @@ pub async fn get_root_keys() -> Vec<RootKeys> {
     let cfg = &get_lit_config();
     let pubkey_router = PubkeyRouter::node_monitor_load(cfg, pubkey_router_address).unwrap();
 
-    const DEFAULT_KEY_SET_NAME: &str = "naga-keyset1";
     let root_keys = pubkey_router
         .get_root_keys(staking_contract_address, DEFAULT_KEY_SET_NAME.to_string())
         .call()

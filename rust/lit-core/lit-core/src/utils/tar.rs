@@ -134,8 +134,7 @@ pub fn write_tar_gz(dir_to_pack: impl AsRef<Path>, output: impl Write) -> Result
     }
     let encoder = flate2::write::GzEncoder::new(output, flate2::Compression::default());
     let mut builder = tar_file::Builder::new(encoder);
-    let name =
-        dir_to_pack.file_name().map(|p| PathBuf::from(p)).unwrap_or_else(|| PathBuf::from(""));
+    let name = dir_to_pack.file_name().map(PathBuf::from).unwrap_or_else(|| PathBuf::from(""));
     builder.append_dir_all(name, dir_to_pack).map_err(|e| {
         io_err(e, Some(format!("Unable to append directory {} to tar file", dir_to_pack.display())))
     })?;

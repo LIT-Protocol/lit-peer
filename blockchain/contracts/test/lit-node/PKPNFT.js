@@ -14,6 +14,7 @@ describe('PKPNFT', function () {
   let signers;
   let pkpContract;
   let router;
+  let routerViews;
   let pkpPermissions;
   let pkpNftMetadata;
   let contractResolver;
@@ -63,13 +64,17 @@ describe('PKPNFT', function () {
       await contractResolver.getAddress(),
       Environment.DEV,
       {
-        additionalFacets: ['PubkeyRouterFacet'],
+        additionalFacets: ['PubkeyRouterFacet', 'PubkeyRouterViewsFacet'],
         verifyContracts: false,
         waitForDeployment: false,
       }
     );
     router = await ethers.getContractAt(
       'PubkeyRouterFacet',
+      await routerDiamond.getAddress()
+    );
+    routerViews = await ethers.getContractAt(
+      'PubkeyRouterViewsFacet',
       await routerDiamond.getAddress()
     );
     const { diamond: pkpPermissionsDiamond } = await deployDiamond(
@@ -172,7 +177,7 @@ describe('PKPNFT', function () {
       realms: [1],
       curves: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
       counts: [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
-      recoveryPartyMembers: [],
+      recoverySessionId: '0x',
     });
 
     // Mint enough tokens for the deployer

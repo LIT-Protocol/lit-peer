@@ -83,6 +83,8 @@ async fn end_to_end_test(
     crate::common::setup_logging();
     let (testnet, mut validator_collection, end_user) = TestSetupBuilder::default()
         .num_staked_and_joined_validators(number_of_nodes_before)
+        .force_deploy(true)
+        .setup_datil_keys(false) // TODO: remove this, once this testunderstands multiple keysets.  This will currently fail sometimes, depending on the order of the keysets being added  ;-)
         .build()
         .await;
 
@@ -178,7 +180,7 @@ async fn end_to_end_test(
         number_of_nodes_before
     );
     for i in 0..number_of_nodes_before {
-        let validator = validator_collection.get_validator_by_idx_mut(i);
+        let validator = validator_collection.get_validator_by_index_as_mut(i);
         assert!(validator.is_node_offline());
     }
 
@@ -338,12 +340,12 @@ async fn upload_key_backups_to_nodes(
                 generate_admin_auth_sig(&admin_signing_key, chain_id, &url, &public_address);
             let json_body = serde_json::to_string(&auth_sig.auth_sig).unwrap();
 
-            let tar_file = backup_directory.join(format!("{}{}", public_address, TARBALL_NAME));
+            let tar_file = backup_directory.join(format!("{public_address}{TARBALL_NAME}"));
             let file = tokio::fs::File::open(tar_file).await.unwrap();
 
             info!("Uploading backup for validator {}", public_address);
             let response = client
-                .post(format!("{}/web/admin/set_key_backup", url))
+                .post(format!("{url}/web/admin/set_key_backup"))
                 .header("Content-Type", "application/octet-stream")
                 .header(
                     "x-auth-sig",
@@ -385,26 +387,26 @@ async fn upload_blinders_to_nodes(
     let mut join_set = JoinSet::new();
 
     for &validator in validators.iter() {
-        let public_address = validator.public_address();
+        let socket_address = validator.public_address();
         let admin_signing_key = admin_signing_key.clone();
         let chain_id = testnet.chain_id;
-        let blinders = downloaded_blinders[&public_address];
+        let blinders = downloaded_blinders[&socket_address];
 
         join_set.spawn(async move {
             // Send the blinders to the node operators
-            let url = format!("http://{}/web/admin/set_blinders", public_address);
+            let url = format!("http://{socket_address}/web/admin/set_blinders");
             let auth_sig =
-                generate_admin_auth_sig(&admin_signing_key, chain_id, &url, &public_address);
+                generate_admin_auth_sig(&admin_signing_key, chain_id, &url, &socket_address);
 
             info!(
                 "{} Sending blinders: {}",
-                public_address,
+                socket_address,
                 serde_json::to_string_pretty(&blinders).unwrap()
             );
 
             let response = lit_sdk::admin::SetBlindersRequest::new()
-                .url_prefix(lit_sdk::UrlPrefix::Http)
-                .public_address(public_address.clone())
+                .url_prefix(lit_sdk::UrlPrefix::from_socket_address(&socket_address))
+                .public_address(socket_address.clone())
                 .request(lit_sdk::admin::SetBlindersData { auth_sig, blinders })
                 .build()
                 .unwrap()
@@ -413,7 +415,7 @@ async fn upload_blinders_to_nodes(
                 .unwrap();
 
             info!("Response: {:?}", response);
-            public_address
+            socket_address
         });
     }
     while let Some(node_info) = join_set.join_next().await {
@@ -446,15 +448,16 @@ async fn node_operator_perform_backup(
         let chain_id = testnet.chain_id;
         let admin_signing_key = admin_signing_key.clone();
         let backup_directory = backup_directory.clone();
+        let socket_address = validator.public_address();
         join_set.spawn(async move {
-            let url = format!("http://{}", public_address);
+            let url = format!("http://{public_address}");
             let auth_sig =
                 generate_admin_auth_sig(&admin_signing_key, chain_id, &url, &public_address);
 
             info!("Getting backup for validator {}", public_address);
 
             let blinders_response = lit_sdk::admin::GetBlindersRequest::new()
-                .url_prefix(lit_sdk::UrlPrefix::Http)
+                .url_prefix(lit_sdk::UrlPrefix::from_socket_address(&socket_address))
                 .public_address(public_address.clone())
                 .request(auth_sig.clone())
                 .build()
@@ -471,12 +474,12 @@ async fn node_operator_perform_backup(
             );
 
             info!("Downloading backup from '{}'. This may take awhile.", url);
-            let node_tar_name = format!("{}{}", public_address, TARBALL_NAME);
+            let node_tar_name = format!("{public_address}{TARBALL_NAME}");
             let file = async_std::fs::File::create(backup_directory.join(node_tar_name))
                 .await
                 .unwrap();
             let _response = lit_sdk::admin::GetKeyBackupRequest::new()
-                .url_prefix(lit_sdk::UrlPrefix::Http)
+                .url_prefix(lit_sdk::UrlPrefix::from_socket_address(&socket_address))
                 .public_address(public_address.clone())
                 .request(lit_sdk::admin::GetKeyBackupParameters {
                     auth: auth_sig,
@@ -546,7 +549,7 @@ async fn download_decryption_key_shares_to_local_lit_recovery_tools(
         .await
         .unwrap();
     for i in 0..validator_collection.validator_count() {
-        let validator = validator_collection.get_validator_by_idx(i);
+        let validator = validator_collection.get_validator_by_index(i);
         let attested_wallet = mappings[i].as_ref().unwrap();
         let mut wallet_public_key_bytes = vec![4u8; 65];
         attested_wallet
@@ -762,12 +765,11 @@ async fn create_node_operator_admin_signing_key() -> SigningKey {
     let admin_address = admin_signing_key.to_eth_address_str();
 
     tokio::fs::write(
-        format!("./{}.toml", CFG_ADMIN_OVERRIDE_NAME),
+        format!("./{CFG_ADMIN_OVERRIDE_NAME}.toml"),
         format!(
             r#"[node]
-admin_address = "{}"
-    "#,
-            admin_address
+admin_address = "{admin_address}"
+    "#
         ),
     )
     .await
@@ -789,8 +791,8 @@ async fn create_recovery_parties(
     info!("Creating recovery parties");
     let mut lrts = Vec::with_capacity(5);
     for i in 0..num_nodes {
-        let share_db_name = format!("sdb{}.db3", i);
-        let file = format!("recovery_{}", i);
+        let share_db_name = format!("sdb{i}.db3");
+        let file = format!("recovery_{i}");
         let keyring_file = backup_directory.join(file);
         let share_db_path = backup_directory.join(share_db_name);
         let lrt = start_lit_recovery_tool(keyring_file, share_db_path).await;
@@ -838,8 +840,8 @@ async fn sign_with_all_curves(
     ] {
         assert_eq!(
             simple_single_sign_with_hd_key(
-                &validator_collection,
-                &end_user,
+                validator_collection,
+                end_user,
                 pubkey.clone(),
                 scheme,
                 &vec![]
@@ -911,7 +913,7 @@ fn generate_admin_auth_sig(
     buffer[64] = recovery_id.to_byte();
     lit_node_core::AdminAuthSig {
         auth_sig: JsonAuthSig::new(
-            hex::encode(&buffer),
+            hex::encode(buffer),
             "web3.eth.personal.sign".to_string(),
             signed_message,
             address,
@@ -926,7 +928,7 @@ trait EthereumAddress {
         let mut buffer = String::new();
         buffer.push('0');
         buffer.push('x');
-        buffer.push_str(&String::from_utf8(address.to_vec()).unwrap());
+        buffer.push_str(core::str::from_utf8(&address).unwrap());
         buffer
     }
 

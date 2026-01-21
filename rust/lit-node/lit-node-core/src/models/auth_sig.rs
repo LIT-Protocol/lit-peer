@@ -12,6 +12,7 @@ use std::fmt;
 /// e.g. wallet sigs, session sigs or cosmos auth sigs etc.
 #[derive(Serialize, Clone, Default, PartialEq, Eq)]
 #[cfg_attr(test, derive(Debug))]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct JsonAuthSig {
     pub sig: String,
@@ -238,6 +239,7 @@ impl<'de> Visitor<'de> for JsonAuthSigVisitor {
 
 /// The auth sig used when calling admin endpoints
 #[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct AdminAuthSig {
     /// The inner auth sig

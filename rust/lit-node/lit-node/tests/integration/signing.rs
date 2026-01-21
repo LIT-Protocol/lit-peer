@@ -6,11 +6,12 @@ use ethers::types::Address;
 use ethers::types::{H160, TransactionRequest, U256};
 use ethers::{providers::Middleware, signers::to_eip155_v};
 use lit_blockchain::contracts::pkpnft::PKPNFT;
-use lit_node_testnet::TestSetupBuilder;
 use lit_node_testnet::end_user::EndUser;
+use lit_node_testnet::{DEFAULT_DATIL_KEY_SET_NAME, DEFAULT_KEY_SET_NAME, TestSetupBuilder};
 
 use lit_node_core::SigningScheme;
 use lit_node_testnet::node_collection::get_identity_pubkeys_from_node_set;
+use lit_node_testnet::validator::ValidatorCollection;
 use lit_rust_crypto::k256;
 use rand::Rng;
 use rand_core::OsRng;
@@ -47,7 +48,7 @@ async fn test_pkp_permissions_get_address_registered() {
 
     let permitted_pubkey = "0x5aaeC3Bd77f1F05f7B1C36927CDc4DB24Ec95bFc";
     let permitted_pubkey_h160 =
-        H160::from_str(&permitted_pubkey).expect("Could not convert pubkey string to bytes");
+        H160::from_str(permitted_pubkey).expect("Could not convert pubkey string to bytes");
 
     let token_id = end_user.first_pkp().token_id;
     let res = end_user
@@ -83,6 +84,7 @@ pub async fn test_pkp_hd_sign_and_submit_eth_txn() {
     let pubkey = end_user.first_pkp().pubkey.clone();
     let token_id = end_user.first_pkp().token_id;
     let pkp_address = end_user.first_pkp().eth_address;
+    let key_set_id = end_user.first_pkp().key_set_id.clone();
 
     let dest_wallet = LocalWallet::new(&mut OsRng).with_chain_id(testnet.chain_id);
 
@@ -150,6 +152,7 @@ pub async fn test_pkp_hd_sign_and_submit_eth_txn() {
         pubkey.clone(),
         epoch,
         SigningScheme::EcdsaK256Sha256,
+        &key_set_id,
     )
     .await
     .unwrap();
@@ -234,6 +237,7 @@ pub async fn test_pkp_hd_sign_and_submit_eth_txn() {
         pubkey,
         epoch,
         SigningScheme::EcdsaK256Sha256,
+        &key_set_id,
     )
     .await;
 
@@ -258,36 +262,34 @@ pub async fn test_pkp_hd_sign_and_submit_eth_txn() {
 pub async fn test_pkp_hd_sign_generic_key() {
     crate::common::setup_logging();
     info!("Starting test: test_hd_pkp_sign");
-    let setup_time = std::time::Instant::now();
     let (testnet, validator_collection, end_user) = TestSetupBuilder::default().build().await;
-
     let pubkey = end_user.first_pkp().pubkey.clone();
+    sign_with_each_curve_type(&validator_collection, &end_user, pubkey.clone()).await;
+    drop(testnet);
+}
 
-    info!("Setup time: {:?}", setup_time.elapsed());
+#[test_case(DEFAULT_DATIL_KEY_SET_NAME; "Datil Keyset PKP")]
+#[test_case(DEFAULT_KEY_SET_NAME; "Naga Keyset 1 PKP")]
+#[tokio::test]
+#[doc = "Primary test to ensure that the network can sign using ECDSA with a PKP key.  It goes through the process of spinning up the network, minting a new PKP, and then signing with it."]
+#[ignore] // we can run this locally, but epoch change tests below already implement this test.
+pub async fn test_sign_single_ecdsa_key(key_set_name: &str) {
+    crate::common::setup_logging();
+    info!("Starting test: test_hd_pkp_sign");
+    let (testnet, validator_collection, mut end_user) = TestSetupBuilder::default().build().await;
+    let pubkey = end_user.new_pkp(key_set_name).await.unwrap().0;
 
-    // We loop instead of running this test multiple times due to spinning up and tearing down
-    // the network. Essentially, this accomplishes the exact same thing.
-    for scheme in ALL_SIGNING_SCHEMES {
-        let start = std::time::Instant::now();
-        info!(
-            "Starting test_pkp_hd_sign_generic_key for signing_scheme: {}",
-            scheme
-        );
-        // check to see that we can sign
-        info!("Signing with scheme: {:?}", scheme);
-        assert!(
-            simple_single_sign_with_hd_key(
-                &validator_collection,
-                &end_user,
-                pubkey.clone(),
-                scheme,
-                &vec![]
-            )
-            .await,
-            "Failed to sign first time with all nodes up."
-        );
-        info!("Time elapsed: {:?}", start.elapsed());
-    }
+    let scheme = SigningScheme::EcdsaK256Sha256;
+    let result = simple_single_sign_with_hd_key(
+        &validator_collection,
+        &end_user,
+        pubkey.clone(),
+        scheme,
+        &vec![],
+    )
+    .await;
+
+    assert!(result, "Failed to sign with {key_set_name} PKP");
 
     drop(testnet);
 }
@@ -304,25 +306,10 @@ pub async fn test_pkp_hd_sign_generic_key_with_epoch_change() {
     let pubkey = end_user.first_pkp().pubkey.clone();
 
     let realm_id = U256::from(1);
-    let current_epoch = validator_collection
-        .actions()
-        .get_current_epoch(realm_id)
-        .await;
+    let current_epoch = actions.get_current_epoch(realm_id).await;
 
     // check to see that we can sign
-    for scheme in ALL_SIGNING_SCHEMES {
-        assert!(
-            simple_single_sign_with_hd_key(
-                &validator_collection,
-                &end_user,
-                pubkey.clone(),
-                scheme,
-                &vec![]
-            )
-            .await,
-            "Failed to sign first time with all nodes up."
-        );
-    }
+    sign_with_each_curve_type(&validator_collection, &end_user, pubkey.clone()).await;
 
     // Wait for the new node to be active.
     actions.wait_for_active(realm_id).await;
@@ -337,20 +324,7 @@ pub async fn test_pkp_hd_sign_generic_key_with_epoch_change() {
     actions.wait_for_epoch(realm_id, current_epoch + 1).await;
 
     // check to see that we can sign
-    for scheme in ALL_SIGNING_SCHEMES {
-        info!("Signing with scheme: {:?}", scheme);
-        assert!(
-            simple_single_sign_with_hd_key(
-                &validator_collection,
-                &end_user,
-                pubkey.clone(),
-                scheme,
-                &vec![]
-            )
-            .await,
-            "Failed to sign after epoch change."
-        );
-    }
+    sign_with_each_curve_type(&validator_collection, &end_user, pubkey.clone()).await;
 }
 
 #[tokio::test]
@@ -368,19 +342,7 @@ pub async fn test_pkp_signing_when_nodes_drop() {
 
     let pubkey = end_user.first_pkp().pubkey.clone();
 
-    for scheme in ALL_SIGNING_SCHEMES {
-        assert!(
-            simple_single_sign_with_hd_key(
-                &validator_collection,
-                &end_user,
-                pubkey.clone(),
-                scheme,
-                &vec![]
-            )
-            .await,
-            "Failed to sign with all nodes up."
-        );
-    }
+    sign_with_each_curve_type(&validator_collection, &end_user, pubkey.clone()).await;
 
     assert!(validator_collection.stop_node(node_to_kill).await.is_ok());
     let realm_id = U256::from(1);
@@ -424,6 +386,25 @@ pub async fn test_pkp_signing_when_nodes_drop() {
             .await,
             "Failed to sign after node drops."
         );
+    }
+}
+
+pub async fn sign_with_each_curve_type(
+    validator_collection: &ValidatorCollection,
+    end_user: &EndUser,
+    pubkey: String,
+) {
+    for scheme in ALL_SIGNING_SCHEMES {
+        info!("Signing with scheme: {:?}", scheme);
+        let result = simple_single_sign_with_hd_key(
+            validator_collection,
+            end_user,
+            pubkey.clone(),
+            scheme,
+            &vec![],
+        )
+        .await;
+        assert!(result, "Failed to sign with all nodes up.");
     }
 }
 
@@ -489,7 +470,7 @@ pub async fn test_presign(signing_scheme: SigningScheme) {
     let start = std::time::Instant::now();
     for i in 0..messages_to_sign {
         info!("Starting sig #{}", i);
-        let message_to_sign = Some(format!("Test message #{}", i));
+        let message_to_sign = Some(format!("Test message #{i}"));
         let start_1 = std::time::Instant::now();
         let validation = sign_with_hd_key(
             &validator_collection,
@@ -583,8 +564,7 @@ pub async fn test_presign(signing_scheme: SigningScheme) {
 
     assert_eq!(
         sign_success, messages_to_sign,
-        "Sign success: {}, messages_to_sign: {}",
-        sign_success, messages_to_sign
+        "Sign success: {sign_success}, messages_to_sign: {messages_to_sign}"
     );
 }
 
@@ -622,7 +602,7 @@ pub async fn eoa_session_sig_with_mgb_pkp_signing() {
     let (testnet, validator_collection, end_user) = TestSetupBuilder::default().build().await;
 
     info!("end user pkp info: {:?}", end_user.first_pkp().info());
-    let (pubkey, token_id, pkp_address) = end_user.first_pkp().info().clone();
+    let (pubkey, token_id, pkp_address, _key_set_id) = end_user.first_pkp().info().clone();
 
     let owner_wallet = end_user.signing_provider().clone();
 
@@ -636,6 +616,7 @@ pub async fn eoa_session_sig_with_mgb_pkp_signing() {
     pkp.add_permitted_address_to_pkp(non_owner_wallet.address(), &[U256::from(1)])
         .await
         .expect("Could not add permitted address to pkp");
+    let key_set_id = pkp.key_set_id.clone();
 
     // Burn the PKP
     let pkpnft_address = validator_collection.actions().contracts().pkpnft.address();
@@ -680,6 +661,7 @@ pub async fn eoa_session_sig_with_mgb_pkp_signing() {
         pubkey.clone(),
         epoch,
         SigningScheme::EcdsaK256Sha256,
+        &key_set_id,
     )
     .await;
 
@@ -698,6 +680,7 @@ pub async fn eoa_session_sig_with_mgb_pkp_signing() {
         pubkey.clone(),
         epoch,
         SigningScheme::EcdsaK256Sha256,
+        &key_set_id,
     )
     .await
     .unwrap();
