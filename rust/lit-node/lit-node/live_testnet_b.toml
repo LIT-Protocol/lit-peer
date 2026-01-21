@@ -1,6 +1,6 @@
-# WARNING : If this file exists under the name live_test.toml, then the tests will be run against the live network.
-# The default name of this file is live_test.toml.example, so if you want to run the tests against the live network, 
-# you need to rename it to live_test.toml and change the values below to the correct values for the live network.
+# WARNING: If this configuration is copied or renamed to live_testnet.toml, then the tests will be run against the live network.
+# The default example file is live_testnet_b.toml, which is not used directly by the test runner. 
+# To run the tests against the live network, create a file named live_testnet.toml based on this one and change the values below to the correct values for the live network.
 
 
 # This file contains the configuration that causes tests to be run against one of the live networks.
