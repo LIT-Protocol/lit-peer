@@ -147,7 +147,6 @@ describe('PKPPermissions', function () {
       pkpPermissionsContract: pkpPermissions,
       hdKeyDeriverContract: keyDeriver,
       pubkeyRouterContract: router,
-      pubkeyRouterViewsContract: routerViews,
     });
 
     await stakingKeySetsFacet.setKeySet({

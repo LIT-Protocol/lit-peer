@@ -273,12 +273,14 @@ async fn do_handshake<'a, I>(node_set: I) -> lit_sdk::HandshakeResponse
 where
     I: Iterator<Item = &'a NodeSet> + Clone,
 {
- 
     let ns = node_set.clone();
     let socket_address = ns.last().unwrap().socket_address.clone();
     let socket_address = match socket_address.contains(".") {
         true => socket_address,
-        false => Ipv4Addr::from_bits(u32::from_str_radix(socket_address.split(":").nth(0).unwrap(), 10).unwrap()).to_string()
+        false => Ipv4Addr::from_bits(
+            u32::from_str_radix(socket_address.split(":").nth(0).unwrap(), 10).unwrap(),
+        )
+        .to_string(),
     };
 
     lit_sdk::HandshakeRequest::new()
@@ -288,13 +290,13 @@ where
         .client_public_key("blah".to_string())
         .build()
         .unwrap_or_else(|e| {
-            panic!("Error building handshake request: {:?}", e);            
+            panic!("Error building handshake request: {:?}", e);
         })
         .send()
-        .await.unwrap_or_else(|e| {
+        .await
+        .unwrap_or_else(|e| {
             panic!("Error doing handshake: {:?}", e);
         })
-        
 }
 
 /// This function is used to hit endpoints with different json bodies per port.

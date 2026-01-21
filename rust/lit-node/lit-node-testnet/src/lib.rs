@@ -246,14 +246,12 @@ impl TestSetupBuilder {
             self = self.selected_network(TestNetName::Naga);
         };
 
-
         let signing_round_timeout_ms = if self.signing_round_timeout.is_some() {
             self.signing_round_timeout
         } else {
             // if not in CI, set a default signing round timeout of 8000ms
             Some("15000".to_string())
         };
-
 
         let custom_node_runtime_config = CustomNodeRuntimeConfig::builder()
             .enable_payment(self.enable_payment)

@@ -100,7 +100,7 @@ impl DatilTestnet {
 
     pub fn shutdown(&mut self) {
         match self.process.as_mut() {
-            Some( process) => {
+            Some(process) => {
                 process.kill().unwrap_or_else(|e| {
                     panic!(
                         "Datil testnet process {:?} couldn't be killed: {}",

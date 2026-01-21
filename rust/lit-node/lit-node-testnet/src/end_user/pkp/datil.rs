@@ -2,6 +2,7 @@ use crate::end_user::EndUser;
 use ethers::abi::AbiEncode;
 use ethers::types::{Address, Bytes, H160, U256};
 use lit_blockchain::util::decode_revert;
+use lit_blockchain_lite::contracts::pkp_helper::PKPHelper;
 use lit_blockchain_lite::contracts::pkp_permissions::{AuthMethod, PKPPermissions};
 use lit_blockchain_lite::contracts::pkpnft::PKPNFT;
 use lit_core::utils::binary::bytes_to_hex;
@@ -16,7 +17,7 @@ impl Pkp {
 
         let pkpnft_address = end_user.actions().datil_contracts().pkpnft.address();
 
-        let client = Arc::new(            end_user.datil_signing_provider().clone());
+        let client = Arc::new(end_user.datil_signing_provider().clone());
 
         let pkpnft = PKPNFT::new(pkpnft_address, client);
 
@@ -314,6 +315,74 @@ impl Pkp {
             .value(mint_cost);
 
         let receipt = mgb_tx
+            .send()
+            .await
+            .map_err(|e| {
+                let revert_msg = format!(
+                    "Failed to send PKP mint transaction: {}",
+                    decode_revert(&e, end_user.actions().contracts().pkpnft.abi())
+                );
+                error!(revert_msg);
+                anyhow::anyhow!(revert_msg)
+            })?
+            .await
+            .map_err(|e| {
+                let revert_msg = format!("Failed while waiting for PKP mint confirmation: {}", e);
+                error!(revert_msg);
+                anyhow::anyhow!(revert_msg)
+            })?
+            .ok_or_else(|| anyhow::anyhow!("Transaction failed - no receipt generated"))?;
+
+        let token_id = receipt.logs[0].topics[1];
+        let token_id = U256::from(token_id.as_bytes());
+
+        let r = end_user
+            .actions()
+            .contracts()
+            .pubkey_router
+            .get_pubkey(token_id)
+            .call()
+            .await?;
+
+        let pubkey = bytes_to_hex(r);
+        let eth_address = pkpnft.get_eth_address(token_id).call().await?;
+
+        info!(
+            "Minted PKP with token id: {} / pubkey : {} / eth address: {:?}",
+            token_id, &pubkey, eth_address
+        );
+
+        Ok(Pkp {
+            signing_provider: end_user.signing_provider().clone(),
+            actions: Arc::new(end_user.actions().clone()),
+            pubkey,
+            token_id,
+            key_set_id: key_set_id.to_string(),
+            eth_address: eth_address.into(),
+            is_datil: false,
+        })
+    }
+
+    pub async fn new_pkp_with_auth_methods_datil(
+        end_user: &EndUser,
+        key_set_id: &str,
+    ) -> Result<Self, anyhow::Error> {
+        let client = Arc::new(end_user.datil_signing_provider().clone());
+
+        let key_type: U256 = U256::from(2);
+
+        let pkpnft_address = end_user.actions().datil_contracts().pkpnft.address();
+        let pkp_helper_address = end_user.actions().datil_contracts().pkp_helper.address();
+        let pkpnft = PKPNFT::new(pkpnft_address, client.clone());
+        let pkp_helper = PKPHelper::new(pkp_helper_address, client.clone());
+        info!("Minting a new PKP using helper contract on the Datil test chain.");
+        let mint_cost = pkpnft.mint_cost().call().await?;
+
+        let mint_tx = pkp_helper
+            .mint_next_and_add_auth_methods(key_type, vec![], vec![], vec![], vec![], false, false)
+            .value(mint_cost);
+
+        let receipt = mint_tx
             .send()
             .await
             .map_err(|e| {

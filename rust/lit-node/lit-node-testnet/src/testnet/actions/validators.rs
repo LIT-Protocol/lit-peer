@@ -43,11 +43,22 @@ impl Actions {
             .expect("Error getting validator structs from chain")
     }
 
-    pub async fn get_current_validator_addresses(&self, addresses: Vec<Address>) -> HashMap<Address, Address> {
+    pub async fn get_current_validator_addresses(
+        &self,
+        addresses: Vec<Address>,
+    ) -> HashMap<Address, Address> {
         use lit_blockchain::contracts::staking::AddressMapping;
-        let l: Vec<AddressMapping> = self.contracts.staking.get_node_staker_address_mappings(addresses.into()).call().await.expect("Error getting node staker address mappings from chain");
+        let l: Vec<AddressMapping> = self
+            .contracts
+            .staking
+            .get_node_staker_address_mappings(addresses.into())
+            .call()
+            .await
+            .expect("Error getting node staker address mappings from chain");
 
-        l.iter().map(|v| (v.node_address, v.staker_address)).collect()
+        l.iter()
+            .map(|v| (v.node_address, v.staker_address))
+            .collect()
     }
     pub async fn get_validator_struct(&self, staker_address: Address) -> Validator {
         self.contracts

@@ -78,7 +78,7 @@ contract PKPPermissionsFacet is ERC2771 {
     function getRouterAddress() public view returns (address) {
         return
             s().contractResolver.getContract(
-                s().contractResolver.PUB_KEY_ROUTER_VIEWS_CONTRACT(),
+                s().contractResolver.PUB_KEY_ROUTER_CONTRACT(),
                 s().env
             );
     }
