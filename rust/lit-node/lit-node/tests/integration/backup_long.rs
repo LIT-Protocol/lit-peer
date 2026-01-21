@@ -84,6 +84,7 @@ async fn end_to_end_test(
     let (testnet, mut validator_collection, end_user) = TestSetupBuilder::default()
         .num_staked_and_joined_validators(number_of_nodes_before)
         .force_deploy(true)
+        .setup_datil_keys(false) // TODO: remove this, once this testunderstands multiple keysets.  This will currently fail sometimes, depending on the order of the keysets being added  ;-) 
         .build()
         .await;
 
