@@ -427,10 +427,10 @@ impl EndUser {
         Ok((pubkey, token_id, eth_address, key_set_id))
     }
 
-    pub async fn new_pkp_and_add_auth_methods(
+    pub async fn new_pkp_and_add_auth_methods_contract_call_only(
         &mut self,
         key_set_id: &str,
-        auth_methods: &[AuthMethod],
+        _auth_methods: &[AuthMethod],
     ) -> Result<(String, U256, H160, String), anyhow::Error> {
         let pkp = Pkp::new_pkp_with_auth_methods(&self, key_set_id).await?;
 

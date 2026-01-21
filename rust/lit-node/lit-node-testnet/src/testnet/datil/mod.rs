@@ -2,7 +2,6 @@ pub mod contracts;
 
 use crate::testnet::NodeAccount;
 use crate::testnet::cache_data_store::CacheDataStore;
-use crate::testnet::cache_data_store::CacheDataStore;
 use crate::testnet::chain::ChainTrait;
 use crate::testnet::chain::anvil::Anvil;
 use command_group::GroupChild;
@@ -10,7 +9,6 @@ use ethers::core::k256::ecdsa::SigningKey;
 use ethers::middleware::SignerMiddleware;
 use ethers::providers::Http;
 use ethers::providers::Provider;
-use ethers::providers::ProviderError;
 use ethers::providers::ProviderError;
 use ethers::signers::LocalWallet;
 use ethers::signers::Signer;

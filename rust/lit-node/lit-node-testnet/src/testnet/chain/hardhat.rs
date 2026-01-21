@@ -1,15 +1,11 @@
 use crate::testnet::NodeAccount;
 use crate::testnet::contracts_repo::{LITCONTRACTPATH, compile_contracts};
-use crate::testnet::contracts_repo::{LITCONTRACTPATH, compile_contracts};
 
 use super::ChainTrait;
-use command_group::{CommandGroup, GroupChild}; // node/hardhat launches many processes to manage the testnet, so we need to use a group interface to manage them, as killing only the process we know about will leave zombies.
 use command_group::{CommandGroup, GroupChild}; // node/hardhat launches many processes to manage the testnet, so we need to use a group interface to manage them, as killing only the process we know about will leave zombies.
 use ethers::prelude::*;
 use hex_literal::hex as hexl;
 
-use std::fs;
-use std::process::{Command, Stdio};
 use std::fs;
 use std::process::{Command, Stdio};
 use std::time::Duration;

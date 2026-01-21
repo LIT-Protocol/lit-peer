@@ -7,7 +7,7 @@ use ethers::providers::Http;
 use ethers::providers::ProviderError;
 use ethers::providers::{Middleware, Provider};
 use lit_core::utils::toml::SimpleToml;
-use std::fs; 
+use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 use std::time::SystemTime;
