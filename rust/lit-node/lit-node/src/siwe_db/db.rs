@@ -20,10 +20,10 @@ fn db_conn(port: u16) -> Result<Connection> {
     // which will not be released. By initalizing the database in a directory within the container
     // allows the nodes to read and write to the database over this connection
     if in_container {
-        Connection::open(format!("/var/tmp/node_{}.db", port))
+        Connection::open(format!("/var/tmp/node_{port}.db"))
             .map_err(|e| unexpected_err_code(e, EC::NodeSystemFault, None))
     } else {
-        Connection::open(format!("./node_state/node_{}.db", port))
+        Connection::open(format!("./node_state/node_{port}.db"))
             .map_err(|e| unexpected_err_code(e, EC::NodeSystemFault, None))
     }
 }
@@ -422,7 +422,7 @@ mod siwe_db_tests {
         let res = db_initial_setup(port);
         if let Err(e) = res {
             // we got an error, so we need to fail the test
-            assert!(false, "Error initializing DB: {:?}", e);
+            assert!(false, "Error initializing DB: {e:?}");
         }
 
         let conn = db_conn(port).unwrap();
@@ -432,7 +432,7 @@ mod siwe_db_tests {
         let res = init_fill_db(port, quit_rx, http_client).await;
         if let Err(e) = res {
             // we got an error, so we need to fail the test
-            assert!(false, "Error filling DB: {:?}", e);
+            assert!(false, "Error filling DB: {e:?}");
         }
 
         let num_rows: i64 = conn
@@ -518,7 +518,7 @@ mod siwe_db_tests {
     // NOTE: We're using different ports for different tests to ensuring that deleting/updating a conn doesn't effect other tests
     fn remove_db_files(port: u16) {
         let _db_cleanup = Command::new("rm")
-            .arg(format!("node_state/node_{}.db", port))
+            .arg(format!("node_state/node_{port}.db"))
             .status()
             .expect("Failed to remove test db");
     }

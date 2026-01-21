@@ -47,8 +47,18 @@ pub async fn sign_message_with_pkp_custom_headers(
     pubkey: String,
     epoch: u64,
     signing_scheme: SigningScheme,
+    key_set_id: &str,
 ) -> Result<()> {
-    let _ = sign_with_pkp_request(node_set, wallet, to_sign, pubkey, epoch, signing_scheme).await?;
+    let _ = sign_with_pkp_request(
+        node_set,
+        wallet,
+        to_sign,
+        pubkey,
+        epoch,
+        signing_scheme,
+        key_set_id,
+    )
+    .await?;
     Ok(())
 }
 
@@ -58,6 +68,7 @@ pub async fn generate_data_to_send(
     pubkey: String,
     to_sign: Vec<u8>,
     signing_scheme: SigningScheme,
+    key_set_id: &str,
 ) -> Result<JsonPKPSigningRequest> {
     let realm_id = U256::from(1);
     let epoch = end_user
@@ -65,8 +76,16 @@ pub async fn generate_data_to_send(
         .get_current_epoch(realm_id)
         .await
         .as_u64();
-    generate_data_to_send_with_epoch(&node_set, end_user, pubkey, to_sign, signing_scheme, epoch)
-        .await
+    generate_data_to_send_with_epoch(
+        node_set,
+        end_user,
+        pubkey,
+        to_sign,
+        signing_scheme,
+        epoch,
+        key_set_id,
+    )
+    .await
 }
 
 pub async fn generate_data_to_send_with_epoch(
@@ -76,6 +95,7 @@ pub async fn generate_data_to_send_with_epoch(
     to_sign: Vec<u8>,
     signing_scheme: SigningScheme,
     epoch: u64,
+    key_set_id: &str,
 ) -> Result<JsonPKPSigningRequest> {
     debug!(
         "generate_data_to_send_with_epoch: signing_scheme - {}",
@@ -90,6 +110,7 @@ pub async fn generate_data_to_send_with_epoch(
         signing_scheme,
         epoch,
         node_set: node_set.to_vec(),
+        key_set_id: key_set_id.to_string(),
     };
     Ok(data_to_send)
 }
@@ -101,9 +122,10 @@ pub async fn generate_session_sigs_and_send_signing_requests(
     pubkey: String,
     epoch: u64,
     signing_scheme: SigningScheme,
+    key_set_id: &str,
 ) -> Vec<GenericResponse<JsonPKPSigningResponse>> {
     let session_sigs = get_session_sigs_for_auth(
-        &node_set,
+        node_set,
         vec![
             LitResourceAbilityRequest {
                 resource: LitResourceAbilityRequestResource {
@@ -124,10 +146,7 @@ pub async fn generate_session_sigs_and_send_signing_requests(
         None,
         None,
     );
-    let nodes = node_set
-        .iter()
-        .map(|(node_set, _)| node_set.clone())
-        .collect::<Vec<NodeSet>>();
+    let nodes = node_set.keys().cloned().collect::<Vec<NodeSet>>();
 
     let my_secret_key = rand::rngs::OsRng.r#gen();
 
@@ -146,6 +165,7 @@ pub async fn generate_session_sigs_and_send_signing_requests(
                         signing_scheme,
                         epoch,
                         node_set: nodes.clone(),
+                        key_set_id: key_set_id.to_string(),
                     };
                     lit_sdk::EndpointRequest {
                         identity_key: sig_and_nodeset.identity_key,
@@ -173,6 +193,7 @@ pub async fn sign_with_pkp_request(
     pubkey: String,
     epoch: u64,
     signing_scheme: SigningScheme,
+    key_set_id: &str,
 ) -> Result<(String, String, String, RecoveryId)> {
     // Remember, for ECDSA signatures we need 100% participation (API responses) from the deterministic subset,
     // which has the size of `get_threshold_count(validator_set)`.
@@ -185,9 +206,10 @@ pub async fn sign_with_pkp_request(
         pubkey.clone(),
         epoch,
         signing_scheme,
+        key_set_id,
     )
     .await;
-    debug!("endpoint_responses: {:?}", endpoint_responses);
+    info!("endpoint_responses: {:?}", endpoint_responses);
 
     assert!(endpoint_responses.len() >= expected_responses);
 

@@ -1,21 +1,25 @@
 pub mod actions;
+pub mod anvil_cache;
+pub mod cache_data_store;
 pub mod chain;
 pub mod contracts;
 pub mod contracts_repo;
+pub mod datil;
 pub mod listener;
 pub mod node_config;
-pub mod payment_delegation;
 
 use crate::testnet::contracts_repo::{
     contract_addresses_from_deployment, remote_deployment_and_config_creation,
 };
+use crate::testnet::datil::DatilTestnet;
 
+use self::anvil_cache::check_and_load_test_state_cache;
 use self::chain::ChainTrait;
 use self::contracts::{ContractAddresses, Contracts, StakingContractGlobalConfig};
-use self::contracts_repo::check_and_load_test_state_cache;
 use self::node_config::{CustomNodeRuntimeConfig, generate_custom_node_runtime_config};
 use command_group::GroupChild;
 
+use crate::testnet::actions::NetworkState;
 use contracts::StakingContractRealmConfig;
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::middleware::SignerMiddleware;
@@ -24,13 +28,11 @@ use ethers::providers::Http;
 use ethers::providers::Provider;
 use ethers::signers::Wallet;
 use ethers::types::Address;
-#[cfg(feature = "testing")]
 use futures::future::BoxFuture;
 use lit_blockchain::resolver::rpc::{ENDPOINT_MANAGER, RpcHealthcheckPoller};
 use lit_core::utils::binary::hex_to_bytes;
 use lit_core::utils::toml::SimpleToml;
 use lit_node_common::coms_keys::ComsKeys;
-#[cfg(feature = "testing")]
 use std::future::Future;
 use std::sync::Arc;
 use std::time::Duration;
@@ -79,7 +81,6 @@ pub struct TestnetBuilder {
     num_staked_only_validators: usize,
     num_staked_and_joined_validators: usize,
     force_deploy: bool,
-    #[cfg(feature = "testing")]
     staker_account_setup_mapper: Option<
         Box<dyn StakerAccountSetupMapper<Future = BoxFuture<'static, Result<(), anyhow::Error>>>>,
     >,
@@ -89,6 +90,8 @@ pub struct TestnetBuilder {
     custom_node_runtime_config: Option<CustomNodeRuntimeConfig>,
     is_fault_test: bool,
     register_inactive_validators: bool,
+    datil_testnet_state_cache_path: String,
+    datil_testnet_contract_resolver_address: Address,
 }
 
 impl Default for TestnetBuilder {
@@ -98,12 +101,18 @@ impl Default for TestnetBuilder {
             num_staked_only_validators: 0,
             num_staked_and_joined_validators: 10,
             force_deploy: false,
-            #[cfg(feature = "testing")]
             staker_account_setup_mapper: None,
             realm_id: 1,
             custom_node_runtime_config: None,
             is_fault_test: false,
             register_inactive_validators: false,
+            // these values are hardcoded since the datil chain comes from a fixed file in the test_data directory.
+            datil_testnet_state_cache_path: "tests/test_data/datil_cache/datil-anvil-state.hex"
+                .to_string(),
+            datil_testnet_contract_resolver_address: Address::from_slice(
+                &hex::decode("5fbdb2315678afecb367f032d93f642f64180aa3")
+                    .expect("Failed to decode contract resolver address"),
+            ),
         }
     }
 }
@@ -155,15 +164,18 @@ impl TestnetBuilder {
         }
     }
 
-    #[cfg(feature = "testing")]
     pub fn staker_account_setup_mapper(
         self,
-        staker_account_setup_mapper: Box<
-            dyn StakerAccountSetupMapper<Future = BoxFuture<'static, Result<(), anyhow::Error>>>,
+        staker_account_setup_mapper: Option<
+            Box<
+                dyn StakerAccountSetupMapper<
+                    Future = BoxFuture<'static, Result<(), anyhow::Error>>,
+                >,
+            >,
         >,
     ) -> Self {
         Self {
-            staker_account_setup_mapper: Some(staker_account_setup_mapper),
+            staker_account_setup_mapper,
             ..self
         }
     }
@@ -185,8 +197,10 @@ impl TestnetBuilder {
                 Box::new(chain::hardhat::Hardhat::new(self.total_num_validators()))
                     as Box<dyn ChainTrait>
             }
-            WhichTestnet::Anvil => Box::new(chain::anvil::Anvil::new(self.total_num_validators()))
-                as Box<dyn ChainTrait>,
+            WhichTestnet::Anvil => {
+                Box::new(chain::anvil::Anvil::new(self.total_num_validators(), false))
+                    as Box<dyn ChainTrait>
+            }
             WhichTestnet::NoChain => {
                 Box::new(chain::no_chain::NoChain::new(self.total_num_validators()))
                     as Box<dyn ChainTrait>
@@ -204,6 +218,14 @@ impl TestnetBuilder {
         let provider_mut = Arc::make_mut(&mut provider);
 
         let provider = Arc::new(provider_mut.set_interval(Duration::from_millis(10)).clone());
+
+        let datil_testnet = DatilTestnet::new(
+            self.total_num_validators(),
+            self.datil_testnet_state_cache_path,
+            self.datil_testnet_contract_resolver_address,
+        )
+        .await;
+
         let mut is_from_cache = false;
 
         // deploy the contracts via script first, so that we can read them when the testnet configuration is loaded.
@@ -223,11 +245,13 @@ impl TestnetBuilder {
             );
 
             if !self.force_deploy {
+                // Note:  We only try load the state cache if the network is active - this could change, but other types of loading are generally exception cases.
                 is_from_cache = true;
                 if !check_and_load_test_state_cache(
                     provider.clone(),
                     self.num_staked_and_joined_validators,
                     self.num_staked_only_validators,
+                    &NetworkState::Active,
                     &custom_node_runtime_config,
                     self.is_fault_test,
                 )
@@ -272,11 +296,11 @@ impl TestnetBuilder {
             existing_config_path,
             num_staked_only_validators: self.num_staked_only_validators,
             num_staked_and_joined_validators: self.num_staked_and_joined_validators,
-            #[cfg(feature = "testing")]
             staker_account_setup_mapper: self.staker_account_setup_mapper,
             register_inactive_validators: self.register_inactive_validators,
             contracts: None,
             is_from_cache,
+            datil_testnet,
         }
     }
 }
@@ -298,6 +322,7 @@ impl TestnetContracts {
 
 pub struct Testnet {
     process: GroupChild,
+    pub datil_testnet: DatilTestnet,
     pub rpcurl: String, //http://localhost:8545
     pub chain_name: String,
     pub chain_id: u64,
@@ -312,7 +337,7 @@ pub struct Testnet {
     pub num_staked_only_validators: usize,
     /// Number of validators that have staked and joined, exclusive of those already accounted for in `num_staked_only_validators`.
     pub num_staked_and_joined_validators: usize,
-    #[cfg(feature = "testing")]
+
     staker_account_setup_mapper: Option<
         Box<dyn StakerAccountSetupMapper<Future = BoxFuture<'static, Result<(), anyhow::Error>>>>,
     >,
@@ -324,11 +349,6 @@ pub struct Testnet {
 impl Testnet {
     pub fn builder() -> TestnetBuilder {
         TestnetBuilder::default()
-    }
-
-    #[cfg(feature = "testing")]
-    pub fn has_staker_account_setup_mapper(&self) -> bool {
-        self.staker_account_setup_mapper.is_some()
     }
 
     pub fn total_num_validators(&self) -> usize {
@@ -351,6 +371,8 @@ impl Testnet {
             });
         }
 
+        self.datil_testnet.shutdown();
+
         //ps x -o  "%p %r %y %x %c "
         self.process.wait().unwrap();
         // if hardhat or node are spawning something and leaving it running after kill
@@ -359,9 +381,11 @@ impl Testnet {
 
     pub fn actions(&self) -> Actions {
         let contracts = self.contracts.as_ref().unwrap();
+        let datil_contracts = self.datil_testnet.contracts.clone();
 
         Actions::new(
             contracts.clone(),
+            datil_contracts,
             self.deploy_account.signing_provider.clone(),
             self.which.clone(),
             self.deploy_address,
@@ -375,7 +399,7 @@ impl Testnet {
     ) -> anyhow::Result<TestnetContracts> {
         let ca = match testnet.existing_config_path.clone() {
             Some(_path) => {
-                Contracts::contract_addresses_from_resolver(
+                Contracts::contract_addresses_from_resolver_cfg(
                     _path,
                     testnet.deploy_account.signing_provider.clone(),
                 )
@@ -424,22 +448,39 @@ impl Testnet {
     }
 }
 
-#[cfg(feature = "testing")]
-pub trait StakerAccountSetupMapper {
+pub trait StakerAccountSetupMapper: Send + Sync {
     type Future: Future<Output = Result<(), anyhow::Error>>;
 
     fn run(&mut self, args: (usize, NodeAccount, Contracts)) -> Self::Future;
 }
 
-#[cfg(feature = "testing")]
-
 impl<T: Future<Output = Result<(), anyhow::Error>>, F: FnMut((usize, NodeAccount, Contracts)) -> T>
     StakerAccountSetupMapper for F
+where
+    F: Send + Sync,
 {
     type Future = T;
 
     fn run(&mut self, args: (usize, NodeAccount, Contracts)) -> Self::Future {
         self(args)
+    }
+}
+
+pub trait BeforeStartValidatorsFn: Send + Sync {
+    type Future: Future<Output = Result<(), anyhow::Error>>;
+
+    fn run(&mut self, actions: Actions) -> Self::Future;
+}
+
+impl<T: Future<Output = Result<(), anyhow::Error>>, F: FnMut(Actions) -> T> BeforeStartValidatorsFn
+    for F
+where
+    F: Send + Sync,
+{
+    type Future = T;
+
+    fn run(&mut self, actions: Actions) -> Self::Future {
+        self(actions)
     }
 }
 

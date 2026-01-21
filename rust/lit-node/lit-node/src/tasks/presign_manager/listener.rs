@@ -7,6 +7,7 @@ use crate::peers::peer_state::models::SimplePeerCollection;
 use crate::tasks::presign_manager::models::Presign;
 use crate::tss::common::storage::{delete_presign, read_presign_from_disk, write_presign_to_disk};
 use crate::tss::ecdsa_damfast::DamFastState;
+use crate::utils::keysets::get_default_keyset_id;
 use crate::version::DataVersionReader;
 use flume::Sender;
 use lit_core::config::ReloadableLitConfig;
@@ -519,7 +520,7 @@ impl PresignManager {
             curve_type,
             &tag,
             &staker_address,
-            epoch,
+            0u64,
             realm,
             key_cache,
             &presign,
@@ -627,6 +628,16 @@ impl PresignManager {
         signing_scheme: SigningScheme,
     ) {
         let signing_state = DamFastState::new(self.tss_state.clone(), signing_scheme);
+
+        let cdm = &self.tss_state.chain_data_config_manager;
+        let default_keyset = match get_default_keyset_id(cdm) {
+            Ok(keyset) => keyset.clone(),
+            Err(e) => {
+                warn!("No default keyset found. Returning blank presign.");
+                return;
+            }
+        };
+
         let txn_prefix =
             TxnPrefix::RealTimePresign(presign_hash, signing_scheme.curve_type()).as_str();
         trace!(
@@ -644,6 +655,7 @@ impl PresignManager {
                 &peers,
                 signing_scheme.curve_type(),
                 None,
+                &default_keyset,
             )
             .await
         {
@@ -691,7 +703,7 @@ impl PresignManager {
                     .await
                     .map(PreSignatureValue::P384),
                 scheme => Err(unexpected_err(
-                    format!("Unsupported scheme {}.", scheme),
+                    format!("Unsupported scheme {scheme}."),
                     None,
                 )),
             };
@@ -839,7 +851,7 @@ impl PresignManager {
                 curve_type,
                 &pubkey,
                 &staker_address,
-                epoch,
+                0u64,
                 realm_id,
                 &key_cache,
             )

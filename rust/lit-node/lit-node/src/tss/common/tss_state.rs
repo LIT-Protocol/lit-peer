@@ -1,6 +1,5 @@
 use super::models::{NodeTransmissionDetails, RoundData};
 use super::traits::cipherable::Cipherable;
-use super::traits::dkg::BasicDkg;
 use super::traits::signable::Signable;
 use crate::common::key_helper::KeyCache;
 use crate::config::chain::ChainDataConfigManager;
@@ -11,13 +10,14 @@ use crate::tss::blsful::models::BlsState;
 use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::key_share::KeyShare;
 use crate::tss::common::storage::read_key_share_from_disk;
+use crate::tss::common::utils::validate_and_get_self_peer;
 use crate::tss::ecdsa_damfast::DamFastState;
 use crate::tss::frost::FrostState;
+use crate::utils::keysets::get_default_keyset_id;
 use crate::version::DataVersionReader;
 use flume::Receiver;
 use lit_core::config::ReloadableLitConfig;
 use lit_core::error::Unexpected;
-use lit_core::utils::binary::bytes_to_hex;
 use lit_node_common::config::LitNodeConfig;
 use lit_node_core::{CurveType, EcdsaSignedMessageShare, SigningScheme};
 use lit_observability::channels::{TracedReceiver, TracedSender, new_traced_unbounded_channel};
@@ -188,36 +188,31 @@ impl TssState {
         Ok(cipher_state)
     }
 
-    #[instrument(level = "debug", skip(self))]
-    pub fn get_dkg_state(&self, curve_type: CurveType) -> Result<Box<dyn BasicDkg>> {
-        let state = Arc::new(self.clone());
-        Ok(Box::new(CurveState { state, curve_type }) as Box<dyn BasicDkg>)
-    }
-
     pub async fn get_threshold_using_current_epoch_realm_peers_for_curve(
         &self,
         peers: &SimplePeerCollection,
         curve_type: CurveType,
         epoch: Option<u64>,
+        key_set_id: &str,
     ) -> Result<usize> {
-        let self_peer = peers.peer_at_address(&self.addr)?;
+        let own_staker_address = self.peer_state.hex_staker_address();
+        let self_peer = validate_and_get_self_peer(peers, &self.addr, &own_staker_address)?;
 
-        let dkg_state = self.get_dkg_state(curve_type)?;
-        let root_keys = dkg_state.root_keys().await;
+        // Shouldn't matter which key set is used, all the keys on this
+        // node should have the same threshold
+        let curve_state = CurveState::new(self.peer_state.clone(), curve_type, key_set_id);
+        let root_keys = curve_state.root_keys()?;
 
         if root_keys.is_empty() {
             return Err(unexpected_err(
-                format!("No root keys exist for curve: {}", curve_type),
+                format!("No root keys exist for curve: {curve_type}"),
                 None,
             ));
         }
 
-        let staker_address = &bytes_to_hex(self_peer.staker_address.as_bytes());
+        let staker_address = &own_staker_address;
         let realm_id = self.peer_state.realm_id();
-        let epoch = match epoch {
-            Some(e) => e,
-            None => self.peer_state.epoch(),
-        };
+        let epoch = epoch.unwrap_or_else(|| self.peer_state.epoch());
 
         let keyshare = read_key_share_from_disk::<KeyShare>(
             curve_type,
@@ -293,17 +288,28 @@ impl TssState {
             return 0;
         }
 
-        let root_keys = self.chain_data_config_manager.root_keys();
-        let curve_type = root_keys
-            .first()
-            .map(|rk| rk.curve_type)
-            .unwrap_or(CurveType::K256);
+        // if we're not part of the peer set (yet), return 0.  This is a special case for joining a network.
+        if !peers.contains_address(self.peer_state.addr.as_str()) {
+            return 0;
+        }
+
+        let curve_type = CurveType::K256;
         let epoch = self.get_keyshare_epoch().await;
+        let cdm = &self.chain_data_config_manager;
+
+        let key_set_id = match get_default_keyset_id(cdm) {
+            Ok(keyset) => keyset.clone(),
+            Err(e) => {
+                warn!("No default keyset found. Returning 0 threshold.");
+                return 0;
+            }
+        };
         let rt = match self
             .get_threshold_using_current_epoch_realm_peers_for_curve(
                 &peers,
                 curve_type,
                 Some(epoch),
+                &key_set_id,
             )
             .await
         {

@@ -1,5 +1,5 @@
+mod datil_pkp;
 mod pkp;
-use pkp::Pkp;
 
 use ethers::middleware::SignerMiddleware;
 use ethers::providers::{Http, Middleware, Provider, ProviderError};
@@ -12,6 +12,7 @@ use lit_blockchain::util::decode_revert;
 use lit_core::utils::binary::bytes_to_hex;
 use tracing::{error, info, trace};
 
+use crate::DEFAULT_KEY_SET_NAME;
 use crate::testnet::Testnet;
 use crate::testnet::actions::Actions;
 use rand_core::OsRng;
@@ -24,16 +25,35 @@ pub struct EndUser {
     pub wallet: Wallet<SigningKey>,
     actions: Actions,
     pkps: Vec<Pkp>,
+    provider: Arc<Provider<Http>>,
+    datil_provider: Arc<Provider<Http>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Pkp {
+    signing_provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>, // sign transactions for this PKP as the owner of the PKP
+    actions: Arc<Actions>, // handy reference to the various contracts
+    pub pubkey: String,
+    pub token_id: U256,
+    pub eth_address: H160,
+    pub key_set_id: String,
+    pub is_datil: bool,
 }
 
 impl EndUser {
     pub fn new(testnet: &Testnet) -> Self {
         let new_wallet = LocalWallet::new(&mut OsRng).with_chain_id(testnet.chain_id);
+
+        let provider = testnet.provider.clone();
+        let datil_provider = testnet.datil_testnet.provider.clone();
+
         info!("New wallet: {:?}", new_wallet.address());
         Self {
             wallet: new_wallet,
             actions: testnet.actions().clone(),
             pkps: vec![],
+            provider,
+            datil_provider,
         }
     }
 
@@ -69,7 +89,15 @@ impl EndUser {
 
     pub async fn set_wallet_balance(&self, amount: &str) {
         let provider = self.actions.deployer_provider();
+        self.set_wallet_balance_with_provider(provider, amount)
+            .await;
 
+        let provider = self.datil_provider.clone();
+        self.set_wallet_balance_with_provider(provider, amount)
+            .await;
+    }
+
+    async fn set_wallet_balance_with_provider(&self, provider: Arc<Provider<Http>>, amount: &str) {
         let res: Result<(), ProviderError> = provider
             .request(
                 "anvil_setBalance",
@@ -185,7 +213,16 @@ impl EndUser {
         &self,
     ) -> Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
         Arc::new(SignerMiddleware::new(
-            self.actions.deployer_provider().clone(),
+            self.provider.clone(),
+            self.wallet.clone(),
+        ))
+    }
+
+    pub fn datil_signing_provider(
+        &self,
+    ) -> Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
+        Arc::new(SignerMiddleware::new(
+            self.datil_provider.clone(),
             self.wallet.clone(),
         ))
     }
@@ -335,7 +372,24 @@ impl EndUser {
     }
 
     pub async fn new_pkp(&mut self) -> Result<(String, U256, H160), anyhow::Error> {
-        let pkp = Pkp::new(self).await?;
+        let pkp = Pkp::new(self, DEFAULT_KEY_SET_NAME).await?;
+        let pkp_info = (pkp.pubkey.clone(), pkp.token_id, pkp.eth_address.clone());
+        self.pkps.push(pkp);
+        Ok(pkp_info)
+    }
+
+    pub async fn new_datil_pkp(&mut self) -> Result<(String, U256, H160), anyhow::Error> {
+        let pkp = Pkp::datil_new(self).await?;
+        let pkp_info = (pkp.pubkey.clone(), pkp.token_id, pkp.eth_address.clone());
+        self.pkps.push(pkp);
+        Ok(pkp_info)
+    }
+
+    pub async fn new_pkp_with_key_set_id(
+        &mut self,
+        key_set_id: &str,
+    ) -> Result<(String, U256, H160), anyhow::Error> {
+        let pkp = Pkp::new(self, key_set_id).await?;
         let pkp_info = (pkp.pubkey.clone(), pkp.token_id, pkp.eth_address.clone());
         self.pkps.push(pkp);
         Ok(pkp_info)
@@ -354,7 +408,11 @@ impl EndUser {
         Ok((pubkey, token_id, eth_address))
     }
 
-    pub async fn mint_grant_and_burn_next_pkp(&self, ipfs_cid: &str) -> Result<Pkp, anyhow::Error> {
-        Pkp::mint_grant_and_burn_next_pkp(self, ipfs_cid).await
+    pub async fn mint_grant_and_burn_next_pkp(
+        &self,
+        ipfs_cid: &str,
+        key_set_id: &str,
+    ) -> Result<Pkp, anyhow::Error> {
+        Pkp::mint_grant_and_burn_next_pkp(self, ipfs_cid, key_set_id).await
     }
 }
