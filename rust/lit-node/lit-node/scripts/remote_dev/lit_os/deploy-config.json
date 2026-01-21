@@ -5,7 +5,7 @@
     "networkName": "litMainnet",
     "newOwnerAddress": "0xc8Da86F7eF9f0158d9C80Af76b2a4E91Bd76f35F",
     "newDomainWalletAdminAddress": "0xc8Da86F7eF9f0158d9C80Af76b2a4E91Bd76f35F",
-    "numberOfStakedAndJoinedWallets": 4,
+    "numberOfStakedAndJoinedWallets": 3,
     "numberOfStakedOnlyWallets": 0,
     "resolverContractAddress": "TBD",
     "useLitCoreDeploymentResolverContractAddress": true,
