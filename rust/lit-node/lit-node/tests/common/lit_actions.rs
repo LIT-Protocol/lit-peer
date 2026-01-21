@@ -44,7 +44,6 @@ const CALL_CHILD_LIT_ACTION_CODE: &str = "const go = async () => {
         toSign: Array.from(toSign),
         publicKey,
         sigName,
-        keySetId
     }});
   };
   go();";
@@ -242,7 +241,10 @@ pub async fn execute_lit_action_session_sigs(
     epoch: u64,
     key_set_id: String,
 ) -> Result<Vec<GenericResponse<JsonExecutionResponse>>> {
-    info!("executing lit action with session sigs");
+    info!(
+        "executing lit action with session sigs.  Lit Action keyset id: {:?}",
+        key_set_id
+    );
     // Generate JSON body for each port
     let nodes = session_sigs_and_node_set
         .iter()
@@ -468,10 +470,7 @@ pub async fn generate_pkp_check_is_permitted_pkp_action(
         std::env::set_var(ENV_LIT_CONFIG_FILE, config_file);
     }
 
-    let cfg = lit_node_common::config::load_cfg().expect("failed to load LitConfig");
-    let loaded_config = &cfg.load_full();
-
-    let (pkp_pubkey, token_id, _, _) = end_user.first_pkp().info();
+    let pkp_pubkey = end_user.first_pkp().pubkey.clone();
 
     let pkp = end_user.pkp_by_pubkey(pkp_pubkey);
     let res = pkp

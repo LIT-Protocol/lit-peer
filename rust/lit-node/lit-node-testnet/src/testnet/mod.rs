@@ -1,4 +1,6 @@
 pub mod actions;
+pub mod anvil_cache;
+pub mod cache_data_store;
 pub mod chain;
 pub mod contracts;
 pub mod contracts_repo;
@@ -6,15 +8,14 @@ pub mod datil;
 pub mod listener;
 pub mod node_config;
 
-use crate::DatilTestnetType;
 use crate::testnet::contracts_repo::{
     contract_addresses_from_deployment, remote_deployment_and_config_creation,
 };
 use crate::testnet::datil::DatilTestnet;
 
+use self::anvil_cache::check_and_load_test_state_cache;
 use self::chain::ChainTrait;
 use self::contracts::{ContractAddresses, Contracts, StakingContractGlobalConfig};
-use self::contracts_repo::check_and_load_test_state_cache;
 use self::node_config::{CustomNodeRuntimeConfig, generate_custom_node_runtime_config};
 use command_group::GroupChild;
 
@@ -89,9 +90,8 @@ pub struct TestnetBuilder {
     custom_node_runtime_config: Option<CustomNodeRuntimeConfig>,
     is_fault_test: bool,
     register_inactive_validators: bool,
-    include_datil_testnet: DatilTestnetType,
-    datil_testnet_state_cache_path: Option<String>,
-    datil_testnet_contract_resolver_address: Option<Address>,
+    datil_testnet_state_cache_path: String,
+    datil_testnet_contract_resolver_address: Address,
 }
 
 impl Default for TestnetBuilder {
@@ -106,9 +106,13 @@ impl Default for TestnetBuilder {
             custom_node_runtime_config: None,
             is_fault_test: false,
             register_inactive_validators: false,
-            include_datil_testnet: DatilTestnetType::None,
-            datil_testnet_state_cache_path: None,
-            datil_testnet_contract_resolver_address: None,
+            // these values are hardcoded since the datil chain comes from a fixed file in the test_data directory.
+            datil_testnet_state_cache_path: "tests/test_data/datil_cache/datil-anvil-state.hex"
+                .to_string(),
+            datil_testnet_contract_resolver_address: Address::from_slice(
+                &hex::decode("5fbdb2315678afecb367f032d93f642f64180aa3")
+                    .expect("Failed to decode contract resolver address"),
+            ),
         }
     }
 }
@@ -187,20 +191,6 @@ impl TestnetBuilder {
         }
     }
 
-    pub fn include_datil_testnet(self, include_datil_testnet: DatilTestnetType) -> Self {
-        Self {
-            include_datil_testnet,
-            datil_testnet_state_cache_path: Some(
-                "tests/test_data/datil_cache/datil-anvil-state.hex".to_string(),
-            ),
-            datil_testnet_contract_resolver_address: Some(Address::from_slice(
-                &hex::decode("5fbdb2315678afecb367f032d93f642f64180aa3")
-                    .expect("Failed to decode contract resolver address"),
-            )),
-            ..self
-        }
-    }
-
     pub async fn build(self) -> Testnet {
         let chain = match self.which {
             WhichTestnet::Hardhat => {
@@ -229,17 +219,12 @@ impl TestnetBuilder {
 
         let provider = Arc::new(provider_mut.set_interval(Duration::from_millis(10)).clone());
 
-        let datil_testnet = if self.include_datil_testnet != DatilTestnetType::None {
-            let datil_testnet = DatilTestnet::new(
-                self.total_num_validators(),
-                self.datil_testnet_state_cache_path.unwrap(),
-                self.datil_testnet_contract_resolver_address.unwrap(),
-            )
-            .await;
-            Some(datil_testnet)
-        } else {
-            None
-        };
+        let datil_testnet = DatilTestnet::new(
+            self.total_num_validators(),
+            self.datil_testnet_state_cache_path,
+            self.datil_testnet_contract_resolver_address,
+        )
+        .await;
 
         let mut is_from_cache = false;
 
@@ -337,7 +322,7 @@ impl TestnetContracts {
 
 pub struct Testnet {
     process: GroupChild,
-    pub datil_testnet: Option<DatilTestnet>,
+    pub datil_testnet: DatilTestnet,
     pub rpcurl: String, //http://localhost:8545
     pub chain_name: String,
     pub chain_id: u64,
@@ -386,9 +371,7 @@ impl Testnet {
             });
         }
 
-        if let Some(datil_testnet) = &mut self.datil_testnet {
-            datil_testnet.shutdown();
-        }
+        self.datil_testnet.shutdown();
 
         //ps x -o  "%p %r %y %x %c "
         self.process.wait().unwrap();
@@ -398,10 +381,7 @@ impl Testnet {
 
     pub fn actions(&self) -> Actions {
         let contracts = self.contracts.as_ref().unwrap();
-        let datil_contracts = match &self.datil_testnet {
-            Some(datil_testnet) => Some(datil_testnet.contracts.clone()),
-            None => None,
-        };
+        let datil_contracts = self.datil_testnet.contracts.clone();
 
         Actions::new(
             contracts.clone(),

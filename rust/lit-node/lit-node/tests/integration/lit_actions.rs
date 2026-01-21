@@ -19,7 +19,6 @@ pub mod litactions {
         LitResourcePrefix, SigningScheme, UnifiedAccessControlCondition,
         UnifiedAccessControlConditionItem, constants::CHAIN_LOCALCHAIN,
     };
-    use lit_node_testnet::DatilTestnetType;
     use lit_node_testnet::end_user::EndUser;
     use lit_node_testnet::testnet::Testnet;
     use lit_node_testnet::validator::ValidatorCollection;
@@ -53,8 +52,8 @@ pub mod litactions {
         &[LaPC::Broadcasts, LaPC::Decrypts, LaPC::ContractCalls];
     const LAPC_BC: &[LitActionPriceComponent] = &[LaPC::Broadcasts, LaPC::ContractCalls];
     const LAPC_SB: &[LitActionPriceComponent] = &[LaPC::Signatures, LaPC::Broadcasts];
-    const LA_DATIL: DatilTestnetType = DatilTestnetType::Default;
-    const LA_NAGA: DatilTestnetType = DatilTestnetType::None;
+    const LA_DATIL: bool = true;
+    const LA_NAGA: bool = false;
     // Notes:
     // - The 2 tests inside test_pkp_permissions_is_cid_registered_and_can_it_sign, is covered by "sign_child_lit_action" & "fail_sign_non_hashed_message".
     // - The original encrypt test wasn't a good integration test - it attempted to compare against a known pubkey, but integration tests generate new keys each time.  encrypt & decrypt tests cover this functionality.
@@ -83,7 +82,7 @@ pub mod litactions {
     #[tokio::test]
     // #[ignore]
     pub async fn lit_action_from_file(
-        datil_testnet_type: DatilTestnetType,
+        use_datil_pkp: bool,
         file_name: &str,
         price_components: &[LitActionPriceComponent],
         fn_assertion: &dyn Fn(
@@ -98,20 +97,14 @@ pub mod litactions {
     ) {
         setup_logging();
 
-        let is_datil = match datil_testnet_type.clone() {
-            DatilTestnetType::Default => true,
-            DatilTestnetType::None => false,
-            DatilTestnetType::NoKeyOverride => true,
-        };
-
+        let force_deploy = file_name.contains("sign_child_lit_action");
         let (testnet, validator_collection, mut end_user) = TestSetupBuilder::default()
-            .include_datil_testnet(datil_testnet_type)
-            .force_deploy(true) // this can be removed once datil is the default.
+            .force_deploy(force_deploy)
             .build()
             .await;
 
         lit_action_from_file_preloaded(
-            is_datil,
+            use_datil_pkp,
             price_components,
             &validator_collection,
             &testnet,
@@ -127,7 +120,7 @@ pub mod litactions {
     }
 
     pub async fn lit_action_from_file_preloaded(
-        is_datil: bool,
+        use_datil_pkp: bool,
         price_components: &[LitActionPriceComponent],
         validator_collection: &ValidatorCollection,
         _testnet: &Testnet,
@@ -169,16 +162,15 @@ pub mod litactions {
             )
             .await;
 
-        let (pubkey, _token_id, _eth_address, key_set_id) = match is_datil {
+        let (pubkey, _token_id, _eth_address, key_set_id) = match use_datil_pkp {
             true => {
                 let pubkey = end_user.new_datil_pkp().await.unwrap().0;
-
                 end_user.pkp_by_pubkey(pubkey).info()
             }
             false => end_user.first_pkp().info(),
         };
 
-        info!("key_set_id: {}", key_set_id);
+        info!("lit_action_from_file_preloaded: key_set_id: {}", key_set_id);
 
         let lit_action_code = data_encoding::BASE64.encode(lit_action_code.as_bytes());
         // per above, there are more params than needed for some actions, but they are ignored
@@ -706,8 +698,7 @@ pub mod litactions {
 
         let ipfs_cid = "QmRwN9GKHvCn4Vk7biqtr6adjXMs7PzzYPCzNCRjPFiDjm";
 
-        let (testnet, validator_collection, end_user) =
-            TestSetupBuilder::default().force_deploy(true).build().await;
+        let (testnet, validator_collection, end_user) = TestSetupBuilder::default().build().await;
         let node_set = validator_collection.random_threshold_nodeset().await;
         let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
         let realm_id = ethers::types::U256::from(1);
@@ -835,8 +826,7 @@ pub mod litactions {
     #[tokio::test]
     async fn sign_as_action() {
         setup_logging();
-        let (_testnet, validator_collection, end_user) =
-            TestSetupBuilder::default().force_deploy(true).build().await;
+        let (_testnet, validator_collection, end_user) = TestSetupBuilder::default().build().await;
         let file_with_path = "./tests/lit_action_scripts/sign_as_lit_action.js";
         let lit_action_code = std::fs::read_to_string(file_with_path).unwrap();
         let action_ipfs_id = lit_sdk::compute_ipfs_hash(&lit_action_code);

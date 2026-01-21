@@ -17,11 +17,6 @@ impl Pkp {
 
         let pkpnft_address = end_user.actions().datil_contracts().pkpnft.address();
 
-        info!(
-            "Datil signing provider: {:?}",
-            end_user.datil_signing_provider()
-        );
-
         let client = Arc::new(SignerMiddleware::new(
             end_user.datil_signing_provider(),
             end_user.wallet.clone(),

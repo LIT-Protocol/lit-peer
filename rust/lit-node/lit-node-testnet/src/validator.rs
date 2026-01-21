@@ -307,7 +307,7 @@ impl ValidatorCollectionBuilder {
         }
 
         if !testnet.is_from_cache {
-            crate::testnet::contracts_repo::save_to_test_state_cache(
+            crate::testnet::anvil_cache::save_to_test_state_cache(
                 testnet.provider.clone(),
                 testnet.num_staked_and_joined_validators,
                 testnet.num_staked_only_validators,
