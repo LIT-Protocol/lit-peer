@@ -49,5 +49,5 @@ impl ClientProxyConfiguration {
 }
 
 pub fn get_local_url_from_port(port: usize) -> Url {
-    Url::parse(format!("http://127.0.0.1:{port}").as_str()).expect("Failed to parse local url")
+    Url::parse(format!("http://127.0.0.1:{}", port).as_str()).expect("Failed to parse local url")
 }

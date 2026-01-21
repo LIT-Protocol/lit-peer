@@ -17,7 +17,6 @@ describe('PKPPermissions', function () {
   let signers;
   let pkpContract;
   let router;
-  let routerViews;
   let pkpHelper;
   let pkpPermissionsDiamond;
   let pkpPermissions;
@@ -59,7 +58,7 @@ describe('PKPPermissions', function () {
       await contractResolver.getAddress(),
       Environment.DEV,
       {
-        additionalFacets: ['PubkeyRouterFacet', 'PubkeyRouterViewsFacet'],
+        additionalFacets: ['PubkeyRouterFacet'],
         verifyContracts: false,
         waitForDeployment: false,
       }
@@ -67,10 +66,6 @@ describe('PKPPermissions', function () {
     routerDiamond = deployResult.diamond;
     router = await ethers.getContractAt(
       'PubkeyRouterFacet',
-      await routerDiamond.getAddress()
-    );
-    routerViews = await ethers.getContractAt(
-      'PubkeyRouterViewsFacet',
       await routerDiamond.getAddress()
     );
     deployResult = await deployDiamond(
@@ -147,7 +142,6 @@ describe('PKPPermissions', function () {
       pkpPermissionsContract: pkpPermissions,
       hdKeyDeriverContract: keyDeriver,
       pubkeyRouterContract: router,
-      pubkeyRouterViewsContract: routerViews,
     });
 
     await stakingKeySetsFacet.setKeySet({
@@ -159,7 +153,7 @@ describe('PKPPermissions', function () {
       realms: [1],
       curves: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
       counts: [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
-      recoverySessionId: '0x',
+      recoveryPartyMembers: [],
     });
 
     // Mint enough tokens for the deployer
@@ -200,7 +194,6 @@ describe('PKPPermissions', function () {
           [creator, tester, randomAccountWithGas, ...signers] = signers;
 
           router = await router.connect(deployer);
-          routerViews = await routerViews.connect(deployer);
 
           // mint the PKP to the tester account
           pkpContract = await pkpContract.connect(tester);
@@ -219,7 +212,7 @@ describe('PKPPermissions', function () {
 
           // validate that it was set
           const [pubkeyAfter, keyTypeAfter, _derivedKeyIdAfter] =
-            await routerViews.getRoutingData(tokenId);
+            await router.getRoutingData(tokenId);
           expect(pubkeyAfter).equal(pubkey);
 
           expect(keyTypeAfter).equal(2);

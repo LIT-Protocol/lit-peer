@@ -1,6 +1,6 @@
 pub fn get_web_addr_from_chain_info(ip: u32, port: u32) -> String {
     let ip = std::net::Ipv4Addr::from(ip).to_string();
-    format!("{ip}:{port}")
+    format!("{}:{}", ip, port)
 }
 
 #[cfg(test)]

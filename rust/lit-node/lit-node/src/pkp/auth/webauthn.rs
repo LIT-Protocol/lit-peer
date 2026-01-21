@@ -153,7 +153,7 @@ impl<M: Middleware + 'static> WebauthnAuthMethodVerifier<M> {
 
 fn generate_auth_method_id(credential_raw_id: String) -> Bytes {
     Bytes::from(keccak256(
-        format!("{credential_raw_id}:{LIT_APP_ID}").into_bytes(),
+        format!("{}:{}", credential_raw_id, LIT_APP_ID).into_bytes(),
     ))
 }
 
@@ -414,7 +414,7 @@ mod tests {
     async fn test_check_blockhash_challenge_success() {
         let (provider, mock) = Provider::mocked();
         let block_hash = "0x70dd3646979bc3d49af8ad6320d2b03149a72863f8e08f254e54fa8954f59143";
-        let block_number = U64::from(1000000000000_u64);
+        let block_number = U64::from(1000000000000 as u64);
         let block: Block<H256> = Block {
             hash: Some(H256::from(
                 encoding::bytes_to_zero_padded_32(encoding::hex_to_bytes(block_hash).unwrap())

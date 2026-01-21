@@ -16,7 +16,7 @@ async fn test_everything_as_web_user() {
     // info!("Testing JWT signing with auth sigs");
     // test_jwt_signing_auth_sig(&nc).await;
     info!("Testing decryption with session sigs");
-    test_encryption_decryption_session_sigs(&validator_collection, &vec![], &end_user).await;
+    test_encryption_decryption_session_sigs(&validator_collection, &end_user).await;
 
     info!("Testing lit actions with BLS session sigs");
     test_lit_action_session_sigs(&validator_collection, &end_user).await;

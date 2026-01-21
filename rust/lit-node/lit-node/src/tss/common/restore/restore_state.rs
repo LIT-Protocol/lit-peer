@@ -9,16 +9,15 @@ use tokio::sync::RwLock;
 use tracing::{instrument, warn};
 
 use crate::common::key_helper::KeyCache;
+use crate::config::chain::CachedRootKey;
 use crate::error::{Result, conversion_err, parser_err, unexpected_err};
-use crate::models::KeySetConfig;
 use crate::tss::common::key_persistence::KeyPersistence;
 use crate::tss::common::restore::eks_and_ds::{
-    CurveRecoveryData, EksAndDs, RecPartyMemberIdType, RestoreParams, RootKeyRecoveryLog,
+    CurveRecoveryData, EksAndDs, RecPartyMemberIdType, RootKeyRecoveryLog,
 };
 use crate::tss::common::restore::point_reader::PointReader;
 use crate::tss::common::tss_state::TssState;
 use crate::utils::contract::get_backup_recovery_contract_with_signer;
-use crate::utils::traits::SignatureCurve;
 use crate::version::{DataVersionReader, DataVersionWriter};
 use lit_blockchain::contracts::backup_recovery::{BackupRecoveryErrors, RecoveredPeerId};
 use lit_core::config::LitConfig;
@@ -46,7 +45,7 @@ pub struct RestoreState {
     blinders: AtomicShared<Blinders>,
     actively_restoring: AtomicBool,
     state: RwLock<Option<InnerState>>,
-    restoring_key_set: AtomicShared<KeySetConfig>,
+    restoring_root_keys: AtomicShared<Vec<CachedRootKey>>,
 }
 
 /// Inner state kept by RestoreState.
@@ -67,7 +66,6 @@ pub(crate) struct InnerState {
     pub pallas_recovery_data: Option<CurveRecoveryData<pallas::Pallas>>,
     pub threshold: usize,
     pub restored_key_cache: KeyCache,
-    pub use_raw_peer_ids: bool,
 }
 
 impl RestoreState {
@@ -77,7 +75,7 @@ impl RestoreState {
             blinders: AtomicShared::from(Shared::new(Self::generate_blinders())),
             actively_restoring: AtomicBool::new(false),
             state: RwLock::new(None),
-            restoring_key_set: AtomicShared::null(),
+            restoring_root_keys: AtomicShared::from(Shared::new(Vec::new())),
         }
     }
 
@@ -87,13 +85,11 @@ impl RestoreState {
         self.init_inner_state().await;
         tss_state
             .chain_data_config_manager
-            .set_all_config_from_chain()
+            .set_root_keys_from_chain()
             .await?;
-        tss_state
-            .chain_data_config_manager
-            .set_key_sets_from_chain()
-            .await?;
-
+        let root_keys = tss_state.chain_data_config_manager.root_keys();
+        debug!("Restoring root keys: {:?}", &root_keys);
+        DataVersionWriter::store(&self.restoring_root_keys, root_keys);
         Ok(())
     }
 
@@ -137,14 +133,6 @@ impl RestoreState {
         Ok(())
     }
 
-    pub fn set_restoring_key_set(&self, key_set: KeySetConfig) {
-        DataVersionWriter::store(&self.restoring_key_set, key_set);
-    }
-
-    pub fn get_restoring_key_set(&self) -> Option<KeySetConfig> {
-        DataVersionReader::read_field(&self.restoring_key_set, |key_set| Some(key_set.clone()))
-    }
-
     pub async fn add_decryption_shares(
         &self,
         rpm_id: &RecPartyMemberIdType,
@@ -178,7 +166,6 @@ impl RestoreState {
                         helper.pk_to_hex(&point)
                     });
                     let decryption_share = DecryptionShare::from(datil_decryption_share);
-                    inner.use_raw_peer_ids = true;
                     return Self::do_add_decryption_share(
                         &mut inner.bls_recovery_data,
                         rpm_id,
@@ -204,7 +191,6 @@ impl RestoreState {
                         helper.pk_to_hex(&point)
                     });
                     let decryption_share = DecryptionShare::from(datil_decryption_share);
-                    inner.use_raw_peer_ids = true;
                     return Self::do_add_decryption_share(
                         &mut inner.k256_recovery_data,
                         rpm_id,
@@ -275,56 +261,146 @@ impl RestoreState {
             return restored_key_shares;
         };
 
-        let params = RestoreParams {
-            threshold: state.threshold,
-            current_peer_id: peer_id,
-            epoch,
-            realm_id,
-            staker_address,
-            restore_key_cache: &state.restored_key_cache,
-        };
-
         if let Some(recovery_data) = &state.bls_recovery_data {
-            restored_key_shares.bls_shares = recovery_data.try_restore(&params).await;
+            restored_key_shares.bls_shares = recovery_data
+                .try_restore(
+                    state.threshold,
+                    peer_id,
+                    epoch,
+                    realm_id,
+                    staker_address,
+                    &state.restored_key_cache,
+                )
+                .await;
         }
 
         if let Some(recovery_data) = &state.k256_recovery_data {
-            restored_key_shares.k256_shares = recovery_data.try_restore(&params).await;
+            restored_key_shares.k256_shares = recovery_data
+                .try_restore(
+                    state.threshold,
+                    peer_id,
+                    epoch,
+                    realm_id,
+                    staker_address,
+                    &state.restored_key_cache,
+                )
+                .await;
         }
 
         if let Some(recovery_data) = &state.p256_recovery_data {
-            restored_key_shares.p256_shares = recovery_data.try_restore(&params).await;
+            restored_key_shares.p256_shares = recovery_data
+                .try_restore(
+                    state.threshold,
+                    peer_id,
+                    epoch,
+                    realm_id,
+                    staker_address,
+                    &state.restored_key_cache,
+                )
+                .await;
         }
 
         if let Some(recovery_data) = &state.p384_recovery_data {
-            restored_key_shares.p384_shares = recovery_data.try_restore(&params).await;
+            restored_key_shares.p384_shares = recovery_data
+                .try_restore(
+                    state.threshold,
+                    peer_id,
+                    epoch,
+                    realm_id,
+                    staker_address,
+                    &state.restored_key_cache,
+                )
+                .await;
         }
 
         if let Some(recovery_data) = &state.ed25519_recovery_data {
-            restored_key_shares.ed25519_shares = recovery_data.try_restore(&params).await;
+            restored_key_shares.ed25519_shares = recovery_data
+                .try_restore(
+                    state.threshold,
+                    peer_id,
+                    epoch,
+                    realm_id,
+                    staker_address,
+                    &state.restored_key_cache,
+                )
+                .await;
         }
 
         if let Some(recovery_data) = &state.ristretto25519_recovery_data {
-            restored_key_shares.ristretto25519_shares = recovery_data.try_restore(&params).await;
+            restored_key_shares.ristretto25519_shares = recovery_data
+                .try_restore(
+                    state.threshold,
+                    peer_id,
+                    epoch,
+                    realm_id,
+                    staker_address,
+                    &state.restored_key_cache,
+                )
+                .await;
         }
 
         if let Some(recovery_data) = &state.ed448_recovery_data {
-            restored_key_shares.ed448_shares = recovery_data.try_restore(&params).await;
+            restored_key_shares.ed448_shares = recovery_data
+                .try_restore(
+                    state.threshold,
+                    peer_id,
+                    epoch,
+                    realm_id,
+                    staker_address,
+                    &state.restored_key_cache,
+                )
+                .await;
         }
 
         if let Some(recovery_data) = &state.jubjub_recovery_data {
-            restored_key_shares.jubjub_shares = recovery_data.try_restore(&params).await;
+            restored_key_shares.jubjub_shares = recovery_data
+                .try_restore(
+                    state.threshold,
+                    peer_id,
+                    epoch,
+                    realm_id,
+                    staker_address,
+                    &state.restored_key_cache,
+                )
+                .await;
         }
 
         if let Some(recovery_data) = &state.decaf377_recovery_data {
-            restored_key_shares.decaf377_shares = recovery_data.try_restore(&params).await;
+            restored_key_shares.decaf377_shares = recovery_data
+                .try_restore(
+                    state.threshold,
+                    peer_id,
+                    epoch,
+                    realm_id,
+                    staker_address,
+                    &state.restored_key_cache,
+                )
+                .await;
         }
 
         if let Some(recovery_data) = &state.bls12381g1_recovery_data {
-            restored_key_shares.bls12381g1_shares = recovery_data.try_restore(&params).await;
+            restored_key_shares.bls12381g1_shares = recovery_data
+                .try_restore(
+                    state.threshold,
+                    peer_id,
+                    epoch,
+                    realm_id,
+                    staker_address,
+                    &state.restored_key_cache,
+                )
+                .await;
         }
         if let Some(recovery_data) = &state.pallas_recovery_data {
-            restored_key_shares.pallas_shares = recovery_data.try_restore(&params).await;
+            restored_key_shares.pallas_shares = recovery_data
+                .try_restore(
+                    state.threshold,
+                    peer_id,
+                    epoch,
+                    realm_id,
+                    staker_address,
+                    &state.restored_key_cache,
+                )
+                .await;
         }
 
         restored_key_shares
@@ -397,91 +473,60 @@ impl RestoreState {
             return false;
         };
 
-        // If no key set is being restored, return false.
-        let Some(restoring_key_set) = self.get_restoring_key_set() else {
-            return false;
-        };
-
-        let root_keys_by_curve = &restoring_key_set.root_keys_by_curve;
+        let restoring_root_keys = DataVersionReader::new_unchecked(&self.restoring_root_keys);
 
         let mut restored = true;
-        for (curve_type, root_keys) in root_keys_by_curve.iter() {
-            let r = match curve_type {
-                CurveType::BLS => Self::are_all_curve_keys_restored(
-                    *curve_type,
+        for root_key in restoring_root_keys.iter() {
+            let r = match root_key.curve_type {
+                CurveType::BLS => CurveRecoveryData::are_all_keys_restored(
                     &state.bls_recovery_data,
-                    root_keys,
+                    &root_key.public_key,
                 ),
-                CurveType::K256 => Self::are_all_curve_keys_restored(
-                    *curve_type,
+                CurveType::K256 => CurveRecoveryData::are_all_keys_restored(
                     &state.k256_recovery_data,
-                    root_keys,
+                    &root_key.public_key,
                 ),
-                CurveType::P256 => Self::are_all_curve_keys_restored(
-                    *curve_type,
+                CurveType::P256 => CurveRecoveryData::are_all_keys_restored(
                     &state.p256_recovery_data,
-                    root_keys,
+                    &root_key.public_key,
                 ),
-                CurveType::P384 => Self::are_all_curve_keys_restored(
-                    *curve_type,
+                CurveType::P384 => CurveRecoveryData::are_all_keys_restored(
                     &state.p384_recovery_data,
-                    root_keys,
+                    &root_key.public_key,
                 ),
-                CurveType::Ed25519 => Self::are_all_curve_keys_restored(
-                    *curve_type,
+                CurveType::Ed25519 => CurveRecoveryData::are_all_keys_restored(
                     &state.ed25519_recovery_data,
-                    root_keys,
+                    &root_key.public_key,
                 ),
-                CurveType::Ed448 => Self::are_all_curve_keys_restored(
-                    *curve_type,
+                CurveType::Ed448 => CurveRecoveryData::are_all_keys_restored(
                     &state.ed448_recovery_data,
-                    root_keys,
+                    &root_key.public_key,
                 ),
-                CurveType::Ristretto25519 => Self::are_all_curve_keys_restored(
-                    *curve_type,
+                CurveType::Ristretto25519 => CurveRecoveryData::are_all_keys_restored(
                     &state.ristretto25519_recovery_data,
-                    root_keys,
+                    &root_key.public_key,
                 ),
-                CurveType::RedJubjub => Self::are_all_curve_keys_restored(
-                    *curve_type,
+                CurveType::RedJubjub => CurveRecoveryData::are_all_keys_restored(
                     &state.jubjub_recovery_data,
-                    root_keys,
+                    &root_key.public_key,
                 ),
-                CurveType::RedDecaf377 => Self::are_all_curve_keys_restored(
-                    *curve_type,
+                CurveType::RedDecaf377 => CurveRecoveryData::are_all_keys_restored(
                     &state.decaf377_recovery_data,
-                    root_keys,
+                    &root_key.public_key,
                 ),
-                CurveType::BLS12381G1 => Self::are_all_curve_keys_restored(
-                    *curve_type,
+                CurveType::BLS12381G1 => CurveRecoveryData::are_all_keys_restored(
                     &state.bls12381g1_recovery_data,
-                    root_keys,
+                    &root_key.public_key,
                 ),
-                CurveType::RedPallas => Self::are_all_curve_keys_restored(
-                    *curve_type,
+                CurveType::RedPallas => CurveRecoveryData::are_all_keys_restored(
                     &state.pallas_recovery_data,
-                    root_keys,
+                    &root_key.public_key,
                 ),
             };
-            restored &= r;
-        }
-        restored
-    }
-
-    fn are_all_curve_keys_restored<C>(
-        curve_type: CurveType,
-        recovery_data: &Option<CurveRecoveryData<C>>,
-        root_keys: &[String],
-    ) -> bool
-    where
-        C: VerifiableEncryptionDecryptor + SignatureCurve<Point = <C as BCA>::Point>,
-        <C as BCA>::Point: CompressedBytes,
-        C::Scalar: CompressedBytes + From<PeerId>,
-    {
-        let mut restored = true;
-        for root_key in root_keys {
-            let r = CurveRecoveryData::are_all_keys_restored(recovery_data, root_key);
-            debug!("Root key is restored: {} {} {}", curve_type, root_key, r);
+            debug!(
+                "Root key is restored: {} {} {}",
+                root_key.curve_type, root_key.public_key, r
+            );
             restored &= r;
         }
         restored
@@ -538,30 +583,14 @@ impl RestoreState {
         }
     }
 
-    pub fn get_expected_recovery_session_id(&self) -> String {
-        DataVersionReader::read_field_unchecked(&self.restoring_key_set, |key_set| {
-            key_set.recovery_session_id.clone()
-        })
-    }
-
     pub async fn pull_recovered_key_cache(&self) -> Result<KeyCache> {
         self.assert_actively_restoring()?;
 
-        let Some(ref inner) = *self.state.read().await else {
+        let Some(inner) = &mut *self.state.write().await else {
             return Err(Self::ciphertexts_not_set());
         };
 
         Ok(inner.restored_key_cache.clone())
-    }
-
-    pub async fn pull_use_raw_peer_ids(&self) -> Result<bool> {
-        self.assert_actively_restoring()?;
-
-        let Some(ref inner) = *self.state.read().await else {
-            return Err(Self::ciphertexts_not_set());
-        };
-
-        Ok(inner.use_raw_peer_ids)
     }
 
     pub async fn report_recovered_peer_id(
@@ -727,7 +756,8 @@ impl RestoreState {
         state
             .bls_recovery_data
             .as_ref()
-            .and_then(|d| d.eks_and_ds.first())
+            .map(|d| d.eks_and_ds.first())
+            .flatten()
             .cloned()
     }
 
@@ -739,7 +769,8 @@ impl RestoreState {
         state
             .k256_recovery_data
             .as_ref()
-            .and_then(|d| d.eks_and_ds.first())
+            .map(|d| d.eks_and_ds.first())
+            .flatten()
             .cloned()
     }
 
@@ -981,7 +1012,6 @@ mod tests {
     use crate::tss::common::storage::{
         StorageType, read_key_share_from_disk, read_recovery_data_from_disk,
     };
-    use crate::tss::util::DEFAULT_KEY_SET_NAME;
     use async_std::path::PathBuf;
     use k256::Secp256k1;
     use lit_node_core::{CompressedBytes, CompressedHex, CurveType};
@@ -1083,23 +1113,16 @@ mod tests {
             blinders: AtomicShared::new(blinders),
             actively_restoring: AtomicBool::new(true),
             state: RwLock::new(None),
-            restoring_key_set: AtomicShared::new(KeySetConfig {
-                identifier: DEFAULT_KEY_SET_NAME.to_string(),
-                description: String::new(),
-                minimum_threshold: 3,
-                monetary_value: 0,
-                complete_isolation: false,
-                realms: maplit::hashset![1],
-                root_keys_by_curve: maplit::hashmap! {
-                    CurveType::BLS => vec![BLS_ROOT_KEY.to_string()],
-                    CurveType::K256 => vec![K256_ROOT_KEY.to_string()]
+            restoring_root_keys: AtomicShared::new(vec![
+                CachedRootKey {
+                    curve_type: CurveType::BLS,
+                    public_key: BLS_ROOT_KEY.to_string(),
                 },
-                root_key_counts: maplit::hashmap! {
-                    CurveType::BLS => 1,
-                    CurveType::K256 => 1,
+                CachedRootKey {
+                    curve_type: CurveType::K256,
+                    public_key: K256_ROOT_KEY.to_string(),
                 },
-                recovery_session_id: "".to_string(),
-            }),
+            ]),
         };
 
         // Generate recovery party members
@@ -1164,21 +1187,13 @@ mod tests {
         inner.threshold = 2;
         inner.bls_recovery_data = Some(CurveRecoveryData {
             encryption_key: bls_enc_key,
-            blinder: restore_state.get_blinders().bls_blinder.unwrap(),
-            eks_and_ds: encrypted_bls_shares.clone(),
-            encrypted_key_shares: encrypted_bls_shares
-                .iter()
-                .map(|eks| eks.encrypted_key_share.clone())
-                .collect(),
+            blinder: restore_state.get_blinders().bls_blinder.unwrap().clone(),
+            eks_and_ds: encrypted_bls_shares,
         });
         inner.k256_recovery_data = Some(CurveRecoveryData {
             encryption_key: k256_enc_key,
-            blinder: restore_state.get_blinders().k256_blinder.unwrap(),
-            eks_and_ds: encrypted_k256_shares.clone(),
-            encrypted_key_shares: encrypted_k256_shares
-                .iter()
-                .map(|eks| eks.encrypted_key_share.clone())
-                .collect(),
+            blinder: restore_state.get_blinders().k256_blinder.unwrap().clone(),
+            eks_and_ds: encrypted_k256_shares,
         });
         restore_state.load_backup(inner).await.unwrap();
 

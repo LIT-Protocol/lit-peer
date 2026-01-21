@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 #[doc = "A single item in the dynamic payment struct."]
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct DynamicPaymentItem {
     pub component: LitActionPriceComponent,
     pub quantity: u64,

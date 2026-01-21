@@ -62,9 +62,7 @@ impl PartialEq for CurveScalar {
             (Self::P256(a), Self::P256(b)) => a == b,
             (Self::P384(a), Self::P384(b)) => a == b,
             (Self::Ed25519(a), Self::Ed25519(b)) => a == b,
-            (Self::Ed25519(a), Self::Ristretto25519(b)) => a == b,
             (Self::Ristretto25519(a), Self::Ristretto25519(b)) => a == b,
-            (Self::Ristretto25519(a), Self::Ed25519(b)) => a == b,
             (Self::Ed448(a), Self::Ed448(b)) => a == b,
             (Self::Jubjub(a), Self::Jubjub(b)) => a == b,
             (Self::Decaf377(a), Self::Decaf377(b)) => a == b,
@@ -114,12 +112,6 @@ impl From<ed448_goldilocks::Scalar> for CurveScalar {
 impl From<jubjub::Scalar> for CurveScalar {
     fn from(scalar: jubjub::Scalar) -> Self {
         Self::Jubjub(scalar)
-    }
-}
-
-impl From<decaf377::Fr> for CurveScalar {
-    fn from(scalar: decaf377::Fr) -> Self {
-        Self::Decaf377(scalar)
     }
 }
 
@@ -553,7 +545,7 @@ where
     let staker_address = bytes_to_hex(peer.staker_address.as_bytes());
     let key_cache = KeyCache::default();
     let persistence = KeyPersistence::<G>::new(curve_type);
-    let public_key = persistence.pk_from_hex(pubkey)?;
+    let public_key = persistence.pk_from_hex(&pubkey)?;
     let local_key = KeyShare::new(
         key_share,
         public_key,
@@ -595,7 +587,7 @@ where
         let (_identifier, private_share, _public_key, share_threshold) =
             load_key_share::<G>(peer, pubkey, epoch, curve_type, realm_id).await;
         if threshold == 0 {
-            threshold = share_threshold;
+            threshold = share_threshold as usize;
         }
         shares.push(private_share);
     }

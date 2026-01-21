@@ -59,9 +59,9 @@ where
                     stringified_error.strip_prefix("Contract call reverted with data: ");
                 if let Some(revert_bytes_str) = maybe_revert_bytes_str {
                     // Check if the length of the string is even and >0.
-                    if revert_bytes_str.len() % 2 == 0 && !revert_bytes_str.is_empty() {
+                    if revert_bytes_str.len() % 2 == 0 && revert_bytes_str.len() > 0 {
                         // Convert to bytes
-                        match Bytes::from_hex(revert_bytes_str) {
+                        let revert_bytes = match Bytes::from_hex(revert_bytes_str) {
                             Ok(bytes) => bytes,
                             Err(conversion_err) => {
                                 return format!(
@@ -69,7 +69,9 @@ where
                                     conversion_err
                                 );
                             }
-                        }
+                        };
+
+                        revert_bytes
                     } else {
                         return format!("Contract Error is not a revert error: {:?}", e);
                     }

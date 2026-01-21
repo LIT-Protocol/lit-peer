@@ -3,7 +3,6 @@ const go = async () => {
 
   let utf8Encode = new TextEncoder();
   const toSign = utf8Encode.encode('Hello World');  
-  const sigShare = await LitActions.signEcdsa({ toSign, publicKey, sigName, keySetId });
-  Lit.Actions.setResponse({ response: JSON.stringify(sigShare) });
+  const sigShare = await LitActions.signEcdsa({ toSign, publicKey, sigName });
 };
 go();

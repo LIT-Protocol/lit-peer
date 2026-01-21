@@ -4,7 +4,6 @@
     publicKey,
     sigName: 'sig1',
     signingScheme: 'SchnorrEd25519Sha512',
-    keySetId,
   });
 
   const sig2 = await Lit.Actions.signAndCombine({
@@ -12,7 +11,6 @@
     publicKey,
     sigName: 'sig2',
     signingScheme: 'SchnorrEd25519Sha512',
-    keySetId,
   });
 
   const sigs = {

@@ -10,7 +10,6 @@
       const { ciphertext, dataToEncryptHash } = await Lit.Actions.encrypt({
         accessControlConditions,
         to_encrypt,
-        keySetId,
       });
       //   console.log('ciphertext in runOnce:', ciphertext);
       //   console.log('dataToEncryptHash in runOnce:', dataToEncryptHash);
@@ -28,7 +27,6 @@
     dataToEncryptHash,
     authSig: null,
     chain: 'ethereum',
-    keySetId,
   });
 
   Lit.Actions.setResponse({ response: decrypted });

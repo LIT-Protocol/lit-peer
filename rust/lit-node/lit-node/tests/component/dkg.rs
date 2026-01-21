@@ -1,13 +1,12 @@
 use super::utils::virtual_node_collection::{VirtualNode, VirtualNodeCollection};
-use crate::common::interpolation::{CurveScalar, get_secret_and_shares, interpolate_secret};
+use crate::common::interpolation::{get_secret_and_shares, interpolate_secret};
 use ethers::types::{H160, U256};
 use futures::future::join_all;
 use lit_blockchain::contracts::backup_recovery::RecoveredPeerId;
 use lit_core::utils::binary::bytes_to_hex;
 use lit_node::common::key_helper::KeyCache;
-use lit_node::models::KeySetConfig;
+use lit_node::config::chain::CachedRootKey;
 use lit_node::peers::peer_state::models::SimplePeerCollection;
-use lit_node::tasks::fsm::epoch_change::ShadowOptions;
 use lit_node::tss::common::dkg_type::DkgType;
 use lit_node::tss::common::key_share::KeyShare;
 use lit_node::tss::common::storage::{
@@ -15,23 +14,17 @@ use lit_node::tss::common::storage::{
     write_key_share_to_cache_only,
 };
 use lit_node::tss::dkg::engine::{DkgAfterRestore, DkgAfterRestoreData, DkgEngine};
-use lit_node::tss::util::DEFAULT_KEY_SET_NAME;
 use lit_node::utils::key_share_proof::{compute_key_share_proofs, verify_key_share_proofs};
 use lit_node::version::DataVersionWriter;
-use lit_node_core::{CompressedBytes, CompressedHex, CurveType, LeBytes, PeerId};
+use lit_node_core::{CompressedBytes, CurveType, PeerId};
 use lit_rust_crypto::{
     blsful, decaf377,
-    ed448_goldilocks::{self, EdwardsPoint},
-    elliptic_curve,
+    ed448_goldilocks::EdwardsPoint,
     elliptic_curve::{Group, group::GroupEncoding},
     jubjub, k256, p256, p384, pallas,
-    vsss_rs::{
-        self, IdentifierPrimeField,
-        curve25519::{WrappedEdwards, WrappedRistretto},
-    },
+    vsss_rs::curve25519::{WrappedEdwards, WrappedRistretto},
 };
-
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use test_case::test_case;
 use tokio::task::JoinHandle;
 use tracing::{error, info};
@@ -81,32 +74,14 @@ pub async fn dkg_and_key_share_proofs(curve_type: CurveType) {
             );
             peers_in_current_epoch.epoch_number = epoch;
             peers_in_current_epoch.commit();
-            let mut key_sets = DataVersionWriter::new_unchecked(
-                &node.tss_state.chain_data_config_manager.key_sets,
+            let mut root_keys = DataVersionWriter::new_unchecked(
+                &node.tss_state.chain_data_config_manager.root_keys,
             );
-            let mut realms = HashSet::with_capacity(1);
-            realms.insert(1);
-            let mut root_keys_by_curve = HashMap::with_capacity(1);
-            root_keys_by_curve.insert(curve_type, vec![pubkey.clone()]);
-            let mut root_key_counts = HashMap::with_capacity(1);
-            root_key_counts.insert(curve_type, 1);
-
-            key_sets.insert(
-                DEFAULT_KEY_SET_NAME.to_string(),
-                KeySetConfig {
-                    identifier: DEFAULT_KEY_SET_NAME.to_string(),
-                    description: "".to_string(),
-                    minimum_threshold: 3,
-                    monetary_value: 0,
-                    complete_isolation: false,
-                    realms,
-                    root_keys_by_curve,
-                    root_key_counts,
-                    recovery_session_id: "".to_string(),
-                },
-            );
-
-            key_sets.commit();
+            root_keys.push(CachedRootKey {
+                curve_type,
+                public_key: pubkey.clone(),
+            });
+            root_keys.commit();
             root_keys_map
                 .entry(curve_type)
                 .and_modify(|v| v.push(pubkey.clone()))
@@ -143,7 +118,7 @@ pub async fn dkg_and_key_share_proofs(curve_type: CurveType) {
                 &vnc.nodes[i].tss_state.addr,
                 &vnc.nodes[i].addr,
                 &vnc.nodes[i].tss_state.peer_state.hex_staker_address(),
-                key_share_proofs,
+                &key_share_proofs,
                 &current_peers,
                 epoch,
                 1,
@@ -318,7 +293,6 @@ pub async fn dkg_after_restore<G>(
     let threshold = next_peers.threshold_for_set_testing_only();
     let mut join_set = tokio::task::JoinSet::new();
 
-    let shadow_key_opts = ShadowOptions::new(false, 1, realm_id, 1, realm_id);
     for node in vnc_before.nodes.iter() {
         tokio::time::sleep(std::time::Duration::from_millis(10)).await;
         let mut dkg_engine = DkgEngine::new(
@@ -326,14 +300,14 @@ pub async fn dkg_after_restore<G>(
             DkgType::Standard,
             1,
             threshold,
-            &shadow_key_opts,
+            (1, realm_id),
             &current_peers,
             &next_peers,
             DkgAfterRestore::False,
         );
         for i in 0..2 {
             let dkg_id = format!("{}{}_key_{}", dkg_id, curve_type, i + 1);
-            dkg_engine.add_dkg(&dkg_id, DEFAULT_KEY_SET_NAME, curve_type, None);
+            dkg_engine.add_dkg(&dkg_id, curve_type, None);
         }
         join_set.spawn(async move {
             let r = dkg_engine.execute(dkg_id, realm_id).await;
@@ -375,7 +349,7 @@ pub async fn dkg_after_restore<G>(
     for i in 0..num_nodes_after {
         let port = (7470 + num_nodes_before + i) as u16;
         // the key hash must be unique, so if we're using 0 as the staker address, we generate a random one
-        let staker_address = *staker_addresses.get(i).unwrap();
+        let staker_address = staker_addresses.get(i).unwrap().clone();
         vnc_after.add_node_internal(port, staker_address).await;
     }
     // setup all the background channels
@@ -409,29 +383,22 @@ pub async fn dkg_after_restore<G>(
         // assume this wait is because the join set starts executing immediately on creation
         tokio::time::sleep(std::time::Duration::from_millis(10)).await;
 
-        let shadow_key_opts = ShadowOptions::new(false, 2, realm_id, 2, realm_id);
         let mut dkg_engine = DkgEngine::new(
             node.tss_state.clone(),
             DkgType::Standard,
             2,
             threshold,
-            &shadow_key_opts,
+            (2, realm_id),
             &current_peers,
             &next_peers,
             DkgAfterRestore::True(DkgAfterRestoreData {
                 peers: recovered_peer_ids.clone(),
                 key_cache: recovery_key_cache.clone(),
-                use_raw_peer_ids: false,
             }),
         );
         for (i, pubkey) in root_keys.iter().enumerate() {
             let dkg_id = format!("{}{}_key_{}", dkg_id, curve_type, i + 1);
-            dkg_engine.add_dkg(
-                &dkg_id,
-                DEFAULT_KEY_SET_NAME,
-                curve_type,
-                Some(pubkey.clone()),
-            );
+            dkg_engine.add_dkg(&dkg_id, curve_type, Some(pubkey.clone()));
         }
         join_set.spawn(async move {
             let r = dkg_engine.execute(dkg_id, realm_id).await;
@@ -454,163 +421,6 @@ pub async fn dkg_after_restore<G>(
         let secret = interpolate_secret(curve_type, &next_peers, pubkey, 3, realm_id).await;
         assert_eq!(
             secret, initial_secrets[i],
-            "secrets do not match after restore"
-        );
-    }
-}
-
-#[test_case(k256::ProjectivePoint::GENERATOR, CurveType::K256, 5, 5; "K256 restore 5 nodes")]
-#[test_case(blsful::inner_types::G1Projective::GENERATOR, CurveType::BLS, 5, 3;  "BLS restore 5 nodes")]
-#[test_case(blsful::inner_types::G1Projective::GENERATOR, CurveType::BLS12381G1, 3, 3; "Bls12381G1 restore 3 nodes")]
-#[test_case(WrappedEdwards::generator(), CurveType::Ed25519, 5, 4; "Ed25519 restore 5 nodes")]
-#[test_case(WrappedRistretto::generator(), CurveType::Ristretto25519, 5, 3; "Ristretto25519 restore 5 nodes")]
-#[test_case(ed448_goldilocks::EdwardsPoint::generator(), CurveType::Ed448, 3, 3; "Ed448 restore 3 nodes")]
-#[test_case(p256::ProjectivePoint::generator(), CurveType::P256, 3, 3; "P256 restore 3 nodes")]
-#[test_case(p384::ProjectivePoint::generator(), CurveType::P384, 3, 3; "P384 restore 3 nodes")]
-#[test_case(lit_frost::red_jubjub_generator(), CurveType::RedJubjub, 5, 4; "RedJubjub restore 5 nodes")]
-#[test_case(decaf377::Element::generator(), CurveType::RedDecaf377, 3, 3; "RedDecaf377 restore 3 nodes")]
-#[tokio::test]
-pub async fn dkg_after_restore_datil<G>(
-    generator: G,
-    curve_type: CurveType,
-    num_nodes_before: usize,
-    num_nodes_after: usize,
-) where
-    G: Group + GroupEncoding + Default + CompressedBytes,
-    G::Scalar: From<PeerId> + CompressedBytes + LeBytes,
-    CurveScalar: From<G::Scalar>,
-{
-    use elliptic_curve::ff::Field;
-
-    crate::common::setup_logging();
-    let vnc_after = VirtualNodeCollection::new(num_nodes_after).await;
-    let current_peers = SimplePeerCollection(vec![]);
-    let next_peers = vnc_after.peers();
-    let realm_id = 1;
-    let threshold = next_peers.threshold_for_set_testing_only();
-
-    let initial_secrets = [
-        G::Scalar::random(rand::rngs::OsRng),
-        G::Scalar::random(rand::rngs::OsRng),
-    ];
-    let root_keys = vec![
-        (generator * initial_secrets[0]).to_compressed_hex(),
-        (generator * initial_secrets[1]).to_compressed_hex(),
-    ];
-
-    let mut key_shares = HashMap::with_capacity(num_nodes_before);
-    for (secret, pubkey) in initial_secrets.iter().zip(root_keys.iter()) {
-        let shared_secret = IdentifierPrimeField(*secret);
-        let shares = vsss_rs::shamir::split_secret::<
-            vsss_rs::DefaultShare<IdentifierPrimeField<G::Scalar>, IdentifierPrimeField<G::Scalar>>,
-        >(
-            threshold,
-            num_nodes_before,
-            &shared_secret,
-            rand::rngs::OsRng,
-        )
-        .unwrap();
-        let peers = shares
-            .iter()
-            .map(|s| PeerId::from_u8(s.identifier.0.to_le_bytes()[0]))
-            .collect::<Vec<_>>();
-        let node_shares = shares
-            .iter()
-            .map(|s| KeyShare {
-                hex_private_share: s.value.0.to_compressed_hex(),
-                hex_public_key: pubkey.to_string(),
-                curve_type,
-                peer_id: PeerId::from_u8(s.identifier.0.to_le_bytes()[0]),
-                threshold: num_nodes_before,
-                total_shares: num_nodes_before,
-                txn_prefix: "".to_string(),
-                realm_id,
-                peers: peers.clone(),
-            })
-            .collect::<Vec<_>>();
-        key_shares.insert(pubkey.clone(), node_shares);
-    }
-
-    let mut recovered_peer_ids = vec![];
-    let mut recovery_key_cache = KeyCache::default();
-    for (index, new_node) in vnc_after.nodes.iter().enumerate() {
-        for pub_key in &root_keys {
-            let key_share = &key_shares[pub_key][index];
-            assert_eq!(key_share.peer_id, PeerId::from_usize(index + 1));
-            write_key_share_to_cache_only(
-                curve_type,
-                pub_key,
-                &new_node.peer.peer_id,
-                &new_node.hex_staker_address,
-                2,
-                realm_id,
-                &mut recovery_key_cache,
-                key_share,
-            )
-            .await
-            .expect("write key share to disk failed");
-        }
-        recovered_peer_ids.push(RecoveredPeerId {
-            node_address: H160::random(),
-            old_peer_id: U256::from(index + 1),
-            new_peer_id: U256::from(new_node.peer.peer_id),
-        });
-    }
-
-    let dkg_id = "TEST_DKG_1_2.";
-    let mut join_set = tokio::task::JoinSet::new();
-
-    let next_peers = vnc_after.peers();
-    let threshold = next_peers.threshold_for_set_testing_only();
-    for node in vnc_after.nodes.iter() {
-        // assume this wait is because the join set starts executing immediately on creation
-        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
-
-        let mut dkg_engine = DkgEngine::new(
-            node.tss_state.clone(),
-            DkgType::Standard,
-            2,
-            threshold,
-            &ShadowOptions::new(false, 2, realm_id, 2, realm_id),
-            &current_peers,
-            &next_peers,
-            DkgAfterRestore::True(DkgAfterRestoreData {
-                peers: recovered_peer_ids.clone(),
-                key_cache: recovery_key_cache.clone(),
-                use_raw_peer_ids: true,
-            }),
-        );
-        for (i, pubkey) in root_keys.iter().enumerate() {
-            let dkg_id = format!("{}{}_key_{}", dkg_id, curve_type, i + 1);
-            dkg_engine.add_dkg(
-                &dkg_id,
-                DEFAULT_KEY_SET_NAME,
-                curve_type,
-                Some(pubkey.clone()),
-            );
-        }
-        join_set.spawn(async move {
-            let r = dkg_engine.execute(dkg_id, realm_id).await;
-            info!("change epoch result: {:?}", r);
-            let _ = r.expect("error from dkg manager change epoch");
-            let root_keys = dkg_engine.get_dkgs().collect::<Vec<_>>();
-            assert_eq!(root_keys.len(), 2);
-            root_keys
-                .iter()
-                .map(|r| r.result().unwrap().public_key())
-                .collect::<Vec<_>>()
-        });
-    }
-
-    while let Some(node_info) = join_set.join_next().await {
-        let _ = node_info.expect("error from dkg engine");
-    }
-
-    for (i, pubkey) in root_keys.iter().enumerate() {
-        let secret = interpolate_secret(curve_type, &next_peers, pubkey, 3, realm_id).await;
-        assert_eq!(
-            secret,
-            initial_secrets[i].into(),
             "secrets do not match after restore"
         );
     }
@@ -704,7 +514,7 @@ pub async fn initial_dkg(
 
     info!(
         "Initial interpolated secret: {:?}",
-        bytes_to_hex(initial_secret.to_bytes())
+        bytes_to_hex(&initial_secret.to_bytes())
     );
 
     (vnc, pubkey, epoch, peers)
@@ -736,8 +546,8 @@ where
 
     let msg = format!(
         "Interpolated Secret (pre/post): {:?} / {:?}",
-        bytes_to_hex(initial_secret.to_bytes()),
-        bytes_to_hex(refresh_secret.to_bytes())
+        bytes_to_hex(&initial_secret.to_bytes()),
+        bytes_to_hex(&refresh_secret.to_bytes())
     );
     match initial_secret == refresh_secret {
         true => info!("{}", msg),
@@ -781,8 +591,8 @@ where
 
     let msg = format!(
         "Interpolated Secret (pre/post): {:?} / {:?}",
-        bytes_to_hex(initial_secret.to_bytes()),
-        bytes_to_hex(reshare_secret.to_bytes())
+        bytes_to_hex(&initial_secret.to_bytes()),
+        bytes_to_hex(&reshare_secret.to_bytes())
     );
     match initial_secret == reshare_secret {
         true => info!("{}", msg),
@@ -814,19 +624,18 @@ pub async fn dkg(
     for node in vnc.nodes.iter() {
         // this is a representation of what happens - but is not exhaustive
 
-        let shadow_key_opts = ShadowOptions::new(false, epoch, realm_id, epoch, realm_id);
         tokio::time::sleep(std::time::Duration::from_millis(10)).await;
         let mut dkg_engine = DkgEngine::new(
             node.tss_state.clone(),
             DkgType::Standard,
             epoch,
             threshold,
-            &shadow_key_opts,
+            (epoch, realm_id),
             current_peers,
             &next_peers,
             DkgAfterRestore::False,
         );
-        dkg_engine.add_dkg(dkg_id, DEFAULT_KEY_SET_NAME, curve_type, pubkey.clone());
+        dkg_engine.add_dkg(dkg_id, curve_type, pubkey.clone());
 
         let jh: JoinHandle<String> = tokio::task::spawn(async move {
             let r = dkg_engine.execute(dkg_id, realm_id).await;
@@ -890,22 +699,21 @@ pub async fn dkg_all_curves(
     for node in vnc.nodes.iter() {
         // this is a representation of what happens - but is not exhaustive
 
-        let shadow_key_opts = ShadowOptions::new(false, epoch, realm_id, epoch, realm_id);
         tokio::time::sleep(std::time::Duration::from_millis(10)).await;
         let mut dkg_engine = DkgEngine::new(
             node.tss_state.clone(),
             DkgType::Standard,
             epoch,
             threshold,
-            &shadow_key_opts,
+            (epoch, realm_id),
             current_peers,
             &next_peers,
             DkgAfterRestore::False,
         );
         for curve_type in CurveType::into_iter() {
             for i in 0..2 {
-                let dkg_id = format!("{dkg_id}{curve_type}_key_{i}");
-                dkg_engine.add_dkg(&dkg_id, DEFAULT_KEY_SET_NAME, curve_type, None);
+                let dkg_id = format!("{}{}_key_{}", dkg_id, curve_type, i);
+                dkg_engine.add_dkg(&dkg_id, curve_type, None);
             }
         }
 

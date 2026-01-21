@@ -171,36 +171,10 @@ impl SimplePeerCollection {
     }
 
     pub fn peer_id_by_address(&self, address: &str) -> Result<PeerId> {
-        let matches: Vec<_> = self
-            .0
+        self.0
             .iter()
-            .filter(|p| p.socket_address == address)
-            .collect();
-
-        if matches.len() > 1 {
-            error!(
-                "Multiple peers found with same address: {}. Matches: {:?}",
-                address,
-                matches
-                    .iter()
-                    .map(|p| (
-                        p.socket_address.clone(),
-                        p.peer_id.to_string(),
-                        p.staker_address.to_string()
-                    ))
-                    .collect::<Vec<_>>()
-            );
-        }
-
-        matches
-            .first()
-            .map(|p| {
-                debug!(
-                    "Found peer_id: {} for address: {} (staker_address: {})",
-                    p.peer_id, address, p.staker_address
-                );
-                p.peer_id
-            })
+            .find(|p| p.socket_address == address)
+            .map(|p| p.peer_id)
             .ok_or_else(|| {
                 unexpected_err(
                     "Peer not found in peer list (peer_id)",
@@ -245,8 +219,7 @@ impl SimplePeerCollection {
             }
             addresses.push_str(&p.debug_address());
         }
-        // for local testing, we don't want to show the local address
-        addresses.replace("127.0.0.1", "")
+        addresses
     }
 
     pub fn peer_at_address(&self, address: &str) -> Result<SimplePeer> {
@@ -255,11 +228,7 @@ impl SimplePeerCollection {
                 return Ok(p.clone());
             }
         }
-        let msg = format!(
-            "Peer {} not found int : {}",
-            address,
-            self.debug_addresses()
-        );
+        let msg = format!("Peer / Peers: {} / {}", address, self.debug_addresses());
         Err(unexpected_err(
             "Peer not found in peer list (peer_at_address)",
             Some(msg),
@@ -274,7 +243,7 @@ impl SimplePeerCollection {
             .ok_or_else(|| {
                 unexpected_err(
                     "Peer not found in peer list (peer_by_id)",
-                    Some(format!("Peer: {peer_id}")),
+                    Some(format!("Peer: {}", peer_id)),
                 )
             })
     }
@@ -343,17 +312,5 @@ impl SimplePeerCollection {
         let mut s = DefaultHasher::new();
         input.hash(&mut s);
         s.finish()
-    }
-
-    pub fn has_version_lower_than(&self, version: &str) -> bool {
-        let parsed_version = semver::Version::parse(version);
-        if let Ok(ver) = parsed_version {
-            for peer in &self.0 {
-                if peer.version < ver {
-                    return true;
-                }
-            }
-        }
-        false
     }
 }

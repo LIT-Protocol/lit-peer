@@ -297,7 +297,7 @@ impl TryFrom<PeerId> for u32 {
     type Error = Error;
 
     fn try_from(value: PeerId) -> Result<Self> {
-        value.0.as_words()[0].try_into().map_err(|_| Error::Parse(format!("unable to convert PeerId '{value}' to 32-bit integer. PeerId is too large to convert to u32")))
+        value.0.as_words()[0].try_into().map_err(|_| Error::Parse(format!("unable to convert PeerId '{}' to 32-bit integer. PeerId is too large to convert to u32", value)))
     }
 }
 
@@ -313,7 +313,7 @@ impl TryFrom<PeerId> for u16 {
     type Error = Error;
 
     fn try_from(value: PeerId) -> Result<Self> {
-        value.0.as_words()[0].try_into().map_err(|_| Error::Parse(format!("unable to convert PeerId '{value}' to 16-bit integer. PeerId is too large to convert to u16")))
+        value.0.as_words()[0].try_into().map_err(|_| Error::Parse(format!("unable to convert PeerId '{}' to 16-bit integer. PeerId is too large to convert to u16", value)))
     }
 }
 
@@ -329,7 +329,7 @@ impl TryFrom<PeerId> for u8 {
     type Error = Error;
 
     fn try_from(value: PeerId) -> Result<Self> {
-        value.0.as_words()[0].try_into().map_err(|_| Error::Parse(format!("unable to convert PeerId '{value}' to 8-bit integer. PeerId is too large to convert to u8")))
+        value.0.as_words()[0].try_into().map_err(|_| Error::Parse(format!("unable to convert PeerId '{}' to 8-bit integer. PeerId is too large to convert to u8", value)))
     }
 }
 
@@ -419,9 +419,9 @@ impl From<&PeerId> for Vec<u8> {
 impl Debug for PeerId {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         if self == &PeerId::NOT_ASSIGNED {
-            return write!(f, "PeerId({self})");
+            return write!(f, "PeerId({})", self);
         }
-        write!(f, "PeerId(NonZero(Uint({self})))")
+        write!(f, "PeerId(NonZero(Uint({}))", self)
     }
 }
 
@@ -451,7 +451,8 @@ impl FromStr for PeerId {
     fn from_str(s: &str) -> Result<Self> {
         if s.len() > 64 {
             return Err(Error::Parse(format!(
-                "PeerId too large to convert from string: PeerId: {s}",
+                "PeerId too large to convert from string: PeerId: {}",
+                s
             )));
         }
         let mut padded = s.to_string();

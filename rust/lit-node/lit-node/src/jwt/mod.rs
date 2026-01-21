@@ -17,7 +17,7 @@ pub fn generate_unsigned_jwt(payload: &models::JwtPayload) -> Result<String> {
     let payload_as_json = serde_json::to_string(&payload).expect_or_err("Could not stringify")?;
     let payload_as_base64 = BASE64URL_NOPAD.encode(payload_as_json.as_bytes());
 
-    let to_sign = format!("{header_as_base64}.{payload_as_base64}");
+    let to_sign = format!("{}.{}", header_as_base64, payload_as_base64);
 
     Ok(to_sign)
 }
@@ -34,7 +34,7 @@ pub fn generate_unsigned_jwt_v2(payload: &models::JwtPayloadV2) -> Result<String
     let payload_as_json = serde_json::to_string(&payload).expect_or_err("Could not stringify")?;
     let payload_as_base64 = BASE64URL_NOPAD.encode(payload_as_json.as_bytes());
 
-    let to_sign = format!("{header_as_base64}.{payload_as_base64}");
+    let to_sign = format!("{}.{}", header_as_base64, payload_as_base64);
 
     Ok(to_sign)
 }
@@ -53,7 +53,7 @@ pub fn generate_unsigned_chain_data_jwt(
     let payload_as_json = serde_json::to_string(&payload).expect_or_err("Could not stringify")?;
     let payload_as_base64 = BASE64URL_NOPAD.encode(payload_as_json.as_bytes());
 
-    let to_sign = format!("{header_as_base64}.{payload_as_base64}");
+    let to_sign = format!("{}.{}", header_as_base64, payload_as_base64);
 
     Ok(to_sign)
 }

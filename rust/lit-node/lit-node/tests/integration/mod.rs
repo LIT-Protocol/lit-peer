@@ -4,6 +4,7 @@ pub mod signing;
 // pub mod epoch_change;
 pub mod backup;
 pub mod epoch_change_long;
+pub mod integration_tests;
 pub mod lit_actions;
 pub mod session_sigs;
 pub mod shadow;

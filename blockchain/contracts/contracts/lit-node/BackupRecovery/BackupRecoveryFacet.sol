@@ -3,7 +3,6 @@ pragma solidity ^0.8.17;
 
 import { ContractResolver } from "../../lit-core/ContractResolver.sol";
 import { LibBackupRecoveryStorage } from "./LibBackupRecoveryStorage.sol";
-import { LibStakingStorage } from "../Staking/LibStakingStorage.sol";
 import { StakingViewsFacet } from "../Staking/StakingViewsFacet.sol";
 import { LibDiamond } from "../../libraries/LibDiamond.sol";
 import { EnumerableMap } from "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
@@ -44,14 +43,6 @@ contract BackupRecoveryFacet {
         returns (LibBackupRecoveryStorage.BackupRecoveryStorage storage)
     {
         return LibBackupRecoveryStorage.getStorage();
-    }
-
-    function ss()
-        internal
-        pure
-        returns (LibStakingStorage.GlobalStakingStorage storage)
-    {
-        return LibStakingStorage.getStakingStorage();
     }
 
     function _getStakingViewsFacet() public view returns (StakingViewsFacet) {
@@ -332,15 +323,10 @@ contract BackupRecoveryFacet {
             delete s().nextState[0].backupMemberPeerMapping[oldPartyMember];
             delete s().nextState[0].peerToBackupMemberMapping[oldPeer];
             delete s().nextState[0].keysReceived[oldPartyMember];
+            delete s().nextState[0].registeredRecoveryKeys;
             delete s().submittedProofs[oldPartyMember];
             // No need to delete `votesToRegisterRecoveryKeys` as the pubKey will be different for all the DKGs
         }
-        delete s().nextState[0].registeredRecoveryKeys;
-        for (uint i = 0; i < s().nextState[0].keySetIds.length; i++) {
-            string memory keySetId = s().nextState[0].keySetIds[i];
-            delete s().nextState[0].keySetIdExists[keySetId];
-        }
-        delete s().nextState[0].keySetIds;
     }
 
     /**
@@ -350,8 +336,7 @@ contract BackupRecoveryFacet {
      */
     function registerRecoveryKeys(
         LibBackupRecoveryStorage.RecoveryKey[] memory recoveryKeys,
-        bytes memory sessionId,
-        string memory keySetId
+        bytes memory sessionId
     ) public {
         require(
             s().nextState[0].partyMembers.length > 1,
@@ -396,10 +381,6 @@ contract BackupRecoveryFacet {
                 .nextState[0]
                 .votesToRegisterRecoveryKeys[recoveryKey.pubkey]
                 .voted[msg.sender] = true;
-            if (!s().nextState[0].keySetIdExists[keySetId]) {
-                s().nextState[0].keySetIdExists[keySetId] = true;
-                s().nextState[0].keySetIds.push(keySetId);
-            }
 
             // If all the Recovery peers have voted, register it
             if (
@@ -411,13 +392,6 @@ contract BackupRecoveryFacet {
                 s().nextState[0].registeredRecoveryKeys.push(recoveryKey);
                 // once a recovery key is registered so is the sessionId
                 s().nextState[0].sessionId = sessionId;
-
-                for (uint i = 0; i < s().nextState[0].keySetIds.length; i++) {
-                    string memory keySetId = s().nextState[0].keySetIds[i];
-                    ss()
-                        .keySetsConfigs[keccak256(abi.encodePacked(keySetId))]
-                        .recoverySessionId = sessionId;
-                }
 
                 emit RecoveryKeySet(recoveryKey);
             }

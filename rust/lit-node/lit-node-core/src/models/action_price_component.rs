@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 
 #[doc = "The different components that can be priced in the dynamic payment system."]
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum LitActionPriceComponent {
     #[default]
     BaseAmount,

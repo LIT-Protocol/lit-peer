@@ -8,39 +8,27 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase")]
-pub struct SDKHandshakeRequest {
+pub struct JsonSDKHandshakeRequest {
     pub client_public_key: String,
     pub challenge: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct EncryptionSignRequest {
-    /// Access control conditions for token/NFT gating
-    #[cfg_attr(feature = "openapi", schema(value_type = Vec<Object>))]
     pub access_control_conditions: Option<Vec<AccessControlConditionItem>>,
-    /// EVM contract conditions
-    #[cfg_attr(feature = "openapi", schema(value_type = Vec<Object>))]
     pub evm_contract_conditions: Option<Vec<EVMContractConditionItem>>,
-    /// Solana RPC conditions
-    #[cfg_attr(feature = "openapi", schema(value_type = Vec<Object>))]
     pub sol_rpc_conditions: Option<Vec<SolRpcConditionItem>>,
-    /// Unified access control conditions
-    #[cfg_attr(feature = "openapi", schema(value_type = Vec<Object>))]
     pub unified_access_control_conditions: Option<Vec<UnifiedAccessControlConditionItem>>,
     pub chain: Option<String>,
     pub data_to_encrypt_hash: String,
     pub auth_sig: AuthSigItem,
     #[serde(default = "default_epoch")]
     pub epoch: u64,
-    pub key_set_id: String,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct JsonSignSessionKeyRequestV2 {
     pub session_key: String,
@@ -51,41 +39,32 @@ pub struct JsonSignSessionKeyRequestV2 {
     pub curve_type: CurveType,
     pub code: Option<String>,
     pub lit_action_ipfs_id: Option<String>,
-    #[cfg_attr(feature = "openapi", schema(value_type = Object))]
     pub js_params: Option<Value>,
     #[serde(default = "default_epoch")]
     pub epoch: u64,
     pub node_set: Vec<NodeSet>,
-    #[cfg_attr(feature = "openapi", schema(value_type = String))]
     pub max_price: U256,
-    pub pkp_key_set_id: Option<String>,
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct JsonPKPSigningRequest {
     pub to_sign: Vec<u8>,
     pub pubkey: String,
     pub auth_sig: AuthSigItem,
     pub auth_methods: Option<Vec<AuthMethod>>, // For backwards compatibility
-    /// The signing scheme to use (e.g., "EcdsaK256Sha256", "Bls12381")
-    #[cfg_attr(feature = "openapi", schema(value_type = String))]
     pub signing_scheme: SigningScheme,
     #[serde(default = "default_epoch")]
     pub epoch: u64,
     pub node_set: Vec<NodeSet>,
-    pub key_set_id: String,
 }
 
 #[derive(Clone, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct JsonExecutionRequest {
     pub code: Option<String>,
     pub ipfs_id: Option<String>,
     pub auth_sig: AuthSigItem,
-    #[cfg_attr(feature = "openapi", schema(value_type = Object))]
     pub js_params: Option<Value>,
     pub auth_methods: Option<Vec<AuthMethod>>,
     #[serde(default = "default_epoch")]
@@ -93,7 +72,6 @@ pub struct JsonExecutionRequest {
     pub node_set: Vec<NodeSet>,
     #[serde(default)]
     pub invocation: Invocation,
-    pub key_set_id: String,
 }
 
 impl JsonExecutionRequest {
@@ -132,7 +110,6 @@ impl std::fmt::Debug for JsonExecutionRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct JsonPKPClaimKeyRequest {
     pub auth_method: AuthMethod,

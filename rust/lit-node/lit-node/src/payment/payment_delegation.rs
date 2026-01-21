@@ -443,7 +443,8 @@ fn construct_payment_delegation(
                 |x| matches!(x.as_str(), Some(s) if s.to_ascii_lowercase() == user_address_str),
             );
             let err_msg = format!(
-                "User {user_address_str} is delegate: {user_is_delegate} and delegate_to_arr: {delegate_to_arr:?}",
+                "User {} is delegate: {} and delegate_to_arr: {:?}",
+                user_address_str, user_is_delegate, delegate_to_arr,
             );
             debug!("{}", &err_msg);
             if !user_is_delegate {
@@ -498,14 +499,14 @@ fn construct_payment_delegation(
             None => {
                 return Err(siwe_conversion_error(
                     "",
-                    &format!("`{s}` is not a valid payment delegation scope"),
+                    &format!("`{}` is not a valid payment delegation scope", s),
                 ));
             }
             Some(s) => match s.parse() {
                 Err(e) => {
                     return Err(siwe_conversion_error(
                         "",
-                        &format!("`{s}` is not a valid payment delegation scope"),
+                        &format!("`{}` is not a valid payment delegation scope", s),
                     ));
                 }
                 Ok(s) => allowed_scopes.add_allowed_scope(&s),

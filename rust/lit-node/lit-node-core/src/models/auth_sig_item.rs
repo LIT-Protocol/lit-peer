@@ -2,7 +2,6 @@ use crate::{JsonAuthSig, MultipleAuthSigs};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase", untagged)]
 #[allow(clippy::large_enum_variant)]
 pub enum AuthSigItem {

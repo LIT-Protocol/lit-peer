@@ -6,7 +6,6 @@
     dataToEncryptHash,
     authSig: null,
     chain: 'ethereum',
-    keySetId,
   });
   Lit.Actions.setResponse({ response: JSON.stringify(resp) });
 })();

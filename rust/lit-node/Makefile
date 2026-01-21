@@ -7,5 +7,4 @@ test:
 format:
 	cargo fmt
 
-openapi:
-	cd openapi-gen && cargo run -p openapi-gen
+

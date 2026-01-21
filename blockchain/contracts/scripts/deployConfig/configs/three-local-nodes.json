@@ -16,6 +16,10 @@
             "127.0.0.1:7471",
             "127.0.0.1:7472"
         ],
+        "keyTypes": [
+            1,
+            2
+        ],
         "backupRecoveryAddresses": [],
         "backupRecoveryKeys": [],
         "verifyContracts": true

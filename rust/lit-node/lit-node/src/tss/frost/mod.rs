@@ -1,10 +1,8 @@
 use crate::error::{EC, parser_err, unexpected_err, unexpected_err_code};
 use crate::p2p_comms::CommsManager;
 use crate::peers::peer_state::models::SimplePeer;
-use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::hd_keys::get_derived_keyshare;
 use crate::tss::common::traits::signable::Signable;
-use crate::tss::common::utils::validate_and_get_self_peer;
 use crate::{
     error::Result,
     metrics,
@@ -71,8 +69,10 @@ impl FrostState {
         VerifyingShare,
     )> {
         if !signature_scheme.supports_algorithm(SigningAlgorithm::Schnorr) {
-            let msg =
-                format!("Requested signature scheme {signature_scheme:?} does not support Schnorr");
+            let msg = format!(
+                "Requested signature scheme {:?} does not support Schnorr",
+                signature_scheme
+            );
             return Err(unexpected_err_code(
                 "Unsupported signature curve for Schnorr signature",
                 EC::NodeSignatureNotSupported,
@@ -86,10 +86,7 @@ impl FrostState {
 
         // setup signing protocol
         let mut rng = rand::rngs::OsRng;
-
-        let own_staker_address = self.state.peer_state.hex_staker_address();
-        let self_peer = validate_and_get_self_peer(peers, &self.state.addr, &own_staker_address)?;
-
+        let self_peer = peers.peer_at_address(&self.state.addr)?;
         let scheme: Scheme = signing_scheme_to_frost_scheme(signature_scheme)
             .map_err(|e| unexpected_err(e, None))?;
         let identifier = self.peer_id_to_frost_identifier(self_peer.peer_id)?;
@@ -154,7 +151,7 @@ impl FrostState {
     async fn derive_frost_signing_components<G>(
         &self,
         deriver: G::Scalar,
-        root_pubkeys: &[String],
+        root_pubkeys: Option<Vec<String>>,
         self_peer: &SimplePeer,
         epoch: u64,
     ) -> Result<(VerifyingKey, SigningShare)>
@@ -162,12 +159,13 @@ impl FrostState {
         G: HDDerivable + GroupEncoding + Default + CompressedBytes,
         G::Scalar: HDDeriver + CompressedBytes,
     {
+        let root_pubkeys = root_pubkeys.expect_or_err("No root pubkeys provided!")?;
         let staker_address = &bytes_to_hex(self_peer.staker_address.as_bytes());
         let realm_id = self.state.peer_state.realm_id();
 
         let (sk, pk) = get_derived_keyshare::<G>(
             deriver,
-            root_pubkeys,
+            &root_pubkeys,
             self.signing_scheme.curve_type(),
             staker_address,
             &self_peer.peer_id,
@@ -224,35 +222,26 @@ impl Signable for FrostState {
         &mut self,
         message_bytes: &[u8],
         public_key: Vec<u8>,
+        root_pubkeys: Option<Vec<String>>,
         tweak_preimage: Option<Vec<u8>>,
         request_id: Vec<u8>,
-        key_set_id: &str,
         epoch: Option<u64>,
         nodeset: &[NodeSet],
     ) -> Result<SignableOutput> {
         let txn_prefix = bytes_to_hex(&request_id);
         let peers = self.state.peer_state.peers();
         let signing_peers = peers.peers_for_nodeset(nodeset);
-
-        let own_staker_address = self.state.peer_state.hex_staker_address();
-        let self_peer = validate_and_get_self_peer(&peers, &self.state.addr, &own_staker_address)?;
-
+        let self_peer = peers.peer_at_address(&self.state.addr)?;
         let threshold = nodeset.len();
         let key_id = tweak_preimage.expect_or_err("No hd_key_id provided!")?;
         let realm_id = self.state.peer_state.realm_id();
-        let epoch = epoch.unwrap_or_else(|| self.state.peer_state.epoch());
-        let curve_state = CurveState::new(
-            self.state.peer_state.clone(),
-            self.signing_scheme.curve_type(),
-            key_set_id,
-        );
-        let root_pubkeys = curve_state.root_keys()?;
+        let epoch = epoch.unwrap_or(self.state.peer_state.epoch());
         let (vk, signing_share) = match self.signing_scheme {
             SigningScheme::SchnorrK256Sha256 | SigningScheme::SchnorrK256Taproot => {
                 let deriver = k256::Scalar::create(&key_id, self.signing_scheme.id_sign_ctx());
                 self.derive_frost_signing_components::<k256::ProjectivePoint>(
                     deriver,
-                    &root_pubkeys,
+                    root_pubkeys,
                     &self_peer,
                     epoch,
                 )
@@ -262,7 +251,7 @@ impl Signable for FrostState {
                 let deriver = p256::Scalar::create(&key_id, self.signing_scheme.id_sign_ctx());
                 self.derive_frost_signing_components::<p256::ProjectivePoint>(
                     deriver,
-                    &root_pubkeys,
+                    root_pubkeys,
                     &self_peer,
                     epoch,
                 )
@@ -272,7 +261,7 @@ impl Signable for FrostState {
                 let deriver = p384::Scalar::create(&key_id, self.signing_scheme.id_sign_ctx());
                 self.derive_frost_signing_components::<p384::ProjectivePoint>(
                     deriver,
-                    &root_pubkeys,
+                    root_pubkeys,
                     &self_peer,
                     epoch,
                 )
@@ -285,7 +274,7 @@ impl Signable for FrostState {
                 );
                 self.derive_frost_signing_components::<vsss_rs::curve25519::WrappedEdwards>(
                     deriver,
-                    &root_pubkeys,
+                    root_pubkeys,
                     &self_peer,
                     epoch,
                 )
@@ -298,7 +287,7 @@ impl Signable for FrostState {
                 );
                 self.derive_frost_signing_components::<vsss_rs::curve25519::WrappedRistretto>(
                     deriver,
-                    &root_pubkeys,
+                    root_pubkeys,
                     &self_peer,
                     epoch,
                 )
@@ -309,7 +298,7 @@ impl Signable for FrostState {
                     ed448_goldilocks::Scalar::create(&key_id, self.signing_scheme.id_sign_ctx());
                 self.derive_frost_signing_components::<ed448_goldilocks::EdwardsPoint>(
                     deriver,
-                    &root_pubkeys,
+                    root_pubkeys,
                     &self_peer,
                     epoch,
                 )
@@ -319,7 +308,7 @@ impl Signable for FrostState {
                 let deriver = jubjub::Scalar::create(&key_id, self.signing_scheme.id_sign_ctx());
                 self.derive_frost_signing_components::<jubjub::SubgroupPoint>(
                     deriver,
-                    &root_pubkeys,
+                    root_pubkeys,
                     &self_peer,
                     epoch,
                 )
@@ -329,7 +318,7 @@ impl Signable for FrostState {
                 let deriver = decaf377::Fr::create(&key_id, self.signing_scheme.id_sign_ctx());
                 self.derive_frost_signing_components::<decaf377::Element>(
                     deriver,
-                    &root_pubkeys,
+                    root_pubkeys,
                     &self_peer,
                     epoch,
                 )
@@ -339,7 +328,7 @@ impl Signable for FrostState {
                 let deriver = pallas::Scalar::create(&key_id, self.signing_scheme.id_sign_ctx());
                 self.derive_frost_signing_components::<pallas::Point>(
                     deriver,
-                    &root_pubkeys,
+                    root_pubkeys,
                     &self_peer,
                     epoch,
                 )

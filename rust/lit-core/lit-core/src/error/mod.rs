@@ -129,7 +129,11 @@ impl Error {
     where
         K: Into<String>,
     {
-        let mut fields = self.inner.fields.take().unwrap_or_default();
+        let mut fields = match self.inner.fields.take() {
+            Some(v) => v,
+            None => HashMap::new(),
+        };
+
         fields.insert(key.into(), value);
         self.inner.fields = Some(fields);
         self
@@ -773,7 +777,7 @@ mod tests {
 
         assert_eq!(
             err,
-            "lit_core::Error { kind: Unexpected, code: CoreFatal, msg: \"fatal-1\", source: lit_core::Error { kind: SevSnp, msg: \"sev-snp\", source: lit_core::Error { kind: Generic, source: \"first\", caller:  { file: \"lit-core/src/error/mod.rs:768:19\" } }, caller:  { file: \"lit-core/src/error/mod.rs:769:19\" } }, caller:  { file: \"lit-core/src/error/mod.rs:770:19\" } }"
+            "lit_core::Error { kind: Unexpected, code: CoreFatal, msg: \"fatal-1\", source: lit_core::Error { kind: SevSnp, msg: \"sev-snp\", source: lit_core::Error { kind: Generic, source: \"first\", caller:  { file: \"lit-core/src/error/mod.rs:772:19\" } }, caller:  { file: \"lit-core/src/error/mod.rs:773:19\" } }, caller:  { file: \"lit-core/src/error/mod.rs:774:19\" } }"
         );
     }
 

@@ -3,8 +3,6 @@ use std::sync::Arc;
 use crate::error::{self, Error, unexpected_err_code, validation_err, validation_err_code};
 use crate::error::{EC, unexpected_err};
 use crate::models;
-use crate::tss::common::tss_state::TssState;
-use crate::utils::datil_contract::is_datil_key_set_id;
 use crate::utils::encoding;
 use anyhow::Result;
 use ethers::abi::AbiEncode;
@@ -25,7 +23,6 @@ use tracing::instrument;
 mod apple;
 pub mod auth_method_verifier;
 pub mod constants;
-mod datil;
 mod discord;
 mod google;
 pub mod stytch;
@@ -325,7 +322,7 @@ pub fn serialize_auth_context_for_checking_against_contract_data(
 }
 
 pub fn get_user_wallet_auth_method_from_address(address: &str) -> error::Result<Vec<u8>> {
-    let serialized = format!("{address}:{LIT_APP_ID}");
+    let serialized = format!("{}:{}", address, LIT_APP_ID);
     let as_bytes = serialized.as_bytes().to_vec();
     let hashed = keccak256(as_bytes);
 
@@ -342,24 +339,7 @@ pub async fn check_pkp_auth(
     cfg: &LitConfig,
     required_scopes: &[usize],
     bls_root_pubkey: &str,
-    key_set_id: &str,
-    tss_state: &TssState,
 ) -> Result<bool, Error> {
-    if is_datil_key_set_id(key_set_id) {
-        return datil::datil_check_pkp_auth(
-            ipfs_id_option,
-            auth_sig,
-            pkp_pubkey,
-            auth_context,
-            cfg,
-            required_scopes,
-            bls_root_pubkey,
-            key_set_id,
-            tss_state,
-        )
-        .await;
-    }
-
     use std::io::Error;
 
     debug!("auth_context- {:?}", auth_context);
@@ -606,13 +586,14 @@ pub async fn check_pkp_auth(
         );
     }
 
-    Err(validation_err_code(
+    return Err(validation_err_code(
         Error::other(format!(
-            "None of the AuthMethods, AuthSig or Lit Actions meet the required scope {required_scopes:?}."
+            "None of the AuthMethods, AuthSig or Lit Actions meet the required scope {:?}.",
+            required_scopes
         )),
         EC::NodeAuthSigScopeTooLimited,
         None,
-    ))
+    ));
 }
 
 // We need this due to an issue in the SDK which allows user to permit the following 3 formats:

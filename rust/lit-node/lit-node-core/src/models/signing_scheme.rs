@@ -3,44 +3,23 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
-/// Cryptographic signing algorithm types supported by the system.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[derive(Clone, Copy, Debug, Hash, Eq, PartialEq, Serialize, Deserialize)]
 pub enum SigningAlgorithm {
-    /// Pairing-based cryptography (e.g., BLS signatures).
     Pairing,
-    /// Elliptic Curve Digital Signature Algorithm.
     Ecdsa,
-    /// Schnorr signature scheme.
     Schnorr,
 }
 
-/// Preference for public key encoding format.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[derive(Clone, Copy, Debug, Hash, Eq, PartialEq, Serialize, Deserialize)]
 pub enum KeyFormatPreference {
-    /// Full uncompressed point representation.
     Uncompressed,
-    /// Compressed point representation (x-coordinate with sign bit).
     Compressed,
 }
 
-/// Comprehensive signing schemes combining curve type, signature algorithm, and hash function.
-///
-/// Serializes as a string in JSON (e.g., "EcdsaK256Sha256", "Bls12381", "SchnorrEd25519Sha512").
-///
-/// Valid values: Bls12381, EcdsaK256Sha256, EcdsaP256Sha256, EcdsaP384Sha384,
-/// SchnorrEd25519Sha512, SchnorrK256Sha256, SchnorrP256Sha256, SchnorrP384Sha384,
-/// SchnorrRistretto25519Sha512, SchnorrEd448Shake256, SchnorrRedJubjubBlake2b512,
-/// SchnorrK256Taproot, SchnorrRedDecaf377Blake2b512, SchnorrRedPallasBlake2b512,
-/// SchnorrkelSubstrate, Bls12381G1ProofOfPossession
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Hash)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
+#[derive(Clone, Copy, Debug, Default, Hash, Eq, PartialEq)]
 pub enum SigningScheme {
-    /// BLS12-381 pairing-based signatures (default).
     #[default]
     Bls12381,
-    /// ECDSA on secp256k1 with SHA-256.
     EcdsaK256Sha256,
     EcdsaP256Sha256,
     EcdsaP384Sha384,
@@ -102,7 +81,7 @@ impl FromStr for SigningScheme {
             "SchnorrRedDecaf377Blake2b512" => Ok(SigningScheme::SchnorrRedDecaf377Blake2b512),
             "SchnorrkelSubstrate" => Ok(SigningScheme::SchnorrkelSubstrate),
             "Bls12381G1ProofOfPossession" => Ok(SigningScheme::Bls12381G1ProofOfPossession),
-            _ => Err(Error::Parse(format!("Invalid signing scheme: {s}"))),
+            _ => Err(Error::Parse(format!("Invalid signing scheme: {}", s))),
         }
     }
 }

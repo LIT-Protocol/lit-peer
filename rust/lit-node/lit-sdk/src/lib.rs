@@ -67,7 +67,7 @@ where
 {
     let client = get_http_client();
     let mut request_builder = client
-        .post(format!("{url_prefix}://{socket_address}/{api_path}"))
+        .post(format!("{}://{}/{}", url_prefix, socket_address, api_path))
         .header("Content-Type", "application/json")
         .header("Accept", "application/json");
     if !request_id.is_empty() {

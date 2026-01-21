@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 /// The ECDSA signature shares
 #[derive(Clone, Serialize, Deserialize, Debug)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct EcdsaSignedMessageShare {
     pub digest: String,
     pub result: String,
@@ -18,7 +17,6 @@ pub struct EcdsaSignedMessageShare {
 
 /// Frost / Schnorr signature shares
 #[derive(Clone, Serialize, Deserialize, Debug)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct FrostSignedMessageShare {
     pub message: String,
     pub result: String,
@@ -33,7 +31,6 @@ pub struct FrostSignedMessageShare {
 
 /// Bls signature shares
 #[derive(Clone, Serialize, Deserialize, Debug)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub struct BlsSignedMessageShare {
     pub message: String,
     pub result: String,
@@ -47,7 +44,6 @@ pub struct BlsSignedMessageShare {
 
 /// The output signature types
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum SignableOutput {
     /// Ecdsa signature shares
     EcdsaSignedMessageShare(EcdsaSignedMessageShare),

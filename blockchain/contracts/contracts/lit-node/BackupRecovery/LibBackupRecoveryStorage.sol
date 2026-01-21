@@ -64,8 +64,6 @@ library LibBackupRecoveryStorage {
         RecoveryKey[] registeredRecoveryKeys;
         bytes sessionId;
         uint256 partyThreshold;
-        mapping(string => bool) keySetIdExists;
-        string[] keySetIds;
     }
 
     struct K256Proof {

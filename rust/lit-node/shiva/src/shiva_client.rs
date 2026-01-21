@@ -42,10 +42,8 @@ impl ShivaClient {
         let testnet_instance = testnet_instances.iter().find(|instance| instance.id == id);
         if let Some(instance) = testnet_instance {
             Ok(TestNetInfo {
-                contract_addresses: ContractAddresses::new(
-                    &instance.test_net.actions().contracts(),
-                ),
-                contract_abis: ContractAbis::new(&instance.test_net.actions().contracts())?,
+                contract_addresses: ContractAddresses::new(instance.contracts.contract_addresses()),
+                contract_abis: ContractAbis::new(&instance.contracts)?,
                 validator_addresses: instance.validators.addresses().clone(),
                 epoch_length: instance.epoch_length,
                 contract_resolver_abi: instance.resolver_abi()?,

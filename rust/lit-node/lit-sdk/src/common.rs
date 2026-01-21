@@ -37,7 +37,8 @@ impl FromStr for UrlPrefix {
             "http" => Ok(Self::Http),
             "https" => Ok(Self::Https),
             _ => Err(SdkError::Parse(format!(
-                "invalid url prefix '{s}'. Expected 'http' or 'https'"
+                "invalid url prefix '{}'. Expected 'http' or 'https'",
+                s
             ))),
         }
     }

@@ -26,7 +26,7 @@ pub async fn handle_node_share_set(
 
     let round_number = parsed.round;
 
-    let channel_id = format!("{operation_type_and_id}-{round_number}");
+    let channel_id = format!("{}-{}", operation_type_and_id, round_number);
     let created = SystemTime::now();
     // to be deleted when network reaches v0.2.15 -> this translates the incoming codes.
     let key = entry.key;

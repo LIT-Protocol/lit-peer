@@ -125,14 +125,14 @@ pub async fn single_link_fault_transient_oneway() {
     let node_0_address = validator_collection
         .get_validator_by_account(&testnet.node_accounts[0])
         .unwrap()
-        .socket_address();
+        .node_address();
 
     // Get staker address of the validator voting to kick (node 1)
     let node_1_staker_address = testnet.node_accounts[1].staker_address;
     let node_1_address = validator_collection
         .get_validator_by_account(&testnet.node_accounts[1])
         .unwrap()
-        .socket_address();
+        .node_address();
     info!(
         "Waiting for staker {} at {} to vote to kick staker {} at {}",
         node_1_staker_address, node_1_address, node_0_staker_address, node_0_address

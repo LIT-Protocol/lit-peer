@@ -19,7 +19,6 @@ describe('Staking', function () {
   let signers;
   let token;
   let routerContract;
-  let routerViews;
   let pkpNft;
   let stakingAccount1;
   let nodeAccount1;
@@ -140,7 +139,7 @@ describe('Staking', function () {
       await contractResolver.getAddress(),
       0,
       {
-        additionalFacets: ['PubkeyRouterFacet', 'PubkeyRouterViewsFacet'],
+        additionalFacets: ['PubkeyRouterFacet'],
         verifyContracts: false,
         waitForDeployment: false,
       }
@@ -148,10 +147,6 @@ describe('Staking', function () {
     routerDiamond = deployResult.diamond;
     routerContract = await ethers.getContractAt(
       'PubkeyRouterFacet',
-      await routerDiamond.getAddress()
-    );
-    routerViews = await ethers.getContractAt(
-      'PubkeyRouterViewsFacet',
       await routerDiamond.getAddress()
     );
 
@@ -164,7 +159,6 @@ describe('Staking', function () {
       stakingContract: stakingValidatorFacet,
       pkpContract: pkpNft,
       pubkeyRouterContract: routerContract,
-      pubkeyRouterViewsContract: routerViews,
     });
 
     await stakingKeySetsFacet.setKeySet({
@@ -176,7 +170,7 @@ describe('Staking', function () {
       realms: [1],
       curves: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
       counts: [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
-      recoverySessionId: '0x',
+      recoveryPartyMembers: [],
     });
 
     await token.mint(deployer.address, totalTokens);
@@ -1315,7 +1309,7 @@ describe('Staking', function () {
       await expect(
         stakingAdminFacet.setConfig({
           tokenRewardPerTokenPerEpoch: 1,
-          keyTypes_deprecated: [],
+          keyTypes: [1, 2, 3],
           minimumValidatorCount: 1,
           rewardEpochDuration: 1,
           maxTimeLock: 1,
@@ -1558,7 +1552,7 @@ async function updateMinimumValidatorCount(
 
   await stakingAdminFacet.setConfig({
     tokenRewardPerTokenPerEpoch: currentConfig.tokenRewardPerTokenPerEpoch,
-    keyTypes_deprecated: currentConfig.keyTypes_deprecated,
+    keyTypes: [...(await stakingViewsFacet.getKeyTypes())],
     minimumValidatorCount: newMinimumValidatorCount,
     rewardEpochDuration: currentConfig.rewardEpochDuration,
     maxTimeLock: currentConfig.maxTimeLock,

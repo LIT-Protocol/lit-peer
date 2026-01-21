@@ -75,7 +75,7 @@ fn get_chain_derivation_prefix_for_chain_name(chain_name: &String) -> Result<Str
         "evmosCosmos" | "evmosCosmosTestnet" => Ok(CHAIN_EVMOS.to_string()),
         CHAIN_JUNO => Ok(CHAIN_JUNO.to_string()),
         _ => Err(validation_err_code(
-            format!("invalid chain for cosmos: {chain_name}"),
+            format!("invalid chain for cosmos: {}", chain_name),
             EC::NodeBlockchainChainUnknown,
             None,
         )),

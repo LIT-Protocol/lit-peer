@@ -44,7 +44,7 @@ impl ChatterClientFactory {
         dest_peer: Url,
         lit_config: Arc<LitConfig>,
     ) -> Result<ChatterServiceClient<Channel>> {
-        trace!("Creating a new grpc client");
+        debug!("Creating a new grpc client");
         let uri = dest_peer.as_str().parse().expect("Failed to parse URL");
         let timeout = match lit_config.chatter_client_timeout() {
             Ok(t) => Duration::from_secs(t),
@@ -53,7 +53,7 @@ impl ChatterClientFactory {
                 Duration::from_millis(CFG_KEY_SIGNING_ROUND_TIMEOUT_MS_DEFAULT as u64)
             }
         };
-        trace!("GRPC client timeout {} ms", timeout.as_millis());
+        debug!("GRPC client timeout {} ms", timeout.as_millis());
         match Channel::builder(uri)
             .timeout(timeout)
             .keep_alive_while_idle(true)
@@ -66,7 +66,7 @@ impl ChatterClientFactory {
             Ok(channel) => Ok(ChatterServiceClient::new(channel)),
             Err(e) => Err(unexpected_err(
                 e,
-                Some(format!("Failed to connect to peer: {dest_peer}")),
+                Some(format!("Failed to connect to peer: {}", dest_peer)),
             )),
         }
     }

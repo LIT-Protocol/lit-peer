@@ -59,6 +59,7 @@ pub struct ContractAddresses {
     pub pkp_permissions: String,
     pub pkp_helper: String,
     pub contract_resolver: String,
+    pub key_deriver: String,
     pub payment_delegation: String,
 }
 

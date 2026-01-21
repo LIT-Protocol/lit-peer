@@ -1,5 +1,5 @@
 use crate::metrics;
-use ethers::types::{Bytes, U256};
+use ethers::types::{Address, Bytes, U256};
 use lit_blockchain::util::decode_revert;
 use lit_core::error::Unexpected;
 use lit_observability::channels::TracedReceiver;
@@ -17,7 +17,7 @@ use lit_core::config::ReloadableLitConfig;
 
 use crate::config::chain::ChainDataConfigManager;
 use crate::error::Result;
-use crate::peers::peer_state::models::{NetworkState, SimplePeer};
+use crate::peers::peer_state::models::NetworkState;
 use lit_node_core::CurveType;
 
 use super::PeerState;
@@ -60,9 +60,10 @@ impl PartialEq for Issue {
 
 #[derive(Debug)]
 pub struct PeerComplaint {
-    pub complainer: SimplePeer,
+    pub complainer: String,
     pub issue: Issue,
-    pub against_peer: SimplePeer,
+    pub peer_node_staker_address: Address,
+    pub peer_node_socket_address: String,
 }
 
 #[derive(Debug)]
@@ -132,7 +133,7 @@ impl PeerReviewer {
                 }
                 Ok((chan_msg, span)) = self.rx.recv_async() => {
                     let complaint = chan_msg.data();
-                    info!("Received complaint {:?} about peer {}.", complaint.issue, complaint.against_peer.debug_address());
+                    info!("Received complaint ({complaint:?})");
                     if let Err(e) = self.remember_complaint(complaint).instrument(span).await {
                         error!("Failed to remember complaint: {:?}", e);
                     }
@@ -161,8 +162,8 @@ impl PeerReviewer {
             return Ok(()); // don't complain about peers if we are restoring or paused
         }
 
-        let peer_key = complaint.against_peer.staker_address;
-        let peer_key_socket_address = complaint.against_peer.debug_address();
+        let peer_key = complaint.peer_node_staker_address;
+        let peer_key_address = complaint.peer_node_socket_address.clone();
         let peer_complaints_tracker = match self
             .peer_key_to_complaints_tracker
             .get_mut(&peer_key.to_string())
@@ -176,11 +177,11 @@ impl PeerReviewer {
                         &[
                             KeyValue::new(
                                 metrics::complaint::ATTRIBUTE_COMPLAINT_REASON,
-                                format!("{key:?}"),
+                                format!("{:?}", key),
                             ),
                             KeyValue::new(
                                 metrics::complaint::ATTRIBUTE_EVICTION_CAUSE,
-                                format!("{cause:?}"),
+                                format!("{:?}", cause),
                             ),
                             KeyValue::new(
                                 metrics::complaint::ATTRIBUTE_PEER_KEY,
@@ -247,8 +248,8 @@ impl PeerReviewer {
         };
 
         info!(
-            "Remembering complaint #{:?} for peer {}.  Tolerance is {:?}",
-            number_of_complaints.counter, peer_key_socket_address, complaint_reason_tolerance
+            "Remembering complaint #{:?} for peer {:?} ({}).  Tolerance is {:?}",
+            number_of_complaints.counter, peer_key, peer_key_address, complaint_reason_tolerance
         );
 
         metrics::counter::add_one(
@@ -271,11 +272,7 @@ impl PeerReviewer {
     // post to blockchain
     #[instrument(level = "debug", skip(self))]
     pub async fn escalate_complaint(&self, complaint: &PeerComplaint) {
-        info!(
-            "Escalating complaint for peer {}. Issue: {:?}",
-            complaint.against_peer.debug_address(),
-            complaint.issue
-        );
+        info!("Escalating complaint ({:?})", complaint);
         let config = self.config.load_full();
         let resolver =
             ContractResolver::try_from(config.as_ref()).expect("failed to load ContractResolver");
@@ -284,7 +281,7 @@ impl PeerReviewer {
             .peer_state
             .staking_contract
             .kick_validator_in_next_epoch(
-                complaint.against_peer.staker_address,
+                complaint.peer_node_staker_address,
                 U256::from(complaint.issue.value()),
                 Bytes::from(vec![]),
             )
@@ -292,12 +289,7 @@ impl PeerReviewer {
             .await
         {
             Ok(_) => {
-                warn!(
-                    "Voted to kick peer {}, with staker address {}. Final complaint was: {:?}",
-                    complaint.against_peer.debug_address(),
-                    complaint.against_peer.staker_address,
-                    complaint.issue
-                );
+                warn!("voted to kick peer. Final complaint was: {:?}", complaint);
                 metrics::counter::add_one(
                     metrics::complaint::ComplaintMetrics::VotedToKick,
                     &[
@@ -307,17 +299,16 @@ impl PeerReviewer {
                         ),
                         KeyValue::new(
                             metrics::complaint::ATTRIBUTE_PEER_KEY,
-                            complaint.against_peer.staker_address.to_string(),
+                            complaint.peer_node_staker_address.to_string(),
                         ),
                     ],
                 );
             }
             // NOTE: the below is trace because inactive nodes also kickvote, but the TX will revert which is intended
             Err(e) => trace!(
-                "failed to vote to kick peer {} w/ err {:?}. Final complaint was {:?}",
-                complaint.against_peer.debug_address(),
+                "failed to vote to kick peer w/ err {:?}. Final complaint was {:?}",
                 decode_revert(&e, self.peer_state.staking_contract.abi()),
-                complaint.issue
+                complaint
             ),
         }
     }

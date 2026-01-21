@@ -118,7 +118,7 @@ impl SessionCapabilityObject for RecapSessionCapabilityObject {
         let (recap_namespace, recap_ability) =
             get_recap_namespace_and_ability(requested_lit_resource_ability.get_ability())?;
         let recap_ability_to_check_for = RecapSessionCapabilityObject::as_recap_ability(
-            format!("{recap_namespace}/{recap_ability}").as_ref(),
+            format!("{}/{}", recap_namespace, recap_ability).as_ref(),
         )?;
 
         // Find an attenuated resource key to match against.
@@ -254,7 +254,7 @@ mod extract_and_verify_tests {
         let resource_prefix = format!("{}://*", LitResourcePrefix::ACC);
         let capabilities = capabilities.with_actions_convert(resource_prefix, [(resource, [])]);
         if let Err(e) = capabilities {
-            panic!("Error: {e:?}");
+            panic!("Error: {:?}", e);
         }
         let capabilities = capabilities.unwrap();
 
@@ -262,7 +262,7 @@ mod extract_and_verify_tests {
         let resource_prefix = format!("{}://*", LitResourcePrefix::LA);
         let capabilities = capabilities.with_actions_convert(resource_prefix, [(resource, [])]);
         if let Err(e) = capabilities {
-            panic!("Error: {e:?}");
+            panic!("Error: {:?}", e);
         }
         let capabilities = capabilities.unwrap();
 
@@ -320,7 +320,7 @@ mod extract_and_verify_tests {
         let resource_prefix = format!("{}://*", LitResourcePrefix::ACC);
         let capabilities = capabilities.with_actions_convert(resource_prefix, [(resource, [])]);
         if let Err(e) = capabilities {
-            panic!("Error: {e:?}");
+            panic!("Error: {:?}", e);
         }
         let capabilities = capabilities.unwrap();
 

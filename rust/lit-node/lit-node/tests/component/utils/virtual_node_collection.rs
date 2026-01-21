@@ -245,7 +245,7 @@ impl VirtualNodeCollection {
         let port = addr
             .clone()
             .split(':')
-            .next_back()
+            .last()
             .unwrap()
             .to_string()
             .parse()
@@ -426,7 +426,7 @@ async fn load_virtual_node_defaults(
     TracedReceiver<NodeTransmissionDetails>,
 ) {
     let cfg = load_cfg().expect("failed to load LitConfig");
-    let addr = format!("127.0.0.1:{port}");
+    let addr = format!("127.0.0.1:{}", port);
     let (peer_checker_tx, _pc_rx) = flume::bounded(10000);
 
     let chain_data_manager =

@@ -4,7 +4,7 @@ const go = async () => {
     const _ = await Lit.Actions.call({ ipfsId: 'QmRwN9GKHvCn4Vk7biqtr6adjXMs7PzzYPCzNCRjPFiDjm', params: {
         toSign: Array.from(toSign),
         publicKey,
-        sigName,
+        sigName
     }});
   };
 go();

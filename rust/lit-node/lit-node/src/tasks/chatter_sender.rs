@@ -59,7 +59,9 @@ pub async fn chatter_sender_worker(
                 let peer_state = peer_state.clone();
                 let peer_addr = transmission_details.dest_peer.socket_address.clone();
                 let dest_url = match Url::parse(format!(
-                    "{prefix}{peer_addr}/"
+                    "{}{}/",
+                    prefix,
+                    peer_addr
                 ).as_str()) {
                     Ok(url) => url,
                     Err(e) => {
@@ -97,19 +99,22 @@ pub async fn chatter_sender_worker(
                                 match e.code() {
                                     Code::Cancelled | Code::DeadlineExceeded | Code::Unavailable => {
                                         // Complain
-                                        warn!("Peer {:?} is unresponsive. Complaining.", transmission_details.dest_peer.debug_address());
-                                        if let Ok(complainer) = peer_state.self_peer() {
-                                            let complaint_channel = peer_state.complaint_channel.clone();
-                                            if let Err(e) = complaint_channel
-                                                .send_async(PeerComplaint {
-                                                    complainer,
-                                                    issue: Issue::Unresponsive,
-                                                    against_peer: transmission_details.dest_peer.clone(),
-                                                })
-                                                .await
-                                            {
-                                                error!("Failed to send complaint to complaint_channel: {:?}", e);
-                                            }
+                                        warn!("Peer {:?} is unresponsive. Complaining.", transmission_details.dest_peer);
+                                        let complainer = peer_state.addr.clone();
+                                        let complaint_channel = peer_state.complaint_channel.clone();
+                                        if let Err(e) = complaint_channel
+                                            .send_async(PeerComplaint {
+                                                complainer,
+                                                issue: Issue::Unresponsive,
+                                                peer_node_staker_address: transmission_details.dest_peer.staker_address,
+                                                peer_node_socket_address: transmission_details
+                                                    .dest_peer
+                                                    .socket_address
+                                                    .clone(),
+                                            })
+                                            .await
+                                        {
+                                            error!("Failed to send complaint to complaint_channel: {:?}", e);
                                         }
                                     }
                                     _ => {}
@@ -225,23 +230,18 @@ async fn create_client(
                 "Peer {:?} is unresponsive. Complaining.",
                 transmission_details.dest_peer.socket_address
             );
-            if let Ok(complainer) = peer_state.self_peer() {
-                let complaint_channel = peer_state.complaint_channel.clone();
-                if let Err(e) = complaint_channel
-                    .send_async(PeerComplaint {
-                        complainer,
-                        issue: Issue::Unresponsive,
-                        against_peer: transmission_details.dest_peer.clone(),
-                    })
-                    .await
-                {
-                    error!("Failed to send complaint to channel: {:?}", e);
-                }
-            } else {
-                error!(
-                    "Failed to get self peer whene attempting to complain about unresponsive peer.  Error: {:?}",
-                    e
-                );
+            let complainer = peer_state.addr.clone();
+            let complaint_channel = peer_state.complaint_channel.clone();
+            if let Err(e) = complaint_channel
+                .send_async(PeerComplaint {
+                    complainer,
+                    issue: Issue::Unresponsive,
+                    peer_node_staker_address: transmission_details.dest_peer.staker_address,
+                    peer_node_socket_address: transmission_details.dest_peer.socket_address.clone(),
+                })
+                .await
+            {
+                error!("Failed to send complaint to channel: {:?}", e);
             }
             Err(e)
         }

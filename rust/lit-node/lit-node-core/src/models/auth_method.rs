@@ -5,7 +5,6 @@ use std::fmt::{self, Debug, Display, Formatter};
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 #[cfg_attr(test, derive(Debug))]
-#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct AuthMethod {
     pub auth_method_type: u32,

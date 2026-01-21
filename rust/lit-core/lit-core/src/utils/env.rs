@@ -40,7 +40,7 @@ pub fn parse_env<R: Read>(reader: &mut BufReader<R>) -> Result<Vec<(String, Stri
 
     let mut substitution_data = HashMap::new();
 
-    for line in reader.lines() {
+    for (_, line) in reader.lines().enumerate() {
         let line = line.unwrap();
 
         match parse_line(line.as_str(), &mut substitution_data) {
@@ -253,7 +253,7 @@ fn parse_value(
                         } else {
                             apply_substitution(
                                 substitution_data,
-                                &std::mem::take(&mut substitution_name),
+                                &substitution_name.drain(..).collect::<String>(),
                                 &mut output,
                             );
                             if c == '$' {
@@ -273,7 +273,7 @@ fn parse_value(
                             substitution_mode = SubstitutionMode::None;
                             apply_substitution(
                                 substitution_data,
-                                &std::mem::take(&mut substitution_name),
+                                &substitution_name.drain(..).collect::<String>(),
                                 &mut output,
                             );
                         } else {
@@ -317,7 +317,11 @@ fn parse_value(
             if value_length == 0 { 0 } else { value_length - 1 },
         ))
     } else {
-        apply_substitution(substitution_data, &std::mem::take(&mut substitution_name), &mut output);
+        apply_substitution(
+            substitution_data,
+            &substitution_name.drain(..).collect::<String>(),
+            &mut output,
+        );
         Ok(output)
     }
 }

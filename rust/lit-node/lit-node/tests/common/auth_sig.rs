@@ -67,16 +67,17 @@ pub async fn generate_authsig(wallet: &Wallet<SigningKey>) -> Result<JsonAuthSig
         .to_rfc3339_opts(SecondsFormat::Millis, true);
     let message = format!(
         "localhost wants you to sign in with your Ethereum account:
-{address}
+{}
 
 This is a key for a Lit Action Test.
 
 URI: https://localhost/
 Version: 1
-Chain ID: {chain_id}
+Chain ID: {}
 Nonce: 1LF00rraLO4f7ZSIt
-Issued At: {issue_datetime}
-Expiration Time: {expiration_datetime}"
+Issued At: {}
+Expiration Time: {}",
+        address, chain_id, issue_datetime, expiration_datetime
     );
 
     // Sign the message
@@ -227,7 +228,7 @@ pub fn get_auth_sig_for_session_sig(
             domain: "localhost:3000".parse().unwrap(),
             address: wallet.address().into(),
             statement: Some(r#"Some custom statement. "#.into()),
-            uri: format!("lit:session:{session_pub_key}").parse().unwrap(),
+            uri: format!("lit:session:{}", session_pub_key).parse().unwrap(),
             version: siwe::Version::V1,
             chain_id: 1,
             nonce: "JIsknRumpxsM9pqmc".into(),
@@ -271,7 +272,7 @@ pub fn get_session_sigs_for_auth(
     let verifying_key = signing_key.verifying_key();
     let session_pub_key = encoding::bytes_to_hex(verifying_key.to_bytes());
 
-    // Sign SIWE first using the local wallet.
+    // Sign SIWE first.
     let auth_sig = get_auth_sig_for_session_sig(
         session_pub_key.clone(),
         auth_sig_wallet,
@@ -402,7 +403,7 @@ pub async fn get_session_delegation_sig_for_pkp(
 
     let serialized_signature = match serde_json::to_string(&signature) {
         Ok(s) => s,
-        Err(e) => panic!("Failed to serialize signature: {e:?}"),
+        Err(e) => panic!("Failed to serialize signature: {:?}", e),
     };
 
     Ok(JsonAuthSig::new(
@@ -506,9 +507,9 @@ pub async fn get_auth_sig_for_session_sig_from_nodes(
     epoch: u64,
 ) -> Result<Vec<GenericResponse<JsonSignSessionKeyResponseV2>>> {
     let results = lit_sdk::HandshakeRequest::new()
-        .node_set_from_iter(node_set.keys())
+        .node_set_from_iter(node_set.iter().map(|(n, _)| n))
         .url_prefix(lit_sdk::UrlPrefix::Http)
-        .challenge("0x123412341234123412341234123412341234".to_string())
+        .challenge("0x1234123412341234123412341234123412341234123412341234123412341234".to_string())
         .client_public_key("blah".to_string())
         .build()
         .unwrap()
@@ -519,7 +520,7 @@ pub async fn get_auth_sig_for_session_sig_from_nodes(
     // Get latest blockhash for the nonce
     let responses = results
         .results()
-        .iter()
+        .into_iter()
         .map(|result| {
             assert!(result.ok);
             result.data.as_ref().unwrap().to_owned()
@@ -544,7 +545,7 @@ pub async fn get_auth_sig_for_session_sig_from_nodes(
             domain: "localhost:3000".parse()?,
             address: *eth_address,
             statement: Some(r#"I am delegating to a session key"#.into()),
-            uri: format!("lit:session:{session_pub_key}").parse()?,
+            uri: format!("lit:session:{}", session_pub_key).parse()?,
             version: siwe::Version::V1,
             chain_id: 1,
             nonce: latest_blockhash.to_string(),
@@ -569,14 +570,17 @@ pub async fn get_auth_sig_for_session_sig_from_nodes(
     );
     let is_testing_without_auth_method = code == Some(session_sig_lit_action_code);
 
-    let nodes = node_set.keys().cloned().collect::<Vec<NodeSet>>();
+    let nodes = node_set
+        .iter()
+        .map(|(node, _)| node.clone())
+        .collect::<Vec<NodeSet>>();
     let signing_request = JsonSignSessionKeyRequestV2 {
         auth_sig: if pass_auth_sig {
             Some(auth_sig.clone())
         } else {
             None
         },
-        session_key: format!("lit:session:{session_pub_key}").parse()?,
+        session_key: format!("lit:session:{}", session_pub_key).parse()?,
         auth_methods: if is_testing_without_auth_method {
             vec![]
         } else {
@@ -594,7 +598,6 @@ pub async fn get_auth_sig_for_session_sig_from_nodes(
         epoch,
         node_set: nodes,
         max_price: U256::MAX,
-        pkp_key_set_id: None,
     };
 
     let mut secret_key = [0u8; 32];

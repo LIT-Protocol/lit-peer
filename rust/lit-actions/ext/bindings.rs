@@ -92,7 +92,6 @@ async fn op_pkp_permissions_get_permitted(
     state: Rc<RefCell<OpState>>,
     #[string] method: String,
     #[string] token_id: String,
-    #[string] key_set_id: String,
 ) -> Result<Vec<serde_json::Value>, JsErrorBox> {
     ensure_one_of!(
         method,
@@ -106,7 +105,7 @@ async fn op_pkp_permissions_get_permitted(
 
     remote_op_async!(op_pkp_permissions_get_permitted,
         state,
-        PkpPermissionsGetPermittedRequest { method, token_id, key_set_id },
+        PkpPermissionsGetPermittedRequest { method, token_id },
         UnionRequest::PkpPermissionsGetPermitted(resp) => serde_json::from_slice(&resp.resources).map_err(JsErrorBox::from_err)
     )
 }
@@ -120,7 +119,6 @@ async fn op_pkp_permissions_get_permitted_auth_method_scopes(
     #[string] method: String,
     #[buffer(copy)] user_id: Vec<u8>,
     #[bigint] max_scope_id: u64,
-    #[string] key_set_id: String,
 ) -> Result<Vec<bool>, JsErrorBox> {
     ensure_u256!(&token_id, "tokenId");
     ensure_u256!(&method, "authMethodType");
@@ -133,7 +131,6 @@ async fn op_pkp_permissions_get_permitted_auth_method_scopes(
             method,
             user_id,
             max_scope_id,
-            key_set_id,
         },
         UnionRequest::PkpPermissionsGetPermittedAuthMethodScopes(resp) => Ok(resp.scopes)
     )
@@ -146,7 +143,6 @@ async fn op_pkp_permissions_is_permitted(
     #[string] method: String,
     #[string] token_id: String,
     #[serde] params: Vec<serde_json::Value>,
-    #[string] key_set_id: String,
 ) -> Result<bool, JsErrorBox> {
     ensure_one_of!(method, ["isPermittedAction", "isPermittedAddress"]);
     ensure_u256!(&token_id, "tokenId");
@@ -158,7 +154,6 @@ async fn op_pkp_permissions_is_permitted(
             method,
             token_id,
             params: serde_json::to_vec(&params).map_err(JsErrorBox::from_err)?,
-            key_set_id,
         },
         UnionRequest::PkpPermissionsIsPermitted(resp) => Ok(resp.is_permitted)
     )
@@ -171,7 +166,6 @@ async fn op_pkp_permissions_is_permitted_auth_method(
     #[string] token_id: String,
     #[string] method: String,
     #[buffer(copy)] user_id: Vec<u8>,
-    #[string] key_set_id: String,
 ) -> Result<bool, JsErrorBox> {
     ensure_u256!(&token_id, "tokenId");
     ensure_u256!(&method, "authMethodType");
@@ -183,7 +177,6 @@ async fn op_pkp_permissions_is_permitted_auth_method(
             token_id,
             method,
             user_id,
-            key_set_id,
         },
         UnionRequest::PkpPermissionsIsPermittedAuthMethod(resp) => Ok(resp.is_permitted)
     )
@@ -219,13 +212,12 @@ async fn op_check_conditions(
 fn op_pubkey_to_token_id(
     state: &mut OpState,
     #[string] public_key: String,
-    #[string] key_set_id: String,
 ) -> Result<String, JsErrorBox> {
     ensure_not_blank!(public_key, "publicKey");
 
     remote_op!(op_pubkey_to_token_id,
         state,
-        PubkeyToTokenIdRequest { public_key, key_set_id },
+        PubkeyToTokenIdRequest { public_key },
         UnionRequest::PubkeyToTokenId(resp) => Ok(resp.token_id)
     )
 }
@@ -238,7 +230,6 @@ async fn op_sign_ecdsa(
     #[buffer(copy)] to_sign: Vec<u8>,
     #[string] public_key: String,
     #[string] sig_name: String,
-    #[string] key_set_id: String,
 ) -> Result<String, JsErrorBox> {
     ensure_not_empty!(to_sign, "toSign");
     ensure_not_blank!(public_key, "publicKey");
@@ -251,7 +242,6 @@ async fn op_sign_ecdsa(
             public_key,
             sig_name,
             eth_personal_sign: false,
-            key_set_id,
         },
         UnionRequest::SignEcdsa(resp) => Ok(resp.success)
     )
@@ -265,7 +255,6 @@ async fn op_sign_ecdsa_eth_personal_sign_message(
     #[buffer(copy)] to_sign: Vec<u8>,
     #[string] public_key: String,
     #[string] sig_name: String,
-    #[string] key_set_id: String,
 ) -> Result<String, JsErrorBox> {
     ensure_not_empty!(to_sign, "toSign");
     ensure_not_blank!(public_key, "publicKey");
@@ -278,7 +267,6 @@ async fn op_sign_ecdsa_eth_personal_sign_message(
             public_key,
             sig_name,
             eth_personal_sign: true,
-            key_set_id,
         },
         UnionRequest::SignEcdsa(resp) => Ok(resp.success)
     )
@@ -293,7 +281,6 @@ async fn op_sign(
     #[string] public_key: String,
     #[string] sig_name: String,
     #[string] signing_scheme: String,
-    #[string] key_set_id: String,
 ) -> Result<String, JsErrorBox> {
     ensure_not_empty!(to_sign, "toSign");
     ensure_not_blank!(public_key, "publicKey");
@@ -307,7 +294,6 @@ async fn op_sign(
             public_key,
             sig_name,
             signing_scheme,
-            key_set_id,
         },
         UnionRequest::Sign(resp) => Ok(resp.success)
     )
@@ -501,7 +487,6 @@ async fn op_decrypt_and_combine(
     #[string] data_to_encrypt_hash: String,
     #[serde] auth_sig: Option<serde_json::Value>, // AuthSigItem
     #[string] chain: String,
-    #[string] key_set_id: String,
 ) -> Result<String, JsErrorBox> {
     remote_op_async!(op_decrypt_and_combine,
         state,
@@ -511,7 +496,6 @@ async fn op_decrypt_and_combine(
             data_to_encrypt_hash,
             auth_sig: auth_sig.as_ref().map(serde_json::to_vec).transpose().map_err(JsErrorBox::from_err)?,
             chain,
-            key_set_id,
         },
         UnionRequest::DecryptAndCombine(resp) => Ok(resp.result)
     )
@@ -525,11 +509,10 @@ async fn op_sign_and_combine_ecdsa(
     #[buffer(copy)] to_sign: Vec<u8>,
     #[string] public_key: String,
     #[string] sig_name: String,
-    #[string] key_set_id: String,
 ) -> Result<String, JsErrorBox> {
     remote_op_async!(op_sign_and_combine_ecdsa,
         state,
-        SignAndCombineEcdsaRequest { to_sign, public_key, sig_name, key_set_id },
+        SignAndCombineEcdsaRequest { to_sign, public_key, sig_name },
         UnionRequest::SignAndCombineEcdsa(resp) => Ok(resp.result)
     )
 }
@@ -543,11 +526,10 @@ async fn op_sign_and_combine(
     #[string] public_key: String,
     #[string] sig_name: String,
     #[string] signing_scheme: String,
-    #[string] key_set_id: String,
 ) -> Result<String, JsErrorBox> {
     remote_op_async!(op_sign_and_combine,
         state,
-        SignAndCombineRequest { to_sign, public_key, sig_name, signing_scheme, key_set_id },
+        SignAndCombineRequest { to_sign, public_key, sig_name, signing_scheme },
         UnionRequest::SignAndCombine(resp) => Ok(resp.result)
     )
 }
@@ -611,14 +593,12 @@ async fn op_encrypt_bls(
     state: Rc<RefCell<OpState>>,
     #[serde] access_control_conditions: Vec<serde_json::Value>, // Vec<UnifiedAccessControlConditionItem>
     #[buffer(copy)] to_encrypt: Vec<u8>,
-    #[string] key_set_id: String,
 ) -> Result<serde_json::Value, JsErrorBox> {
     remote_op_async!(op_encrypt_bls,
         state,
         EncryptBlsRequest {
             access_control_conditions: serde_json::to_vec(&access_control_conditions).map_err(JsErrorBox::from_err)?,
             to_encrypt,
-            key_set_id,
         },
         UnionRequest::EncryptBls(resp) => Ok(json!({"ciphertext": resp.ciphertext, "dataToEncryptHash": resp.data_to_encrypt_hash}))
     )
@@ -634,7 +614,6 @@ async fn op_decrypt_to_single_node(
     #[string] data_to_encrypt_hash: String,
     #[serde] auth_sig: Option<serde_json::Value>, // AuthSigItem
     #[string] chain: String,
-    #[string] key_set_id: String,
 ) -> Result<String, JsErrorBox> {
     let auth_sig = match auth_sig {
         Some(auth_sig) => Some(serde_json::to_vec(&auth_sig).map_err(JsErrorBox::from_err)?),
@@ -648,7 +627,6 @@ async fn op_decrypt_to_single_node(
             data_to_encrypt_hash,
             auth_sig,
             chain,
-            key_set_id,
         },
         UnionRequest::DecryptToSingleNode(resp) => Ok(resp.result)
     )

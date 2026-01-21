@@ -43,7 +43,7 @@ pub async fn do_network_restore(
         .unwrap_or(NetworkState::Unknown);
 
     info!(
-        "Starting: FSM Restore polling (will try every {}s).  Shadow State: {}. Realm ID: {}, Current Network State: {:?}",
+        "Starting: FSM polling (will try every {}s).  Shadow State: {}. Realm ID: {}, Current Network State: {:?}",
         interval.period().as_secs(),
         is_shadow,
         realm_id,
@@ -172,18 +172,10 @@ pub async fn do_network_restore(
                     continue;
                 }
             };
-            let use_raw_peer_ids = match restore_state.pull_use_raw_peer_ids().await {
-                Ok(use_raw_peer_ids) => use_raw_peer_ids,
-                Err(e) => {
-                    error!("RestoredState: Failed to pull use raw peer ids: {}", e);
-                    continue;
-                }
-            };
             standard_dkg_manager.next_dkg_after_restore =
                 DkgAfterRestore::True(DkgAfterRestoreData {
                     peers: vec![],
                     key_cache,
-                    use_raw_peer_ids,
                 });
 
             report_progress(&cfg, NodeRecoveryStatus::AllKeysAreRestored).await;

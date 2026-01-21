@@ -53,7 +53,7 @@ pub fn verify_and_decrypt_with_signatures_shares(
     ciphertext: &TimeCryptCiphertext<Bls12381G2Impl>,
     shares: &[SignatureShare<Bls12381G2Impl>],
 ) -> SdkResult<Vec<u8>> {
-    let signature = Signature::from_shares(shares).map_err(SdkError::Bls)?;
+    let signature = Signature::from_shares(shares)?;
     verify_and_decrypt(public_key, identity, ciphertext, &signature)
 }
 

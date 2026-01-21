@@ -17,7 +17,6 @@ use crate::{
     tss::common::{
         models::{NodeTransmissionDetails, NodeWaitParams, RoundData},
         tss_state::TssState,
-        utils::validate_and_get_self_peer,
     },
 };
 use lit_core::error::Result;
@@ -77,8 +76,8 @@ impl CommsManager {
         let channels = register_comms_channel(tx_round_manager.clone(), txn_prefix, round).await?;
 
         let addr = &state.addr;
-        let own_staker_address = state.peer_state.hex_staker_address();
-        let self_peer = validate_and_get_self_peer(peers, addr, &own_staker_address)?;
+
+        let self_peer = peers.peer_at_address(addr)?;
 
         let wait_params = NodeWaitParams {
             channels: Some(channels.clone()),
@@ -165,27 +164,7 @@ impl CommsManager {
     where
         C: serde::de::DeserializeOwned,
     {
-        debug!(
-            "collect_from called with {} expected peers: {:?}",
-            expected_peers.0.len(),
-            expected_peers
-                .0
-                .iter()
-                .map(|p| (
-                    p.socket_address.clone(),
-                    p.peer_id.to_string(),
-                    p.staker_address.to_string()
-                ))
-                .collect::<Vec<_>>()
-        );
         let data = self.await_bytes_from(expected_peers, None).await?;
-        debug!(
-            "Received {} responses with peer IDs: {:?}",
-            data.len(),
-            data.iter()
-                .map(|(pid, _)| pid.to_string())
-                .collect::<Vec<_>>()
-        );
         let data = data
             .into_iter()
             .map(|(index, data)| {
@@ -193,7 +172,6 @@ impl CommsManager {
                 let data: C = serde_json::from_str(data).map_err(|e| {
                     unexpected_err(e, Some("Error while deserializing data".into()))
                 })?;
-                trace!("Mapped response to peer_id: {}", index);
                 Ok((index, data))
             })
             .collect::<Result<Vec<(PeerId, C)>>>()?;

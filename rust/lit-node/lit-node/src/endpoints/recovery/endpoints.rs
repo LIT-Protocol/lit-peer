@@ -45,13 +45,8 @@ pub async fn recovery_set_dec_shares(
     }
 
     info!(
-        "Recovery: Decryption shares corresponding to member {:?} uploaded to node for participant id {:?}",
-        request.auth_sig.address,
-        request
-            .share_data
-            .first()
-            .map(|s| s.participant_id)
-            .unwrap_or_default()
+        "Recovery: Decryption shares corresponding to member {:?} uploaded to node",
+        request.auth_sig.address
     );
     status::Custom(
         Status::Ok,
@@ -92,8 +87,8 @@ pub async fn recovery_set_dec_share(
     }
 
     info!(
-        "Recovery: Decryption share corresponding to member {:?} uploaded to node for participant id {:?}",
-        request.auth_sig.address, request.share_data.participant_id
+        "Recovery: Decryption share corresponding to member {:?} uploaded to node",
+        request.auth_sig.address
     );
     status::Custom(
         Status::Ok,

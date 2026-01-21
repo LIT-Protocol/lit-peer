@@ -26,7 +26,8 @@ pub fn decode_cbor_cose_key(key: Bytes) -> Result<(COSEKey, String)> {
             validation_err(
                 e,
                 Some(format!(
-                    "Expected CBOR encoded COSE key to be a map, got {value:?}"
+                    "Expected CBOR encoded COSE key to be a map, got {:?}",
+                    value
                 )),
             )
         })?;
@@ -126,7 +127,7 @@ pub fn decode_cbor_cose_key(key: Bytes) -> Result<(COSEKey, String)> {
             Ok((cose_key, ec_public_key_hex))
         }
         _ => Err(validation_err(
-            format!("Currently not supporting {key_type:?} key types"),
+            format!("Currently not supporting {:?} key types", key_type),
             None,
         )),
     }
@@ -150,7 +151,8 @@ fn get_cbor_map_value_by_key(cbor_map: &Vec<(Value, Value)>, key: i32) -> Result
             validation_err(
                 e,
                 Some(format!(
-                    "Map does not include key {key:?}, got {cbor_map:?}"
+                    "Map does not include key {:?}, got {:?}",
+                    key, cbor_map
                 )),
             )
         })?
@@ -165,7 +167,7 @@ fn map_usize_to_ecdsa_curve(ecdsa_curve_id: usize) -> Result<ECDSACurve> {
         3 => ECDSACurve::SECP521R1,
         _ => {
             return Err(validation_err(
-                format!("Unknown ECDSA curve id: {ecdsa_curve_id}"),
+                format!("Unknown ECDSA curve id: {}", ecdsa_curve_id),
                 None,
             ));
         }
@@ -181,7 +183,7 @@ fn map_usize_to_cose_key_type_id(key_type_id: usize) -> Result<COSEKeyTypeId> {
         4 => COSEKeyTypeId::EC_Symmetric,
         _ => {
             return Err(validation_err(
-                format!("Unknown key type id: {key_type_id}"),
+                format!("Unknown key type id: {}", key_type_id),
                 None,
             ));
         }
@@ -206,6 +208,6 @@ fn map_isize_to_cose_alg(alg_id: isize) -> Result<COSEAlgorithm> {
 
         -65535 => COSEAlgorithm::INSECURE_RS1,
 
-        _ => return Err(validation_err(format!("Unknown alg id: {alg_id}"), None)),
+        _ => return Err(validation_err(format!("Unknown alg id: {}", alg_id), None)),
     })
 }

@@ -240,7 +240,7 @@ async function deployLitNodeContracts(deployNodeConfig) {
     'PubkeyRouter',
     [deployNodeConfig.resolverContractAddress, deployEnvEnum],
     true,
-    ['PubkeyRouterFacet', 'PubkeyRouterViewsFacet'],
+    ['PubkeyRouterFacet'],
     false,
     deployNodeConfig.verifyContracts
   );
@@ -538,24 +538,6 @@ async function deployLitNodeContracts(deployNodeConfig) {
   tx = await stakingContract.addRealm();
   await tx.wait();
 
-  // Ensure the default keyset is set
-  let realmConfig = {
-    maxConcurrentRequests: 1000,
-    maxPresignCount: 25,
-    minPresignCount: 10,
-    peerCheckingIntervalSecs: 7,
-    maxPresignConcurrency: 2,
-    rpcHealthcheckEnabled: true,
-    minEpochForRewards: 3,
-    permittedValidatorsOn: false,
-    defaultKeySet: DEFAULT_KEY_SET_NAME,
-  };
-  // 1000n, 25n,   10n,
-  // 7n,    2n,    true,
-  // 3n,    false, ''
-  tx = await stakingContract.setRealmConfig(1, realmConfig);
-  await tx.wait();
-
   // set the default keyset config
   let defaultKeysetConfig = {
     identifier: DEFAULT_KEY_SET_NAME,
@@ -566,7 +548,7 @@ async function deployLitNodeContracts(deployNodeConfig) {
     realms: [1],
     curves: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
     counts: [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
-    recoverySessionId: '0x',
+    recoveryPartyMembers: [],
   };
   tx = await stakingContract.setKeySet(defaultKeysetConfig);
   await tx.wait();

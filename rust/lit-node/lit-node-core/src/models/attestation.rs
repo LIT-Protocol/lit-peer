@@ -3,14 +3,11 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 
-/// Supported attestation types for node verification.
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[allow(unused)]
 pub enum AttestationType {
-    /// AMD SEV-SNP (Secure Encrypted Virtualization - Secure Nested Paging) attestation.
     AmdSevSnp,
-    /// Admin-signed attestation for development/testing.
     AdminSigned,
 }
 
@@ -31,7 +28,8 @@ impl FromStr for AttestationType {
             "AMD_SEV_SNP" => Ok(AttestationType::AmdSevSnp),
             "ADMIN_SIGNED" => Ok(AttestationType::AdminSigned),
             _ => Err(Error::InvalidType(format!(
-                "{s} is not a valid AttestationType",
+                "{} is not a valid AttestationType",
+                s
             ))),
         }
     }

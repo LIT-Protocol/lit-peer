@@ -95,7 +95,7 @@ impl<'a> StandardRpcHealthcheckPoller<'a> {
     }
 }
 
-impl RpcHealthcheckPoller for StandardRpcHealthcheckPoller<'_> {
+impl<'a> RpcHealthcheckPoller for StandardRpcHealthcheckPoller<'a> {
     fn get_latencies(&self) -> &ArcSwap<HashMap<RpcEntry, Latency>> {
         &self.latencies
     }
@@ -435,16 +435,16 @@ impl RpcResolver {
 }
 
 fn create_provider(rpc_entry: &RpcEntry) -> Result<Arc<Provider<Http>>> {
-    let http_cache = HTTP_CLIENT.get_or_init(scc::HashIndex::default);
+    let http_cache = HTTP_CLIENT.get_or_init(|| scc::HashIndex::default());
 
-    let guard = scc::Guard::new();
+    let guard = scc::ebr::Guard::new();
     let provider = match http_cache.peek(rpc_entry.url(), &guard) {
         Some(provider) => provider.clone(),
         None => {
             let provider = Arc::new(rpc_provider(rpc_entry)?);
-            // If it already exists, we'll temporarily have two providers which is okay
-            // Once this one goes out of scope, it will be dropped freeing resources
-            let _ = http_cache.insert_sync(rpc_entry.url().to_owned(), provider.clone());
+            http_cache
+                .insert(rpc_entry.url().to_owned(), provider.clone())
+                .map_err(|_| unexpected_err("how does it already exist?", None))?;
             provider
         }
     };

@@ -19,8 +19,8 @@ use lit_node_core::{
 };
 use lit_rust_crypto::{
     blsful::{
-        self, Bls12381G2Impl, Pairing, PublicKey, SecretKey, SecretKeyShare, Signature,
-        SignatureSchemes, SignatureShare,
+        Bls12381G2Impl, Pairing, PublicKey, SecretKey, SecretKeyShare, Signature, SignatureSchemes,
+        SignatureShare,
         inner_types::{G1Projective, Scalar},
     },
     ed448_goldilocks,
@@ -203,11 +203,8 @@ pub async fn compute_key_share_proof(
         );
 
         let sks = secret_key_share
-            .sign(
-                blsful::SignatureSchemes::ProofOfPossession,
-                noonce.as_bytes(),
-            )
-            .map_err(|e| unexpected_err(format!("Failed to sign message: {e:?}"), None))?;
+            .sign(SignatureSchemes::ProofOfPossession, noonce.as_bytes())
+            .map_err(|e| unexpected_err(format!("Failed to sign message: {:?}", e), None))?;
 
         return postcard::to_stdvec(&sks)
             .map_err(|e| unexpected_err(e, Some("cannot serialize BLS proof".to_string())));
@@ -384,13 +381,13 @@ pub async fn verify_key_share_proofs(
 
     if !peers.contains_address(their_addr) {
         return Err(unexpected_err(
-            format!("Peer {their_addr} not found in the set"),
+            format!("Peer {} not found in the set", their_addr),
             None,
         ));
     }
     if key_share_proofs.proofs.is_empty() {
         return Err(unexpected_err_code(
-            format!("Peer {their_addr} has no key share proofs"),
+            format!("Peer {} has no key share proofs", their_addr),
             EC::IncorrectInfoForKeyShareValidation,
             None,
         ));

@@ -14,7 +14,7 @@ pub async fn get_random_peer_within_deterministic_subset(actions: &Actions) -> R
     // Get the sorted peers from chain.
     let sorted_validators = get_sorted_peers(actions, U256::from(1))
         .await
-        .map_err(|e| anyhow::anyhow!("failed to get sorted peers: {e:?}"))?;
+        .map_err(|e| anyhow::anyhow!("failed to get sorted peers: {:?}", e))?;
 
     // Get a random address within the deterministic subset.
     let mut rng = rand::thread_rng();
@@ -43,7 +43,7 @@ pub async fn get_sorted_peers(actions: &Actions, realm_id: U256) -> Result<Vec<S
         .staking
         .get_kicked_validators(realm_id)
         .await
-        .map_err(|e| anyhow::anyhow!("failed to get kicked validators: {e:?}"))?;
+        .map_err(|e| anyhow::anyhow!("failed to get kicked validators: {:?}", e))?;
 
     // Get the address mapping.
     let address_mapping = actions
@@ -82,7 +82,7 @@ pub async fn get_simple_peer_collection(
         .await?;
 
     for i in 0..validator_collection.validator_count() {
-        let validator = validator_collection.get_validator_by_index(i);
+        let validator = validator_collection.get_validator_by_idx(i);
         let attested_wallet = mappings[i].as_ref().unwrap();
         let mut wallet_public_key_bytes = vec![4u8; 65];
         attested_wallet

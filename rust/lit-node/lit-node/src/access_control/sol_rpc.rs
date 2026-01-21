@@ -365,7 +365,7 @@ pub async fn check_condition(
         "getHealth" => RpcRequest::GetHealth,
         _ => {
             return Err(validation_err_code(
-                format!("Unsupported Solana RPC method: {rpc_method}"),
+                format!("Unsupported Solana RPC method: {}", rpc_method),
                 EC::NodeInvalidSolanaRpcMethod,
                 None,
             ));
@@ -888,7 +888,7 @@ mod tests {
             },
         };
         let check_balance_condition =
-            check_condition(&address_condition, &get_auth_sig(), "", None).await;
+            check_condition(&address_condition, &get_auth_sig(), &"".to_string(), None).await;
         assert!(check_balance_condition.is_ok());
         assert!(check_balance_condition.unwrap());
     }

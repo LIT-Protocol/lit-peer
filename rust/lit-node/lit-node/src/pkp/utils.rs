@@ -1,20 +1,10 @@
 use crate::{
-    config::chain::ChainDataConfigManager,
     error::validation_err_code,
     models::AuthContext,
     peers::PeerState,
-    pkp::{
-        auth::verify_auth_method_for_claim,
-        utils_datil::{
-            datil_get_pubkey_routing_data_from_pubkey,
-            datil_pkp_permissions_is_permitted_auth_method,
-        },
-    },
+    pkp::auth::verify_auth_method_for_claim,
     tss::common::{storage::any_key_share_exists, tss_state::TssState},
-    utils::{
-        datil_contract::is_datil_key_set_id,
-        encoding::{self, ipfs_cid_to_bytes, string_to_eth_address, string_to_u256},
-    },
+    utils::encoding::{self, ipfs_cid_to_bytes, string_to_eth_address, string_to_u256},
 };
 
 use crate::error::{
@@ -32,7 +22,6 @@ use std::sync::Arc;
 use tracing::instrument;
 
 use super::auth::serialize_auth_context_for_checking_against_contract_data;
-use crate::models::PubKeyRoutingData;
 use ethers::{signers::Signer, types::U256};
 use lit_blockchain::contracts::load_wallet;
 use lit_node_core::NodeSet;
@@ -46,8 +35,6 @@ pub async fn pkp_permissions_is_permitted(
     cfg: &LitConfig,
     method: String,
     params: Vec<Value>,
-    key_set_id: &str,
-    cdm: &ChainDataConfigManager,
 ) -> Result<bool> {
     let resolver = ContractResolver::try_from(cfg)
         .map_err(|e| unexpected_err_code(e, EC::NodeContractResolverConversionFailed, None))?;
@@ -170,14 +157,14 @@ pub async fn pkp_permissions_is_permitted(
             .await;
     } else {
         return Err(unexpected_err_code(
-            format!("Method not found: {method}"),
+            format!("Method not found: {}", method),
             NodeUnknownError,
             None,
         ));
     }
 
     res.map_err(|e| {
-        let msg = format!("Error calling {method}: {e}");
+        let msg = format!("Error calling {}: {}", method, e);
         error!("{}", msg);
         unexpected_err_code(e, NodeUnknownError, Some(msg))
     })
@@ -188,21 +175,7 @@ pub async fn pkp_permissions_is_permitted_auth_method(
     cfg: &LitConfig,
     auth_method_type_str: String,
     user_id_vec: Vec<u8>,
-    key_set_id: &str,
-    cdm: &ChainDataConfigManager,
 ) -> Result<bool> {
-    if is_datil_key_set_id(key_set_id) {
-        return datil_pkp_permissions_is_permitted_auth_method(
-            token_id_str,
-            cfg,
-            auth_method_type_str,
-            user_id_vec,
-            key_set_id,
-            cdm,
-        )
-        .await;
-    }
-
     let resolver = ContractResolver::try_from(cfg)
         .map_err(|e| unexpected_err_code(e, EC::NodeContractResolverConversionFailed, None))?;
     let contract = resolver.pkp_permissions_contract(cfg).await?;
@@ -239,7 +212,7 @@ pub async fn pkp_permissions_is_permitted_auth_method(
         .call()
         .await
         .map_err(|e| {
-            let msg = format!("Error calling isPermittedAuthMethod: {e}");
+            let msg = format!("Error calling isPermittedAuthMethod: {}", e);
             error!("{}", msg);
             unexpected_err_code(e, NodeUnknownError, Some(msg))
         })
@@ -269,7 +242,11 @@ pub async fn pkp_permissions_get_permitted(
             .call()
             .await
             .map_err(|e| {
-                unexpected_err_code(e, NodeUnknownError, Some(format!("Error calling {method}")))
+                unexpected_err_code(
+                    e,
+                    NodeUnknownError,
+                    Some(format!("Error calling {}", method)),
+                )
             })?;
         ret_val = res
             .iter()
@@ -281,7 +258,11 @@ pub async fn pkp_permissions_get_permitted(
             .call()
             .await
             .map_err(|e| {
-                unexpected_err_code(e, NodeUnknownError, Some(format!("Error calling {method}")))
+                unexpected_err_code(
+                    e,
+                    NodeUnknownError,
+                    Some(format!("Error calling {}", method)),
+                )
             })?;
         ret_val = res
             .iter()
@@ -295,12 +276,16 @@ pub async fn pkp_permissions_get_permitted(
             .call()
             .await
             .map_err(|e| {
-                unexpected_err_code(e, NodeUnknownError, Some(format!("Error calling {method}")))
+                unexpected_err_code(
+                    e,
+                    NodeUnknownError,
+                    Some(format!("Error calling {}", method)),
+                )
             })?;
         ret_val = res.iter().map(|x| json!(x)).collect::<Vec<Value>>();
     } else {
         return Err(unexpected_err_code(
-            format!("Method not found: {method}"),
+            format!("Method not found: {}", method),
             NodeUnknownError,
             None,
         ));
@@ -343,7 +328,7 @@ pub async fn pkp_permissions_get_permitted_auth_method_scopes(
         .call()
         .await
         .map_err(|e| {
-            let msg = format!("Error calling get_permitted_auth_method_scopes: {e}");
+            let msg = format!("Error calling get_permitted_auth_method_scopes: {}", e);
             error!("{}", msg);
             unexpected_err_code(e, NodeUnknownError, Some(msg))
         })
@@ -365,12 +350,9 @@ pub async fn sign(
     bls_root_pubkey: &String,
     node_set: &Vec<NodeSet>,
     signing_scheme: SigningScheme,
-    key_set_id: &str,
 ) -> Result<SignableOutput> {
     trace!("sign() enter - signing_scheme: {}", signing_scheme);
     // auth check
-    let tss_state = tss_state.expect_or_err("tss_state not set in RustJsComms")?;
-
     let is_authed = crate::pkp::auth::check_pkp_auth(
         lit_action_ipfs_id,
         auth_sig.clone(),
@@ -379,32 +361,31 @@ pub async fn sign(
         cfg,
         required_scopes,
         bls_root_pubkey,
-        key_set_id,
-        &tss_state,
     )
     .await?;
 
     if !is_authed {
         return Err(validation_err_code(
             format!(
-                "Neither you nor this Lit Action are authorized to sign using this PKP: {pubkey}"
+                "Neither you nor this Lit Action are authorized to sign using this PKP: {}",
+                pubkey
             ),
             NodePKPNotAuthorized,
             None,
         ));
     }
 
-    let pubkey_routing_data = get_pubkey_routing_data_from_pubkey(
-        &tss_state.chain_data_config_manager,
-        cfg,
-        &pubkey,
-        key_set_id,
-    )
-    .await;
+    let tweak_preimage = get_tweak_preimage_from_pubkey(cfg, &pubkey).await;
+    let tss_state = tss_state.expect_or_err("tss_state not set in RustJsComms")?;
 
-    // if this is an HD key, we need to get the root pubkeys, otherwise check the fs for the key share
-    let pubkey_routing_data = match pubkey_routing_data {
-        Ok(p) => p,
+    // if this is a HD key, we need to get the root pubkeys, otherwise check the fs for the key share
+    let (tweak_preimage, root_pubkeys) = match tweak_preimage {
+        Ok(_) => {
+            let tweak_preimage = tweak_preimage.expect_or_err("hd_key_id is None")?;
+            let temp_signable = tss_state.get_dkg_state(signing_scheme.curve_type())?;
+            let root_pub_keys = temp_signable.root_keys().await;
+            (Some(tweak_preimage.to_vec()), Some(root_pub_keys))
+        }
         Err(_) => {
             let staker_address = &tss_state.peer_state.hex_staker_address();
 
@@ -420,15 +401,14 @@ pub async fn sign(
                         );
                         return Err(unexpected_err_code(
                             format!(
-                                "Signing scheme '{signing_scheme}' does not support curve type '{curve_type}"
+                                "Signing scheme '{}' does not support curve type '{}",
+                                signing_scheme, curve_type
                             ),
                             NodeUnknownError,
-                            Some(format!("Pubkey share not found on this node PKP: {pubkey}")),
-                        ));
-                    } else {
-                        return Err(unexpected_err(
-                            "No pubkey routing data exists".to_string(),
-                            None,
+                            Some(format!(
+                                "Pubkey share not found on this node PKP: {}",
+                                pubkey
+                            )),
                         ));
                     }
                 }
@@ -437,7 +417,10 @@ pub async fn sign(
                     return Err(unexpected_err_code(
                         err,
                         NodeUnknownError,
-                        Some(format!("Pubkey share not found on this node PKP: {pubkey}")),
+                        Some(format!(
+                            "Pubkey share not found on this node PKP: {}",
+                            pubkey
+                        )),
                     ));
                 }
                 Ok(None) => {
@@ -446,18 +429,20 @@ pub async fn sign(
                         pubkey
                     );
                     return Err(unexpected_err_code(
-                        format!("Pubkey share not found on this node PKP: {pubkey}"),
+                        format!("Pubkey share not found on this node PKP: {}", pubkey),
                         NodeUnknownError,
                         None,
                     ));
                 }
-            }
+            };
+
+            (None, None)
         }
     };
 
     trace!(
-        "sign() pubkey: {}, routing data: {:?}",
-        pubkey, pubkey_routing_data
+        "sign() pubkey: {}, hd_key_id: {:?}, root_pubkeys: {:?}",
+        pubkey, tweak_preimage, root_pubkeys
     );
 
     let mut signing_state = tss_state.get_signing_state(signing_scheme)?;
@@ -472,9 +457,9 @@ pub async fn sign(
         .sign_with_pubkey(
             to_sign,
             public_key,
-            Some(pubkey_routing_data.tweak_preimage.to_vec()),
+            root_pubkeys,
+            tweak_preimage,
             request_id.clone(),
-            &pubkey_routing_data.key_set_identifier,
             epoch,
             node_set,
         )
@@ -486,17 +471,8 @@ pub async fn sign(
     Ok(sign_result)
 }
 
-#[instrument(skip(cfg), level = "debug")]
-pub async fn get_pubkey_routing_data_from_pubkey(
-    cdm: &ChainDataConfigManager,
-    cfg: &LitConfig,
-    pubkey: &str,
-    key_set_id: &str,
-) -> Result<PubKeyRoutingData> {
-    if is_datil_key_set_id(key_set_id) {
-        return datil_get_pubkey_routing_data_from_pubkey(cdm, cfg, pubkey, key_set_id).await;
-    }
-
+#[instrument(level = "debug", skip(cfg))]
+pub async fn get_tweak_preimage_from_pubkey(cfg: &LitConfig, pubkey: &str) -> Result<[u8; 32]> {
     let resolver = ContractResolver::try_from(cfg)
         .map_err(|e| unexpected_err_code(e, EC::NodeContractResolverConversionFailed, None))?;
     let contract = resolver.pub_key_router_contract(cfg).await?;
@@ -513,12 +489,11 @@ pub async fn get_pubkey_routing_data_from_pubkey(
             Some("Could not find token id in pubkey routing contract.".to_string()),
         )
     })?;
-    pubkey_routing_data.try_into()
+    Ok(pubkey_routing_data.derived_key_id)
 }
 
 pub async fn vote_for_root_key(
     cfg: &LitConfig,
-    key_set_id: &str,
     root_keys: Vec<RootKey>,
     peer_state: &Arc<PeerState>,
 ) -> Result<bool> {
@@ -531,8 +506,11 @@ pub async fn vote_for_root_key(
     let contract = resolver
         .pub_key_router_contract_with_gas_relay(cfg, peer_state.wallet_keys.signing_key().clone())
         .await?;
-    let func =
-        contract.vote_for_root_keys(staking_contract_address, key_set_id.to_string(), root_keys);
+    let func = contract.vote_for_root_keys(
+        staking_contract_address,
+        crate::tss::util::DEFAULT_KEY_SET_NAME.to_string(),
+        root_keys,
+    );
 
     let gas_estimate = match func.estimate_gas().await {
         Ok(gas_estimate) => gas_estimate,

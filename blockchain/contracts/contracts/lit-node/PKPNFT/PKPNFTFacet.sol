@@ -16,7 +16,6 @@ import { LibPKPNFTStorage } from "./LibPKPNFTStorage.sol";
 import { IPubkeyRouter } from "../PubkeyRouter/LibPubkeyRouterStorage.sol";
 import { LibPubkeyRouterStorage } from "../PubkeyRouter/LibPubkeyRouterStorage.sol";
 import { PubkeyRouterFacet } from "../PubkeyRouter/PubkeyRouterFacet.sol";
-import { PubkeyRouterViewsFacet } from "../PubkeyRouter/PubkeyRouterViewsFacet.sol";
 import { PKPNFTMetadata } from "../PKPNFTMetadata.sol";
 import { ContractResolver } from "../../lit-core/ContractResolver.sol";
 import { PKPPermissionsFacet } from "../PKPPermissions/PKPPermissionsFacet.sol";
@@ -80,6 +79,7 @@ contract PKPNFTFacet is
                 s().env
             );
     }
+
     function getPkpNftMetadataAddress() public view returns (address) {
         return
             s().contractResolver.getContract(
@@ -110,35 +110,27 @@ contract PKPNFTFacet is
 
     /// get the eth address for the keypair
     function getEthAddress(uint256 tokenId) public view returns (address) {
-        PubkeyRouterViewsFacet router = PubkeyRouterViewsFacet(
-            getRouterAddress()
-        );
+        PubkeyRouterFacet router = PubkeyRouterFacet(getRouterAddress());
         return router.getEthAddress(tokenId);
     }
 
     /// includes the 0x04 prefix so you can pass this directly to ethers.utils.computeAddress
     function getPubkey(uint256 tokenId) public view returns (bytes memory) {
-        PubkeyRouterViewsFacet router = PubkeyRouterViewsFacet(
-            getRouterAddress()
-        );
+        PubkeyRouterFacet router = PubkeyRouterFacet(getRouterAddress());
         return router.getPubkey(tokenId);
     }
 
     function getPkpInfoFromTokenIds(
         uint256[] memory tokenIds
     ) public view returns (LibPubkeyRouterStorage.PkpInfo[] memory) {
-        PubkeyRouterViewsFacet router = PubkeyRouterViewsFacet(
-            getRouterAddress()
-        );
+        PubkeyRouterFacet router = PubkeyRouterFacet(getRouterAddress());
         return router.getPkpInfoFromTokenIds(tokenIds);
     }
 
     function getPkpInfoFromEthAddresses(
         address[] memory ethAddresses
     ) public view returns (LibPubkeyRouterStorage.PkpInfo[] memory) {
-        PubkeyRouterViewsFacet router = PubkeyRouterViewsFacet(
-            getRouterAddress()
-        );
+        PubkeyRouterFacet router = PubkeyRouterFacet(getRouterAddress());
         return router.getPkpInfoFromEthAddresses(ethAddresses);
     }
 
@@ -214,9 +206,7 @@ contract PKPNFTFacet is
     function tokenURI(
         uint256 tokenId
     ) public view override returns (string memory) {
-        PubkeyRouterViewsFacet router = PubkeyRouterViewsFacet(
-            getRouterAddress()
-        );
+        PubkeyRouterFacet router = PubkeyRouterFacet(getRouterAddress());
         bytes memory pubKey = router.getPubkey(tokenId);
         address ethAddress = router.getEthAddress(tokenId);
 
@@ -255,9 +245,7 @@ contract PKPNFTFacet is
         string memory keySetId
     ) public payable returns (uint256) {
         require(msg.value == s().mintCost, "You must pay exactly mint cost");
-        PubkeyRouterViewsFacet router = PubkeyRouterViewsFacet(
-            getRouterAddress()
-        );
+        PubkeyRouterFacet router = PubkeyRouterFacet(getRouterAddress());
         bytes32 derivedKeyId = getNextDerivedKeyId();
         bytes memory pubkey = router.getDerivedPubkey(
             getStakingAddress(),
@@ -265,7 +253,7 @@ contract PKPNFTFacet is
             derivedKeyId
         );
         uint256 tokenId = uint256(keccak256(pubkey));
-        routeDerivedKey(keyType, derivedKeyId, pubkey, tokenId, keySetId);
+        routeDerivedKey(keyType, derivedKeyId, pubkey, tokenId);
         _mintWithoutValueCheck(tokenId, LibERC2771._msgSender());
         return tokenId;
     }
@@ -279,9 +267,7 @@ contract PKPNFTFacet is
         address stakingContractAddress
     ) public payable returns (uint256) {
         require(msg.value == s().mintCost, "You must pay exactly mint cost");
-        PubkeyRouterViewsFacet router = PubkeyRouterViewsFacet(
-            getRouterAddress()
-        );
+        PubkeyRouterFacet router = PubkeyRouterFacet(getRouterAddress());
         router.checkNodeSignatures(
             realmId,
             signatures,
@@ -294,7 +280,7 @@ contract PKPNFTFacet is
         );
         uint256 tokenId = uint256(keccak256(pubkey));
 
-        routeDerivedKey(keyType, derivedKeyId, pubkey, tokenId, keySetId);
+        routeDerivedKey(keyType, derivedKeyId, pubkey, tokenId);
         _mintWithoutValueCheck(tokenId, LibERC2771._msgSender());
 
         return tokenId;
@@ -306,9 +292,7 @@ contract PKPNFTFacet is
         bytes memory ipfsCID
     ) public payable returns (uint256) {
         require(msg.value == s().mintCost, "You must pay exactly mint cost");
-        PubkeyRouterViewsFacet router = PubkeyRouterViewsFacet(
-            getRouterAddress()
-        );
+        PubkeyRouterFacet router = PubkeyRouterFacet(getRouterAddress());
         bytes32 derivedKeyId = getNextDerivedKeyId();
         bytes memory pubkey = router.getDerivedPubkey(
             getStakingAddress(),
@@ -316,7 +300,7 @@ contract PKPNFTFacet is
             derivedKeyId
         );
         uint256 tokenId = uint256(keccak256(pubkey));
-        routeDerivedKey(keyType, derivedKeyId, pubkey, tokenId, keySetId);
+        routeDerivedKey(keyType, derivedKeyId, pubkey, tokenId);
         _mintWithoutValueCheck(tokenId, address(this));
         uint256[] memory scopes = new uint256[](1);
         scopes[0] = 1;
@@ -333,23 +317,19 @@ contract PKPNFTFacet is
         uint256 keyType,
         bytes32 derivedKeyId,
         bytes memory pubkey,
-        uint256 tokenId,
-        string memory keySetIdentifier
+        uint256 tokenId
     ) internal {
         PubkeyRouterFacet(getRouterAddress()).setRoutingData(
             tokenId,
             pubkey,
-            getStakingAddress(),
+            address(getStakingAddress()),
             keyType,
-            derivedKeyId,
-            keySetIdentifier
+            derivedKeyId
         );
     }
 
     function _mintWithoutValueCheck(uint256 tokenId, address to) internal {
-        PubkeyRouterViewsFacet router = PubkeyRouterViewsFacet(
-            getRouterAddress()
-        );
+        PubkeyRouterFacet router = PubkeyRouterFacet(getRouterAddress());
         require(router.isRouted(tokenId), "This PKP has not been routed yet");
 
         if (to == address(this)) {

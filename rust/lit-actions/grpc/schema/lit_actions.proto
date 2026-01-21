@@ -226,13 +226,11 @@ message ExecuteJsResponse {
 
   message PubkeyToTokenIdRequest {
     string public_key = 1;
-    string key_set_id = 2;
   }
 
   message PkpPermissionsGetPermittedRequest {
     string method = 1;
     string token_id = 2;
-    string key_set_id = 3;
   }
 
   message PkpPermissionsGetPermittedAuthMethodScopesRequest {
@@ -240,21 +238,18 @@ message ExecuteJsResponse {
     string method = 2;
     bytes user_id = 3;
     uint64 max_scope_id = 4;
-    string key_set_id = 5;
   }
 
   message PkpPermissionsIsPermittedRequest {
     string method = 1;
     string token_id = 2;
     bytes params = 3;  // Vec<serde_json::Value>
-    string key_set_id = 4;
   }
 
   message PkpPermissionsIsPermittedAuthMethodRequest {
     string token_id = 1;
     string method = 2;
     bytes user_id = 3;
-    string key_set_id = 4;
   }
 
   message SignEcdsaRequest {
@@ -262,7 +257,6 @@ message ExecuteJsResponse {
     string public_key = 2;
     string sig_name = 3;
     bool eth_personal_sign = 4;
-    string key_set_id = 5;
   }
 
   message SignRequest {
@@ -270,7 +264,6 @@ message ExecuteJsResponse {
     string public_key = 2;
     string sig_name = 3;
     string signing_scheme = 4;
-    string key_set_id = 5;
   }
 
   message AesDecryptRequest {
@@ -314,7 +307,6 @@ message ExecuteJsResponse {
     string data_to_encrypt_hash = 3;
     optional bytes auth_sig = 4;
     string chain = 5;
-    string key_set_id = 6;
   }
 
   message DecryptToSingleNodeRequest {
@@ -323,14 +315,12 @@ message ExecuteJsResponse {
     string data_to_encrypt_hash = 3;
     optional bytes auth_sig = 4;
     string chain = 5;
-    string key_set_id = 6;
   }
 
   message SignAndCombineEcdsaRequest {
     bytes to_sign = 1;
     string public_key = 2;
     string sig_name = 3;
-    string key_set_id = 4;
   }
 
   message SignAndCombineRequest {
@@ -338,7 +328,6 @@ message ExecuteJsResponse {
     string public_key = 2;
     string sig_name = 3;
     string signing_scheme = 4;
-    string key_set_id = 5;
   }
 
   message GetRpcUrlRequest {
@@ -357,7 +346,6 @@ message ExecuteJsResponse {
   message EncryptBlsRequest {
     bytes access_control_conditions = 1;
     bytes to_encrypt = 2;
-    string key_set_id = 3;
   }
 
   message UpdateResourceUsageRequest {

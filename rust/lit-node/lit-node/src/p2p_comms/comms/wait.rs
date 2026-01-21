@@ -103,9 +103,10 @@ pub async fn node_share_await(
                             match peers.peer_by_id(peer) {
                                 Ok(peer) => {
                                     let complaint = PeerComplaint {
-                                        complainer: complainer.clone(),
+                                        complainer: complainer.socket_address.clone(),
                                         issue: Issue::NonParticipation,
-                                        against_peer: peer.clone(),
+                                        peer_node_staker_address: peer.staker_address,
+                                        peer_node_socket_address: peer.socket_address.clone(),
                                     };
                                     if let Err(e) = params.tx_pr.send_async(complaint).await {
                                         debug!(

@@ -5,7 +5,6 @@
   const { ciphertext, dataToEncryptHash } = await Lit.Actions.encrypt({
     accessControlConditions,
     to_encrypt,
-    keySetId,
   });
   Lit.Actions.setResponse({ response: ciphertext });
 })();

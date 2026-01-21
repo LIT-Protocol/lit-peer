@@ -5,8 +5,6 @@ chains:
     - url: https://rpc-amoy.polygon.technology
   anvil:
     - url: http://127.0.0.1:8545
-  anvilDatil:
-    - url: http://127.0.0.1:8549
   arbitrum:
     - url: https://arb1.arbitrum.io/rpc
   arbitrumSepolia:
@@ -82,8 +80,6 @@ chains:
     - url: https://lit-chain-rpc.litprotocol.com
   localchain:
     - url: http://127.0.0.1:8545
-  localchainDatil:
-    - url: http://127.0.0.1:8549
   localchainArbitrum:
     - url: http://127.0.0.1:8547
   lukso:

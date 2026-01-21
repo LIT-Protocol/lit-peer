@@ -15,7 +15,6 @@ describe('PKPHelper', function () {
   let signers;
   let pkpContract;
   let router;
-  let routerViews;
   let pkpHelper;
   let pkpPermissionsDiamond;
   let pkpPermissions;
@@ -55,7 +54,7 @@ describe('PKPHelper', function () {
       await contractResolver.getAddress(),
       Environment.DEV,
       {
-        additionalFacets: ['PubkeyRouterFacet', 'PubkeyRouterViewsFacet'],
+        additionalFacets: ['PubkeyRouterFacet'],
         verifyContracts: false,
         waitForDeployment: false,
       }
@@ -63,10 +62,6 @@ describe('PKPHelper', function () {
     routerDiamond = deployResult.diamond;
     router = await ethers.getContractAt(
       'PubkeyRouterFacet',
-      await routerDiamond.getAddress()
-    );
-    routerViews = await ethers.getContractAt(
-      'PubkeyRouterViewsFacet',
       await routerDiamond.getAddress()
     );
 
@@ -136,7 +131,6 @@ describe('PKPHelper', function () {
       pkpPermissionsContract: pkpPermissions,
       hdKeyDeriverContract: keyDeriver,
       pubkeyRouterContract: router,
-      pubkeyRouterViewsContract: routerViews,
     });
 
     // Mint enough tokens for the deployer
@@ -167,7 +161,7 @@ describe('PKPHelper', function () {
       realms: [1],
       curves: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
       counts: [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
-      recoverySessionId: '0x',
+      recoveryPartyMembers: [],
     });
 
     await allNodesVoteForRootKeys(

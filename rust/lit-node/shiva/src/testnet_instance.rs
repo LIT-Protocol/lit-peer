@@ -4,38 +4,43 @@ use std::{
     process::{Child, Command},
 };
 
-use crate::models::{ContractAbis, ContractAddresses, TestNetCreateParams, TestNetState};
 use anyhow::anyhow;
 use ethers::types::U256;
-use lit_node_testnet::testnet::actions;
-use lit_node_testnet::{TestSetupBuilder, testnet::Testnet};
+use lit_node_testnet::validator::ValidatorCollection;
 use tracing::{info, warn};
+
+use crate::models::{ContractAbis, ContractAddresses, TestNetCreateParams, TestNetState};
+
+use lit_node_testnet::testnet::Testnet;
+use lit_node_testnet::testnet::contracts::StakingContractRealmConfig;
+use lit_node_testnet::testnet::{TestnetContracts, actions};
 
 // Custom impl to avoid `From<T>` trait as it requires borrowing which we do not want as we cannot brrow from the runtime context
 impl ContractAbis {
-    pub fn new(
-        contracts: &lit_node_testnet::testnet::contracts::Contracts,
-    ) -> Result<Self, anyhow::Error> {
-        let lit_token = serde_json::to_string(contracts.lit_token.abi())
+    pub fn new(contracts: &TestnetContracts) -> Result<Self, anyhow::Error> {
+        let lit_token = serde_json::to_string(contracts.contracts().lit_token.abi())
             .map_err(|e| anyhow!("Could not serialize contract data {}", e))?;
-        let erc20 = serde_json::to_string(contracts.erc20.abi())
+        let erc20 = serde_json::to_string(contracts.contracts().erc20.abi())
             .map_err(|e| anyhow!("Could not serialize contract data {}", e))?;
-        let backup_recovery = serde_json::to_string(contracts.backup_recovery.abi()).unwrap();
-        let staking = serde_json::to_string(contracts.staking.abi())
+        let backup_recovery =
+            serde_json::to_string(contracts.contracts().backup_recovery.abi()).unwrap();
+        let staking = serde_json::to_string(contracts.contracts().staking.abi())
             .map_err(|e| anyhow!("Could not serialize contract data {}", e))?;
-        let pkpnft = serde_json::to_string(contracts.pkpnft.abi())
+        let pkpnft = serde_json::to_string(contracts.contracts().pkpnft.abi())
             .map_err(|e| anyhow!("Could not serialize contract data {}", e))?;
-        let pubkey_router = serde_json::to_string(contracts.pubkey_router.abi())
+        let pubkey_router = serde_json::to_string(contracts.contracts().pubkey_router.abi())
             .map_err(|e| anyhow!("Could not serialize contract data {}", e))?;
-        let pkp_helper = serde_json::to_string(contracts.pkp_helper.abi())
+        let pkp_helper = serde_json::to_string(contracts.contracts().pkp_helper.abi())
             .map_err(|e| anyhow!("Could not serialize contract data {}", e))?;
-        let pkp_permissions = serde_json::to_string(contracts.pkp_permissions.abi())
+        let pkp_permissions = serde_json::to_string(contracts.contracts().pkp_permissions.abi())
             .map_err(|e| anyhow!("Could not serialize contract data {}", e))?;
 
-        let contract_resolver = serde_json::to_string(contracts.contract_resolver.abi())
-            .map_err(|e| anyhow!("Could not serialize contract data {}", e))?;
-        let payment_delegation = serde_json::to_string(contracts.payment_delegation.abi())
-            .map_err(|e| anyhow!("Could not serialize contract data {}", e))?;
+        let contract_resolver =
+            serde_json::to_string(contracts.contracts().contract_resolver.abi())
+                .map_err(|e| anyhow!("Could not serialize contract data {}", e))?;
+        let payment_delegation =
+            serde_json::to_string(contracts.contracts().payment_delegation.abi())
+                .map_err(|e| anyhow!("Could not serialize contract data {}", e))?;
 
         Ok(Self {
             lit_token,
@@ -53,17 +58,18 @@ impl ContractAbis {
 }
 
 impl ContractAddresses {
-    pub fn new(contracts: &lit_node_testnet::testnet::contracts::Contracts) -> Self {
+    pub fn new(addresses: &lit_node_testnet::testnet::contracts::ContractAddresses) -> Self {
         Self {
-            lit_token: format!("{:#x}", contracts.lit_token.address()),
-            backup_recovery: format!("{:#x}", contracts.backup_recovery.address()),
-            staking: format!("{:#x}", contracts.staking.address()),
-            pkpnft: format!("{:#x}", contracts.pkpnft.address()),
-            pubkey_router: format!("{:#x}", contracts.pubkey_router.address()),
-            pkp_permissions: format!("{:#x}", contracts.pkp_permissions.address()),
-            pkp_helper: format!("{:#x}", contracts.pkp_helper.address()),
-            contract_resolver: format!("{:#x}", contracts.contract_resolver.address()),
-            payment_delegation: format!("{:#x}", contracts.payment_delegation.address()),
+            lit_token: format!("{:#x}", addresses.lit_token),
+            backup_recovery: format!("{:#x}", addresses.backup_recovery),
+            staking: format!("{:#x}", addresses.staking),
+            pkpnft: format!("{:#x}", addresses.pkpnft),
+            pubkey_router: format!("{:#x}", addresses.pubkey_router),
+            pkp_permissions: format!("{:#x}", addresses.pkp_permissions),
+            pkp_helper: format!("{:#x}", addresses.pkp_helper),
+            contract_resolver: format!("{:#x}", addresses.contract_resolver),
+            key_deriver: format!("{:#x}", addresses.key_deriver),
+            payment_delegation: format!("{:#x}", addresses.payment_delegation),
         }
     }
 }
@@ -79,6 +85,7 @@ pub struct TestnetInstance {
     pub action_server: Option<Child>,
     pub actions: actions::Actions,
     pub test_net: Testnet,
+    pub contracts: lit_node_testnet::testnet::TestnetContracts,
     pub validators: lit_node_testnet::validator::ValidatorCollection,
     pub state: TestNetState,
 }
@@ -108,11 +115,28 @@ impl TestnetInstance {
             lit_action_process = Some(lit_action_server);
         }
 
-        let (testnet, validator_collection, _end_user) = TestSetupBuilder::default()
+        let mut testnet = Testnet::builder()
             .num_staked_and_joined_validators(params.node_count)
-            .epoch_length(params.epoch_length as usize)
             .build()
             .await;
+        let testnet_contracts = Testnet::setup_contracts(
+            &mut testnet,
+            None,
+            Some(
+                StakingContractRealmConfig::builder()
+                    .epoch_length(Some(U256::from(params.epoch_length)))
+                    .build(),
+            ),
+        )
+        .await
+        .map_err(|e| anyhow::anyhow!("Error while spawning testnet contracts: {}", e))?;
+
+        let validator_collection = ValidatorCollection::builder()
+            .num_staked_nodes(params.node_count)
+            // .custom_binary_path(params.custom_build_path)
+            .build(&testnet)
+            .await
+            .map_err(|e| anyhow::anyhow!("Error while spawning validators: {}", e))?;
 
         let actions = testnet.actions();
 
@@ -127,6 +151,7 @@ impl TestnetInstance {
             action_server: lit_action_process,
             test_net: testnet,
             actions,
+            contracts: testnet_contracts,
             validators: validator_collection,
             state: TestNetState::Busy,
         };
@@ -144,9 +169,8 @@ impl TestnetInstance {
     }
 
     pub fn resolver_abi(&self) -> Result<String, anyhow::Error> {
-        let abi_string =
-            serde_json::to_string(self.test_net.actions().contracts().contract_resolver.abi())
-                .map_err(|e| anyhow!("Could not serialize contract data {}", e))?;
+        let abi_string = serde_json::to_string(self.contracts.contracts().contract_resolver.abi())
+            .map_err(|e| anyhow!("Could not serialize contract data {}", e))?;
         Ok(abi_string)
     }
 
@@ -155,7 +179,7 @@ impl TestnetInstance {
         for i in 0..self.validators.size() {
             if self
                 .validators
-                .get_validator_by_index(i)
+                .get_validator_by_idx(i)
                 .account()
                 .node_address
                 .to_string()
@@ -353,11 +377,10 @@ mod tests {
                 network.validators.size() == NODE_COUNT,
                 "Validator set size should match config"
             );
-            // This depends on whether or not we launch from a cached chain.
-            // assert!(
-            //     network.actions.get_current_epoch(realm_id).await == U256::from(2),
-            //     "Should have an epoch of 2 after future resolves"
-            // );
+            assert!(
+                network.actions.get_current_epoch(realm_id).await == U256::from(2),
+                "Should have an epoch of 2 after future resolves"
+            );
         }
     }
 }

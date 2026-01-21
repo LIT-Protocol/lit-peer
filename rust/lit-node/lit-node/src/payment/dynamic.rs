@@ -114,7 +114,8 @@ impl DynamicPayment {
             if (self.running_total + price) > self.spending_limit {
                 return Err(unexpected_err_code(
                     format!(
-                        "Action aborted as next execution of '{component:?}' would exceed wallet balance."
+                        "Action aborted as next execution of '{:?}' would exceed wallet balance.",
+                        component
                     ),
                     EC::PaymentFailed,
                     None,
@@ -132,7 +133,10 @@ impl DynamicPayment {
             Ok(())
         } else {
             Err(unexpected_err_code(
-                format!("Action aborted as pricing component '{component:?}' was not found."),
+                format!(
+                    "Action aborted as pricing component '{:?}' was not found.",
+                    component
+                ),
                 EC::PaymentFailed,
                 None,
             ))

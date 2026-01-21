@@ -387,7 +387,8 @@ pub fn get_staker_address(cfg: &LitConfig) -> crate::error::Result<String> {
             return Err(conversion_err(
                 e,
                 Some(format!(
-                    "Could not convert staking address to H160 type from {staker_address}"
+                    "Could not convert staking address to H160 type from {}",
+                    staker_address
                 )),
             ));
         }

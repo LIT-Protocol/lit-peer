@@ -151,7 +151,7 @@ pub async fn do_sign_with_pubkey<C>(
             .0
             .iter()
             .filter(|p| p.key_hash == presign_share.staker_hash)
-            .next_back()
+            .last()
         {
             Some(p) => p,
             None => continue,
@@ -177,7 +177,7 @@ pub async fn do_sign_with_pubkey<C>(
             let sig_share = damfast_state
                 .generate_signature_share_from_key_id::<C>(
                     &loop_message_bytes,
-                    &hd_root_keys,
+                    Some(hd_root_keys),
                     &presign_share.share.unwrap::<C>().clone(),
                     request_id,
                     &peers,

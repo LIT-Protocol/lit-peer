@@ -1,6 +1,6 @@
 pub mod backup;
 pub mod contract;
-pub mod curve_state;
+mod curve_state;
 pub mod dkg_type;
 pub mod hd_keys;
 pub mod key_persistence;

@@ -296,10 +296,10 @@ impl<'r> FromFormField<'r> for JsonAuthSigExtended {
         let v = data_encoding::BASE64
             .decode(field.value.as_bytes())
             .map_err(|e| {
-                form::Error::validation(format!("auth field needs to be base64: {e:?}"))
+                form::Error::validation(format!("auth field needs to be base64: {:?}", e))
             })?;
         let auth: JsonAuthSigExtended = serde_json::from_slice(&v).map_err(|e| {
-            form::Error::validation(format!("auth failed to decode from JSON: {e:?}"))
+            form::Error::validation(format!("auth failed to decode from JSON: {:?}", e))
         })?;
 
         Ok(auth)

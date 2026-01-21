@@ -5,7 +5,7 @@ use crate::common::lit_actions::{assert_signed_action, lit_action_params};
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::{NodeIdentityKey, get_identity_pubkeys_from_node_set};
 use lit_node_testnet::node_collection::{get_network_pubkey, get_network_pubkey_from_node_set};
-use lit_node_testnet::validator::{Validator, ValidatorCollection};
+use lit_node_testnet::validator::ValidatorCollection;
 use std::collections::HashMap;
 
 use crate::common::auth_sig::generate_authsig;
@@ -79,7 +79,8 @@ pub fn prepare_test_encryption_parameters() -> TestEncryptionParameters {
     })
     .unwrap();
     let identity_param = AccessControlConditionResource::new(format!(
-        "{hashed_access_control_conditions}/{data_to_encrypt_hash}"
+        "{}/{}",
+        hashed_access_control_conditions, data_to_encrypt_hash
     ))
     .get_resource_key()
     .into_bytes();
@@ -136,7 +137,8 @@ pub fn prepare_test_encryption_parameters_with_wallet_address(
     })
     .unwrap();
     let identity_param = AccessControlConditionResource::new(format!(
-        "{hashed_access_control_conditions}/{data_to_encrypt_hash}"
+        "{}/{}",
+        hashed_access_control_conditions, data_to_encrypt_hash
     ))
     .get_resource_key()
     .into_bytes();
@@ -157,7 +159,6 @@ pub fn prepare_test_encryption_parameters_with_wallet_address(
 pub async fn test_encryption_decryption_auth_sig(
     node_set: &HashMap<NodeSet, NodeIdentityKey>,
     epoch: u64,
-    key_set_id: &str,
 ) {
     // prepare
     let test_encryption_parameters = prepare_test_encryption_parameters();
@@ -171,9 +172,8 @@ pub async fn test_encryption_decryption_auth_sig(
     // Encrypt.
     let message_bytes = test_encryption_parameters.to_encrypt.as_bytes();
 
-    let network_pubkey = get_network_pubkey_from_node_set(node_set.keys()).await;
-    let pubkey =
-        lit_rust_crypto::blsful::PublicKey::try_from(hex::decode(network_pubkey).unwrap()).unwrap();
+    let network_pubkey = get_network_pubkey_from_node_set(node_set.iter().map(|(n, _)| n)).await;
+    let pubkey = PublicKey::try_from(hex::decode(network_pubkey).unwrap()).unwrap();
 
     let ciphertext = lit_sdk::encryption::encrypt_time_lock(
         &pubkey,
@@ -189,7 +189,6 @@ pub async fn test_encryption_decryption_auth_sig(
         test_encryption_parameters.clone(),
         &auth_sig,
         epoch,
-        key_set_id,
     )
     .await;
 
@@ -205,7 +204,6 @@ pub async fn test_encryption_decryption_auth_sig(
 
 pub async fn test_encryption_decryption_session_sigs(
     validator_collection: &ValidatorCollection,
-    validators_to_include: &Vec<&Validator>,
     end_user: &EndUser,
 ) {
     let epoch = validator_collection
@@ -228,9 +226,7 @@ pub async fn test_encryption_decryption_session_sigs(
     })
     .unwrap();
 
-    let node_set = validator_collection
-        .partially_random_threshold_nodeset(validators_to_include)
-        .await;
+    let node_set = validator_collection.random_threshold_nodeset().await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     // Get session sig for auth
     let session_sigs = get_session_sigs_for_auth(
@@ -254,6 +250,15 @@ pub async fn test_encryption_decryption_session_sigs(
     // Encrypt.
     let network_pubkey = get_network_pubkey(validator_collection.actions()).await;
     let message_bytes = test_encryption_parameters.to_encrypt.as_bytes();
+    let hashed_access_control_conditions = hash_access_control_conditions(RequestConditions {
+        access_control_conditions: test_encryption_parameters.access_control_conditions.clone(),
+        evm_contract_conditions: test_encryption_parameters.evm_contract_conditions.clone(),
+        sol_rpc_conditions: test_encryption_parameters.sol_rpc_conditions.clone(),
+        unified_access_control_conditions: test_encryption_parameters
+            .unified_access_control_conditions
+            .clone(),
+    })
+    .unwrap();
     let identity_param = AccessControlConditionResource::new(format!(
         "{}/{}",
         hashed_access_control_conditions, test_encryption_parameters.data_to_encrypt_hash
@@ -261,15 +266,7 @@ pub async fn test_encryption_decryption_session_sigs(
     .get_resource_key()
     .into_bytes();
 
-    let pubkey =
-        lit_rust_crypto::blsful::PublicKey::try_from(hex::decode(&network_pubkey).unwrap())
-            .unwrap();
-    let key_set_id = validator_collection
-        .actions()
-        .get_keyset_id_for_root_key(&network_pubkey)
-        .await
-        .expect("Could not get keyset Id key from public key.");
-
+    let pubkey = PublicKey::try_from(hex::decode(&network_pubkey).unwrap()).unwrap();
     let ciphertext =
         lit_sdk::encryption::encrypt_time_lock(&pubkey, message_bytes, &identity_param)
             .expect("Unable to encrypt");
@@ -283,7 +280,6 @@ pub async fn test_encryption_decryption_session_sigs(
         test_encryption_parameters.clone(),
         &session_sigs,
         epoch.as_u64(),
-        &key_set_id,
     )
     .await;
 
@@ -303,7 +299,6 @@ pub async fn retrieve_decryption_key(
     test_encryption_parameters: TestEncryptionParameters,
     auth_sig: &JsonAuthSig,
     epoch: u64,
-    key_set_id: &str,
 ) -> Vec<GenericResponse<EncryptionSignResponse>> {
     let payload = EncryptionSignRequest {
         access_control_conditions: test_encryption_parameters.access_control_conditions.clone(),
@@ -316,7 +311,6 @@ pub async fn retrieve_decryption_key(
         data_to_encrypt_hash: test_encryption_parameters.data_to_encrypt_hash.clone(),
         auth_sig: AuthSigItem::Single(auth_sig.to_owned()),
         epoch,
-        key_set_id: key_set_id.to_string(),
     };
     info!("Sending payload {:?}", payload);
     let my_secret_key = rand::rngs::OsRng.r#gen();
@@ -347,13 +341,11 @@ pub async fn retrieve_decryption_key_session_sigs(
     test_encryption_parameters: TestEncryptionParameters,
     session_sigs_and_node_set: &Vec<SessionSigAndNodeSet>,
     epoch: u64,
-    key_set_id: &str,
 ) -> Vec<GenericResponse<EncryptionSignResponse>> {
     retrieve_decryption_key_session_sigs_with_version(
         test_encryption_parameters,
         session_sigs_and_node_set,
         epoch,
-        key_set_id,
     )
     .await
 }
@@ -362,7 +354,6 @@ pub async fn retrieve_decryption_key_session_sigs_with_version(
     test_encryption_parameters: TestEncryptionParameters,
     session_sigs_and_node_set: &Vec<SessionSigAndNodeSet>,
     epoch: u64,
-    key_set_id: &str,
 ) -> Vec<GenericResponse<EncryptionSignResponse>> {
     let mut endpoint_requests = Vec::new();
 
@@ -379,7 +370,6 @@ pub async fn retrieve_decryption_key_session_sigs_with_version(
             data_to_encrypt_hash: test_encryption_parameters.data_to_encrypt_hash.clone(),
             auth_sig: AuthSigItem::Single(session_sig_and_nodeset.session_sig.clone()),
             epoch,
-            key_set_id: key_set_id.to_string(),
         };
 
         endpoint_requests.push(lit_sdk::EndpointRequest {
@@ -417,9 +407,6 @@ pub fn assert_decrypted(
     let serialized_decryption_shares = decryption_resp
         .into_iter()
         .map(|resp| {
-            if !resp.ok {
-                warn!("Resp: {:?}", resp);
-            }
             assert!(resp.ok);
             let parsed_resp = resp.data.unwrap();
             parsed_resp.signature_share
@@ -430,13 +417,8 @@ pub fn assert_decrypted(
         &identity_param,
         ciphertext,
         &serialized_decryption_shares,
-    );
-    let decrypted = match decrypted {
-        Ok(decrypted) => decrypted,
-        Err(e) => {
-            panic!("Failed to decrypt and combine: {e:?}");
-        }
-    };
+    )
+    .expect("Unable to decrypt");
     assert_eq!(
         decrypted,
         *expected_plaintext.as_bytes(),
@@ -466,9 +448,10 @@ pub async fn test_lit_action_session_sigs(
 pub async fn generate_session_sigs_execute_lit_action(
     validator_collection: &ValidatorCollection,
     lit_action_code: &str,
+
     end_user: &EndUser,
 ) -> Result<Vec<GenericResponse<JsonExecutionResponse>>> {
-    let (pubkey, _token_id, pkp_eth_address, key_set_id) = end_user.first_pkp().info();
+    let (pubkey, _token_id, pkp_eth_address) = end_user.first_pkp().info();
     let wallet = end_user.wallet.clone();
     // add the PKP itself as a permitted address, so that our session sig from the PKP will be able to sign with it
     end_user
@@ -503,11 +486,10 @@ pub async fn generate_session_sigs_execute_lit_action(
 
     // run
     let (lit_action_code, ipfs_id, js_params, auth_methods) =
-        lit_action_params(lit_action_code.to_string(), pubkey, key_set_id.clone())
+        lit_action_params(lit_action_code.to_string(), pubkey)
             .await
             .expect("Could not get lit action params");
 
-    info!("Executing lit action with session sigs");
     execute_lit_action_session_sigs(
         Some(lit_action_code),
         ipfs_id,
@@ -515,7 +497,6 @@ pub async fn generate_session_sigs_execute_lit_action(
         auth_methods,
         &session_sigs_and_node_set,
         2,
-        key_set_id,
     )
     .await
 }

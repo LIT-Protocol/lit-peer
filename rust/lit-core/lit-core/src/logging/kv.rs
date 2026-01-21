@@ -32,7 +32,7 @@ impl<'a, 'kvs> Visitor<'kvs> for InlineKVVisitor<'a> {
 
 pub struct FieldCollectorKVVisitor<'a>(pub &'a mut Map<String, JsonValue>);
 
-impl<'kvs> Visitor<'kvs> for FieldCollectorKVVisitor<'_> {
+impl<'a, 'kvs> Visitor<'kvs> for FieldCollectorKVVisitor<'a> {
     fn visit_pair(&mut self, key: Key<'kvs>, value: Value<'kvs>) -> Result<(), KVError> {
         let value = if let Some(err) = value.to_borrowed_error() {
             if let Some(err) = err.downcast_ref::<Error>() {
@@ -55,7 +55,7 @@ impl<'kvs> Visitor<'kvs> for FieldCollectorKVVisitor<'_> {
     }
 }
 
-impl tracing::field::Visit for FieldCollectorKVVisitor<'_> {
+impl<'a> tracing::field::Visit for FieldCollectorKVVisitor<'a> {
     fn record_f64(&mut self, field: &tracing::field::Field, value: f64) {
         if let Ok(value) = serde_json::to_value(value) {
             self.0.insert(field.name().to_string(), value);

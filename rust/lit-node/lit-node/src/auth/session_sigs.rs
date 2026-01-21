@@ -144,7 +144,7 @@ pub(crate) async fn validate_session_sig(
     // Validate that node_address matches our node address
     let port = cfg.external_port()?;
     let domain_name = cfg.api_domain()?;
-    let our_node_addr = format!("{domain_name}:{port}");
+    let our_node_addr = format!("{}:{}", domain_name, port);
     if our_node_addr != prepare_domain_name(&session_key_signed_message.node_address) {
         return Err(validation_err_code(
             format!(
@@ -212,7 +212,8 @@ where
     if issued_at.timestamp() > now.timestamp() + grace_period_seconds {
         return Err(validation_err_code(
             format!(
-                "Session key issued_at {issued_at} is in the future beyond the grace period of {grace_period_seconds} seconds (now is {now})"
+                "Session key issued_at {} is in the future beyond the grace period of {} seconds (now is {})",
+                issued_at, grace_period_seconds, now
             ),
             EC::NodeIatOutsideGracePeriod,
             None,
@@ -233,7 +234,8 @@ where
     if expiration < issued_at {
         return Err(validation_err_code(
             format!(
-                "Session key expiration {expiration} is in behind issue_at which is {issued_at}"
+                "Session key expiration {} is in behind issue_at which is {}",
+                expiration, issued_at
             ),
             EC::NodeExpWrongOrTooLarge,
             None,
@@ -245,7 +247,8 @@ where
     if expiration.timestamp() < now.timestamp() - grace_period_seconds {
         return Err(validation_err_code(
             format!(
-                "Session key expiration {expiration} is in the past beyond the grace period of {grace_period_seconds} seconds (now is {now})"
+                "Session key expiration {} is in the past beyond the grace period of {} seconds (now is {})",
+                expiration, grace_period_seconds, now
             ),
             EC::NodeExpWrongOrTooLarge,
             None,
@@ -478,7 +481,7 @@ mod validate_session_sig_tests {
             &requested_lit_resource_ability,
             &None,
             &lit_config,
-            "",
+            &"".to_string(),
         )
         .await;
         assert!(validate.is_err());
@@ -515,7 +518,7 @@ mod validate_session_sig_tests {
             &requested_lit_resource_ability,
             &None,
             &lit_config,
-            "",
+            &"".to_string(),
         )
         .await;
         assert!(validate.is_err());
@@ -556,7 +559,7 @@ mod validate_session_sig_tests {
             &requested_lit_resource_ability,
             &None,
             &lit_config,
-            "",
+            &"".to_string(),
         )
         .await;
         assert!(validate.is_err());
@@ -604,7 +607,7 @@ mod validate_session_sig_tests {
             &requested_lit_resource_ability,
             &None,
             &lit_config,
-            "",
+            &"".to_string(),
         )
         .await;
         assert!(validate.is_err());
@@ -662,7 +665,7 @@ mod validate_session_sig_tests {
             &requested_lit_resource_ability,
             &None,
             &lit_config,
-            "",
+            &"".to_string(),
         )
         .await;
         assert!(validate.is_err());
@@ -722,7 +725,7 @@ mod validate_session_sig_tests {
             &requested_lit_resource_ability,
             &None,
             &lit_config,
-            "",
+            &"".to_string(),
         )
         .await;
         assert!(validate.is_err());
@@ -779,7 +782,7 @@ mod validate_session_sig_tests {
             &requested_lit_resource_ability,
             &None,
             &lit_config,
-            "",
+            &"".to_string(),
         )
         .await;
         assert!(validate.is_err());
@@ -818,7 +821,7 @@ mod validate_session_sig_tests {
             domain: "localhost:7470".parse().unwrap(),
             address: wallet.address().into(),
             statement: Some(r#"Some custom statement. I further authorize the stated URI to perform the following actions on my behalf: (1) '*': '*' for 'lit-accesscontrolcondition://524a697a410a417fb95a9f52d57cba5fa7c87b3acd3b408cf14560fa52691251'."#.into()),
-            uri: format!("lit:session:{session_pub_key}").parse().unwrap(),
+            uri: format!("lit:session:{}", session_pub_key).parse().unwrap(),
             version: siwe::Version::V1,
             chain_id: 1,
             nonce: "JIsknRumpxsM9pqmc".into(),
@@ -876,7 +879,7 @@ mod validate_session_sig_tests {
             &requested_lit_resource_ability,
             &None,
             &lit_config,
-            "",
+            &"".to_string(),
         )
         .await;
 

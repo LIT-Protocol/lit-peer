@@ -5,7 +5,7 @@ use ethers::types::U256;
 use ethers::utils::hex;
 use futures::future::join_all;
 use lit_node_core::response::GenericResponse;
-use lit_node_core::response::SDKHandshakeResponseV0;
+use lit_node_core::response::JsonSDKHandshakeResponse;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt::Debug;
@@ -199,7 +199,7 @@ pub async fn get_identity_pubkeys_from_node_set(
 async fn handshake_nodes(
     actions: &Actions,
     realm_id: U256,
-) -> Vec<GenericResponse<SDKHandshakeResponseV0>> {
+) -> Vec<GenericResponse<JsonSDKHandshakeResponse>> {
     let validators = actions.get_current_validator_structs(realm_id).await;
     let node_set = validators
         .iter()
@@ -338,13 +338,6 @@ where
     let responses: Vec<GenericResponse<D>> = futures::future::join_all(futures).await;
     trace!("responses: {:?}", responses);
     responses
-}
-
-pub fn choose_random_indices_as_vec(array_size: usize, num_random_indices: usize) -> Vec<usize> {
-    choose_random_indices(array_size, num_random_indices)
-        .iter()
-        .cloned()
-        .collect::<Vec<usize>>()
 }
 
 pub fn choose_random_indices(array_size: usize, num_random_indices: usize) -> HashSet<usize> {

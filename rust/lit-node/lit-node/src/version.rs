@@ -42,15 +42,6 @@ impl<T> DataVersionReader<T> {
         Some(Self { data, guard })
     }
 
-    pub fn read_field<Q>(
-        atomic: &AtomicShared<T>,
-        func: impl FnOnce(DataVersionReader<T>) -> Option<Q>,
-    ) -> Option<Q> {
-        let guard = Guard::new();
-        let data = atomic.get_shared(Ordering::Acquire, &guard)?;
-        func(Self { data, guard })
-    }
-
     /// This is only safe if the atomic is guaranteed to not be empty.
     pub fn new_unchecked(atomic: &AtomicShared<T>) -> Self {
         let guard = Guard::new();

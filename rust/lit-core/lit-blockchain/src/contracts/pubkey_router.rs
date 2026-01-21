@@ -671,7 +671,6 @@ pub mod pubkey_router {
                                             ::ethers::core::abi::ethabi::ParamType::Bytes,
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                             ::ethers::core::abi::ethabi::ParamType::FixedBytes(32usize),
-                                            ::ethers::core::abi::ethabi::ParamType::String,
                                         ],
                                     ),
                                     internal_type: ::core::option::Option::Some(
@@ -782,7 +781,6 @@ pub mod pubkey_router {
                                             ::ethers::core::abi::ethabi::ParamType::Bytes,
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                             ::ethers::core::abi::ethabi::ParamType::FixedBytes(32usize),
-                                            ::ethers::core::abi::ethabi::ParamType::String,
                                         ],
                                     ),
                                     internal_type: ::core::option::Option::Some(
@@ -870,13 +868,6 @@ pub mod pubkey_router {
                                         ::std::borrow::ToOwned::to_owned("bytes32"),
                                     ),
                                 },
-                                ::ethers::core::abi::ethabi::Param {
-                                    name: ::std::borrow::ToOwned::to_owned("keySetIdentifier"),
-                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
-                                    internal_type: ::core::option::Option::Some(
-                                        ::std::borrow::ToOwned::to_owned("string"),
-                                    ),
-                                },
                             ],
                             outputs: ::std::vec![],
                             constant: ::core::option::Option::None,
@@ -931,13 +922,6 @@ pub mod pubkey_router {
                                     ),
                                     internal_type: ::core::option::Option::Some(
                                         ::std::borrow::ToOwned::to_owned("bytes32"),
-                                    ),
-                                },
-                                ::ethers::core::abi::ethabi::Param {
-                                    name: ::std::borrow::ToOwned::to_owned("keySetIdentifier"),
-                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
-                                    internal_type: ::core::option::Option::Some(
-                                        ::std::borrow::ToOwned::to_owned("string"),
                                     ),
                                 },
                             ],
@@ -1216,11 +1200,6 @@ pub mod pubkey_router {
                                     kind: ::ethers::core::abi::ethabi::ParamType::FixedBytes(
                                         32usize,
                                     ),
-                                    indexed: false,
-                                },
-                                ::ethers::core::abi::ethabi::EventParam {
-                                    name: ::std::borrow::ToOwned::to_owned("keySetIdentifier"),
-                                    kind: ::ethers::core::abi::ethabi::ParamType::String,
                                     indexed: false,
                                 },
                             ],
@@ -1973,7 +1952,7 @@ pub mod pubkey_router {
                 .method_hash([249, 93, 113, 177], new_resolver_address)
                 .expect("method not found (this should never happen)")
         }
-        ///Calls the contract's `setRoutingData` (0xff463de6) function
+        ///Calls the contract's `setRoutingData` (0x0fccbd62) function
         pub fn set_routing_data(
             &self,
             token_id: ::ethers::core::types::U256,
@@ -1981,23 +1960,21 @@ pub mod pubkey_router {
             staking_contract_address: ::ethers::core::types::Address,
             key_type: ::ethers::core::types::U256,
             derived_key_id: [u8; 32],
-            key_set_identifier: ::std::string::String,
         ) -> ::ethers::contract::builders::ContractCall<M, ()> {
             self.0
                 .method_hash(
-                    [255, 70, 61, 230],
+                    [15, 204, 189, 98],
                     (
                         token_id,
                         pubkey,
                         staking_contract_address,
                         key_type,
                         derived_key_id,
-                        key_set_identifier,
                     ),
                 )
                 .expect("method not found (this should never happen)")
         }
-        ///Calls the contract's `setRoutingDataAsAdmin` (0x6c095735) function
+        ///Calls the contract's `setRoutingDataAsAdmin` (0x6e289d8e) function
         pub fn set_routing_data_as_admin(
             &self,
             token_id: ::ethers::core::types::U256,
@@ -2005,19 +1982,11 @@ pub mod pubkey_router {
             staking_contract: ::ethers::core::types::Address,
             key_type: ::ethers::core::types::U256,
             derived_key_id: [u8; 32],
-            key_set_identifier: ::std::string::String,
         ) -> ::ethers::contract::builders::ContractCall<M, ()> {
             self.0
                 .method_hash(
-                    [108, 9, 87, 53],
-                    (
-                        token_id,
-                        pubkey,
-                        staking_contract,
-                        key_type,
-                        derived_key_id,
-                        key_set_identifier,
-                    ),
+                    [110, 40, 157, 142],
+                    (token_id, pubkey, staking_contract, key_type, derived_key_id),
                 )
                 .expect("method not found (this should never happen)")
         }
@@ -3005,7 +2974,7 @@ pub mod pubkey_router {
     )]
     #[ethevent(
         name = "PubkeyRoutingDataSet",
-        abi = "PubkeyRoutingDataSet(uint256,bytes,address,uint256,bytes32,string)"
+        abi = "PubkeyRoutingDataSet(uint256,bytes,address,uint256,bytes32)"
     )]
     pub struct PubkeyRoutingDataSetFilter {
         #[ethevent(indexed)]
@@ -3014,7 +2983,6 @@ pub mod pubkey_router {
         pub staking_contract: ::ethers::core::types::Address,
         pub key_type: ::ethers::core::types::U256,
         pub derived_key_id: [u8; 32],
-        pub key_set_identifier: ::std::string::String,
     }
     #[derive(
         Clone,
@@ -3592,7 +3560,7 @@ pub mod pubkey_router {
     pub struct SetContractResolverCall {
         pub new_resolver_address: ::ethers::core::types::Address,
     }
-    ///Container type for all input parameters for the `setRoutingData` function with signature `setRoutingData(uint256,bytes,address,uint256,bytes32,string)` and selector `0xff463de6`
+    ///Container type for all input parameters for the `setRoutingData` function with signature `setRoutingData(uint256,bytes,address,uint256,bytes32)` and selector `0x0fccbd62`
     #[derive(
         Clone,
         ::ethers::contract::EthCall,
@@ -3607,7 +3575,7 @@ pub mod pubkey_router {
     )]
     #[ethcall(
         name = "setRoutingData",
-        abi = "setRoutingData(uint256,bytes,address,uint256,bytes32,string)"
+        abi = "setRoutingData(uint256,bytes,address,uint256,bytes32)"
     )]
     pub struct SetRoutingDataCall {
         pub token_id: ::ethers::core::types::U256,
@@ -3615,9 +3583,8 @@ pub mod pubkey_router {
         pub staking_contract_address: ::ethers::core::types::Address,
         pub key_type: ::ethers::core::types::U256,
         pub derived_key_id: [u8; 32],
-        pub key_set_identifier: ::std::string::String,
     }
-    ///Container type for all input parameters for the `setRoutingDataAsAdmin` function with signature `setRoutingDataAsAdmin(uint256,bytes,address,uint256,bytes32,string)` and selector `0x6c095735`
+    ///Container type for all input parameters for the `setRoutingDataAsAdmin` function with signature `setRoutingDataAsAdmin(uint256,bytes,address,uint256,bytes32)` and selector `0x6e289d8e`
     #[derive(
         Clone,
         ::ethers::contract::EthCall,
@@ -3632,7 +3599,7 @@ pub mod pubkey_router {
     )]
     #[ethcall(
         name = "setRoutingDataAsAdmin",
-        abi = "setRoutingDataAsAdmin(uint256,bytes,address,uint256,bytes32,string)"
+        abi = "setRoutingDataAsAdmin(uint256,bytes,address,uint256,bytes32)"
     )]
     pub struct SetRoutingDataAsAdminCall {
         pub token_id: ::ethers::core::types::U256,
@@ -3640,7 +3607,6 @@ pub mod pubkey_router {
         pub staking_contract: ::ethers::core::types::Address,
         pub key_type: ::ethers::core::types::U256,
         pub derived_key_id: [u8; 32],
-        pub key_set_identifier: ::std::string::String,
     }
     ///Container type for all input parameters for the `setTrustedForwarder` function with signature `setTrustedForwarder(address)` and selector `0xda742228`
     #[derive(
@@ -4575,7 +4541,7 @@ pub mod pubkey_router {
         pub pubkey: ::ethers::core::types::Bytes,
         pub eth_address: ::ethers::core::types::Address,
     }
-    ///`PubkeyRoutingData(bytes,uint256,bytes32,string)`
+    ///`PubkeyRoutingData(bytes,uint256,bytes32)`
     #[derive(
         Clone,
         ::ethers::contract::EthAbiType,
@@ -4592,6 +4558,5 @@ pub mod pubkey_router {
         pub pubkey: ::ethers::core::types::Bytes,
         pub key_type: ::ethers::core::types::U256,
         pub derived_key_id: [u8; 32],
-        pub key_set_identifier: ::std::string::String,
     }
 }
