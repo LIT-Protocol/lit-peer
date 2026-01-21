@@ -14,10 +14,12 @@
     "ipAddresses": [
       "173.234.27.195:443",
       "173.234.27.203:443",
-      "173.234.27.211:443",
-      "173.234.27.219:443"
+      "173.234.27.211:443"
     ],
-    "keyTypes": [1, 2],
+    "keyTypes": [
+      1,
+      2
+    ],
     "existingContracts": {
       "stylusContractP256Address": "0xBf7D170515a7D956951bF2f35Cea9c3793b10c1b",
       "stylusContractK256Address": "0x4bb266678E7116D8A1df7aAe7625f9347b01eE85"
