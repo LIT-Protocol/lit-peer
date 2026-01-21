@@ -45,6 +45,7 @@ contract StakingFacet is StakingCommon, ERC2771 {
         address senderAddress,
         uint256 senderRealmId
     );
+    error RateMustBeLessThan100Percent();
 
     /* ========== MUTABLE FUNCTIONS ========== */
 
@@ -1270,7 +1271,9 @@ contract StakingFacet is StakingCommon, ERC2771 {
     }
 
     function setValidatorCommissionRate(uint256 rate) external {
-        require(rate < 1 ether, "Rate must be less than 100%");
+        if (rate >= 1 ether) {
+            revert RateMustBeLessThan100Percent();
+        }
         s().validators[LibERC2771._msgSender()].commissionRate = rate;
     }
 

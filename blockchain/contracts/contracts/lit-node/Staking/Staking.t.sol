@@ -17,6 +17,7 @@ import { LibStakingStorage } from "../Staking/LibStakingStorage.sol";
 import { LITToken } from "../LITToken.sol";
 import { FixedPointMathLib } from "solady/src/utils/FixedPointMathLib.sol";
 import { SetupAndUtils } from "./SetupAndUtils.t.sol";
+import { StakingParticipationFacet } from "./StakingParticipationFacet.sol";
 import { console } from "lib/forge-std/src/console.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
@@ -6209,7 +6210,7 @@ contract StakingTest is Test, SetupAndUtils {
         for (uint256 i = 0; i < operatorStakers.length; i++) {
             // Register the first time.
             vm.prank(operatorStakers[i]);
-            stakingValidatorFacet.registerAttestedWallet(
+            stakingParticipationFacet.registerAttestedWallet(
                 operatorStakers[i],
                 vm.randomAddress(),
                 walletKeys[i],
@@ -6219,7 +6220,7 @@ contract StakingTest is Test, SetupAndUtils {
 
             // Register the second time.
             vm.prank(operatorStakers[i]);
-            stakingValidatorFacet.registerAttestedWallet(
+            stakingParticipationFacet.registerAttestedWallet(
                 operatorStakers[i],
                 vm.randomAddress(),
                 walletKeys[i],
@@ -6235,11 +6236,11 @@ contract StakingTest is Test, SetupAndUtils {
         for (uint256 i = 0; i < operatorStakers.length; i++) {
             vm.prank(operatorStakers[i]);
             vm.expectRevert(
-                StakingValidatorFacet
+                StakingParticipationFacet
                     .ValidatorRegisterAttestedWalletDisabled
                     .selector
             );
-            stakingValidatorFacet.registerAttestedWallet(
+            stakingParticipationFacet.registerAttestedWallet(
                 operatorStakers[i],
                 vm.randomAddress(),
                 walletKeys[i],
@@ -6270,7 +6271,7 @@ contract StakingTest is Test, SetupAndUtils {
         for (uint256 i = 0; i < operatorStakers.length; i++) {
             if (operatorStakers[i] == operatorStakerToLeave) {
                 vm.prank(operatorStakers[i]);
-                stakingValidatorFacet.registerAttestedWallet(
+                stakingParticipationFacet.registerAttestedWallet(
                     operatorStakers[i],
                     vm.randomAddress(),
                     walletKeys[i],
@@ -6280,11 +6281,11 @@ contract StakingTest is Test, SetupAndUtils {
             } else {
                 vm.prank(operatorStakers[i]);
                 vm.expectRevert(
-                    StakingValidatorFacet
+                    StakingParticipationFacet
                         .ValidatorRegisterAttestedWalletDisabled
                         .selector
                 );
-                stakingValidatorFacet.registerAttestedWallet(
+                stakingParticipationFacet.registerAttestedWallet(
                     operatorStakers[i],
                     vm.randomAddress(),
                     walletKeys[i],

@@ -23,6 +23,10 @@ library LibStakingStorage {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSetViewFriendly for EnumerableSetViewFriendly.AddressSet;
 
+    /* ========== ERRORS ========== */
+    error RealmIdCannotBeZero();
+    error RealmIdNotFound(uint256 realmId);
+
     bytes32 constant GLOBAL_STAKING_POSITION =
         keccak256("global.staking.storage");
 
@@ -432,11 +436,11 @@ library LibStakingStorage {
         uint256 realmId
     ) internal view returns (RealmStorage storage storageStruct) {
         if (realmId == 0) {
-            revert("Realm Id can not be 0.");
+            revert RealmIdCannotBeZero();
         }
 
         if (!EnumerableSet.contains(getStakingStorage().realmIds, realmId)) {
-            revert("RealmId not found in storage.");
+            revert RealmIdNotFound(realmId);
         }
 
         bytes32 position = keccak256(abi.encode(realmId));

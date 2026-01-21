@@ -16,6 +16,7 @@ contract StakingValidatorFacet {
     using EnumerableSet for EnumerableSet.AddressSet;
 
     // errors
+    error OnlyStakingContractCanCall(address caller);
     error ValidatorNotInNextEpoch(address staker);
     error ValidatorAlreadyInNextValidatorSet(address staker);
     error MustBeInActiveOrUnlockedState(LibStakingStorage.States state);
@@ -54,7 +55,6 @@ contract StakingValidatorFacet {
     );
     error ValueMustBeNonzero(string valueName);
     error CannotWithdrawZero();
-    error CannotReuseCommsKeys(uint256 senderPubKey, uint256 receiverPubKey);
     error ValidatorNotPermitted(address validatorAddress, uint256 realmId);
     error SignaledReadyForWrongEpochNumber(
         uint256 currentEpochNumber,
@@ -67,7 +67,7 @@ contract StakingValidatorFacet {
         address stakerAddress
     );
     error InvalidAttestedAddress();
-    error ValidatorRegisterAttestedWalletDisabled();
+    error CannotKickBelowKeySetThreshold(string keySetId);
 
     /* ========== VIEWS ========== */
 
@@ -132,7 +132,7 @@ contract StakingValidatorFacet {
             );
         }
 
-        StakingUtilsLib.checkNextSetAboveThreshold(realmId);
+        StakingUtilsLib.checkNodeCountIsSafe(realmId);
 
         StakingUtilsLib.realm(realmId).state = LibStakingStorage
             .States
@@ -480,7 +480,7 @@ contract StakingValidatorFacet {
         address stakerAddress
     ) external {
         if (msg.sender != address(this)) {
-            revert("Only the Staking contract can call this function");
+            revert OnlyStakingContractCanCall(msg.sender);
         }
 
         executeRequestToJoin(realmId, stakerAddress);
@@ -607,93 +607,6 @@ contract StakingValidatorFacet {
         emit RequestToJoin(stakerAddress);
     }
 
-    /// @notice This will be called using the node operator wallet (unattested).
-    function registerAttestedWallet(
-        address stakerAddress,
-        address attestedAddress,
-        bytes calldata attestedPubKey,
-        uint256 senderPubKey,
-        uint256 receiverPubKey
-    ) external {
-        require(attestedPubKey.length == 65, "Invalid uncompressed key length");
-        uint8 prefix = uint8(attestedPubKey[0]);
-        require(prefix == 0x04, "Invalid uncompressed key prefix");
-
-        // Check that the staker address is correct.
-        address resolvedAddress = StakingUtilsLib
-            .views()
-            .operatorAddressToStakerAddress(msg.sender);
-        if (resolvedAddress != stakerAddress) {
-            revert StakerAddressMismatch(
-                msg.sender,
-                resolvedAddress,
-                stakerAddress
-            );
-        } else if (
-            StakingUtilsLib.views().nodeAddressToStakerAddress(
-                attestedAddress
-            ) !=
-            address(0) &&
-            attestedAddress != msg.sender
-        ) {
-            revert InvalidAttestedAddress();
-        }
-
-        if (senderPubKey == 0) {
-            revert ValueMustBeNonzero("senderPubKey");
-        }
-        if (receiverPubKey == 0) {
-            revert ValueMustBeNonzero("receiverPubKey");
-        }
-
-        LibStakingStorage.Validator storage validator = s().validators[
-            stakerAddress
-        ];
-
-        if (validator.registerAttestedWalletDisabled) {
-            revert ValidatorRegisterAttestedWalletDisabled();
-        }
-        if (validator.lastRealmId != 0) {
-            // Skip check if the keys are the same
-            if (
-                !(senderPubKey == validator.senderPubKey &&
-                    receiverPubKey == validator.receiverPubKey)
-            ) {
-                LibStakingStorage.RealmStorage
-                    storage realmStorage = StakingUtilsLib.realm(
-                        validator.lastRealmId
-                    );
-                bytes32 commsKeysHash = keccak256(
-                    abi.encodePacked(senderPubKey, receiverPubKey)
-                );
-                if (realmStorage.usedCommsKeys[commsKeysHash]) {
-                    revert CannotReuseCommsKeys(senderPubKey, receiverPubKey);
-                }
-                realmStorage.usedCommsKeys[commsKeysHash] = true;
-            }
-        }
-
-        uint256 x;
-        uint256 y;
-        assembly {
-            x := calldataload(add(attestedPubKey.offset, 1))
-            y := calldataload(add(attestedPubKey.offset, 33))
-        }
-
-        validator.senderPubKey = senderPubKey;
-        validator.receiverPubKey = receiverPubKey;
-        validator.nodeAddress = attestedAddress;
-        s().stakerAddressToNodeAddress[stakerAddress] = attestedAddress;
-        s().nodeAddressToStakerAddress[attestedAddress] = stakerAddress;
-        s().attestedAddressToPubKey[attestedAddress] = LibStakingStorage
-            .UncompressedK256Key(x, y);
-        emit AttestedWalletRegistered(
-            stakerAddress,
-            attestedAddress,
-            LibStakingStorage.UncompressedK256Key(x, y)
-        );
-    }
-
     /// Exit staking and get any outstanding rewards
     function exit() external pure {
         //    "Not implemented - check the docs to validate a proper withdrawl process."
@@ -746,19 +659,32 @@ contract StakingValidatorFacet {
         bool isValidatorInCurrentSet = realmStorage
             .validatorsInCurrentEpoch
             .contains(validatorToKickStakerAddress);
+
         if (
             StakingUtilsLib.views().epoch(realmId).number > 1 &&
-            realmStorage.currentValidatorsKickedFromNextEpoch.length() >=
-            (StakingUtilsLib
+            StakingUtilsLib
                 .views()
                 .getValidatorsInCurrentEpoch(realmId)
-                .length -
+                .length >=
+            (realmStorage.currentValidatorsKickedFromNextEpoch.length() +
                 StakingUtilsLib.views().currentValidatorCountForConsensus(
                     realmId
                 ))
         ) {
             revert CannotKickBelowCurrentValidatorThreshold();
         }
+
+        uint256 nextValidatorCnt = StakingUtilsLib
+            .views()
+            .getValidatorsInCurrentEpoch(realmId)
+            .length -
+            realmStorage.currentValidatorsKickedFromNextEpoch.length();
+
+        StakingUtilsLib.checkValidatorCountAgainstKeySetsInRealm(
+            realmId,
+            nextValidatorCnt,
+            3
+        );
 
         LibStakingStorage.Epoch memory currentEpoch = mutableEpoch(realmId);
         // Vote to kick
@@ -850,7 +776,7 @@ contract StakingValidatorFacet {
                 // we want to kick off the next epoch transition to remove this node from the set
 
                 // check that it's safe to move to locked
-                StakingUtilsLib.checkNextSetAboveThreshold(realmId);
+                StakingUtilsLib.checkNodeCountIsSafe(realmId);
 
                 realmStorage.state = LibStakingStorage
                     .States
@@ -1019,22 +945,13 @@ contract StakingValidatorFacet {
             StakingUtilsLib.realm(realmId).state
         );
 
-        if (
-            StakingUtilsLib.realm(realmId).validatorsInNextEpoch.length() - 1 <
-            s().globalConfig[0].minimumValidatorCount
-        ) {
-            revert StakingUtilsLib.NotEnoughValidatorsInNextEpoch(
-                StakingUtilsLib.realm(realmId).validatorsInNextEpoch.length(),
-                s().globalConfig[0].minimumValidatorCount
-            );
-        }
         StakingUtilsLib.removeValidatorFromNextEpoch(realmId, stakerAddress);
 
         // ensure this won't drop us below the minimum validator count.
         // technically, if we would drop below the threshold in the next set due to this node leaving,
         // it should be okay, since this node is "gracefully" leaving and participating in the Reshare.
         // but we still need to prevent it from dropping below the threshold due to kicks.
-        StakingUtilsLib.checkNextSetAboveThreshold(realmId);
+        StakingUtilsLib.checkNodeCountIsSafe(realmId);
         emit RequestToLeave(stakerAddress);
     }
 

@@ -19,6 +19,7 @@ contract StakingViewsFacet {
     using EnumerableSetViewFriendly for EnumerableSetViewFriendly.AddressSet;
 
     error NodeAddressNotFoundForStaker();
+    error NoPubKeyRegisteredForAttestedAddress(address attestedAddress);
 
     /* ========== VIEWS ========== */
 
@@ -1154,9 +1155,9 @@ contract StakingViewsFacet {
     ) external view returns (bytes memory) {
         LibStakingStorage.UncompressedK256Key memory key = s()
             .attestedAddressToPubKey[attestedAddress];
-        require(key.x != 0, "No key registered");
-        require(key.y != 0, "No key registered");
-
+        if (key.x == 0 || key.y == 0) {
+            revert NoPubKeyRegisteredForAttestedAddress(attestedAddress);
+        }
         bytes memory pubKey = new bytes(65);
         pubKey[0] = bytes1(0x04);
 
