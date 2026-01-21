@@ -85,6 +85,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
         .num_staked_and_joined_validators(number_of_nodes)
         .epoch_length(epoch_length)
         .include_datil_testnet(DatilTestnetType::NoKeyOverride)
+        .force_deploy(true)
         .build()
         .await;
 
@@ -206,6 +207,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
         &client,
         &validator_collection2,
         &backup_directory,
+        recovery_party_size,
     )
     .await;
 
@@ -358,6 +360,7 @@ async fn upload_key_backups_to_nodes(
     client: &Client,
     validator_collection: &ValidatorCollection,
     backup_directory: &PathBuf,
+    recovery_party_size: usize,
 ) {
     let validators = validator_collection.get_active_validators().await.unwrap();
     let mut join_set = JoinSet::new();
@@ -376,7 +379,15 @@ async fn upload_key_backups_to_nodes(
 
             let tar_file =
                 backup_directory.join(format!("{public_address}{BACKUP_ENCRYPTED_KEYS}"));
-            let file = tokio::fs::File::open(tar_file).await.unwrap();
+            let file = tokio::fs::File::open(tar_file).await;
+
+            let file = match file {
+                Ok(file) => file,
+                Err(e) => {
+                    error!("No file for: {}", e);
+                    return (public_address, false);
+                }
+            };
 
             info!("Uploading backup for validator {}", public_address);
             let response = client
@@ -405,11 +416,15 @@ async fn upload_key_backups_to_nodes(
             (public_address, success)
         });
     }
+    let mut success_count = 0;
     while let Some(node_info) = join_set.join_next().await {
         let (public_address, success) = node_info.unwrap();
         info!("Node {} received tar backup: {}", public_address, success);
-        assert!(success);
+        if success {
+            success_count += 1;
+        }
     }
+    assert!(success_count == recovery_party_size);
 }
 
 #[derive(Clone, Default, Serialize)]
@@ -453,40 +468,43 @@ async fn upload_blinders_to_nodes(
         let admin_signing_key = admin_signing_key.clone();
         let chain_id = testnet.chain_id;
         let client = client.clone();
-        let blinders = downloaded_blinders[&public_address].clone();
 
-        join_set.spawn(async move {
-            // Send the blinders to the node operators
-            let url = format!("http://{public_address}/web/admin/set_blinders");
-            let auth_sig =
-                generate_admin_auth_sig(&admin_signing_key, chain_id, &url, &public_address);
-            let auth_sig = serde_json::to_string(&auth_sig.auth_sig).unwrap();
+        if downloaded_blinders.contains_key(&public_address) {
+            let blinders = downloaded_blinders[&public_address].clone();
 
-            let json_body = serde_json::to_string(&blinders).unwrap();
+            join_set.spawn(async move {
+                // Send the blinders to the node operators
+                let url = format!("http://{public_address}/web/admin/set_blinders");
+                let auth_sig =
+                    generate_admin_auth_sig(&admin_signing_key, chain_id, &url, &public_address);
+                let auth_sig = serde_json::to_string(&auth_sig.auth_sig).unwrap();
 
-            info!(
-                "{} Sending blinders: {}",
-                public_address,
-                serde_json::to_string_pretty(&blinders).unwrap()
-            );
-            info!("Sending blinders to validator: {}", url);
-            let response = client
-                .post(url)
-                .header("Content-Type", "application/octet-stream")
-                .header(
-                    "x-auth-sig",
-                    data_encoding::BASE64URL.encode(auth_sig.as_bytes()),
-                )
-                .body(json_body)
-                .send()
-                .await
-                .unwrap()
-                .text()
-                .await
-                .unwrap();
-            info!("Response: {}", response);
-            public_address
-        });
+                let json_body = serde_json::to_string(&blinders).unwrap();
+
+                info!(
+                    "{} Sending blinders: {}",
+                    public_address,
+                    serde_json::to_string_pretty(&blinders).unwrap()
+                );
+                info!("Sending blinders to validator: {}", url);
+                let response = client
+                    .post(url)
+                    .header("Content-Type", "application/octet-stream")
+                    .header(
+                        "x-auth-sig",
+                        data_encoding::BASE64URL.encode(auth_sig.as_bytes()),
+                    )
+                    .body(json_body)
+                    .send()
+                    .await
+                    .unwrap()
+                    .text()
+                    .await
+                    .unwrap();
+                info!("Response: {}", response);
+                public_address
+            });
+        };
     }
     while let Some(node_info) = join_set.join_next().await {
         let public_address = node_info.unwrap();
