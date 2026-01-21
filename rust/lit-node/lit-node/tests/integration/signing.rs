@@ -6,6 +6,7 @@ use ethers::types::Address;
 use ethers::types::{H160, TransactionRequest, U256};
 use ethers::{providers::Middleware, signers::to_eip155_v};
 use lit_blockchain::contracts::pkpnft::PKPNFT;
+use lit_node_testnet::TestSetupBuilder;
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::{DEFAULT_DATIL_KEY_SET_NAME, DEFAULT_KEY_SET_NAME, TestSetupBuilder};
 
