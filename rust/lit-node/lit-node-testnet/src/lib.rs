@@ -249,7 +249,7 @@ impl TestSetupBuilder {
         let signing_round_timeout_ms = if self.signing_round_timeout.is_some() {
             self.signing_round_timeout
         } else {
-            // if not in CI, set a default signing round timeout of 8000ms
+            // if not in CI, set a default signing round timeout of 15000ms
             Some("15000".to_string())
         };
 
