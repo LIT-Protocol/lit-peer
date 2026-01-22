@@ -55,7 +55,7 @@ fn select_rpc_entry<'a>(
 ) -> &'a RpcEntry {
     assert!(!entries.is_empty(), "select_rpc_entry called with empty entries");
 
-    // Try to find the best healthy entry first
+    // Try to find the best healthy entry
     let best_healthy = entries
         .iter()
         .filter_map(|entry| match latencies.get(entry) {
@@ -74,17 +74,18 @@ fn select_rpc_entry<'a>(
         return entry;
     }
 
-    // No healthy entries. This happens when the healthcheck poller has not completed a cycle but the
-    // contract resolver immediately needs an RPC (e.g. prov bootstrap). In that case, all entries are
-    // default-unhealthy due to missing latency data. We must avoid picking a high-priority replica
-    // that may not exist; instead use the default-priority remote RPC that is most likely to be
-    // available and warn that fallback was used. This makes a priority-0 default entry mandatory
+    // No healthy entries
+    // Return the default-priority remote RPC (it is most likely to be available)
+    // This can happen when the healthcheck poller has not completed a cycle but the
+    // contract resolver immediately requests an RPC (e.g. prov bootstrap).
+    //In that case, all entries are default-unhealthy due to missing latency data.
+    // NOTE: It is mandatory to provide a priority-0 default entry in the config
     // for every chain that may be used during initialization (yellowstone, litChain)
     let fallback_entry =
         entries.iter().filter(|entry| entry.priority() == 0).min_by(|a, b| a.url().cmp(b.url()));
 
     if let Some(entry) = fallback_entry {
-        warn!(url = entry.url(), "RPC healthcheck fallback URL selected");
+        warn!(url = entry.url(), "No healthy endpoints available, returning fallback");
         return entry;
     }
 
