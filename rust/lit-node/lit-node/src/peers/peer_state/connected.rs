@@ -72,6 +72,9 @@ impl PeerState {
                 version: version::get_version().to_string(),
             }
         } else {
+            // this represents "us", but if we're not in any of the current/next epochs, we shouldn't be able to complain anyway!
+            let complainer = self.self_peer()?;
+
             let cfg = self.lit_config.load_full();
             let noonce_bytes = OsRng.r#gen::<[u8; 32]>();
             let noonce = hex::encode(noonce_bytes);
@@ -113,8 +116,7 @@ impl PeerState {
                                     return Err(unexpected_err(
                                         e,
                                         Some(format!(
-                                            "Failed to connect to peer {} while network is {:?} ( will not complain ).",
-                                            addr, network_state,
+                                            "Failed to connect to peer {addr} while network is {network_state:?} ( will not complain ).",
                                         )),
                                     ));
                                 }
@@ -129,14 +131,12 @@ impl PeerState {
                                     | Code::Unavailable => {
                                         self.client_grpc_channels.remove_connection(addr).await;
                                         warn!("Peer {:?} is unresponsive. Complaining.", addr);
-                                        let complainer = self.addr.clone();
                                         let complaint_channel = self.complaint_channel.clone();
                                         if let Err(e) = complaint_channel
                                             .send_async(PeerComplaint {
                                                 complainer,
                                                 issue: Issue::Unresponsive,
-                                                peer_node_staker_address: peer.staker_address,
-                                                peer_node_socket_address: peer.socket_addr.clone(),
+                                                against_peer: (&peer).into(),
                                             })
                                             .await
                                         {
@@ -148,17 +148,14 @@ impl PeerState {
 
                                 return Err(unexpected_err(
                                     e,
-                                    Some(format!(
-                                        "Failed to send connect request to peer:{}",
-                                        addr
-                                    )),
+                                    Some(format!("Failed to send connect request to peer:{addr}")),
                                 ));
                             }
                         };
                         break;
                     }
                     None => {
-                        let dest_url = Url::parse(format!("{}{}/", prefix, addr).as_str())
+                        let dest_url = Url::parse(format!("{prefix}{addr}/").as_str())
                             .expect("Failed to parse URL");
                         trace!("Creating a new grpc client connection at {}", addr);
                         match ChatterClientFactory::new_client(dest_url, cfg.clone()).await {
@@ -169,22 +166,19 @@ impl PeerState {
                                     return Err(unexpected_err(
                                         e,
                                         Some(format!(
-                                            "Failed to connect to peer while network is paused ( no complaining ) : {}",
-                                            addr
+                                            "Failed to connect to peer while network is paused ( no complaining ) : {addr}"
                                         )),
                                     ));
                                 }
 
                                 trace!("Connecting to peer {:?} has failed, {:?}", &addr, e);
                                 warn!("Peer {:?} is unresponsive. Complaining.", addr);
-                                let complainer = self.addr.clone();
                                 let complaint_channel = self.complaint_channel.clone();
                                 if let Err(e) = complaint_channel
                                     .send_async(PeerComplaint {
                                         complainer,
                                         issue: Issue::Unresponsive,
-                                        peer_node_staker_address: peer.staker_address,
-                                        peer_node_socket_address: peer.socket_addr.clone(),
+                                        against_peer: (&peer).into(),
                                     })
                                     .await
                                 {
@@ -192,7 +186,7 @@ impl PeerState {
                                 }
                                 return Err(unexpected_err(
                                     e,
-                                    Some(format!("Failed to connect to peer: {}", addr)),
+                                    Some(format!("Failed to connect to peer: {addr}")),
                                 ));
                             }
                         };
@@ -216,6 +210,10 @@ impl PeerState {
                 )
                 .await;
             if let Err(verify_err) = verify_res {
+                error!(
+                    "Verification failed for addr: {:?}, expected validator staker_address: {:?}, peer_item staker_address: {:?}, error: {:?}",
+                    addr, peer.staker_address, peer_item.staker_address, verify_err
+                );
                 // If the error is EC::NodeRpcError, log error and rethrow Error without complaining Peer.
                 // Rethrowing Error will cause this code path to be run again at some later time by the caller.
                 return if verify_err.is_code(EC::NodeRpcError, true)
@@ -230,14 +228,16 @@ impl PeerState {
                         "{:?}: {:?}. Err: {:?}. Complaining.",
                         err_msg, addr, verify_err
                     );
-                    let complainer = self.addr.clone();
+                    warn!(
+                        "Sending IncorrectInfo complaint for peer at addr: {:?}, staker_address: {:?}",
+                        addr, peer.staker_address
+                    );
                     let complaint_channel = self.complaint_channel.clone();
                     if let Err(e) = complaint_channel
                         .send_async(PeerComplaint {
                             complainer,
                             issue: Issue::IncorrectInfo,
-                            peer_node_staker_address: peer.staker_address,
-                            peer_node_socket_address: peer.socket_addr.clone(),
+                            against_peer: (&peer).into(),
                         })
                         .await
                     {
@@ -279,12 +279,19 @@ impl PeerState {
         }
 
         // verify web address
-        if peer_item_to_verify.addr != get_web_addr_from_chain_info(validator.ip, validator.port) {
+        let expected_addr = get_web_addr_from_chain_info(validator.ip, validator.port);
+        if peer_item_to_verify.addr != expected_addr {
+            error!(
+                "IP/Port mismatch detected! Peer item addr: {:?}, chain expected addr: {:?}, staker_address: {:?}, node_address: {:?}",
+                peer_item_to_verify.addr,
+                expected_addr,
+                peer_item_to_verify.staker_address,
+                peer_item_to_verify.node_address
+            );
             return Err(unexpected_err(
                 format!(
                     "addr different from chain.  Peer item addr: {:?}, chain addr: {:?}",
-                    peer_item_to_verify.addr,
-                    get_web_addr_from_chain_info(validator.ip, validator.port)
+                    peer_item_to_verify.addr, expected_addr
                 ),
                 None,
             ));
@@ -321,6 +328,13 @@ impl PeerState {
 
         // verify staker address
         if peer_item_to_verify.staker_address != registered_staker_address {
+            error!(
+                "Staker address mismatch detected! Peer item staker_address: {:?}, chain registered_staker_address: {:?}, node_address: {:?}, addr: {:?}",
+                peer_item_to_verify.staker_address,
+                registered_staker_address,
+                peer_item_to_verify.node_address,
+                peer_item_to_verify.addr
+            );
             tracing::debug!("Peer item: {:?}", peer_item_to_verify);
             tracing::debug!("Validator from chain: {:?}", validator);
 
@@ -444,8 +458,7 @@ impl PeerState {
         peer_state_data
             .get_peer_by_staker_addr(staker_address)
             .expect_or_err(format!(
-                "PeerItem not found for staker address: {}",
-                staker_address
+                "PeerItem not found for staker address: {staker_address}"
             ))
     }
 }

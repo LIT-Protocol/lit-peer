@@ -10,7 +10,6 @@ use hyper::body::Bytes;
 use hyper::http::HeaderValue;
 use hyper::{HeaderMap, Method, Request as HyperRequest, Response as HyperResponse};
 use tracing::debug;
-use uuid::Uuid;
 
 use crate::context::{HEADER_KEY_X_CORRELATION_ID, HEADER_KEY_X_REQUEST_ID, Tracing, with_context};
 
@@ -129,13 +128,10 @@ impl Default for Router {
     }
 }
 
-// Get Tracing from request headers.
+// Get Tracing from request headers; no fallback ID generation.
 fn get_tracing_from_request_header(headers: HeaderMap<HeaderValue>) -> Tracing {
-    if let Some(correlation_id) = extract_correlation_id(headers) {
-        Tracing::new(correlation_id)
-    } else {
-        Tracing::new(Uuid::new_v4().simple().to_string())
-    }
+    let correlation_id = extract_correlation_id(headers).unwrap_or_default();
+    Tracing::new(correlation_id)
 }
 
 fn extract_correlation_id(headers: HeaderMap<HeaderValue>) -> Option<String> {

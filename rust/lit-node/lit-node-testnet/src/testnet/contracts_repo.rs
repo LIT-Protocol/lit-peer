@@ -1,17 +1,15 @@
 use std::borrow::BorrowMut;
+use std::fs;
 use std::io::BufReader;
 use std::path::Path;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::SystemTime;
-use std::{fs, process::Stdio};
 
 use crate::testnet::contracts::ContractAddresses;
-use crate::testnet::node_config::{CustomNodeRuntimeConfig, generate_custom_node_runtime_config};
 
 use super::{NodeAccount, SimpleTomlValue};
-use anyhow::Result;
-use command_group::{CommandGroup, GroupChild};
+use command_group::CommandGroup;
 use ethers::prelude::*;
 use k256::ecdsa::SigningKey;
 use lit_core::utils::binary::hex_to_bytes;
@@ -21,12 +19,10 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::process::Command;
-use tokio::fs::File;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-use tracing::{debug, error, info, trace};
+use tracing::info;
 
-const LITCONTRACTPATH: &str = "../../../blockchain/contracts";
+pub const LITCONTRACTPATH: &str = "../../../blockchain/contracts";
 
 // Required environment variables for the deployment scripts
 const ENV_IPFS_API_KEY: &str = "IPFS_API_KEY";
@@ -321,74 +317,6 @@ pub fn latest_wallet_manifest(is_alias_wallet_manifest: bool) -> Vec<WalletManif
     serde_json::from_str::<Vec<WalletManifestItem>>(&manifest).expect("Failed to parse JSON")
 }
 
-/// An alias manifest is a JSON file that declares the details of how to (generate and) add a new wallet
-/// as an alias of an existing wallet / node.
-pub fn get_alias_manifest_template() -> AddAliasManifest {
-    let alias_manifest_template_path = fs::canonicalize(LITCONTRACTPATH)
-        .expect("Failed to get canonical path")
-        .join("scripts")
-        .join("generate_wallet_and_add_as_alias_manifest.template.json");
-    let alias_manifest_template =
-        fs::read_to_string(alias_manifest_template_path).expect("Failed to read template");
-    serde_json::from_str::<AddAliasManifest>(&alias_manifest_template)
-        .expect("Failed to parse JSON")
-}
-
-pub fn save_alias_manifest(alias_manifest: &AddAliasManifest) {
-    let alias_manifest_path = fs::canonicalize(LITCONTRACTPATH)
-        .expect("Failed to get canonical path")
-        .join("scripts")
-        .join("generate_wallet_and_add_as_alias_manifest.json");
-    let alias_manifest =
-        serde_json::to_string_pretty(&alias_manifest).expect("Failed to serialize JSON");
-    info!("Generating alias manifest: {:?}", alias_manifest);
-    fs::write(alias_manifest_path, alias_manifest).expect("Failed to write alias manifest to file");
-}
-
-pub fn generate_wallet_and_add_as_alias() {
-    let args = [
-        "hardhat",
-        "run",
-        "--network",
-        "localchain",
-        "scripts/generate_wallet_and_add_as_alias.ts",
-    ];
-    info!(
-        "Running full generate_wallet_and_add_as_alias command in {}: npx {}",
-        LITCONTRACTPATH,
-        args.join(" ")
-    );
-    let mut rv = populate_required_environment_variables(Command::new("npx").borrow_mut())
-        .args(args)
-        .current_dir(fs::canonicalize(LITCONTRACTPATH).unwrap())
-        // .stderr(Stdio::null()) // comment this out to see what's going on
-        // .stdout(Stdio::null()) // comment this out to see what's going on
-        .group_spawn()
-        .expect("Failed to launch generate wallet and add as alias script");
-    let exit_code = rv
-        .wait()
-        .expect("Failed to wait on generate wallet and add as alias script");
-    if !exit_code.success() {
-        panic!(
-            "Generate wallet and add as alias script failed with exit code {:?}",
-            exit_code
-        );
-    }
-}
-
-pub fn start_hardhat_chain() -> GroupChild {
-    Command::new("npx")
-        .current_dir(fs::canonicalize(LITCONTRACTPATH).unwrap())
-        // .env("ETHERNAL_EMAIL", "user@litprotocol.com") // localhost
-        // .env("ETHERNAL_PASSWORD", "somepassword")
-        .arg("hardhat")
-        .arg("node")
-        .stderr(Stdio::null()) // comment this out to see what's going on with hardhat
-        .stdout(Stdio::null()) // comment this out to see what's going on with hardhat
-        .group_spawn()
-        .expect("Failed to launch Testnet")
-}
-
 pub fn compile_contracts() {
     // First, check if the contracts are compiled, and if not recompile them by running npx anvil test.
     if !artifacts_exist() {
@@ -610,271 +538,4 @@ pub async fn contract_addresses_from_deployment() -> ContractAddresses {
     };
 
     contract_addresses
-}
-
-pub async fn check_and_load_test_state_cache(
-    provider: Arc<Provider<Http>>,
-    num_staked: usize,
-    num_nodes: usize,
-    custom_node_runtime_config: &CustomNodeRuntimeConfig,
-    is_fault_test: bool,
-) -> bool {
-    let tar_name = format!(
-        "./tests/test_state_cache/{}_{}.tar.gz",
-        num_staked, num_nodes
-    );
-    if !Path::new(&tar_name).exists() {
-        info!(
-            "No test state cache found for this config (num_staked: {}, num_nodes: {}), will deploy contracts normally via script.",
-            num_staked, num_nodes
-        );
-        return false;
-    }
-
-    let block_number = provider.get_block_number().await.unwrap();
-    trace!("Block number before loading chain state: {}", block_number);
-
-    let root = "./tests/test_state_cache";
-    let tar_name = format!("./{}/{}_{}.tar.gz", root, num_staked, num_nodes);
-
-    lit_core::utils::tar::read_tar_gz_file(&tar_name, &root).expect("Failed to read tar.gz file");
-    let dir_name = format!("./tests/test_state_cache/{}_{}", num_staked, num_nodes);
-    let dir = Path::new(&dir_name);
-
-    info!("Loading test state from cache: {:?}", dir);
-
-    let filename = "anvil_state.hex".to_string();
-    let path = dir.join(&filename);
-    let mut file = File::open(&path).await.unwrap();
-    let mut contents = String::new();
-    file.read_to_string(&mut contents).await.unwrap();
-
-    let params: Vec<String> = vec![contents];
-    let res: bool = provider
-        .request("anvil_loadState", params.clone())
-        .await
-        .unwrap();
-    if !res {
-        error!("Couldn't load chain state into anvil...");
-        return false;
-    }
-
-    let block_number = provider.get_block_number().await.unwrap();
-    trace!("Block number after loading chain state: {}", block_number);
-
-    info!("Loading matching node configs for chain state...");
-
-    // also copy back the node configs
-    let node_configs_path = node_configs_path();
-    fs::create_dir_all(&node_configs_path).unwrap();
-
-    let node_configs_dir = &dir.join("node_configs");
-    let dir_entries = fs::read_dir(node_configs_dir).unwrap();
-    for entry in dir_entries {
-        let entry = entry.unwrap();
-        if entry.file_type().unwrap().is_dir() {
-            continue;
-        }
-        if entry.path().extension().unwrap() == "toml" {
-            let dest_path = Path::new(&node_configs_path).join(entry.file_name());
-            fs::copy(entry.path(), &dest_path).unwrap();
-            generate_custom_node_runtime_config(
-                is_fault_test,
-                &crate::testnet::WhichTestnet::Anvil,
-                custom_node_runtime_config,
-                Some(dest_path.to_str().unwrap().to_string()),
-            );
-        }
-    }
-
-    // finally, put back the wallet
-    let wallet_manifest_path = dir.join("wallet.json");
-    let timestamp = SystemTime::now()
-        .duration_since(SystemTime::UNIX_EPOCH)
-        .unwrap()
-        .as_millis();
-
-    let base_path = Path::new(LITCONTRACTPATH).join("wallets");
-    fs::create_dir_all(&base_path).unwrap();
-    let dest_path = base_path.join(format!(
-        "wallets-{}-localchain-{}.json",
-        timestamp, num_nodes
-    ));
-    fs::copy(wallet_manifest_path, dest_path).unwrap();
-    info!("Chain state loaded from cache - not deploying contracts");
-
-    let node_key_folder_source = dir.join("node_keys_cache");
-    let node_key_folder_dest = "./node_keys"; // since we're including the "node_keys" folder itself.
-
-    info!("Copying node keys to local directories...");
-    // copy node keys to the test cache; folder name is changed to avoid .git_ignore issues.
-    for entry in fs::read_dir(&node_key_folder_source).unwrap() {
-        let entry = entry.unwrap();
-        fs_extra::dir::copy(
-            &entry.path(),
-            &node_key_folder_dest,
-            &fs_extra::dir::CopyOptions::new().overwrite(true),
-        )
-        .unwrap();
-    }
-
-    let deployed_core_contracts_dest =
-        &format!("{}/deployed-lit-core-contracts-temp.json", LITCONTRACTPATH);
-    let deployed_node_contracts_dest =
-        &format!("{}/deployed-lit-node-contracts-temp.json", LITCONTRACTPATH);
-
-    let deployed_core_contracts_src = &dir.join("deployed-lit-core-contracts-temp.json");
-    let deployed_node_contracts_src = &dir.join("deployed-lit-node-contracts-temp.json");
-
-    fs::copy(deployed_core_contracts_src, deployed_core_contracts_dest)
-        .expect("Failed to copy deployed-lit-core-contracts-temp.json");
-    fs::copy(deployed_node_contracts_src, deployed_node_contracts_dest)
-        .expect("Failed to copy deployed-lit-node-contracts-temp.json");
-
-    fs::remove_dir_all(&dir_name).expect("Failed to remove temp directory");
-    debug!("Finished loading chain state from cache");
-
-    true
-}
-
-pub async fn save_to_test_state_cache(
-    provider: Arc<Provider<Http>>,
-    num_staked_and_joined_validators: usize,
-    num_staked_only_validators: usize,
-) {
-    let temp_dir_name = format!(
-        "./tests/test_state_cache/{}_{}",
-        num_staked_and_joined_validators, num_staked_only_validators
-    );
-
-    let tar_name = format!(
-        "./tests/test_state_cache/{}_{}.tar.gz",
-        num_staked_and_joined_validators, num_staked_only_validators
-    );
-
-    let dir = Path::new(&temp_dir_name);
-    if !dir.exists() {
-        info!("Creating chain state cache directory: {:?}", dir);
-        fs::create_dir_all(dir).unwrap();
-    } else {
-        info!("Chain state already saved for this config - not saving again.");
-        return;
-    }
-
-    let block_number = provider.get_block_number().await.unwrap();
-    info!(
-        "Dumping chain state to file at block number {}",
-        block_number
-    );
-    let params: Vec<String> = vec![];
-    let res: String = provider.request("anvil_dumpState", params).await.unwrap();
-
-    let filename = "anvil_state.hex".to_string();
-    let path = dir.join(&filename);
-    let mut file = File::create(&path).await.unwrap();
-    file.write_all(res.as_bytes()).await.unwrap();
-    file.sync_all().await.unwrap();
-
-    // also save the node configs
-    info!("Getting node configs to cache...");
-    let node_configs_path = node_configs_path();
-    let node_configs = fs::read_dir(node_configs_path).unwrap();
-    let node_configs_dir = &dir.join("node_configs");
-    fs::create_dir_all(node_configs_dir).unwrap();
-    for entry in node_configs {
-        let entry = entry.unwrap();
-        let dest_path = node_configs_dir.join(entry.file_name());
-        fs::copy(entry.path(), dest_path).unwrap();
-    }
-
-    // also save the wallets
-    info!("Getting wallets to cache...");
-    let latest_wallet_manifest = latest_wallet_manifest(false);
-    if latest_wallet_manifest.len()
-        != (num_staked_and_joined_validators + num_staked_only_validators)
-    {
-        panic!(
-            "When saving chain state cache, number of nodes in latest_wallet_manifest.json ({}) does not match num_nodes in chain config ({})",
-            latest_wallet_manifest.len(),
-            num_staked_and_joined_validators + num_staked_only_validators
-        );
-    }
-    // output latest_wallet_manifest into dir/wallet.json as json
-    let wallet_manifest_path = dir.join("wallet.json");
-    let wallet_manifest_json = serde_json::to_string(&latest_wallet_manifest).unwrap();
-    tokio::fs::write(wallet_manifest_path, wallet_manifest_json)
-        .await
-        .unwrap();
-
-    // copy node keys to the test cache; folder name is changed to avoid .git_ignore issues.
-    info!("Getting node key shares and wallet key to cache...");
-    let node_key_folder_source = Path::new("./node_keys");
-    let node_key_folder_dest = dir.join("node_keys_cache");
-    fs::create_dir_all(&node_key_folder_dest).unwrap();
-
-    for entry in fs::read_dir(&node_key_folder_source).unwrap() {
-        let entry = entry.unwrap();
-        fs_extra::dir::copy(
-            &entry.path(),
-            &node_key_folder_dest,
-            &fs_extra::dir::CopyOptions::new(),
-        )
-        .unwrap();
-    }
-
-    info!("Getting deployed core contracts to cache...");
-    let deployed_core_contracts_src =
-        &format!("{}/deployed-lit-core-contracts-temp.json", LITCONTRACTPATH);
-    let deployed_node_contracts_src =
-        &format!("{}/deployed-lit-node-contracts-temp.json", LITCONTRACTPATH);
-
-    let deployed_core_contracts_dest = dir.join("deployed-lit-core-contracts-temp.json");
-    let deployed_node_contracts_dest = dir.join("deployed-lit-node-contracts-temp.json");
-
-    fs::copy(deployed_core_contracts_src, deployed_core_contracts_dest).unwrap();
-    fs::copy(deployed_node_contracts_src, deployed_node_contracts_dest).unwrap();
-
-    info!("Writing tar file...");
-    lit_core::utils::tar::write_tar_gz_file(&temp_dir_name, &tar_name)
-        .expect("Failed to write tar.gz file");
-    info!("Tar file created: {:?}", tar_name);
-
-    info!("Removing temp directory '{}'...", temp_dir_name);
-    fs::remove_dir_all(&temp_dir_name).expect("Failed to remove temp directory");
-    info!("Finished saving chain state to cache: {:?}", tar_name);
-}
-
-/// Search within node_configs_path for the lit_configX.toml file that corresponds to the node_account parameters.
-pub fn fetch_node_config_file_from_node_account(node_account: &NodeAccount) -> Result<String> {
-    // List all files in node_configs_path
-    let node_configs_path = node_configs_path();
-    let dir_entries = fs::read_dir(node_configs_path)
-        .map_err(|e| anyhow::anyhow!("Couldn't read directory: {}", e))?;
-
-    // For each file, load the TOML and check for matching parameters
-    for entry in dir_entries {
-        let entry = entry.map_err(|e| anyhow::anyhow!("Couldn't read entry: {}", e))?;
-        let path = entry.path();
-        let config = SimpleToml::try_from(path.as_path())
-            .map_err(|e| anyhow::anyhow!("Couldn't read config file: {}", e))?;
-
-        // Check against node config
-        let staker_address = config
-            .get_address("node", "staker_address")
-            .ok_or(anyhow::anyhow!("Couldn't retrieve the staking address"))?;
-        let node_private_key = config
-            .get_signing_key()
-            .ok_or(anyhow::anyhow!("Couldn't retrieve the node wallet key"))?;
-
-        if staker_address == node_account.staker_address
-            && H256::from_slice(&node_private_key) == node_account.node_address_private_key
-        {
-            return path
-                .to_str()
-                .ok_or(anyhow::anyhow!("Couldn't convert path to string"))
-                .map(|s| s.to_string());
-        }
-    }
-
-    Err(anyhow::anyhow!("Couldn't find a matching node config file"))
 }

@@ -1,12 +1,13 @@
 use crate::testnet::NodeAccount;
-use crate::testnet::contracts_repo::{compile_contracts, start_hardhat_chain};
+use crate::testnet::contracts_repo::{LITCONTRACTPATH, compile_contracts};
 
 use super::ChainTrait;
-use command_group::GroupChild; // node/hardhat launches many processes to manage the testnet, so we need to use a group interface to manage them, as killing only the process we know about will leave zombies.
+use command_group::{CommandGroup, GroupChild}; // node/hardhat launches many processes to manage the testnet, so we need to use a group interface to manage them, as killing only the process we know about will leave zombies.
 use ethers::prelude::*;
 use hex_literal::hex as hexl;
 
-use std::process::Command;
+use std::fs;
+use std::process::{Command, Stdio};
 use std::time::Duration;
 use tokio::net::{TcpStream, ToSocketAddrs};
 use tracing::info;
@@ -45,7 +46,7 @@ impl ChainTrait for Hardhat {
         self.accounts()[0].clone()
     }
 
-    async fn start_chain(&self) -> GroupChild {
+    async fn start_chain(&self) -> Option<GroupChild> {
         compile_contracts();
 
         if is_hardhat_running(&self.rpc_url()).await {
@@ -136,4 +137,18 @@ pub fn hardhat_account_private_keys(nodenum: usize) -> Vec<H256> {
         selected.push(*addr);
     }
     selected
+}
+
+pub fn start_hardhat_chain() -> Option<GroupChild> {
+    let process = Command::new("npx")
+        .current_dir(fs::canonicalize(LITCONTRACTPATH).unwrap())
+        // .env("ETHERNAL_EMAIL", "user@litprotocol.com") // localhost
+        // .env("ETHERNAL_PASSWORD", "somepassword")
+        .arg("hardhat")
+        .arg("node")
+        .stderr(Stdio::null()) // comment this out to see what's going on with hardhat
+        .stdout(Stdio::null()) // comment this out to see what's going on with hardhat
+        .group_spawn()
+        .expect("Failed to launch Testnet");
+    Some(process)
 }

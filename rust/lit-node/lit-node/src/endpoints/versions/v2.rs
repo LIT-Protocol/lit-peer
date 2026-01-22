@@ -264,13 +264,14 @@ pub(crate) async fn execute_function(
 
 #[cfg(feature = "lit-actions")]
 #[post("/web/job_status/v2", format = "json", data = "<job_status_request>")]
-#[instrument(level = "debug", name = "POST /web/job_status/v2", skip_all, ret)]
+#[instrument(level = "debug", name = "POST /web/job_status/v2", skip_all, fields(correlation_id = tracing.correlation_id()), ret)]
 pub(crate) async fn get_job_status(
     job_status_request: Json<EncryptedPayload<models::JsonJobStatusRequest>>,
     action_store: &State<ActionStore>,
     tss_state: &State<Arc<TssState>>,
     cfg: &State<ReloadableLitConfig>,
     client_state: &State<Arc<ClientState>>,
+    tracing: Tracing,
 ) -> status::Custom<Value> {
     let (job_status_request, client_session) =
         match client_state.json_decrypt_to_session(&job_status_request) {

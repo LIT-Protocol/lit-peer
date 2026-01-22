@@ -4,7 +4,6 @@ use serde::ser::SerializeStruct;
 use serde::{Serialize, Serializer};
 
 /// NB: This is intended for structured logging and not to send as a HTTP response object.
-
 impl Serialize for Error {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -78,7 +77,7 @@ mod tests {
 
         assert_eq!(
             json,
-            "{\"pkg\":\"lit_core\",\"kind\":\"Unexpected\",\"code\":\"CoreFatal\",\"msg\":\"fatal-1\",\"source\":{\"pkg\":\"lit_core\",\"kind\":\"SevSnp\",\"msg\":\"sev-snp\",\"source\":{\"pkg\":\"lit_core\",\"kind\":\"Generic\",\"source\":\"first\",\"caller\":{\"file\":\"lit-core/src/error/serializer.rs:73:19\"}},\"caller\":{\"file\":\"lit-core/src/error/serializer.rs:74:19\"}},\"caller\":{\"file\":\"lit-core/src/error/serializer.rs:75:19\"}}"
+            "{\"pkg\":\"lit_core\",\"kind\":\"Unexpected\",\"code\":\"CoreFatal\",\"msg\":\"fatal-1\",\"source\":{\"pkg\":\"lit_core\",\"kind\":\"SevSnp\",\"msg\":\"sev-snp\",\"source\":{\"pkg\":\"lit_core\",\"kind\":\"Generic\",\"source\":\"first\",\"caller\":{\"file\":\"lit-core/src/error/serializer.rs:72:19\"}},\"caller\":{\"file\":\"lit-core/src/error/serializer.rs:73:19\"}},\"caller\":{\"file\":\"lit-core/src/error/serializer.rs:74:19\"}}"
         );
     }
 }

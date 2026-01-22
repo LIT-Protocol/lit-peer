@@ -10,14 +10,14 @@ default-members = [
 ]
 # all the things in this workspace (including dev and test stuff)
 members = [
-    "lit-node", 
-    "utils", 
+    "lit-node",
+    "utils",
     "lit-node-common",
     "lit-node-core",
-    "lit-node-testnet", 
-    "shiva", 
-    
-    "lit-sdk"
+    "lit-node-testnet",
+    "shiva",
+    "lit-sdk",
+    "openapi-gen"
 ]
 exclude = ["lit-node-monitor"]
 
@@ -32,7 +32,7 @@ data-encoding = "2.9"
 derive_more = { version = "2" , features = ["display"] }
 ed25519-dalek = { version = "2.2", features = ["rand_core"] }
 elliptic-curve = { version = "0.13", features = ["arithmetic", "serde"] }
-ethabi = "16.0.0"
+ethabi = "18.0.0"
 ethers = { version = "2.0.8", features = [
     "abigen",
     "legacy"
@@ -53,6 +53,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 soteria-rs = { version = "0.3.1", features = ["serde", "elements"] }
 url = { version = "2", features = ["serde"] }
+utoipa = { version = "5", features = ["chrono"] }
 zeroize = { version = "1.8", features = ["derive"] }
 lit-rust-crypto = {version = "0.6.0", features = [
     "arithmetic",
@@ -80,6 +81,7 @@ deno_core = { git = "https://github.com/Lit-Protocol/deno_core", branch = "fix/d
 # Fix libffi build on macOS Sequoia (required by Deno)
 # Upstream issue: https://github.com/tov/libffi-rs/issues/109
 libffi-sys = { git = "https://github.com/integer32llc/libffi-rs", rev = "8df0df577317bdca2c2b5e9ae263ba0e98fa9076" }
+#elliptic-curve-tools = { path = "../../../../mikelodder/elliptic-curve-tools" }
 
 # Please keep all profiles in sync with lit-actions
 [profile.release]

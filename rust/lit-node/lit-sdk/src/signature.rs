@@ -389,15 +389,31 @@ where
         .map_err(|_| SdkError::SignatureCombine("invalid public key".to_string()))?;
     let public_key_affine = Option::from(C::AffinePoint::from_encoded_point(&public_key))
         .ok_or_else(|| SdkError::SignatureCombine("invalid public key".to_string()))?;
-    let signature =
-        EcdsaSignatureShare::<C>::combine_into_signature(&sig_shares).expect("signature");
+
+    let signature = EcdsaSignatureShare::<C>::combine_into_signature(&sig_shares).map_err(|e| {
+        SdkError::SignatureCombine(format!(
+            "Failed to combine ECDSA signature shares: {:?}. Peer IDs involved: {}",
+            e,
+            shares
+                .iter()
+                .map(|s| s.peer_id.clone())
+                .collect::<Vec<_>>()
+                .join(", ")
+        ))
+    })?;
 
     let message = hex::decode(&first_share.digest)?;
-    let vk = ecdsa::VerifyingKey::<C>::from_affine(public_key_affine).expect("verifying key");
-    let signature: ecdsa::Signature<C> = signature.try_into().expect("signature");
+    let vk = ecdsa::VerifyingKey::<C>::from_affine(public_key_affine).map_err(|e| {
+        SdkError::SignatureCombine(format!("Failed to create verifying key: {:?}", e))
+    })?;
+    let signature: ecdsa::Signature<C> = signature
+        .try_into()
+        .map_err(|e| SdkError::SignatureCombine(format!("Failed to convert signature: {:?}", e)))?;
+
     <ecdsa::VerifyingKey<C> as PrehashVerifier<ecdsa::Signature<C>>>::verify_prehash(
         &vk, &message, &signature,
-    )?;
+    )
+    .map_err(SdkError::EcdsaSignature)?;
 
     let rid = RecoveryId::trial_recovery_from_prehash(&vk, &message, &signature)?;
 
@@ -595,6 +611,6 @@ pub fn get_lit_action_public_key(
     action_ipfs_id: &str,
     root_keys: &[String],
 ) -> SdkResult<String> {
-    let key_id = keccak256(format!("lit_action_{}", action_ipfs_id));
+    let key_id = keccak256(format!("lit_action_{action_ipfs_id}"));
     get_derived_public_key(signing_scheme, &key_id, root_keys)
 }

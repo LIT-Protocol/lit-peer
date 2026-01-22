@@ -1,6 +1,6 @@
 [package]
 name = "lit_node"
-version = "2.1.8"
+version = "2.1.9"
 edition.workspace = true
 default-run = "lit_node"
 
@@ -17,11 +17,12 @@ lit-actions-server = [
 testing = [
     "lit-actions-server",
     "lit-observability/testing",
+    "lit-blockchain/testing",
 ] # enables testing features
 proxy_chatter = [
     "lit-node-testnet/proxy_chatter",
-    "lit-node-testnet/testing",
     "lit-node-testnet/lit-actions",
+    "lit-blockchain/proxy_chatter",
 ] # enables proxy http for testing
 
 [build-dependencies]
@@ -87,9 +88,6 @@ moka = { version = "0.12.7", features = ["future"] }
 mpl-token-metadata = "1.2.10"
 num_cpus = { version = "1.16.0" }
 openssl = { version = "0.10.71" }
-opentelemetry = { version = "0.24" }
-opentelemetry_sdk = { version = "0.24" }
-opentelemetry-semantic-conventions = "0.15.0"
 rand.workspace = true
 rand_chacha.workspace = true
 rand_core.workspace = true
@@ -142,6 +140,7 @@ x25519-dalek = { version = "2.0", features = ["static_secrets"] }
 xor_name = "3.0.0"
 xorf = { version = "0.8.1", features = ["serde"] }
 tokio-stream = "0.1.17"
+log = "0.4.27"
 
 [dependencies.lit-node-common]
 path = "../lit-node-common"
@@ -167,6 +166,9 @@ features = ["rocket-helper", "client-reqwest", "server"]
 
 [dependencies.lit-blockchain]
 path = "../../lit-core/lit-blockchain"
+
+[dependencies.lit-blockchain-lite]
+git = "https://github.com/LIT-Protocol/datil-lit-blockchain-lite.git"
 
 [dependencies.lit-recovery]
 path = "../../lit-core/lit-recovery"

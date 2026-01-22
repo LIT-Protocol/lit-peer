@@ -94,6 +94,7 @@ pub async fn get_realm_config(realm_id: ethers::types::U256) -> Vec<NetworkConfi
             name: "max_presign_concurrency".to_string(),
             value: config.max_presign_concurrency.to_string(),
         },
+        // Deprecated and now unused
         NetworkConfig {
             name: "rpc_health_check_enabled".to_string(),
             value: config.rpc_healthcheck_enabled.to_string(),

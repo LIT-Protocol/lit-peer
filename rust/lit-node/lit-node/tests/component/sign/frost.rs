@@ -52,7 +52,7 @@ async fn sign_lower_threshold(signing_scheme: SigningScheme) {
         let frost_state = FrostState::new(node.tss_state.clone(), signing_scheme);
 
         let (_, secret_share, vk, _) =
-            load_frost_key_share(&signing_node, &pubkey, epoch, signing_scheme).await;
+            load_frost_key_share(signing_node, &pubkey, epoch, signing_scheme).await;
         if verifying_key.is_none() {
             verifying_key = Some(vk.clone());
         }
@@ -155,7 +155,7 @@ async fn sign_with_pubkey(signing_scheme: SigningScheme) {
         let frost_state = FrostState::new(node.tss_state.clone(), signing_scheme);
 
         let (_, secret_share, vk, _) =
-            load_frost_key_share(&signing_node, &pubkey, epoch, signing_scheme).await;
+            load_frost_key_share(signing_node, &pubkey, epoch, signing_scheme).await;
         if verifying_key.is_none() {
             verifying_key = Some(vk.clone());
         }

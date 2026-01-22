@@ -18,9 +18,9 @@ use lit_node_core::{
     LitAbility, LitResourceAbilityRequest, LitResourceAbilityRequestResource, LitResourcePrefix,
     NodeSet,
 };
-use lit_node_testnet::TestSetupBuilder;
 use lit_node_testnet::node_collection::{get_identity_pubkeys_from_node_set, get_network_pubkey};
 use lit_node_testnet::testnet::actions::Actions;
+use lit_node_testnet::{DEFAULT_KEY_SET_NAME, TestSetupBuilder};
 use lit_node_testnet::{end_user::EndUser, testnet::Testnet, validator::ValidatorCollection};
 use rand_core::OsRng;
 
@@ -93,6 +93,7 @@ async fn test_all_payment_methods_for_user() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
     assert!(
@@ -122,6 +123,7 @@ async fn test_all_payment_methods_for_user() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -167,6 +169,7 @@ async fn test_all_payment_methods_for_user() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -223,6 +226,7 @@ async fn test_all_payment_methods_for_user() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -243,7 +247,10 @@ async fn test_all_payment_methods_for_user() {
     self_pay_user
         .set_wallet_balance(INITIAL_FUNDING_AMOUNT)
         .await;
-    assert!(self_pay_user.new_pkp().await.is_ok(), "Failed to mint PKP");
+    assert!(
+        self_pay_user.new_pkp(DEFAULT_KEY_SET_NAME).await.is_ok(),
+        "Failed to mint PKP"
+    );
 
     // The price for the sign_session_key
     self_pay_user
@@ -292,7 +299,7 @@ async fn test_all_payment_methods_for_user() {
 
     let auth_sig = generate_authsig_item(&self_pay_user.wallet).await.unwrap();
 
-    let (network_pubkey, _token_id, eth_address) = self_pay_user.first_pkp().info();
+    let (network_pubkey, _token_id, eth_address, _key_set_id) = self_pay_user.first_pkp().info();
 
     let signing_key = ed25519_dalek::SigningKey::generate(&mut OsRng);
     let verifying_key = signing_key.verifying_key();
@@ -372,7 +379,10 @@ async fn test_all_payment_methods_for_user() {
     self_pay_user
         .set_wallet_balance(INITIAL_FUNDING_AMOUNT)
         .await;
-    assert!(self_pay_user.new_pkp().await.is_ok(), "Failed to mint PKP");
+    assert!(
+        self_pay_user.new_pkp(DEFAULT_KEY_SET_NAME).await.is_ok(),
+        "Failed to mint PKP"
+    );
 
     // The price for the sign_session_key
     self_pay_user
@@ -425,11 +435,14 @@ async fn test_all_payment_methods_for_user() {
     info!("2 - Delegation: Testing that someone else can delegate authSig to the user");
     let mut delegation_user = EndUser::new(&testnet);
     delegation_user.fund_wallet_default_amount().await;
-    let _delegation_user_pkp = delegation_user.new_pkp().await.unwrap();
+    let _delegation_user_pkp = delegation_user.new_pkp(DEFAULT_KEY_SET_NAME).await.unwrap();
 
     let mut delegation_payer = EndUser::new(&testnet);
     let _ = delegation_payer.fund_wallet_default_amount().await;
-    let _delegation_payer_pkp = delegation_payer.new_pkp().await.unwrap();
+    let _delegation_payer_pkp = delegation_payer
+        .new_pkp(DEFAULT_KEY_SET_NAME)
+        .await
+        .unwrap();
 
     delegation_payer
         .set_wallet_balance(INITIAL_FUNDING_AMOUNT)
@@ -455,7 +468,7 @@ async fn test_all_payment_methods_for_user() {
     let delegation_auth_sig = get_auth_sig_with_payment_resources(
         &delegation_payer.wallet,
         &bytes_to_hex(delegation_user.wallet.address()),
-        U256::from(delegation_max_price),
+        delegation_max_price,
         vec![PayedEndpoint::EncryptionSign],
     );
 
@@ -471,6 +484,7 @@ async fn test_all_payment_methods_for_user() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
     assert!(
@@ -507,6 +521,7 @@ async fn test_all_payment_methods_for_user() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -537,6 +552,7 @@ async fn test_all_payment_methods_for_user() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -566,6 +582,7 @@ async fn test_all_payment_methods_for_user() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -636,6 +653,7 @@ async fn test_all_payment_methods_for_user() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
     assert!(
@@ -683,6 +701,7 @@ async fn test_all_payment_methods_for_user() {
             test_encryption_parameters.clone(),
             &session_sigs_and_node_set,
             actions.get_current_epoch(realm_id).await.as_u64(),
+            DEFAULT_KEY_SET_NAME,
         )
         .await;
 
@@ -707,8 +726,7 @@ async fn test_all_payment_methods_for_user() {
 
     assert!(
         request_count > 2 && request_count < MAX_TEST_REQUESTS,
-        "PaymentDB should work for at least the first 3 requests and at most the next 3 requests but it also passed at request {}",
-        request_count
+        "PaymentDB should work for at least the first 3 requests and at most the next 3 requests but it also passed at request {request_count}"
     );
 
     // We have a 10 second period, so, after 10 seconds we should be able to make 3 more requests.
@@ -739,6 +757,7 @@ async fn test_all_payment_methods_for_user() {
             test_encryption_parameters.clone(),
             &session_sigs_and_node_set,
             actions.get_current_epoch(realm_id).await.as_u64(),
+            DEFAULT_KEY_SET_NAME,
         )
         .await;
 
@@ -763,8 +782,7 @@ async fn test_all_payment_methods_for_user() {
 
     assert!(
         request_count > 2 && request_count < MAX_TEST_REQUESTS,
-        "PaymentDB should work for at least the first 3 requests and at most the next 3 requests but it also passed at request {}",
-        request_count
+        "PaymentDB should work for at least the first 3 requests and at most the next 3 requests but it also passed at request {request_count}"
     );
 
     tokio::time::sleep(tokio::time::Duration::from_secs(
@@ -792,10 +810,13 @@ async fn test_all_payment_methods_for_pkp() {
 
     let mut pkp_owner = EndUser::new(&testnet);
     pkp_owner.set_wallet_balance(INITIAL_FUNDING_AMOUNT).await;
-    pkp_owner.new_pkp().await.expect("Failed to mint PKP");
+    pkp_owner
+        .new_pkp(DEFAULT_KEY_SET_NAME)
+        .await
+        .expect("Failed to mint PKP");
 
     // add the PKP itself as a permitted address, so that our session sig from the PKP will be able to sign with it
-    let (pubkey, _token_id, eth_address) = pkp_owner.first_pkp().info();
+    let (pubkey, _token_id, eth_address, _key_set_id) = pkp_owner.first_pkp().info();
     let pkp = pkp_owner.pkp_by_pubkey(pubkey.clone());
     pkp.add_permitted_address_to_pkp(eth_address, &[U256::from(1)])
         .await
@@ -868,6 +889,7 @@ async fn test_all_payment_methods_for_pkp() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -945,6 +967,7 @@ async fn test_all_payment_methods_for_pkp() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(U256::from(1)).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -1023,6 +1046,7 @@ async fn test_all_payment_methods_for_pkp() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -1109,6 +1133,7 @@ async fn test_all_payment_methods_for_pkp() {
             test_encryption_parameters.clone(),
             &session_sigs_and_node_set,
             actions.get_current_epoch(realm_id).await.as_u64(),
+            DEFAULT_KEY_SET_NAME,
         )
         .await;
 
@@ -1133,8 +1158,7 @@ async fn test_all_payment_methods_for_pkp() {
 
     assert!(
         request_count > 2 && request_count < MAX_TEST_REQUESTS,
-        "PaymentDB should work for at least the first 3 requests and at most the next 3 requests but it also passed at request {}",
-        request_count
+        "PaymentDB should work for at least the first 3 requests and at most the next 3 requests but it also passed at request {request_count}"
     );
 
     // We have a 10 second period, so, after 10 seconds we should be able to make at least 3 more requests.
@@ -1163,6 +1187,7 @@ async fn test_all_payment_methods_for_pkp() {
             test_encryption_parameters.clone(),
             &session_sigs_and_node_set,
             actions.get_current_epoch(realm_id).await.as_u64(),
+            DEFAULT_KEY_SET_NAME,
         )
         .await;
 
@@ -1187,8 +1212,7 @@ async fn test_all_payment_methods_for_pkp() {
 
     assert!(
         request_count > 2 && request_count < MAX_TEST_REQUESTS,
-        "PaymentDB should work for at least the first 3 requests and at most the next 3 requests but it also passed at request {}",
-        request_count
+        "PaymentDB should work for at least the first 3 requests and at most the next 3 requests but it also passed at request {request_count}"
     );
 
     tokio::time::sleep(tokio::time::Duration::from_secs(
@@ -1268,6 +1292,7 @@ async fn test_pending_payments_block_usage() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -1306,6 +1331,7 @@ async fn test_pending_payments_block_usage() {
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
@@ -1326,10 +1352,11 @@ async fn test_pending_payments_block_usage() {
         Some(first_node_price),
     );
 
-    let decryption_resp = retrieve_decryption_key_session_sigs(
+    let _decryption_resp = retrieve_decryption_key_session_sigs(
         test_encryption_parameters.clone(),
         &session_sigs_and_node_set,
         actions.get_current_epoch(realm_id).await.as_u64(),
+        DEFAULT_KEY_SET_NAME,
     )
     .await;
 
