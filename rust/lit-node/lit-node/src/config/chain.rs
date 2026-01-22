@@ -53,7 +53,7 @@ pub struct GenericConfig {
     pub min_presign_count: u64,
     pub peer_checking_interval_secs: u64,
     pub max_presign_concurrency: u64,
-    pub rpc_healthcheck_enabled: bool,
+    pub rpc_healthcheck_enabled: bool, // Deprecated and now unused
     pub default_key_set: Option<String>,
 }
 
@@ -178,7 +178,7 @@ impl ChainDataConfigManager {
                 min_presign_count: 10,
                 peer_checking_interval_secs: 5,
                 max_presign_concurrency: 2,
-                rpc_healthcheck_enabled: false,
+                rpc_healthcheck_enabled: false, // Deprecated and now unused
                 default_key_set: None,
             }),
             actions_config: AtomicShared::new(ActionsConfig {
@@ -640,7 +640,7 @@ impl ChainDataConfigManager {
         let min_presign_count = realm_config.min_presign_count.as_u64();
         let peer_checking_interval_secs = realm_config.peer_checking_interval_secs.as_u64();
         let max_presign_concurrency = realm_config.max_presign_concurrency.as_u64();
-        let rpc_healthcheck_enabled = realm_config.rpc_healthcheck_enabled;
+        let rpc_healthcheck_enabled = realm_config.rpc_healthcheck_enabled; // Deprecated and now unused
         let default_key_set = if realm_config.default_key_set.is_empty() {
             None
         } else {
@@ -653,7 +653,7 @@ impl ChainDataConfigManager {
         generic_config.min_presign_count = min_presign_count;
         generic_config.peer_checking_interval_secs = peer_checking_interval_secs;
         generic_config.max_presign_concurrency = max_presign_concurrency;
-        generic_config.rpc_healthcheck_enabled = rpc_healthcheck_enabled;
+        generic_config.rpc_healthcheck_enabled = rpc_healthcheck_enabled; // Deprecated and now unused
         generic_config.default_key_set = default_key_set;
 
         let lit_actions_config =

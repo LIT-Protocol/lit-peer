@@ -2,6 +2,7 @@ use crate::end_user::EndUser;
 use ethers::abi::AbiEncode;
 use ethers::types::{Address, Bytes, H160, U256};
 use lit_blockchain::util::decode_revert;
+use lit_blockchain_lite::contracts::pkp_helper::PKPHelper;
 use lit_blockchain_lite::contracts::pkp_permissions::{AuthMethod, PKPPermissions};
 use lit_blockchain_lite::contracts::pkpnft::PKPNFT;
 use lit_core::utils::binary::bytes_to_hex;
@@ -11,6 +12,76 @@ use tracing::{debug, error, info};
 use super::Pkp;
 
 impl Pkp {
+    pub async fn new_datil(end_user: &EndUser, key_set_id: &str) -> Result<Self, anyhow::Error> {
+        let key_type: U256 = U256::from(2); // 2 is ECDSA key type
+
+        let pkpnft_address = end_user.actions().datil_contracts().pkpnft.address();
+
+        let client = Arc::new(end_user.datil_signing_provider().clone());
+
+        let pkpnft = PKPNFT::new(pkpnft_address, client);
+
+        info!("Minting a new PKP on the Datil test chain.");
+        let mint_cost = pkpnft.mint_cost().call().await?;
+        info!("Mint cost: {:}", mint_cost);
+
+        let mint_tx = pkpnft.mint_next(key_type).value(mint_cost);
+
+        let receipt = mint_tx
+            .send()
+            .await
+            .map_err(|e| {
+                let revert_msg = format!(
+                    "Failed to send Datil PKP mint transaction: {}",
+                    decode_revert(&e, end_user.actions().datil_contracts().pkpnft.abi())
+                );
+                error!(revert_msg);
+                anyhow::anyhow!(revert_msg)
+            })?
+            .await
+            .map_err(|e| {
+                let revert_msg = format!(
+                    "Failed while waiting for Datil PKP mint confirmation: {}",
+                    e
+                );
+                error!(revert_msg);
+                anyhow::anyhow!(revert_msg)
+            })?
+            .ok_or_else(|| anyhow::anyhow!("Transaction failed - no receipt generated"))?;
+
+        if receipt.logs.is_empty() {
+            return Err(anyhow::anyhow!("Transaction receipt contains no logs"));
+        }
+        let token_id = receipt.logs[0].topics[1];
+        let token_id = U256::from(token_id.as_bytes());
+
+        let r = end_user
+            .actions()
+            .datil_contracts()
+            .pubkey_router
+            .get_pubkey(token_id)
+            .call()
+            .await?;
+        let pubkey = bytes_to_hex(r);
+
+        let eth_address = pkpnft.get_eth_address(token_id).call().await?;
+
+        info!(
+            "Minted Datil PKP with token id: {} / pubkey : {} / eth address: {:?}",
+            token_id, &pubkey, eth_address
+        );
+
+        Ok(Pkp {
+            signing_provider: end_user.datil_signing_provider().clone(),
+            actions: Arc::new(end_user.actions().clone()),
+            pubkey: pubkey.clone(),
+            token_id,
+            eth_address,
+            key_set_id: key_set_id.to_string(),
+            is_datil: true,
+        })
+    }
+
     #[doc = "Grant an address permission to use a PKP"]
     pub async fn add_permitted_address_to_pkp_datil(
         &self,
@@ -76,7 +147,7 @@ impl Pkp {
             self.token_id, to_address
         );
 
-        let pkpnft_address = self.actions.contracts().pkpnft.address();
+        let pkpnft_address = self.actions.datil_contracts().pkpnft.address();
         let pkpnft = PKPNFT::new(pkpnft_address, self.signing_provider.clone());
 
         let cc = pkpnft.transfer_from(
@@ -89,7 +160,7 @@ impl Pkp {
             let e = tx.unwrap_err();
             info!(
                 "Decoded error: {}",
-                decode_revert(&e, self.actions.contracts().pkpnft.abi()).to_string()
+                decode_revert(&e, self.actions.datil_contracts().pkpnft.abi()).to_string()
             );
             error!("Error sending transfer PKP: {:?}", e);
             return Err(anyhow::anyhow!("Error transferring PKP - sending tx"));
@@ -122,7 +193,7 @@ impl Pkp {
             ipfs_cid
         );
 
-        let pkp_permissions_address = self.actions.contracts().pkp_permissions.address();
+        let pkp_permissions_address = self.actions.datil_contracts().pkp_permissions.address();
         let pkp_permissions =
             PKPPermissions::new(pkp_permissions_address, self.signing_provider.clone());
         let pacc = pkp_permissions.add_permitted_action(
@@ -158,7 +229,7 @@ impl Pkp {
             self.token_id, ipfs_cid
         );
 
-        let pkp_permissions_address = self.actions.contracts().pkp_permissions.address();
+        let pkp_permissions_address = self.actions.datil_contracts().pkp_permissions.address();
         let pkp_permissions =
             PKPPermissions::new(pkp_permissions_address, self.signing_provider.clone());
         let is_permitted = pkp_permissions
@@ -184,7 +255,7 @@ impl Pkp {
         };
         debug!("Address Auth method to permit: {:?}", address_auth_method);
 
-        let pkp_permissions_address = self.actions.contracts().pkp_permissions.address();
+        let pkp_permissions_address = self.actions.datil_contracts().pkp_permissions.address();
         let pkp_permissions =
             PKPPermissions::new(pkp_permissions_address, self.signing_provider.clone());
         let paam = pkp_permissions.add_permitted_auth_method(
@@ -292,8 +363,76 @@ impl Pkp {
         })
     }
 
+    pub async fn new_pkp_with_auth_methods_datil(
+        end_user: &EndUser,
+        key_set_id: &str,
+    ) -> Result<Self, anyhow::Error> {
+        let client = Arc::new(end_user.datil_signing_provider().clone());
+
+        let key_type: U256 = U256::from(2);
+
+        let pkpnft_address = end_user.actions().datil_contracts().pkpnft.address();
+        let pkp_helper_address = end_user.actions().datil_contracts().pkp_helper.address();
+        let pkpnft = PKPNFT::new(pkpnft_address, client.clone());
+        let pkp_helper = PKPHelper::new(pkp_helper_address, client.clone());
+        info!("Minting a new PKP using helper contract on the Datil test chain.");
+        let mint_cost = pkpnft.mint_cost().call().await?;
+
+        let mint_tx = pkp_helper
+            .mint_next_and_add_auth_methods(key_type, vec![], vec![], vec![], vec![], false, false)
+            .value(mint_cost);
+
+        let receipt = mint_tx
+            .send()
+            .await
+            .map_err(|e| {
+                let revert_msg = format!(
+                    "Failed to send PKP mint transaction: {}",
+                    decode_revert(&e, end_user.actions().contracts().pkpnft.abi())
+                );
+                error!(revert_msg);
+                anyhow::anyhow!(revert_msg)
+            })?
+            .await
+            .map_err(|e| {
+                let revert_msg = format!("Failed while waiting for PKP mint confirmation: {}", e);
+                error!(revert_msg);
+                anyhow::anyhow!(revert_msg)
+            })?
+            .ok_or_else(|| anyhow::anyhow!("Transaction failed - no receipt generated"))?;
+
+        let token_id = receipt.logs[0].topics[1];
+        let token_id = U256::from(token_id.as_bytes());
+
+        let r = end_user
+            .actions()
+            .contracts()
+            .pubkey_router
+            .get_pubkey(token_id)
+            .call()
+            .await?;
+
+        let pubkey = bytes_to_hex(r);
+        let eth_address = pkpnft.get_eth_address(token_id).call().await?;
+
+        info!(
+            "Minted PKP with token id: {} / pubkey : {} / eth address: {:?}",
+            token_id, &pubkey, eth_address
+        );
+
+        Ok(Pkp {
+            signing_provider: end_user.signing_provider().clone(),
+            actions: Arc::new(end_user.actions().clone()),
+            pubkey,
+            token_id,
+            key_set_id: key_set_id.to_string(),
+            eth_address: eth_address.into(),
+            is_datil: false,
+        })
+    }
+
     pub async fn burn_pkp_datil(&self) -> Result<bool, anyhow::Error> {
-        let pkpnft_address = self.actions.contracts().pkpnft.address();
+        let pkpnft_address = self.actions.datil_contracts().pkpnft.address();
         let pkpnft = PKPNFT::new(pkpnft_address, self.signing_provider.clone());
 
         let cc = pkpnft.burn(self.token_id);

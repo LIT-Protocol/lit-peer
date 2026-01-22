@@ -842,6 +842,10 @@ impl Client {
             UnionResponse::CallChild(CallChildRequest { ipfs_id, params }) => {
                 self.pay(LitActionPriceComponent::CallDepth, 1).await?;
 
+                info!(
+                    "Calling child action: {:?}, self keyset id: {:?}",
+                    ipfs_id, self.key_set_id
+                );
                 call_depth += 1;
                 if call_depth > self.max_call_depth {
                     bail!(

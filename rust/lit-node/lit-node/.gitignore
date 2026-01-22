@@ -25,6 +25,9 @@ rpc-config.overlay.yaml
 # local developer's scoped logging configuration
 log_levels.toml
 
+# used to configure the testnet to run against the live network
+live_testnet.toml
+
 common/target/*
 
 # various configuration files used in setup
