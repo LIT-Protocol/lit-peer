@@ -514,7 +514,7 @@ async fn test_all_payment_methods_for_user() {
         resource_ability_requests.clone(),
         Some(delegation_user.wallet.clone()),
         Some(vec![delegation_auth_sig.clone()]),
-        Some(first_node_price),
+        Some(first_node_price / DIVISION_FACTOR_TO_FAIL),
     );
 
     let decryption_resp = retrieve_decryption_key_session_sigs(
