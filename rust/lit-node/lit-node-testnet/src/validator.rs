@@ -839,6 +839,7 @@ impl ValidatorCollection {
             .call()
             .await
             .unwrap_or_else(|_e| vec![]);
+        info!("!@#kicked: {:?}", kicked);
 
         let ports = self
             .actions
@@ -848,6 +849,7 @@ impl ValidatorCollection {
             .filter(|f| !kicked.contains(&f.node_address))
             .map(|v| v.port as usize)
             .collect::<Vec<usize>>();
+        info!("!@#ports: {:?}", ports);
 
         let mut nodes_for_epoch: Vec<String> = self
             .get_active_validators_with_realm_id(realm)
@@ -857,8 +859,8 @@ impl ValidatorCollection {
             .filter(|f| ports.contains(&f.node.port))
             .map(|v| v.socket_address())
             .collect();
-
         let nodes_for_epoch2 = nodes_for_epoch.clone();
+        info!("!@#nodes_for_epoch2: {:?}", nodes_for_epoch2);
 
         let threshold = self
             .actions
@@ -868,6 +870,7 @@ impl ValidatorCollection {
             .await
             .unwrap()
             .as_usize();
+        info!("!@#threshold: {:?}", threshold);
 
         let epoch = self.actions().get_current_epoch(realm_id).await.as_u64();
         // this was using ports.len()
@@ -897,8 +900,8 @@ impl ValidatorCollection {
             node_set.push(random_node_set);
         }
 
-        debug!(
-            "All nodes / online nodes (epoch {}): {} / {} and threshold: {}, and nodeset (l:{}): {:?}",
+        info!(
+            "!@#All nodes / online nodes (epoch {}): {} / {} and threshold: {}, and nodeset (l:{}): {:?}",
             epoch,
             self.validators.len(),
             nodes_for_epoch2.len(),
