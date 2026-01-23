@@ -1424,7 +1424,13 @@ async fn test_payment_tracker_usage_tracking() {
         let handle = tokio::spawn(async move {
             // Add small delay to ensure requests are truly concurrent
             tokio::time::sleep(tokio::time::Duration::from_millis(i * 10)).await;
-            retrieve_decryption_key_session_sigs(params, &session_sigs_and_node_set, epoch, DEFAULT_KEY_SET_NAME).await
+            retrieve_decryption_key_session_sigs(
+                params,
+                &session_sigs_and_node_set,
+                epoch,
+                DEFAULT_KEY_SET_NAME,
+            )
+            .await
         });
         handles.push(handle);
     }
