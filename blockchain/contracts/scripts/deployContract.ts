@@ -8,7 +8,7 @@ import { hardhatDeployAndVerifySingleContract } from './utils';
 const { ethers } = hre;
 
 // CONFIGURE THIS //
-const args: any[] = ['0x0A88e4A0A371F783fCc2dd802f214EAF48D1C6a9', 0];
+const args: any[] = [];
 
 async function run() {
   const inputs = await getInputsFromCliOptions();
