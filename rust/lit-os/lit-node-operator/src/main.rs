@@ -53,7 +53,8 @@ async fn main() -> Result<()> {
     );
 
     // Create Chronicle Replica Config with the enabled flag from config
-    let chronicle_config = ChronicleReplicaConfig { enable_local_replica: enable_replica , ..Default::default()};
+    let chronicle_config =
+        ChronicleReplicaConfig { enable_local_replica: enable_replica, ..Default::default() };
 
     debug!(config = ?chronicle_config, "Using Chronicle Replica Config");
 
