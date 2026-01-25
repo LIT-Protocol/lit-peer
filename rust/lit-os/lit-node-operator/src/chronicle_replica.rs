@@ -1,7 +1,7 @@
 //! Manages the Yellowstone Chronicle replica container's lifecycle and network access control.
 //! Uses a CommandRunner trait for testability. Assumes external script handles iptables setup.
 
-use crate::error::{EC, Result, unexpected_err_code};
+use crate::error::{unexpected_err_code, Result, EC};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde_json::Value;
@@ -211,7 +211,7 @@ impl CommandRunner for RealCommandRunner {
             "http://localhost:8547",
         ];
 
-        let output = Command::new("docker").args(&cmd_args).output().await.map_err(|e| {
+        let output = Command::new("docker").args(cmd_args).output().await.map_err(|e| {
             unexpected_err_code(
                 e,
                 EC::ReplicaIoError,
@@ -228,7 +228,7 @@ impl CommandRunner for RealCommandRunner {
         let stdout = String::from_utf8_lossy(&output.stdout);
         match serde_json::from_str::<Value>(&stdout) {
             Ok(json) => {
-                let is_syncing = json.get("result").map_or(false, |res| res.is_object());
+                let is_syncing = json.get("result").is_some_and(|res| res.is_object());
                 debug!("eth_syncing check inside container result: syncing = {}", is_syncing);
                 Ok(is_syncing)
             }
@@ -493,7 +493,8 @@ impl<R: CommandRunner + 'static> ChronicleReplicaManager<R> {
 
     /// Handles Unhealthy/NoResponse states: blocks traffic, tracks duration, checks eth_syncing, recreates if needed.
     async fn handle_unhealthy_state(
-        &mut self, previous_status: &ReplicaHealthStatus,
+        &mut self,
+        previous_status: &ReplicaHealthStatus,
     ) -> Result<()> {
         let now = Instant::now();
 
@@ -607,13 +608,11 @@ impl<R: CommandRunner + 'static> ChronicleReplicaManager<R> {
                         self.recreate_container_via_script().await?;
                     }
                 }
-            } else {
-                if self.state.syncing_while_unhealthy_since.is_some() {
-                    debug!(
-                        "Resetting max_syncing_while_unhealthy timer as container unhealthy_since is None."
-                    );
-                    self.state.syncing_while_unhealthy_since = None;
-                }
+            } else if self.state.syncing_while_unhealthy_since.is_some() {
+                debug!(
+                    "Resetting max_syncing_while_unhealthy timer as container unhealthy_since is None."
+                );
+                self.state.syncing_while_unhealthy_since = None;
             }
         }
 

@@ -15,7 +15,7 @@ use nix::unistd::Uid;
 use std::time::Duration;
 use tokio::task::JoinHandle;
 use tokio::time::{MissedTickBehavior, interval};
-use tracing::{debug, error, info, trace, warn};
+use tracing::{debug, error, info, trace};
 use tracing_subscriber::{EnvFilter, prelude::*};
 
 #[tokio::main]
@@ -53,8 +53,7 @@ async fn main() -> Result<()> {
     );
 
     // Create Chronicle Replica Config with the enabled flag from config
-    let mut chronicle_config = ChronicleReplicaConfig::default();
-    chronicle_config.enable_local_replica = enable_replica;
+    let chronicle_config = ChronicleReplicaConfig { enable_local_replica: enable_replica , ..Default::default()};
 
     debug!(config = ?chronicle_config, "Using Chronicle Replica Config");
 
@@ -64,7 +63,7 @@ async fn main() -> Result<()> {
 
         // Clone the config for the worker task
         let replica_config_clone = chronicle_config.clone();
-        let command_runner = RealCommandRunner::default();
+        let command_runner = RealCommandRunner;
 
         let handle = tokio::spawn(async move {
             let mut replica_manager =
