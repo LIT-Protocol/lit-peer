@@ -168,16 +168,10 @@ impl DatilTestnet {
             })
             .collect();
 
-        let node_addresses: Vec<Address> = self
-            .node_accounts
-            .iter()
-            .map(|na| na.node_address)
-            .collect();
-
         let func = self
             .contracts
             .pubkey_router
-            .admin_reset_root_keys(staking_address, node_addresses);
+            .admin_reset_root_keys(staking_address);
         let tx = func.send().await.unwrap();
         let _receipt = tx.await.unwrap();
         info!("Called admin_reset_root_keys on the Datil chain to clear root keys");
