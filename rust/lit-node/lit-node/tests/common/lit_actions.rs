@@ -44,7 +44,6 @@ const CALL_CHILD_LIT_ACTION_CODE: &str = "const go = async () => {
         toSign: Array.from(toSign),
         publicKey,
         sigName,
-        keySetId
     }});
   };
   go();";
@@ -242,15 +241,20 @@ pub async fn execute_lit_action_session_sigs(
     epoch: u64,
     key_set_id: String,
 ) -> Result<Vec<GenericResponse<JsonExecutionResponse>>> {
-    info!("executing lit action with session sigs");
+    info!(
+        "executing lit action with session sigs.  Lit Action keyset id: {:?}",
+        key_set_id
+    );
     // Generate JSON body for each port
-    let nodes = session_sigs_and_node_set
+    let nodesets = session_sigs_and_node_set
         .iter()
         .map(|sig_and_nodeset| sig_and_nodeset.node.clone())
         .collect::<Vec<_>>();
     let my_private_key = OsRng.r#gen();
     let response = lit_sdk::ExecuteFunctionRequest::new()
-        .url_prefix(lit_sdk::UrlPrefix::Http)
+        .url_prefix(lit_sdk::UrlPrefix::from_socket_address(
+            &nodesets.first().unwrap().socket_address,
+        ))
         .node_set(
             session_sigs_and_node_set
                 .iter()
@@ -262,7 +266,7 @@ pub async fn execute_lit_action_session_sigs(
                         js_params: Some(js_params.clone().unwrap_or_default()),
                         auth_methods: auth_methods.clone(),
                         epoch,
-                        node_set: nodes.clone(),
+                        node_set: nodesets.clone(),
                         invocation: Invocation::Sync,
                         key_set_id: key_set_id.clone(),
                     };
@@ -322,7 +326,9 @@ pub async fn execute_lit_action_auth_sig(
     };
     let my_private_key = OsRng.r#gen();
     let response = lit_sdk::ExecuteFunctionRequest::new()
-        .url_prefix(lit_sdk::UrlPrefix::Http)
+        .url_prefix(lit_sdk::UrlPrefix::from_socket_address(
+            &node_set.keys().next().unwrap().socket_address,
+        ))
         .node_set(
             node_set
                 .iter()
@@ -468,10 +474,7 @@ pub async fn generate_pkp_check_is_permitted_pkp_action(
         std::env::set_var(ENV_LIT_CONFIG_FILE, config_file);
     }
 
-    let cfg = lit_node_common::config::load_cfg().expect("failed to load LitConfig");
-    let loaded_config = &cfg.load_full();
-
-    let (pkp_pubkey, token_id, _, _) = end_user.first_pkp().info();
+    let pkp_pubkey = end_user.first_pkp().pubkey.clone();
 
     let pkp = end_user.pkp_by_pubkey(pkp_pubkey);
     let res = pkp

@@ -321,7 +321,9 @@ pub async fn retrieve_decryption_key(
     info!("Sending payload {:?}", payload);
     let my_secret_key = rand::rngs::OsRng.r#gen();
     let response = lit_sdk::EncryptionSignRequest::new()
-        .url_prefix(lit_sdk::UrlPrefix::Http)
+        .url_prefix(lit_sdk::UrlPrefix::from_socket_address(
+            &node_set.keys().next().unwrap().socket_address,
+        ))
         .node_set(
             node_set
                 .iter()
@@ -391,7 +393,13 @@ pub async fn retrieve_decryption_key_session_sigs_with_version(
 
     let my_secret_key = rand::rngs::OsRng.r#gen();
     let response = lit_sdk::EncryptionSignRequest::new()
-        .url_prefix(lit_sdk::UrlPrefix::Http)
+        .url_prefix(lit_sdk::UrlPrefix::from_socket_address(
+            &session_sigs_and_node_set
+                .first()
+                .unwrap()
+                .node
+                .socket_address,
+        ))
         .node_set(endpoint_requests)
         .build()
         .unwrap()

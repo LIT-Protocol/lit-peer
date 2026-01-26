@@ -10,7 +10,7 @@ const go = async () => {
   const toSign = ethers.utils.arrayify(
     ethers.utils.keccak256(utf8Encode.encode('Hello World'))
   );
-  const sigShare = await LitActions.signEcdsa({ toSign, publicKey, sigName, keySetId });
+  const sigShare = await LitActions.signEcdsa({ toSign, publicKey, sigName });
   Lit.Actions.setResponse({ response: JSON.stringify(sigShare) });
 };
 go();

@@ -22,3 +22,6 @@ pub mod toxiproxy;
 #[macro_use]
 extern crate rocket;
 pub mod external;
+
+// edge tests - test the edge cases of the network
+pub mod edge;
