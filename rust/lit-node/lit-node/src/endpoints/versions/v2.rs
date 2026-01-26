@@ -69,6 +69,7 @@ pub(crate) async fn sign_session_key(
             Ok(request) => request,
             Err(e) => {
                 let handle = e.handle();
+                payment_tracker.deregister_usage(&PayedEndpoint::SignSessionKey);
                 return status::Custom(
                     handle.0,
                     json!(GenericResponse::err_and_data_json(
@@ -154,6 +155,7 @@ pub(crate) async fn encryption_sign(
             Ok(request) => request,
             Err(e) => {
                 let handle = e.handle();
+                payment_tracker.deregister_usage(&PayedEndpoint::EncryptionSign);
                 let msg = GenericResponse::err_and_data_json("can't decrypt".to_string(), handle.1);
                 return status::Custom(handle.0, json!(msg));
             }
@@ -217,6 +219,7 @@ pub(crate) async fn execute_function(
             Ok(request) => request,
             Err(e) => {
                 let handle = e.handle();
+                payment_tracker.deregister_usage(&PayedEndpoint::LitAction);
                 return status::Custom(
                     handle.0,
                     json!(GenericResponse::err_and_data_json(
@@ -337,6 +340,7 @@ pub(crate) async fn pkp_sign(
             Ok(json_pkp_signing_request) => json_pkp_signing_request,
             Err(e) => {
                 let handle = e.handle();
+                payment_tracker.deregister_usage(&PayedEndpoint::PkpSign);
                 let msg = GenericResponse::err_and_data_json("can't decrypt".to_string(), handle.1);
                 return status::Custom(handle.0, json!(msg));
             }
