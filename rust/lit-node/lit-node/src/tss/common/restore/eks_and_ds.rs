@@ -215,6 +215,7 @@ where
         }
         // If this key does not have enough decryption shares, don't attempt.
         if self.decryption_shares.len() < params.threshold {
+            // debug!("Only {} of a minimum of {} decryption shares available for key: {:?}", self.decryption_shares.len(), params.threshold, self.encrypted_key_share.public_key);
             return None;
         }
 

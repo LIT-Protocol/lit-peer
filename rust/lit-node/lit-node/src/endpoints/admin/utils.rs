@@ -788,7 +788,7 @@ where
     // DATIL_BACKUP: Remove this loop once old Datil backup is obsolete.
     for share in encrypted_key_shares.iter_mut() {
         if let Some(pk) = C::parse_old_backup_public_key(&share.public_key) {
-            info!("Old {} backup share is found", curve_type);
+            info!("{} backup share is received for public key: {:?}", curve_type, pk.to_compressed_hex());
             share.public_key = pk.to_compressed_hex();
         }
     }

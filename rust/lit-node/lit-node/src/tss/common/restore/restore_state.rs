@@ -913,7 +913,7 @@ impl RestoreStateLog {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum NodeRecoveryStatus {
     Null,
     StartedInRestoreState,
@@ -933,12 +933,12 @@ pub async fn report_progress(cfg: &LitConfig, status: NodeRecoveryStatus) {
     };
 
     match recovery_contract
-        .set_node_recovery_status(status as u8)
+        .set_node_recovery_status(status.clone() as u8)
         .send()
         .await
     {
         Ok(tx) => {
-            info!("RestoreState: reported progress to recovery contract");
+            info!("RestoreState: reported progress to recovery contract : {:?}", status);
             match tx.confirmations(1).await {
                 Ok(s) => match s {
                     None => {

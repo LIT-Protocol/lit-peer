@@ -1,3 +1,4 @@
+pub mod get_datil_backup;
 use ethers::signers::{LocalWallet, Signer};
 use ethers::types::U256;
 use lit_core::utils::binary::bytes_to_hex;
