@@ -32,6 +32,7 @@ use tracing::{debug, error, info, instrument};
 use xor_name::XorName;
 
 #[allow(clippy::unwrap_used)]
+#[allow(dead_code)]
 pub mod chatter {
     tonic::include_proto!("chatter");
 }
@@ -121,7 +122,7 @@ impl ChatterService for ChatterServer {
                 error!("Error deserializing and decrypting entry: {:?}", e);
                 return Err(Status::new(
                     Code::Internal,
-                    format!("Error deserializing and decrypting entry: {:?}", e),
+                    format!("Error deserializing and decrypting entry: {e:?}"),
                 ));
             }
         };
@@ -136,7 +137,7 @@ impl ChatterService for ChatterServer {
             error!("Error handling node share set: {:?}", e);
             return Err(Status::new(
                 Code::Internal,
-                format!("Error handling node share set: {:?}", e),
+                format!("Error handling node share set: {e:?}"),
             ));
         }
         Ok(tonic::Response::new(NodeRecordResponse {
@@ -167,7 +168,7 @@ impl ChatterService for ChatterServer {
                 error!("Error retrieving private key: {:?}", e);
                 return Err(Status::new(
                     Code::Internal,
-                    format!("Error retrieving private key: {:?}", e),
+                    format!("Error retrieving private key: {e:?}"),
                 ));
             }
         };
@@ -178,12 +179,11 @@ impl ChatterService for ChatterServer {
                 error!("Error parsing secret key: {:?}", e);
                 return Err(Status::new(
                     Code::Internal,
-                    format!("Error parsing secret key: {:?}", e),
+                    format!("Error parsing secret key: {e:?}"),
                 ));
             }
         };
         let public_key = libsecp256k1::PublicKey::from_secret_key(&secret_key);
-
         let mut peer_item = PeerItem {
             id: peer_state.id,
             public_key,
@@ -197,11 +197,14 @@ impl ChatterService for ChatterServer {
             version: version::get_version().to_string(),
         };
 
-        if let Ok(at) = create_attestation(cfg.load_full(), &noonce, None).await {
-            peer_item.attestation = Some(at);
-        } else {
-            #[cfg(not(feature = "testing"))]
-            error!("Error creating attestation.");
+        match create_attestation(cfg.load_full(), &noonce, None).await {
+            Ok(at) => {
+                peer_item.attestation = Some(at);
+            }
+            Err(e) => {
+                #[cfg(not(feature = "testing"))]
+                error!("Error creating attestation: {:?}", e);
+            }
         }
 
         let peer_item_json = match serde_json::to_string(&peer_item) {
@@ -210,7 +213,7 @@ impl ChatterService for ChatterServer {
                 error!("Failed to serialize peer_item: {:?}", e);
                 return Err(Status::new(
                     Code::Internal,
-                    format!("Failed to serialize peer_item: {:?}", e),
+                    format!("Failed to serialize peer_item: {e:?}"),
                 ));
             }
         };

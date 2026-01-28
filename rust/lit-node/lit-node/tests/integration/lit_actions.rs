@@ -11,6 +11,7 @@ pub mod litactions {
     use base64_light::base64_encode_bytes;
     use lit_core::utils::binary::bytes_to_hex;
     use lit_node::models::RequestConditions;
+    use lit_node::tss::util::DEFAULT_KEY_SET_NAME;
     use lit_node_core::{
         ControlConditionItem, EVMContractCondition, JsonAccessControlCondition, JsonAuthSig,
         JsonReturnValueTest, JsonReturnValueTestV2, LitAbility, LitActionPriceComponent,
@@ -18,6 +19,7 @@ pub mod litactions {
         LitResourcePrefix, SigningScheme, UnifiedAccessControlCondition,
         UnifiedAccessControlConditionItem, constants::CHAIN_LOCALCHAIN,
     };
+    use lit_node_testnet::DEFAULT_DATIL_KEY_SET_NAME;
     use lit_node_testnet::end_user::EndUser;
     use lit_node_testnet::testnet::Testnet;
     use lit_node_testnet::validator::ValidatorCollection;
@@ -36,6 +38,7 @@ pub mod litactions {
     use lit_node_testnet::node_collection::{
         get_identity_pubkeys_from_node_set, get_network_pubkey,
     };
+    use lit_rust_crypto::k256;
     use lit_sdk::signature::SignedDataOutput;
     use rocket::form::validate::Contains;
     use serde_json::Value;
@@ -50,31 +53,37 @@ pub mod litactions {
         &[LaPC::Broadcasts, LaPC::Decrypts, LaPC::ContractCalls];
     const LAPC_BC: &[LitActionPriceComponent] = &[LaPC::Broadcasts, LaPC::ContractCalls];
     const LAPC_SB: &[LitActionPriceComponent] = &[LaPC::Signatures, LaPC::Broadcasts];
+    const LA_DATIL: bool = true;
+    const LA_NAGA: bool = false;
     // Notes:
     // - The 2 tests inside test_pkp_permissions_is_cid_registered_and_can_it_sign, is covered by "sign_child_lit_action" & "fail_sign_non_hashed_message".
     // - The original encrypt test wasn't a good integration test - it attempted to compare against a known pubkey, but integration tests generate new keys each time.  encrypt & decrypt tests cover this functionality.
 
-    #[test_case("broadcast_and_collect", &[LaPC::Broadcasts], &all_response_match, &standard_acc, true, "*", true)] /* Success */
-    #[test_case("check_conditions_with_auth_sig", &[LaPC::ContractCalls], &all_response_match, &standard_acc, true, "true", true)] /* Success */
-    #[test_case("check_conditions_without_auth_sig", &[LaPC::ContractCalls], &all_response_match, &standard_acc, false,  "true", true)] /* Success <<< BUT CHECK */
-    #[test_case("current_ipfs_id_substitution", LAPC_DBC, &all_response_match, &ipfs_acc, true, "hello this is a test", true)] /* Success */
-    #[test_case("decrypt_and_combine_with_access_denied",LAPC_BC, &action_failed_with_error, &impossible_acc, true, "Access control conditions check failed", false)] /* Success */
-    #[test_case("decrypt_and_combine_with_auth_sig", LAPC_DBC, &all_response_match, &standard_acc, true, "hello this is a test", true)] /* Success */
-    #[test_case("decrypt_and_combine_without_auth_sig", LAPC_DBC, &all_response_match, &standard_acc, false, "*", true)]
-    #[test_case("decrypt_to_single_node", LAPC_DBC, &single_valid, &standard_acc, true, "hello this is a test", true)]
-    #[test_case("get_rpc_url", &[], &all_response_match, &standard_acc,true, "https://api.node.glif.io/rpc/v1", true)] /* local rpc config */
-    #[test_case("multiple_sign_and_combine_ecdsa", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
-    #[test_case("multiple_sign_and_combine_ed25519", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
-    #[test_case("multiple_sign_and_combine_blsg1", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
-    #[test_case("run_once_and_collect_responses", &[LaPC::Broadcasts, LaPC::Fetches], &all_response_match, &standard_acc,true, "*", true)]
-    #[test_case("run_once", &[LaPC::Fetches], &all_response_match, &standard_acc,true, "*", true)]
-    #[test_case("sign_and_combine_ecdsa", LAPC_SB, &all_response_match, &standard_acc,true, "*", true)]
-    #[test_case("sign_hello_world", &[LaPC::Signatures], &valid_sign_no_combine, &standard_acc, true, "", false)]
-    #[test_case("sign_child_lit_action", &[LaPC::Signatures, LaPC::CallDepth], &valid_sign_no_combine, &standard_acc, true, "", false)]
-    #[test_case("fail_sign_non_hashed_message", &[LaPC::Signatures], &action_failed_with_error, &standard_acc, true, "Message length to be signed is not 32 bytes", false)]
+    #[test_case(LA_NAGA,"broadcast_and_collect", &[LaPC::Broadcasts], &all_response_match, &standard_acc, true, "*", true)]
+    #[test_case(LA_NAGA,"check_conditions_with_auth_sig", &[LaPC::ContractCalls], &all_response_match, &standard_acc, true, "true", true)]
+    #[test_case(LA_NAGA,"check_conditions_without_auth_sig", &[LaPC::ContractCalls], &all_response_match, &standard_acc, false,  "true", true)]
+    #[test_case(LA_NAGA,"current_ipfs_id_substitution", LAPC_DBC, &all_response_match, &ipfs_acc, true, "hello this is a test", true)]
+    #[test_case(LA_NAGA,"decrypt_and_combine_with_access_denied",LAPC_BC, &action_failed_with_error, &impossible_acc, true, "Access control conditions check failed", false)]
+    #[test_case(LA_NAGA,"decrypt_and_combine_with_auth_sig", LAPC_DBC, &all_response_match, &standard_acc, true, "hello this is a test", true)]
+    #[test_case(LA_NAGA,"decrypt_and_combine_without_auth_sig", LAPC_DBC, &all_response_match, &standard_acc, false, "*", true)]
+    #[test_case(LA_NAGA,"decrypt_to_single_node", LAPC_DBC, &single_valid, &standard_acc, true, "hello this is a test", true)]
+    #[test_case(LA_NAGA,"get_rpc_url", &[], &all_response_match, &standard_acc,true, "https://api.node.glif.io/rpc/v1", true)]
+    #[test_case(LA_NAGA,"multiple_sign_and_combine_ecdsa", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
+    #[test_case(LA_DATIL,"multiple_sign_and_combine_ecdsa", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
+    #[test_case(LA_NAGA,"multiple_sign_and_combine_ed25519", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
+    #[test_case(LA_NAGA,"multiple_sign_and_combine_blsg1", LAPC_SB, &valid_sign_and_combine, &standard_acc, true, "", false)]
+    #[test_case(LA_NAGA,"run_once_and_collect_responses", &[LaPC::Broadcasts, LaPC::Fetches], &all_response_match, &standard_acc,true, "*", true)]
+    #[test_case(LA_NAGA,"run_once", &[LaPC::Fetches], &all_response_match, &standard_acc,true, "*", true)]
+    #[test_case(LA_NAGA,"sign_and_combine_ecdsa", LAPC_SB, &all_response_match, &standard_acc,true, "*", true)]
+    #[test_case(LA_DATIL,"sign_and_combine_ecdsa", LAPC_SB, &all_response_match, &standard_acc,true, "*", true)]
+    #[test_case(LA_NAGA,"sign_hello_world", &[LaPC::Signatures], &valid_sign_no_combine, &standard_acc, true, "", false)]
+    #[test_case(LA_DATIL,"sign_hello_world", &[LaPC::Signatures], &valid_sign_no_combine, &standard_acc, true, "", false)]
+    #[test_case(LA_NAGA,"sign_child_lit_action", &[LaPC::Signatures, LaPC::CallDepth], &valid_sign_no_combine, &standard_acc, true, "", false)]
+    #[test_case(LA_NAGA,"fail_sign_non_hashed_message", &[LaPC::Signatures], &action_failed_with_error, &standard_acc, true, "Message length to be signed is not 32 bytes", false)]
     #[tokio::test]
     // #[ignore]
     pub async fn lit_action_from_file(
+        use_datil_pkp: bool,
         file_name: &str,
         price_components: &[LitActionPriceComponent],
         fn_assertion: &dyn Fn(
@@ -88,12 +97,19 @@ pub mod litactions {
         wrap_in_quotes: bool,
     ) {
         setup_logging();
-        let (testnet, validator_collection, end_user) = TestSetupBuilder::default().build().await;
+
+        let force_deploy = file_name.contains("sign_child_lit_action");
+        let (testnet, validator_collection, mut end_user) = TestSetupBuilder::default()
+            .force_deploy(force_deploy)
+            .build()
+            .await;
+
         lit_action_from_file_preloaded(
+            use_datil_pkp,
             price_components,
             &validator_collection,
             &testnet,
-            &end_user,
+            &mut end_user,
             file_name,
             fn_assertion,
             fn_accs,
@@ -105,10 +121,11 @@ pub mod litactions {
     }
 
     pub async fn lit_action_from_file_preloaded(
+        use_datil_pkp: bool,
         price_components: &[LitActionPriceComponent],
         validator_collection: &ValidatorCollection,
         _testnet: &Testnet,
-        end_user: &EndUser,
+        end_user: &mut EndUser,
         file_name: &str,
         fn_assertion: &dyn Fn(
             Vec<GenericResponse<JsonExecutionResponse>>,
@@ -121,7 +138,7 @@ pub mod litactions {
         wrap_in_quotes: bool,
     ) -> u8 {
         info!("Starting test: {}.js", file_name);
-        let file_with_path = &format!("./tests/lit_action_scripts/{}.js", file_name);
+        let file_with_path = &format!("./tests/lit_action_scripts/{file_name}.js");
 
         let actions = validator_collection.actions();
         let node_set = validator_collection.random_threshold_nodeset().await;
@@ -139,14 +156,19 @@ pub mod litactions {
         let (access_control_conditions, ciphertext, data_to_encrypt_hash, auth_sig) =
             get_encryption_decryption_test_params(
                 end_user.wallet.clone(),
-                &actions,
+                actions,
                 value,
                 &lit_action_code,
                 fn_accs,
             )
             .await;
 
-        let (pubkey, _token_id, _eth_address) = end_user.first_pkp().info();
+        let (pubkey, _token_id, _eth_address, key_set_id) = match use_datil_pkp {
+            true => end_user.new_pkp(DEFAULT_DATIL_KEY_SET_NAME).await.unwrap(),
+            false => end_user.first_pkp().info(),
+        };
+
+        info!("lit_action_from_file_preloaded: key_set_id: {}", key_set_id);
 
         let lit_action_code = data_encoding::BASE64.encode(lit_action_code.as_bytes());
         // per above, there are more params than needed for some actions, but they are ignored
@@ -155,6 +177,7 @@ pub mod litactions {
         js_params.insert("sigName".to_string(), "sig1".into());
         js_params.insert("ciphertext".to_string(), ciphertext.into());
         js_params.insert("dataToEncryptHash".to_string(), data_to_encrypt_hash.into());
+        js_params.insert("keySetId".to_string(), key_set_id.clone().into());
         js_params.insert(
             "accessControlConditions".to_string(),
             serde_json::to_value(access_control_conditions.unwrap()).unwrap(),
@@ -181,23 +204,22 @@ pub mod litactions {
             js_params,
             auth_methods,
             epoch,
+            key_set_id,
         )
         .await;
 
         let value = if wrap_in_quotes {
-            format!("\"{}\"", value)
+            format!("\"{value}\"")
         } else {
             value.to_string()
         };
 
         let execute_resp = execute_resp.unwrap();
-        if execute_resp.len() > 0 {
-            if execute_resp[0].ok {
-                assert!(
-                    check_payment_details(&execute_resp, price_components),
-                    "Payment details are not correct."
-                );
-            }
+        if !execute_resp.is_empty() && execute_resp[0].ok {
+            assert!(
+                check_payment_details(&execute_resp, price_components),
+                "Payment details are not correct."
+            );
         }
         assert!(fn_assertion(
             execute_resp,
@@ -224,10 +246,7 @@ pub mod litactions {
             .iter()
             .map(|r| {
                 let payment_details = r.data.as_ref().unwrap().payment_detail.as_ref().unwrap();
-                payment_details
-                    .iter()
-                    .map(|p| p.clone())
-                    .collect::<Vec<_>>()
+                payment_details.iter().copied().collect::<Vec<_>>()
             })
             .collect::<Vec<_>>();
 
@@ -271,9 +290,7 @@ pub mod litactions {
             } else {
                 assert!(
                     count >= response_count,
-                    "Price component {:?} count less than response count.  One or more nodes did not pay the {:?}",
-                    price_component,
-                    price_component
+                    "Price component {price_component:?} count less than response count.  One or more nodes did not pay the {price_component:?}"
                 );
             }
             info!(
@@ -286,13 +303,13 @@ pub mod litactions {
         let mut not_found = vec![];
 
         for payment_detail in payment_details {
-            if !all_price_components.contains(&payment_detail.component) {
-                if !not_found.contains(&payment_detail.component) {
-                    not_found.push(payment_detail.component);
-                }
+            if !all_price_components.contains(&payment_detail.component)
+                && !not_found.contains(&payment_detail.component)
+            {
+                not_found.push(payment_detail.component);
             }
         }
-        if not_found.len() > 0 {
+        if !not_found.is_empty() {
             error!("Price components not found: {:?}", not_found);
             return false;
         }
@@ -369,6 +386,7 @@ pub mod litactions {
         // currently designed to handle just a single siganture.
         let mut shares = vec![];
         for resp in execute_resp {
+            info!("resp: {:?}", resp);
             assert!(resp.ok);
             let data = resp.data.as_ref().unwrap();
             info!("json_object: {:?}", data);
@@ -392,10 +410,11 @@ pub mod litactions {
                 k256::Scalar::ZERO
             };
 
-            let scalar_primitive = elliptic_curve::ScalarPrimitive::<k256::Secp256k1>::from_slice(
-                &hex::decode(&la_signed_data.digest).unwrap(),
-            )
-            .unwrap();
+            let scalar_primitive =
+                lit_rust_crypto::elliptic_curve::ScalarPrimitive::<k256::Secp256k1>::from_slice(
+                    &hex::decode(&la_signed_data.digest).unwrap(),
+                )
+                .unwrap();
             let data_signed = k256::Scalar::from(scalar_primitive);
 
             let signed_data: SignedDatak256 = SignedDatak256 {
@@ -429,11 +448,10 @@ pub mod litactions {
         let results = execute_resp
             .into_iter()
             .map(|r| {
-                assert!(r.ok, "Expected response to succeed but got: {:?}", r);
+                assert!(r.ok, "Expected response to succeed but got: {r:?}");
                 assert!(
                     r.data.is_some(),
-                    "Expected response to have data but got: {:?}",
-                    r
+                    "Expected response to have data but got: {r:?}"
                 );
                 r.data.unwrap()
             })
@@ -625,14 +643,15 @@ pub mod litactions {
         })
         .unwrap();
         let identity_param = AccessControlConditionResource::new(format!(
-            "{}/{}",
-            hashed_access_control_conditions, data_to_encrypt_hash
+            "{hashed_access_control_conditions}/{data_to_encrypt_hash}"
         ))
         .get_resource_key()
         .into_bytes();
 
         debug!("Identity parameter: {:?}", identity_param);
-        let pubkey = blsful::PublicKey::try_from(&hex::decode(&network_pubkey).unwrap()).unwrap();
+        let pubkey =
+            lit_rust_crypto::blsful::PublicKey::try_from(&hex::decode(&network_pubkey).unwrap())
+                .unwrap();
 
         let ciphertext =
             lit_sdk::encryption::encrypt_time_lock(&pubkey, message_bytes, &identity_param)
@@ -689,11 +708,12 @@ pub mod litactions {
             .as_u64();
 
         let mgb_pkp = end_user
-            .mint_grant_and_burn_next_pkp(ipfs_cid)
+            .mint_grant_and_burn_next_pkp(ipfs_cid, DEFAULT_KEY_SET_NAME)
             .await
             .unwrap();
 
         let mgb_pubkey = mgb_pkp.pubkey;
+        let key_set_id = mgb_pkp.key_set_id;
 
         let mut js_params = serde_json::Map::new();
         js_params.insert(
@@ -706,6 +726,7 @@ pub mod litactions {
         );
         js_params.insert("publicKey".to_string(), mgb_pubkey.into());
         js_params.insert("sigName".to_string(), "sig1".into());
+        js_params.insert("keySetId".to_string(), key_set_id.clone().into());
 
         let params = js_params.clone();
         let js_params = Some(serde_json::Value::Object(js_params));
@@ -745,12 +766,11 @@ pub mod litactions {
                     .await;
 
                 let _ = second_owner_end_user
-                    .new_pkp()
+                    .new_pkp(DEFAULT_KEY_SET_NAME)
                     .await
                     .expect("Could not mint next pkp");
-                let second_owner_pkp_info = second_owner_end_user.first_pkp().info();
-                let second_owner_pkp_pubkey = second_owner_pkp_info.0;
-                let second_owner_pkp_eth_address = second_owner_pkp_info.2;
+                let (second_owner_pkp_pubkey, _, second_owner_pkp_eth_address, _) =
+                    second_owner_end_user.first_pkp().info();
 
                 info!("get_session_sigs_and_node_set_for_pkp");
                 get_session_sigs_and_node_set_for_pkp(
@@ -793,6 +813,7 @@ pub mod litactions {
             None,
             &session_sigs_and_node_set,
             2,
+            key_set_id,
         )
         .await
         .expect("Could not execute lit action");
@@ -815,7 +836,7 @@ pub mod litactions {
         let auth_sig = generate_authsig(&end_user.wallet)
             .await
             .expect("Couldn't generate auth sig");
-        let (pubkey, _token_id, _eth_address) = end_user.first_pkp().info();
+        let (pubkey, _token_id, _eth_address, key_set_id) = end_user.first_pkp().info();
         let lit_action_code = data_encoding::BASE64.encode(lit_action_code.as_bytes());
 
         let mut js_params = serde_json::Map::new();
@@ -861,6 +882,7 @@ pub mod litactions {
             } else {
                 32
             };
+            let key_set_id = key_set_id.clone();
             let mut js_params = js_params.clone();
             js_params.insert(
                 "signingScheme".to_string(),
@@ -877,13 +899,17 @@ pub mod litactions {
                 js_params,
                 None,
                 epoch.as_u64(),
+                key_set_id.clone(),
             )
             .await
             .unwrap();
             let root_keys;
             let curve_type = signing_scheme.curve_type();
             loop {
-                if let Some(rk) = actions.get_root_keys(curve_type as u8, None).await {
+                if let Some(rk) = actions
+                    .get_root_keys(curve_type as u8, DEFAULT_KEY_SET_NAME)
+                    .await
+                {
                     root_keys = rk;
                     break;
                 }
@@ -899,17 +925,12 @@ pub mod litactions {
 
             let mut signed_outputs = Vec::with_capacity(execute_resp.len());
             for ex in &execute_resp {
-                assert!(ex.ok, "response returned invalid: {:?}", ex);
-                assert!(
-                    ex.data.is_some(),
-                    "response didn't return a result: {:?}",
-                    ex
-                );
+                assert!(ex.ok, "response returned invalid: {ex:?}");
+                assert!(ex.data.is_some(), "response didn't return a result: {ex:?}");
                 let response = ex.data.as_ref().unwrap();
                 assert!(
                     response.success,
-                    "execution response returned false: {:?}",
-                    response
+                    "execution response returned false: {response:?}"
                 );
                 let outer: String = serde_json::from_str(&response.response).unwrap();
                 let output = serde_json::from_str::<SignedDataOutput>(&outer).unwrap();
@@ -951,22 +972,18 @@ pub mod litactions {
                 pk_params,
                 None,
                 epoch.as_u64(),
+                key_set_id.clone(),
             )
             .await
             .unwrap();
 
             for ex in pk_execute_resp {
-                assert!(ex.ok, "response returned invalid: {:?}", ex);
-                assert!(
-                    ex.data.is_some(),
-                    "response didn't return a result: {:?}",
-                    ex
-                );
+                assert!(ex.ok, "response returned invalid: {ex:?}");
+                assert!(ex.data.is_some(), "response didn't return a result: {ex:?}");
                 let response = ex.data.as_ref().unwrap();
                 assert!(
                     response.success,
-                    "execution response returned false: {:?}",
-                    response
+                    "execution response returned false: {response:?}"
                 );
                 let outer: String = serde_json::from_str(&response.response).unwrap();
                 assert_eq!(outer, first.verifying_key);
@@ -1003,22 +1020,18 @@ pub mod litactions {
                 pk_params,
                 None,
                 epoch.as_u64(),
+                key_set_id.clone(),
             )
             .await
             .unwrap();
 
             for ex in pk_execute_resp {
-                assert!(ex.ok, "response returned invalid: {:?}", ex);
-                assert!(
-                    ex.data.is_some(),
-                    "response didn't return a result: {:?}",
-                    ex
-                );
+                assert!(ex.ok, "response returned invalid: {ex:?}");
+                assert!(ex.data.is_some(), "response didn't return a result: {ex:?}");
                 let response = ex.data.as_ref().unwrap();
                 assert!(
                     response.success,
-                    "execution response returned false: {:?}",
-                    response
+                    "execution response returned false: {response:?}"
                 );
                 let outer: String = serde_json::from_str(&response.response).unwrap();
                 assert_eq!(outer, "true");

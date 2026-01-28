@@ -167,7 +167,7 @@ pub fn get_auth_sig_for_chain_string(
         }
     } else {
         let signature_not_found_message =
-            format!("signature for cosmos-sdk chain {} not found", chain);
+            format!("signature for cosmos-sdk chain {chain} not found");
         Err(validation_err_code(
             signature_not_found_message,
             EC::NodeInvalidCosmosSDKSignature,
@@ -226,7 +226,7 @@ pub async fn check_condition(
 
     // hit the URL, check the value
     let base_url = rpc_url(&condition.chain)?;
-    let url = format!("{}{}", base_url, substituted_path);
+    let url = format!("{base_url}{substituted_path}");
     debug!("hitting cosmos url: {}", url);
     let resp = http_client
         .get(&url)
@@ -346,7 +346,7 @@ pub async fn check_condition_timelock(
     let timestamp = get_timestamp_from_block_height(&block_height_url, http_client.clone()).await?;
 
     // hit the URL, check the value
-    let url = format!("{}{}", base_url, substituted_path);
+    let url = format!("{base_url}{substituted_path}");
     debug!("hitting cosmos url: {}", url);
     let resp = http_client
         .get(&url)
@@ -402,19 +402,18 @@ async fn check_return_value(
                     // need to check the type here.  because if this is a string, we can concatenate for the "contains" operator.  i suppose we shouldn't do that if it's a number.
                     if filtered_vals.len() > 1
                         && condition.return_value_test.comparator == "contains"
+                        && let serde_json::Value::String(_) = value_to_check
                     {
-                        if let serde_json::Value::String(_) = value_to_check {
-                            // it's a string.  concate all items
-                            let mut concatenated_string = String::new();
-                            for item in filtered_vals {
-                                concatenated_string.push_str(
-                                    item.as_str()
-                                        .expect_or_err("could not get string from item")?,
-                                );
-                                concatenated_string.push(' ');
-                            }
-                            value_to_check = serde_json::Value::String(concatenated_string);
+                        // it's a string.  concate all items
+                        let mut concatenated_string = String::new();
+                        for item in filtered_vals {
+                            concatenated_string.push_str(
+                                item.as_str()
+                                    .expect_or_err("could not get string from item")?,
+                            );
+                            concatenated_string.push(' ');
                         }
+                        value_to_check = serde_json::Value::String(concatenated_string);
                     }
                 }
             }
@@ -802,14 +801,8 @@ mod tests {
         };
         let http_client = default_http_client();
 
-        let check_balance_condition = check_condition(
-            &address_condition,
-            &get_auth_sig(),
-            &"".to_string(),
-            None,
-            http_client,
-        )
-        .await;
+        let check_balance_condition =
+            check_condition(&address_condition, &get_auth_sig(), "", None, http_client).await;
         assert!(check_balance_condition.is_ok());
         assert!(check_balance_condition.unwrap());
     }
@@ -832,14 +825,8 @@ mod tests {
         };
         let http_client = default_http_client();
 
-        let check_balance_condition = check_condition(
-            &balance_condition,
-            &get_auth_sig(),
-            &"".to_string(),
-            None,
-            http_client,
-        )
-        .await;
+        let check_balance_condition =
+            check_condition(&balance_condition, &get_auth_sig(), "", None, http_client).await;
         assert!(check_balance_condition.is_ok());
         assert!(check_balance_condition.unwrap());
     }

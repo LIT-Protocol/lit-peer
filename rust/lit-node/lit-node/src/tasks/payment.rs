@@ -3,8 +3,8 @@ use ethers::middleware::SignerMiddleware;
 use ethers::providers::{Http, PendingTransaction, Provider};
 use ethers::signers::{Signer, Wallet};
 use ethers::types::{Bytes, TxHash, U256};
-use k256::ecdsa::SigningKey;
 use lit_blockchain::util::ether::middleware::EIP2771GasRelayerMiddleware;
+use lit_rust_crypto::k256::ecdsa::SigningKey;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::mpsc;
@@ -194,7 +194,7 @@ async fn set_usage_percentage(
         .await
         .map(|_| ())
         .map_err(|e| {
-            let err_msg = format!("Cannot set the usage percentage: {:?}", e);
+            let err_msg = format!("Cannot set the usage percentage: {e:?}");
             unexpected_err(e, Some(err_msg))
         })
 }

@@ -33,8 +33,7 @@ pub fn validate_siwe(siwe_message: &siwe::Message) -> Result<()> {
     if issued_at.as_ref() > now_add_grace_period.as_ref() {
         return Err(validation_err_code(
             format!(
-                "Session key issued_at {} is in the future beyond the grace period of {} seconds (now is {})",
-                issued_at, grace_period_seconds, now
+                "Session key issued_at {issued_at} is in the future beyond the grace period of {grace_period_seconds} seconds (now is {now})"
             ),
             EC::NodeSIWEMessageError,
             None,
@@ -60,8 +59,7 @@ pub fn validate_siwe(siwe_message: &siwe::Message) -> Result<()> {
         if expiration.as_ref() < issued_at.as_ref() {
             return Err(validation_err_code(
                 format!(
-                    "Session key expiration {} is in behind issue_at which is {}",
-                    expiration, issued_at
+                    "Session key expiration {expiration} is in behind issue_at which is {issued_at}"
                 ),
                 EC::NodeExpWrongOrTooLarge,
                 None,
@@ -73,8 +71,7 @@ pub fn validate_siwe(siwe_message: &siwe::Message) -> Result<()> {
         if expiration.as_ref() < now_subtract_grace_period.as_ref() {
             return Err(validation_err_code(
                 format!(
-                    "Session key expiration {} is in the past beyond the grace period of {} seconds (now is {})",
-                    expiration, grace_period_seconds, now
+                    "Session key expiration {expiration} is in the past beyond the grace period of {grace_period_seconds} seconds (now is {now})"
                 ),
                 EC::NodeSIWEMessageError,
                 None,

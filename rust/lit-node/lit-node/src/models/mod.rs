@@ -1,5 +1,6 @@
 use ethers::types::{Address, U256};
 
+use crate::error::blockchain_err;
 use crate::functions::action_client::ExecutionState;
 use crate::functions::{JobId, JobStatus};
 use iri_string::spec::UriSpec;
@@ -8,32 +9,21 @@ use lit_blockchain::resolver::rpc::config::RpcConfig;
 #[cfg(feature = "lit-actions")]
 use lit_core::config::LitConfig;
 use lit_node_core::{
-    AccessControlConditionItem, AuthMethod, AuthSigItem, Blinders, CurveType,
-    EVMContractConditionItem, JsonAuthSig, NodeSet, SolRpcConditionItem,
-    UnifiedAccessControlConditionItem,
+    AccessControlConditionItem, AuthMethod, AuthSigItem, CurveType, EVMContractConditionItem,
+    JsonAuthSig, NodeSet, SolRpcConditionItem, UnifiedAccessControlConditionItem,
 };
 use lit_recovery::models::UploadedShareData;
 use moka::future::Cache;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 #[cfg(feature = "lit-actions")]
 use std::sync::Arc;
 use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
 use web3::types::{Bytes, CallRequest};
-use webauthn_rs_core::proto::PublicKeyCredential;
 
 pub mod auth;
-pub mod siwe;
-pub mod webauthn_signature_verification_material;
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct JsonAdminSetBlindersRequest {
-    pub auth_sig: JsonAuthSig,
-    pub blinders: Blinders,
-}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -224,31 +214,6 @@ pub struct JwtSignedChainDataPayload {
     pub call_responses: Vec<Bytes>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct JsonSigningResourceId {
-    pub base_url: String,
-    pub path: String,
-    pub org_id: String,
-    pub role: String,
-    pub extra_data: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct SigningAccessControlConditionRequest {
-    pub access_control_conditions: Option<Vec<AccessControlConditionItem>>,
-    pub evm_contract_conditions: Option<Vec<EVMContractConditionItem>>,
-    pub sol_rpc_conditions: Option<Vec<SolRpcConditionItem>>,
-    pub unified_access_control_conditions: Option<Vec<UnifiedAccessControlConditionItem>>,
-    pub chain: Option<String>,
-    pub auth_sig: AuthSigItem,
-    pub iat: u64,
-    pub exp: u64,
-    #[serde(default = "default_epoch")]
-    pub epoch: u64,
-}
-
 /* accessControlConditions looks like this:
 accessControlConditions: [
 {
@@ -304,16 +269,6 @@ pub struct JwtPayloadV2 {
     pub unified_access_control_conditions: Option<Vec<UnifiedAccessControlConditionItem>>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct RecoveryShare {
-    pub recovery_share: Vec<u8>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct JsonRecoveryShareResponse {
-    pub result: String,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct PeerValidator {
     pub ip: u32,
@@ -333,19 +288,75 @@ pub struct PeerValidator {
     pub realm_id: U256,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct WebAuthnAuthenticationRequest {
-    pub credential: PublicKeyCredential,
-    pub session_pubkey: String,
-    pub siwe_message: String,
-}
-
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct EthBlock {
     pub blockhash: String,
     pub timestamp: String,
     pub block_number: usize,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct KeySetConfig {
+    pub identifier: String,
+    pub description: String,
+    pub minimum_threshold: usize,
+    pub monetary_value: usize,
+    pub complete_isolation: bool,
+    pub realms: HashSet<usize>,
+    pub root_keys_by_curve: HashMap<CurveType, Vec<String>>,
+    pub root_key_counts: HashMap<CurveType, usize>,
+    pub recovery_session_id: String,
+}
+
+impl TryFrom<lit_blockchain::contracts::staking::KeySetConfig> for KeySetConfig {
+    type Error = lit_core::error::Error;
+
+    fn try_from(
+        config: lit_blockchain::contracts::staking::KeySetConfig,
+    ) -> lit_core::error::Result<Self> {
+        let mut root_keys_by_curve = HashMap::with_capacity(config.curves.len());
+        let mut root_key_counts = HashMap::with_capacity(config.curves.len());
+        for (curve, count) in config.curves.iter().zip(config.counts.iter()) {
+            let curve_type = CurveType::try_from(*curve).map_err(|e| blockchain_err(e, None))?;
+            root_keys_by_curve.insert(curve_type, Vec::with_capacity(count.as_usize()));
+            root_key_counts.insert(curve_type, count.as_usize());
+        }
+
+        Ok(Self {
+            identifier: config.identifier,
+            description: config.description,
+            minimum_threshold: config.minimum_threshold as usize,
+            monetary_value: config.monetary_value as usize,
+            complete_isolation: config.complete_isolation,
+            realms: config.realms.into_iter().map(|r| r.as_usize()).collect(),
+            recovery_session_id: hex::encode(config.recovery_session_id),
+            root_keys_by_curve,
+            root_key_counts,
+        })
+    }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct PubKeyRoutingData {
+    pub pubkey: Vec<u8>,
+    pub curve_type: CurveType,
+    pub tweak_preimage: [u8; 32],
+    pub key_set_identifier: String,
+}
+
+impl TryFrom<lit_blockchain::contracts::pubkey_router::PubkeyRoutingData> for PubKeyRoutingData {
+    type Error = lit_core::error::Error;
+
+    fn try_from(
+        data: lit_blockchain::contracts::pubkey_router::PubkeyRoutingData,
+    ) -> lit_core::error::Result<Self> {
+        Ok(Self {
+            pubkey: data.pubkey.to_vec(),
+            curve_type: CurveType::try_from(data.key_type).map_err(|e| blockchain_err(e, None))?,
+            tweak_preimage: data.derived_key_id,
+            key_set_identifier: data.key_set_identifier,
+        })
+    }
 }
 
 #[test]

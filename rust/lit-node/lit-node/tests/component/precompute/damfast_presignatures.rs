@@ -3,9 +3,8 @@ use futures::future::join_all;
 use lit_fast_ecdsa::SignatureShare;
 use lit_node::peers::peer_state::models::SimplePeerCollection;
 use lit_node::tasks::presign_manager::models::PreSignatureValue;
-use lit_node_core::CurveType;
-use lit_node_core::NodeSet;
-use lit_node_core::SigningScheme;
+use lit_node_core::{CurveType, NodeSet, SigningScheme};
+use lit_rust_crypto::{k256, p256, p384};
 use tokio::task::JoinHandle;
 
 #[tokio::test]
@@ -42,7 +41,7 @@ async fn generate_damfast_presignature(
                             threshold,
                         )
                         .await
-                        .map(|r| PreSignatureValue::K256(r));
+                        .map(PreSignatureValue::K256);
                     r.expect("error from create presignature")
                 }
                 SigningScheme::EcdsaP256Sha256 => {
@@ -53,7 +52,7 @@ async fn generate_damfast_presignature(
                             threshold,
                         )
                         .await
-                        .map(|r| PreSignatureValue::P256(r));
+                        .map(PreSignatureValue::P256);
                     r.expect("error from create presignature")
                 }
                 SigningScheme::EcdsaP384Sha384 => {
@@ -64,7 +63,7 @@ async fn generate_damfast_presignature(
                             threshold,
                         )
                         .await
-                        .map(|r| PreSignatureValue::P384(r));
+                        .map(PreSignatureValue::P384);
                     r.expect("error from create presignature")
                 }
                 _ => panic!("Unsupported signing scheme"),
@@ -80,7 +79,7 @@ async fn generate_damfast_presignature(
         .iter()
         .map(|result| {
             let sig = result.as_ref().unwrap();
-            (*sig).clone()
+            *sig
         })
         .collect::<Vec<_>>();
 
@@ -102,10 +101,10 @@ async fn damfast_signature(vnc: &VirtualNodeCollection) -> bool {
     let mut v = Vec::new();
 
     let current_peers = SimplePeerCollection::default();
-    let _pubkey = super::super::dkg::dkg(&vnc, CurveType::K256, 0, None, &current_peers).await;
+    let _pubkey = super::super::dkg::dkg(vnc, CurveType::K256, 0, None, &current_peers).await;
 
     let message_bytes = b"DamFast Test!";
-    let root_pubkeys = None;
+    let root_pubkeys = [];
     let tweak_preimage = None;
     let request_id = b"damfasttxn";
     let epoch = Some(1);
@@ -124,14 +123,14 @@ async fn damfast_signature(vnc: &VirtualNodeCollection) -> bool {
         let mut damfast_state = node.damfast_state(SigningScheme::EcdsaK256Sha256).clone();
         let root_pubkeys = root_pubkeys.clone();
         let tweak_preimage = tweak_preimage.clone();
-        let epoch = epoch.clone();
-        let request_id = request_id.clone();
+        let epoch = epoch;
+        let request_id = *request_id;
         let node_set = node_set.clone();
         let jh: JoinHandle<_> = tokio::spawn(async move {
             let r = damfast_state
                 .sign_with_pubkey_internal::<k256::Secp256k1>(
                     message_bytes,
-                    root_pubkeys,
+                    &root_pubkeys,
                     tweak_preimage,
                     request_id.to_vec(),
                     epoch,

@@ -24,7 +24,7 @@ pub enum SdkError {
     EcdsaSignature(#[from] ecdsa::signature::Error),
     /// Bls errors from the blsful crate
     #[error("Bls error: {0}")]
-    Bls(#[from] lit_node_core::blsful::BlsError),
+    Bls(#[from] lit_node_core::lit_rust_crypto::blsful::BlsError),
     /// Errors from string parsing
     #[error("String parse error: {0}")]
     Parse(String),

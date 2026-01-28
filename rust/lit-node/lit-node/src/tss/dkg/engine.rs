@@ -4,6 +4,7 @@ use crate::error::{Result, unexpected_err};
 use crate::metrics;
 use crate::p2p_comms::CommsManager;
 use crate::peers::peer_state::models::{SimplePeer, SimplePeerCollection};
+use crate::tasks::fsm::epoch_change::ShadowOptions;
 use crate::tss::common::dkg_type::DkgType;
 use crate::tss::common::key_persistence::{KeyPersistence, RECOVERY_DKG_EPOCH};
 use crate::tss::common::key_share::KeyShare;
@@ -15,21 +16,24 @@ use crate::tss::common::storage::{
 };
 use crate::tss::common::tss_state::TssState;
 use crate::tss::dkg::models::{DkgOutput, Mode};
-use elliptic_curve::group::GroupEncoding;
-use frost_dkg::elliptic_curve_tools::SumOfProducts;
+use crate::version::DataVersionReader;
+use elliptic_curve_tools::SumOfProducts;
 use frost_dkg::*;
 use lit_blockchain::contracts::backup_recovery::RecoveredPeerId;
 use lit_core::error::Unexpected;
-use lit_node_core::CurveType;
-use lit_node_core::PeerId;
-use lit_node_core::{CompressedBytes, CompressedHex};
+use lit_node_core::{CompressedBytes, CompressedHex, CurveType, PeerId};
+use lit_rust_crypto::{
+    blsful, decaf377, ed448_goldilocks,
+    group::GroupEncoding,
+    jubjub, k256, p256, p384, pallas,
+    vsss_rs::{self, DefaultShare, IdentifierPrimeField, ParticipantIdGeneratorType},
+};
 use serde::{Deserialize, Serialize};
 use std::collections::btree_map::Values;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::num::NonZeroUsize;
 use std::sync::Arc;
 use tracing::instrument;
-use vsss_rs::{DefaultShare, IdentifierPrimeField, ParticipantIdGeneratorType};
 
 const MIN_EPOCH_FOR_COMMITMENT_DELETION: u64 = 1;
 #[derive(Clone, Debug)]
@@ -39,7 +43,7 @@ pub struct DkgEngine {
     dkg_type: DkgType,
     epoch: u64,
     threshold: usize,
-    shadow_key_opts: (u64, u64),
+    shadow_key_opts: ShadowOptions,
     current_peers: SimplePeerCollection,
     next_peers: SimplePeerCollection,
     next_dkg_after_restore: DkgAfterRestore,
@@ -70,6 +74,7 @@ impl DkgAfterRestore {
 pub struct DkgAfterRestoreData {
     pub peers: Vec<RecoveredPeerId>,
     pub key_cache: KeyCache,
+    pub use_raw_peer_ids: bool,
 }
 
 impl DkgEngine {
@@ -80,7 +85,7 @@ impl DkgEngine {
         dkg_type: DkgType,
         epoch: u64,
         threshold: usize,
-        shadow_key_opts: (u64, u64),
+        shadow_key_opts: &ShadowOptions,
         current_peers: &SimplePeerCollection,
         next_peers: &SimplePeerCollection,
         next_dkg_after_restore: DkgAfterRestore,
@@ -90,7 +95,7 @@ impl DkgEngine {
             dkg_type,
             epoch,
             threshold,
-            shadow_key_opts,
+            shadow_key_opts: shadow_key_opts.clone(),
             current_peers: current_peers.clone(),
             next_peers: next_peers.clone(),
             dkgs: BTreeMap::new(),
@@ -99,10 +104,17 @@ impl DkgEngine {
     }
 
     /// Add a DKG to be computed
-    pub fn add_dkg(&mut self, dkg_id: &str, curve_type: CurveType, pubkey: Option<String>) {
+    pub fn add_dkg(
+        &mut self,
+        dkg_id: &str,
+        key_set_id: &str,
+        curve_type: CurveType,
+        pubkey: Option<String>,
+    ) {
         let dkg_data = DkgData {
             dkg_id: dkg_id.to_string(),
             curve_type,
+            key_set_id: key_set_id.to_string(),
             pubkey: pubkey.clone(),
             result: None,
         };
@@ -140,7 +152,7 @@ impl DkgEngine {
             self.dkgs.len(),
             self.current_peers.debug_addresses(),
             self.next_peers.debug_addresses(),
-            self.next_dkg_after_restore,
+            self.next_dkg_after_restore.value(),
         );
 
         let self_peer = self.next_peers.peer_at_address(&self.tss_state.addr)?;
@@ -276,10 +288,19 @@ impl DkgEngine {
                     let participant = self
                         .create_participant::<jubjub::SubgroupPoint>(
                             &create_participant_args,
-                            Some(lit_frost::red_jubjub_generator()),
+                            Some(lit_rust_crypto::red_jubjub_signing_generator()),
                         )
                         .await?;
                     dkg_participants.push(DkgCurve::JubJub(participant));
+                }
+                CurveType::RedPallas => {
+                    let participant = self
+                        .create_participant::<pallas::Point>(
+                            &create_participant_args,
+                            Some(lit_rust_crypto::red_pallas_signing_generator()),
+                        )
+                        .await?;
+                    dkg_participants.push(DkgCurve::Pallas(participant));
                 }
                 CurveType::RedDecaf377 => {
                     let participant = self
@@ -328,8 +349,10 @@ impl DkgEngine {
                 let output_generator = match dkg_data.run() {
                     Ok(generator) => generator,
                     Err(e) => {
-                        error!("Dkg round failed: {:?}, realm_id: {}", e, realm_id);
-                        break;
+                        return Err(unexpected_err(
+                            format!("Dkg round failed: {:?}, realm_id: {}", e, realm_id),
+                            None,
+                        ));
                     }
                 };
                 for output in output_generator.iter() {
@@ -497,6 +520,10 @@ impl DkgEngine {
                             self.create_dkg_result::<jubjub::SubgroupPoint>(&args, p.as_ref())
                                 .await?,
                         ),
+                        DkgCurve::Pallas(p) => DkgResult::Pallas(
+                            self.create_dkg_result::<pallas::Point>(&args, p.as_ref())
+                                .await?,
+                        ),
                         DkgCurve::Decaf377(p) => DkgResult::Decaf377(
                             self.create_dkg_result::<decaf377::Element>(&args, p.as_ref())
                                 .await?,
@@ -638,6 +665,45 @@ impl DkgEngine {
             }
         };
 
+        if self.next_dkg_after_restore.value() {
+            // if we're doing a next dkg after restore, we should write the keyshare
+            // with the current epoch, incase there are also existing or new DKGs
+            // that need to be run for this epoch, and one or both of them fail.
+            let pubkey = key_state
+                .write_key(
+                    write_key_pubkey.clone(),
+                    pk,
+                    share,
+                    &args.peer_id,
+                    args.dkg_id,
+                    next_epoch - 1,
+                    &active_peers,
+                    staker_address,
+                    args.realm_id,
+                    self.threshold,
+                    &self.tss_state.key_cache,
+                )
+                .await?;
+            debug!(
+                "Saved key share to disk for public key {}, epoch {}, realm {}",
+                pubkey,
+                next_epoch - 1,
+                args.realm_id
+            );
+
+            write_key_share_commitments_to_disk(
+                args.curve_type,
+                &pubkey,
+                staker_address,
+                &args.peer_id,
+                next_epoch - 1,
+                args.realm_id,
+                &self.tss_state.key_cache,
+                &save_commitments,
+            )
+            .await?;
+        }
+
         let pubkey = key_state
             .write_key(
                 write_key_pubkey,
@@ -670,34 +736,46 @@ impl DkgEngine {
         .await?;
 
         if delete_epoch > MIN_EPOCH_FOR_COMMITMENT_DELETION {
-            debug!(
-                "Removing old key share commitments for epochs less than {}",
-                delete_epoch
+            let shadow_realm_id = DataVersionReader::read_field_unchecked(
+                &self.tss_state.chain_data_config_manager.shadow_realm_id,
+                |realm| realm.as_u64(),
             );
-            let _ = delete_key_share_commitments_older_than_epoch(
-                args.curve_type,
-                &pubkey,
-                staker_address,
-                &args.peer_id,
-                delete_epoch,
-                args.realm_id,
-                &self.tss_state.key_cache,
-            )
-            .await;
-            debug!(
-                "Removing old key shares for epochs less than {}",
-                delete_epoch
-            );
-            let _ = delete_keyshares_older_than_epoch(
-                args.curve_type,
-                &pubkey,
-                staker_address,
-                &args.peer_id,
-                delete_epoch,
-                args.realm_id,
-                &self.tss_state.key_cache,
-            )
-            .await;
+
+            if shadow_realm_id > 0 {
+                debug!(
+                    "Holding on to key shares and commitments while processing shadow realm {} / epoch {}",
+                    args.realm_id, delete_epoch
+                );
+            } else {
+                debug!(
+                    "Removing old key share commitments for epochs less than {}",
+                    delete_epoch
+                );
+                let _ = delete_key_share_commitments_older_than_epoch(
+                    args.curve_type,
+                    &pubkey,
+                    staker_address,
+                    &args.peer_id,
+                    delete_epoch,
+                    args.realm_id,
+                    &self.tss_state.key_cache,
+                )
+                .await;
+                debug!(
+                    "Removing old key shares for epochs less than {}",
+                    delete_epoch
+                );
+                let _ = delete_keyshares_older_than_epoch(
+                    args.curve_type,
+                    &pubkey,
+                    staker_address,
+                    &args.peer_id,
+                    delete_epoch,
+                    args.realm_id,
+                    &self.tss_state.key_cache,
+                )
+                .await;
+            }
         }
 
         Ok(DkgOutput {
@@ -739,10 +817,16 @@ impl DkgEngine {
             args.realm_id,
             args.dkg_data.dkg_id,
             args.dkg_data.curve_type,
-            id.0.to_compressed_hex(),
+            format!(
+                "{}...",
+                id.0.to_compressed_hex().chars().take(6).collect::<String>()
+            ),
             new_id_scalars
                 .iter()
-                .map(|x| x.0.to_compressed_hex())
+                .map(|x| format!(
+                    "{}...",
+                    x.0.to_compressed_hex().chars().take(6).collect::<String>()
+                ))
                 .collect::<Vec<_>>()
                 .join(", "),
         );
@@ -784,16 +868,14 @@ impl DkgEngine {
                     Ok(Some((private_share, public_key))) => (private_share, public_key),
                     Ok(None) => {
                         let err_msg = format!(
-                            "key share not found on disk for realm {} public key {}",
-                            realm_id, pubkey
+                            "key share not found on disk for realm {realm_id} public key {pubkey}"
                         );
                         error!("{}", err_msg);
                         return Err(unexpected_err(err_msg, None));
                     }
                     Err(e) => {
                         let err_msg = format!(
-                            "Error reading key share for realm {} public key {}",
-                            realm_id, pubkey
+                            "Error reading key share for realm {realm_id} public key {pubkey}"
                         );
                         error!("{}", err_msg);
                         return Err(unexpected_err(e, Some(err_msg)));
@@ -822,52 +904,49 @@ impl DkgEngine {
                     DkgAfterRestore::False => &dummy_key_cache,
                 };
 
+                // in the initial epoch when we're shadow splicing we actually use the same key share as regular DKG...
+                // this is specific to the first nodes in the realm, and only for the first epoch.
+                let (read_epoch, read_realm_id) = if self.shadow_key_opts.is_shadow
+                    && self.shadow_key_opts.epoch_number > 1
+                {
+                    trace!("Using shadow key opts to read key share from disk.");
+                    (
+                        self.shadow_key_opts.epoch_number,
+                        self.shadow_key_opts.realm_id,
+                    )
+                } else if self.shadow_key_opts.is_shadow {
+                    trace!(
+                        "Using normal key opts to read key share from disk while in shadow realm."
+                    );
+                    (
+                        self.shadow_key_opts.non_shadow_epoch_number,
+                        self.shadow_key_opts.non_shadow_realm_id,
+                    )
+                } else {
+                    trace!("Using normal key opts to read key share from disk.");
+
+                    (self.epoch, realm_id)
+                };
+
                 let key_share = match read_key_share_from_disk::<KeyShare>(
                     key_state.curve_type,
                     pubkey,
                     staker_address,
                     &args.peer_id,
-                    self.epoch,
-                    realm_id,
+                    read_epoch,
+                    read_realm_id,
                     key_cache,
                 )
                 .await
                 {
                     Ok(share) => share,
                     Err(e) => {
-                        if self.shadow_key_opts.0 == self.epoch
-                            && self.shadow_key_opts.1 == realm_id
-                        {
-                            let err_msg =
-                                format!("Error reading key share for public key {}", pubkey);
-                            error!("{}", err_msg);
-                            return Err(unexpected_err(e, Some(err_msg)));
-                        } else {
-                            trace!(
-                                "Key share not found on disk for public key {}, using key epoch {} / realm {} to retry. Original error: {}",
-                                pubkey, self.shadow_key_opts.0, self.shadow_key_opts.1, e
-                            );
-                        }
-
-                        match read_key_share_from_disk::<KeyShare>(
-                            key_state.curve_type,
-                            pubkey,
-                            staker_address,
-                            &args.peer_id,
-                            self.shadow_key_opts.0,
-                            self.shadow_key_opts.1,
-                            key_cache,
-                        )
-                        .await
-                        {
-                            Ok(share) => share,
-                            Err(e) => {
-                                let err_msg =
-                                    format!("Error reading key share for public key {}", pubkey);
-                                error!("{}", err_msg);
-                                return Err(unexpected_err(e, Some(err_msg)));
-                            }
-                        }
+                        let err_msg = format!(
+                            "Error reading key share in realm {read_realm_id}, epoch {read_epoch}, for public key {pubkey}"
+                        );
+                        error!("{}", err_msg);
+                        error!("Shadow key opts: {:?}", self.shadow_key_opts);
+                        return Err(unexpected_err(e, Some(err_msg)));
                     }
                 };
 
@@ -892,7 +971,7 @@ impl DkgEngine {
                     );
                 };
                 let private_share = key_state.secret_from_hex(&key_share.hex_private_share)?;
-                let old_share = DefaultShare {
+                let mut old_share = DefaultShare {
                     identifier: IdentifierPrimeField(G::Scalar::from(key_share.peer_id)),
                     value: IdentifierPrimeField(private_share),
                 };
@@ -901,6 +980,10 @@ impl DkgEngine {
                 // share is no longer used, the corresponding peer id should be dropped as well.
                 let old_ids = match &self.next_dkg_after_restore {
                     DkgAfterRestore::True(data) => {
+                        if data.use_raw_peer_ids {
+                            old_share.identifier.0 =
+                                G::Scalar::from(key_share.peer_id.0.as_words()[0]);
+                        }
                         let mut old_ids = vec![];
                         for pair in data.peers.iter() {
                             let new_peer_id = PeerId::try_from(pair.new_peer_id)
@@ -908,7 +991,14 @@ impl DkgEngine {
                             let old_peer_id = PeerId::try_from(pair.old_peer_id)
                                 .map_err(|e| unexpected_err(e, None))?;
                             if args.next_ids.contains(&new_peer_id) {
-                                old_ids.push(IdentifierPrimeField(G::Scalar::from(old_peer_id)));
+                                if data.use_raw_peer_ids {
+                                    old_ids.push(IdentifierPrimeField(G::Scalar::from(
+                                        pair.old_peer_id.as_u64(),
+                                    )))
+                                } else {
+                                    old_ids
+                                        .push(IdentifierPrimeField(G::Scalar::from(old_peer_id)));
+                                }
                             }
                         }
                         old_ids
@@ -926,6 +1016,7 @@ impl DkgEngine {
                             .collect::<Vec<_>>()
                     }
                 };
+
                 Ok(Box::new(
                     SecretParticipant::<G>::with_secret(id, &old_share, &parameters, &old_ids)
                         .map_err(|e| {
@@ -940,28 +1031,22 @@ impl DkgEngine {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct DkgData {
     pub(crate) dkg_id: String,
+    pub(crate) key_set_id: String,
     pub(crate) curve_type: CurveType,
     pub(crate) pubkey: Option<String>,
     pub(crate) result: Option<DkgResult>,
 }
 
-impl Default for DkgData {
-    fn default() -> Self {
-        Self {
-            dkg_id: "".to_string(),
-            curve_type: CurveType::BLS,
-            pubkey: None,
-            result: None,
-        }
-    }
-}
-
 impl DkgData {
     pub fn dkg_id(&self) -> &str {
         &self.dkg_id
+    }
+
+    pub fn key_set_id(&self) -> &str {
+        &self.key_set_id
     }
 
     pub fn curve_type(&self) -> CurveType {
@@ -988,6 +1073,7 @@ pub enum DkgScalar {
     Ed448(ed448_goldilocks::Scalar),
     JubJub(jubjub::Scalar),
     Decaf377(decaf377::Fr),
+    Pallas(pallas::Scalar),
     Bls12381G1ProofOfPossession(blsful::inner_types::Scalar),
 }
 
@@ -1003,9 +1089,10 @@ impl std::fmt::Display for DkgScalar {
             Self::Ed448(scalar) => scalar.to_compressed_hex(),
             Self::JubJub(scalar) => scalar.to_compressed_hex(),
             Self::Decaf377(scalar) => scalar.to_compressed_hex(),
+            Self::Pallas(scalar) => scalar.to_compressed_hex(),
             Self::Bls12381G1ProofOfPossession(scalar) => scalar.to_compressed_hex(),
         };
-        write!(f, "{}", hex)
+        write!(f, "{hex}")
     }
 }
 
@@ -1019,6 +1106,7 @@ pub enum DkgResult {
     Ristretto256(DkgOutput<vsss_rs::curve25519::WrappedRistretto>),
     Ed448(DkgOutput<ed448_goldilocks::EdwardsPoint>),
     JubJub(DkgOutput<jubjub::SubgroupPoint>),
+    Pallas(DkgOutput<pallas::Point>),
     Decaf377(DkgOutput<decaf377::Element>),
     Bls12381G1ProofOfPossession(DkgOutput<blsful::inner_types::G1Projective>),
 }
@@ -1061,6 +1149,10 @@ impl DkgResult {
             }
             Self::JubJub(output) => {
                 let helper = KeyPersistence::<jubjub::SubgroupPoint>::new(CurveType::RedJubjub);
+                helper.pk_to_hex(&output.pk)
+            }
+            Self::Pallas(output) => {
+                let helper = KeyPersistence::<pallas::Point>::new(CurveType::RedPallas);
                 helper.pk_to_hex(&output.pk)
             }
             Self::Decaf377(output) => {
@@ -1138,6 +1230,13 @@ impl DkgResult {
                     public_key: helper.pk_to_hex(&output.pk),
                 }
             }
+            Self::Pallas(output) => {
+                let helper = KeyPersistence::<pallas::Point>::new(CurveType::RedPallas);
+                CachedRootKey {
+                    curve_type: CurveType::RedPallas,
+                    public_key: helper.pk_to_hex(&output.pk),
+                }
+            }
             Self::Decaf377(output) => {
                 let helper = KeyPersistence::<decaf377::Element>::new(CurveType::RedDecaf377);
                 CachedRootKey {
@@ -1168,6 +1267,7 @@ pub enum DkgCurve {
     Ed448(Box<dyn AnyParticipant<ed448_goldilocks::EdwardsPoint>>),
     JubJub(Box<dyn AnyParticipant<jubjub::SubgroupPoint>>),
     Decaf377(Box<dyn AnyParticipant<decaf377::Element>>),
+    Pallas(Box<dyn AnyParticipant<pallas::Point>>),
     Bls12381G1ProofOfPossession(Box<dyn AnyParticipant<blsful::inner_types::G1Projective>>),
 }
 
@@ -1182,6 +1282,7 @@ impl DkgCurve {
             Self::Ristretto25519(participant) => participant.get_round(),
             Self::Ed448(participant) => participant.get_round(),
             Self::JubJub(participant) => participant.get_round(),
+            Self::Pallas(participant) => participant.get_round(),
             Self::Decaf377(participant) => participant.get_round(),
             Self::Bls12381G1ProofOfPossession(participant) => participant.get_round(),
         }
@@ -1262,6 +1363,15 @@ impl DkgCurve {
                 })?;
                 Ok(DkgRoundOutputGenerator::JubJub(output))
             }
+            DkgCurve::Pallas(participant) => {
+                let output = participant.run().map_err(|e| {
+                    unexpected_err(
+                        e,
+                        Some("an error occurred while computing next round".to_string()),
+                    )
+                })?;
+                Ok(DkgRoundOutputGenerator::Pallas(output))
+            }
             DkgCurve::Decaf377(participant) => {
                 let output = participant.run().map_err(|e| {
                     unexpected_err(
@@ -1294,6 +1404,7 @@ impl DkgCurve {
             DkgCurve::Ristretto25519(participant) => participant.completed(),
             DkgCurve::Ed448(participant) => participant.completed(),
             DkgCurve::JubJub(participant) => participant.completed(),
+            DkgCurve::Pallas(participant) => participant.completed(),
             DkgCurve::Decaf377(participant) => participant.completed(),
             DkgCurve::Bls12381G1ProofOfPossession(participant) => participant.completed(),
         }
@@ -1346,6 +1457,12 @@ impl DkgCurve {
                 unexpected_err(e, Some("an error occurred while receiving".to_string()))
             }),
             (
+                DkgCurve::Pallas(participant),
+                DkgParticipantRoundOutput::Pallas(participant_data),
+            ) => participant.receive(&participant_data.data).map_err(|e| {
+                unexpected_err(e, Some("an error occurred while receiving".to_string()))
+            }),
+            (
                 DkgCurve::Decaf377(participant),
                 DkgParticipantRoundOutput::Decaf377(participant_data),
             ) => participant.receive(&participant_data.data).map_err(|e| {
@@ -1390,6 +1507,9 @@ impl DkgCurve {
             DkgCurve::JubJub(participant) => participant
                 .get_public_key()
                 .map(|pk| <jubjub::SubgroupPoint as CompressedBytes>::to_compressed(&pk)),
+            DkgCurve::Pallas(participant) => participant
+                .get_public_key()
+                .map(|pk| <pallas::Point as CompressedBytes>::to_compressed(&pk)),
             DkgCurve::Decaf377(participant) => participant
                 .get_public_key()
                 .map(|pk| <decaf377::Element as CompressedBytes>::to_compressed(&pk)),
@@ -1431,6 +1551,9 @@ impl DkgCurve {
             DkgCurve::JubJub(participant) => participant
                 .get_secret_share()
                 .map(|share| <jubjub::Scalar as CompressedBytes>::to_compressed(&share.value.0)),
+            DkgCurve::Pallas(participant) => participant
+                .get_secret_share()
+                .map(|share| <pallas::Scalar as CompressedBytes>::to_compressed(&share.value.0)),
             DkgCurve::Decaf377(participant) => participant
                 .get_secret_share()
                 .map(|share| <decaf377::Fr as CompressedBytes>::to_compressed(&share.value.0)),
@@ -1453,6 +1576,7 @@ pub enum DkgRoundOutputGenerator {
     Ristretto25519(RoundOutputGenerator<vsss_rs::curve25519::WrappedRistretto>),
     Ed448(RoundOutputGenerator<ed448_goldilocks::EdwardsPoint>),
     JubJub(RoundOutputGenerator<jubjub::SubgroupPoint>),
+    Pallas(RoundOutputGenerator<pallas::Point>),
     Decaf377(RoundOutputGenerator<decaf377::Element>),
     Bls12381G1ProofOfPossession(RoundOutputGenerator<blsful::inner_types::G1Projective>),
 }
@@ -1486,6 +1610,9 @@ impl DkgRoundOutputGenerator {
             DkgRoundOutputGenerator::JubJub(generator) => {
                 Box::new(generator.iter().map(DkgParticipantRoundOutput::JubJub))
             }
+            DkgRoundOutputGenerator::Pallas(generator) => {
+                Box::new(generator.iter().map(DkgParticipantRoundOutput::Pallas))
+            }
             DkgRoundOutputGenerator::Decaf377(generator) => {
                 Box::new(generator.iter().map(DkgParticipantRoundOutput::Decaf377))
             }
@@ -1514,6 +1641,7 @@ pub enum DkgParticipantRoundOutput {
     Ristretto25519(ParticipantRoundOutput<vsss_rs::curve25519::WrappedScalar>),
     Ed448(ParticipantRoundOutput<ed448_goldilocks::Scalar>),
     JubJub(ParticipantRoundOutput<jubjub::Scalar>),
+    Pallas(ParticipantRoundOutput<pallas::Scalar>),
     Decaf377(ParticipantRoundOutput<decaf377::Fr>),
     Bls12381G1ProofOfPossession(ParticipantRoundOutput<blsful::inner_types::Scalar>),
 }
@@ -1530,6 +1658,7 @@ impl DkgParticipantRoundOutput {
             Self::Ed448(data) => DkgScalar::Ed448(data.dst_id.0),
             Self::JubJub(data) => DkgScalar::JubJub(data.dst_id.0),
             Self::Decaf377(data) => DkgScalar::Decaf377(data.dst_id.0),
+            Self::Pallas(data) => DkgScalar::Pallas(data.dst_id.0),
             Self::Bls12381G1ProofOfPossession(data) => {
                 DkgScalar::Bls12381G1ProofOfPossession(data.dst_id.0)
             }
@@ -1546,6 +1675,7 @@ impl DkgParticipantRoundOutput {
             Self::Ristretto25519(data) => data.dst_ordinal,
             Self::Ed448(data) => data.dst_ordinal,
             Self::JubJub(data) => data.dst_ordinal,
+            Self::Pallas(data) => data.dst_ordinal,
             Self::Decaf377(data) => data.dst_ordinal,
             Self::Bls12381G1ProofOfPossession(data) => data.dst_ordinal,
         }
@@ -1561,6 +1691,7 @@ impl DkgParticipantRoundOutput {
             Self::Ristretto25519(data) => data.data.clone(),
             Self::Ed448(data) => data.data.clone(),
             Self::JubJub(data) => data.data.clone(),
+            Self::Pallas(data) => data.data.clone(),
             Self::Decaf377(data) => data.data.clone(),
             Self::Bls12381G1ProofOfPossession(data) => data.data.clone(),
         }

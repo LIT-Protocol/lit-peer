@@ -139,15 +139,15 @@ pub async fn get_pkp_sign(
     pass_as_auth_method: bool,
     to_sign: String,
     pubkey: String,
+    key_set_id: &str,
 ) -> Result<Vec<GenericResponse<JsonPKPSigningResponse>>> {
-    let nodes = node_set
-        .iter()
-        .map(|(node_set, _)| node_set.clone())
-        .collect::<Vec<NodeSet>>();
+    let nodesets = node_set.keys().cloned().collect::<Vec<NodeSet>>();
     if let Some(session_sigs_and_node_set) = session_sigs_and_node_set {
         let my_secret_key = rand::rngs::OsRng.r#gen();
         let response = lit_sdk::PKPSigningRequest::new()
-            .url_prefix(lit_sdk::UrlPrefix::Http)
+            .url_prefix(lit_sdk::UrlPrefix::from_socket_address(
+                &nodesets.first().unwrap().socket_address,
+            ))
             .node_set(
                 session_sigs_and_node_set
                     .iter()
@@ -161,7 +161,8 @@ pub async fn get_pkp_sign(
                             auth_methods: None,
                             signing_scheme: SigningScheme::EcdsaK256Sha256,
                             epoch: 2, // Hardcoded as at other places in the tests
-                            node_set: nodes.clone(),
+                            node_set: nodesets.clone(),
+                            key_set_id: key_set_id.to_string(),
                         };
 
                         // json_body_vec.push(json_body);
@@ -198,11 +199,14 @@ pub async fn get_pkp_sign(
             auth_methods,
             signing_scheme: SigningScheme::EcdsaK256Sha256,
             epoch: 2, // Hardcoded as at other places in the tests
-            node_set: nodes.clone(),
+            node_set: nodesets.clone(),
+            key_set_id: key_set_id.to_string(),
         };
         let my_secret_key = rand::rngs::OsRng.r#gen();
         let responses = lit_sdk::PKPSigningRequest::new()
-            .url_prefix(lit_sdk::UrlPrefix::Http)
+            .url_prefix(lit_sdk::UrlPrefix::from_socket_address(
+                &nodesets.first().unwrap().socket_address,
+            ))
             .node_set(
                 node_set
                     .iter()

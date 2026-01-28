@@ -74,7 +74,6 @@ jobs:
               - rust/lit-node/**
               - .github/workflows/rust-lit-node-unit-tests.yml
               - .github/workflows/rust-lit-node-integration-tests.yml
-              - .github/workflows/rust-lit-node-version-upgrade-tests.yml
               - .github/workflows/rust-lit-node-fault-tests.yml
               - .github/workflows/rust-lit-node-long-running-tests.yml
               - .github/workflows/rust-lit-node-clippy.yml

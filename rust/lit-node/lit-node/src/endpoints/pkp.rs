@@ -8,14 +8,12 @@ use crate::payment::{payed_endpoint::PayedEndpoint, payment_tracker::PaymentTrac
 use crate::pkp::auth::AuthMethodScope;
 use crate::pkp::utils::{claim_key, sign};
 use crate::tss::common::tss_state::TssState;
-use crate::utils::web::get_auth_context;
+use crate::utils::web::{get_auth_context, get_default_bls_root_pubkey};
 use lit_node_common::config::LitNodeConfig;
 
 use crate::client_session::ClientSession;
 use crate::utils::web::pubkey_to_token_id;
-use crate::utils::web::{
-    get_auth_context_from_session_sigs, get_bls_root_pubkey, get_signed_message,
-};
+use crate::utils::web::{get_auth_context_from_session_sigs, get_signed_message};
 use lit_api_core::error::ApiError;
 use lit_core::config::ReloadableLitConfig;
 use lit_node_common::client_state::ClientState;
@@ -69,11 +67,14 @@ pub(crate) async fn pkp_sign(
     let resource_ability = resource.signing_ability();
 
     // Validate auth sig item
-    let bls_root_pubkey = match get_bls_root_pubkey(tss_state).await {
+    let key_set_id = json_pkp_signing_request.key_set_id.clone();
+    let bls_root_pubkey = match get_default_bls_root_pubkey(tss_state) {
         Ok(bls_root_pubkey) => bls_root_pubkey,
         Err(e) => {
-            return client_session
-                .json_encrypt_err_custom_response("No bls root key exists", e.handle());
+            return client_session.json_encrypt_err_custom_response(
+                "No bls root key exists to validate the auth sig.",
+                e.handle(),
+            );
         }
     };
 
@@ -156,6 +157,7 @@ pub(crate) async fn pkp_sign(
                 &peers,
                 curve_type,
                 Some(json_pkp_signing_request.epoch),
+                &key_set_id,
             )
             .await
         {
@@ -321,6 +323,7 @@ pub(crate) async fn pkp_sign(
         &bls_root_pubkey,
         &json_pkp_signing_request.node_set,
         json_pkp_signing_request.signing_scheme,
+        &json_pkp_signing_request.key_set_id,
     )
     .await
     .map_err(|e| unexpected_err(e, Some("Error signing with the PKP".to_string())));

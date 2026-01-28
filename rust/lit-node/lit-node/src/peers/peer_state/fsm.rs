@@ -165,7 +165,7 @@ impl PeerState {
             .map_err(|e|
                 blockchain_err(
                     decode_revert(&e, self.staking_contract.abi()),
-                    Some(format!("Unable to contact chain to get threshold for node count - original error {:?}", e)),
+                    Some(format!("Unable to contact chain to get threshold for node count - original error {e:?}")),
                 )
             )
     }

@@ -14,7 +14,7 @@ pub mod integration;
 // sdk tests - downloads the latest SDK & test it against the nodes in full compilation in a local network configuration
 pub mod sdk;
 // upgrade tests - test the upgrade process
-//pub mod upgrades;
+pub mod upgrades;
 // fault tests - test the fault tolerance of the network
 pub mod toxiproxy;
 
@@ -22,3 +22,6 @@ pub mod toxiproxy;
 #[macro_use]
 extern crate rocket;
 pub mod external;
+
+// edge tests - test the edge cases of the network
+pub mod edge;

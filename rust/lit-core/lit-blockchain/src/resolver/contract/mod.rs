@@ -19,7 +19,6 @@ use lit_core::config::LitConfig;
 #[allow(unused_imports)]
 use lit_core::config::envs::LitEnv;
 
-use crate::ReleaseRegister;
 use crate::config::LitBlockchainConfig;
 use crate::contracts::allowlist::Allowlist;
 use crate::contracts::backup_recovery::BackupRecovery;
@@ -48,6 +47,7 @@ use crate::resolver::contract::config::SubnetConfig;
 use crate::resolver::rpc::{RPC_RESOLVER, RpcResolver};
 use crate::util::ether::middleware::EIP2771GasRelayerMiddleware;
 use crate::util::ether::transaction_receipt_to_serde;
+use crate::{ReleaseRegister, SignerProvider};
 
 pub mod config;
 
@@ -272,7 +272,7 @@ impl ContractResolver {
 
     pub async fn staking_contract_with_signer(
         &self, cfg: &LitConfig,
-    ) -> Result<Staking<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<Staking<SignerProvider>> {
         Staking::load_with_signer(
             cfg,
             *self.resolve(cfg, STAKING_CONTRACT).await?.address(),
@@ -282,17 +282,13 @@ impl ContractResolver {
 
     pub async fn staking_contract_with_signer_override(
         &self, cfg: &LitConfig, address: H160, wallet_key: Option<&str>,
-    ) -> Result<Staking<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<Staking<SignerProvider>> {
         Staking::load_with_signer(cfg, address, wallet_key)
     }
 
     pub async fn staking_contract_with_gas_relay(
         &self, cfg: &LitConfig, meta_signer_key: impl Into<SigningKey>,
-    ) -> Result<
-        Staking<
-            EIP2771GasRelayerMiddleware<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-        >,
-    > {
+    ) -> Result<Staking<EIP2771GasRelayerMiddleware<SignerProvider>>> {
         Staking::load_with_gas_relay(
             cfg,
             *self.resolve(cfg, STAKING_CONTRACT).await?.address(),
@@ -315,8 +311,7 @@ impl ContractResolver {
 
     pub async fn resolver_contract_with_signer(
         &self, cfg: &LitConfig,
-    ) -> Result<ContractResolverContract<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>>
-    {
+    ) -> Result<ContractResolverContract<SignerProvider>> {
         ContractResolverContract::load_with_signer(
             cfg,
             *self.resolve(cfg, CONTRACT_RESOLVER_CONTRACT).await?.address(),
@@ -334,7 +329,7 @@ impl ContractResolver {
 
     pub async fn release_register_contract_with_signer(
         &self, cfg: &LitConfig,
-    ) -> Result<ReleaseRegister<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<ReleaseRegister<SignerProvider>> {
         ReleaseRegister::load_with_signer(
             cfg,
             *self.resolve(cfg, RELEASE_REGISTER_CONTRACT).await?.address(),
@@ -352,7 +347,7 @@ impl ContractResolver {
 
     pub async fn multisender_contract_with_signer(
         &self, cfg: &LitConfig,
-    ) -> Result<Multisender<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<Multisender<SignerProvider>> {
         Multisender::load_with_signer(
             cfg,
             *self.resolve(cfg, MULTI_SENDER_CONTRACT).await?.address(),
@@ -368,7 +363,7 @@ impl ContractResolver {
 
     pub async fn lit_token_contract_with_signer(
         &self, cfg: &LitConfig,
-    ) -> Result<LITToken<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<LITToken<SignerProvider>> {
         LITToken::load_with_signer(
             cfg,
             *self.resolve(cfg, LIT_TOKEN_CONTRACT).await?.address(),
@@ -386,7 +381,7 @@ impl ContractResolver {
 
     pub async fn pub_key_router_contract_with_signer(
         &self, cfg: &LitConfig,
-    ) -> Result<PubkeyRouter<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<PubkeyRouter<SignerProvider>> {
         PubkeyRouter::load_with_signer(
             cfg,
             *self.resolve(cfg, PUB_KEY_ROUTER_CONTRACT).await?.address(),
@@ -396,11 +391,7 @@ impl ContractResolver {
 
     pub async fn pub_key_router_contract_with_gas_relay(
         &self, cfg: &LitConfig, meta_signer_key: impl Into<SigningKey>,
-    ) -> Result<
-        PubkeyRouter<
-            EIP2771GasRelayerMiddleware<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-        >,
-    > {
+    ) -> Result<PubkeyRouter<EIP2771GasRelayerMiddleware<SignerProvider>>> {
         PubkeyRouter::load_with_gas_relay(
             cfg,
             *self.resolve(cfg, PUB_KEY_ROUTER_CONTRACT).await?.address(),
@@ -418,7 +409,7 @@ impl ContractResolver {
 
     pub async fn pkp_nft_contract_with_signer(
         &self, cfg: &LitConfig,
-    ) -> Result<PKPNFT<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<PKPNFT<SignerProvider>> {
         PKPNFT::load_with_signer(
             cfg,
             *self.resolve(cfg, PKP_NFT_CONTRACT).await?.address(),
@@ -428,11 +419,7 @@ impl ContractResolver {
 
     pub async fn pkp_nft_contract_with_gas_relay(
         &self, cfg: &LitConfig, meta_signer_key: impl Into<SigningKey>,
-    ) -> Result<
-        PKPNFT<
-            EIP2771GasRelayerMiddleware<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-        >,
-    > {
+    ) -> Result<PKPNFT<EIP2771GasRelayerMiddleware<SignerProvider>>> {
         PKPNFT::load_with_gas_relay(
             cfg,
             *self.resolve(cfg, PKP_NFT_CONTRACT).await?.address(),
@@ -449,7 +436,7 @@ impl ContractResolver {
 
     pub async fn pkp_helper_contract_with_signer(
         &self, cfg: &LitConfig,
-    ) -> Result<PKPHelper<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<PKPHelper<SignerProvider>> {
         PKPHelper::load_with_signer(
             cfg,
             *self.resolve(cfg, PKP_HELPER_CONTRACT).await?.address(),
@@ -467,7 +454,7 @@ impl ContractResolver {
 
     pub async fn pkp_permissions_contract_with_signer(
         &self, cfg: &LitConfig,
-    ) -> Result<PKPPermissions<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<PKPPermissions<SignerProvider>> {
         PKPPermissions::load_with_signer(
             cfg,
             *self.resolve(cfg, PKP_PERMISSIONS_CONTRACT).await?.address(),
@@ -477,11 +464,7 @@ impl ContractResolver {
 
     pub async fn pkp_permissions_contract_with_gas_relay(
         &self, cfg: &LitConfig, meta_signer_key: impl Into<SigningKey>,
-    ) -> Result<
-        PKPPermissions<
-            EIP2771GasRelayerMiddleware<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-        >,
-    > {
+    ) -> Result<PKPPermissions<EIP2771GasRelayerMiddleware<SignerProvider>>> {
         PKPPermissions::load_with_gas_relay(
             cfg,
             *self.resolve(cfg, PKP_PERMISSIONS_CONTRACT).await?.address(),
@@ -501,7 +484,7 @@ impl ContractResolver {
 
     pub async fn pkp_nft_metadata_contract_with_signer(
         &self, cfg: &LitConfig,
-    ) -> Result<PKPNFTMetadata<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<PKPNFTMetadata<SignerProvider>> {
         PKPNFTMetadata::load_with_signer(
             cfg,
             *self.resolve(cfg, PKP_NFT_METADATA_CONTRACT).await?.address(),
@@ -517,7 +500,7 @@ impl ContractResolver {
 
     pub async fn allowlist_contract_with_signer(
         &self, cfg: &LitConfig,
-    ) -> Result<Allowlist<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<Allowlist<SignerProvider>> {
         Allowlist::load_with_signer(
             cfg,
             *self.resolve(cfg, ALLOWLIST_CONTRACT).await?.address(),
@@ -534,7 +517,7 @@ impl ContractResolver {
 
     pub async fn backup_recovery_contract_with_signer(
         &self, cfg: &LitConfig,
-    ) -> Result<BackupRecovery<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<BackupRecovery<SignerProvider>> {
         BackupRecovery::load_with_signer(
             cfg,
             *self.resolve(cfg, BACKUP_RECOVERY_CONTRACT).await?.address(),
@@ -544,7 +527,7 @@ impl ContractResolver {
 
     pub async fn backup_recovery_contract_with_signer_override(
         &self, cfg: &LitConfig, address: Address, private_key_bytes: &str,
-    ) -> Result<BackupRecovery<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<BackupRecovery<SignerProvider>> {
         BackupRecovery::load_with_signer(cfg, address, Some(private_key_bytes))
     }
 
@@ -555,7 +538,7 @@ impl ContractResolver {
 
     pub async fn ledger_contract_with_signer(
         &self, cfg: &LitConfig,
-    ) -> Result<Ledger<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<Ledger<SignerProvider>> {
         Ledger::load_with_signer(
             cfg,
             *self.resolve(cfg, LEDGER_CONTRACT).await?.address(),
@@ -565,11 +548,7 @@ impl ContractResolver {
 
     pub async fn ledger_contract_with_gas_relay(
         &self, cfg: &LitConfig, meta_signer_key: impl Into<SigningKey>,
-    ) -> Result<
-        Ledger<
-            EIP2771GasRelayerMiddleware<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-        >,
-    > {
+    ) -> Result<Ledger<EIP2771GasRelayerMiddleware<SignerProvider>>> {
         Ledger::load_with_gas_relay(
             cfg,
             *self.resolve(cfg, LEDGER_CONTRACT).await?.address(),
@@ -591,7 +570,7 @@ impl ContractResolver {
 
     pub async fn payment_delegation_contract_with_signer(
         &self, cfg: &LitConfig,
-    ) -> Result<PaymentDelegation<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<PaymentDelegation<SignerProvider>> {
         PaymentDelegation::load_with_signer(
             cfg,
             *self.resolve(cfg, PAYMENT_DELEGATION_CONTRACT).await?.address(),
@@ -606,7 +585,7 @@ impl ContractResolver {
 
     pub async fn price_feed_contract_with_signer(
         &self, cfg: &LitConfig,
-    ) -> Result<PriceFeed<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>> {
+    ) -> Result<PriceFeed<SignerProvider>> {
         PriceFeed::load_with_signer(
             cfg,
             *self.resolve(cfg, PRICE_FEED_CONTRACT).await?.address(),
@@ -616,11 +595,7 @@ impl ContractResolver {
 
     pub async fn price_feed_contract_with_gas_relay(
         &self, cfg: &LitConfig, meta_signer_key: impl Into<SigningKey>,
-    ) -> Result<
-        PriceFeed<
-            EIP2771GasRelayerMiddleware<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-        >,
-    > {
+    ) -> Result<PriceFeed<EIP2771GasRelayerMiddleware<SignerProvider>>> {
         PriceFeed::load_with_gas_relay(
             cfg,
             *self.resolve(cfg, PRICE_FEED_CONTRACT).await?.address(),
