@@ -19,7 +19,7 @@ use tracing_subscriber::EnvFilter;
 use tracing_subscriber::{fmt, prelude::*};
 
 use lit_core::error::Result;
-pub const PRIVACY_MODE_TAG: &str = "privacy_mode";
+pub const PRIVACY_MODE_TAG: &str = "lit_privacy_mode";
 
 #[cfg(feature = "channels")]
 pub mod channels;

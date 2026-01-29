@@ -217,17 +217,15 @@ pub(crate) fn extract_request_and_correlation_ids(
     let mut correlation_id = x_correlation_id.or(x_request_id);
 
     if let Some(privacy_mode) = x_privacy_mode {
-        if privacy_mode.to_lowercase() == "true" {
-            let privacy_suffix = format!("_{}", PRIVACY_MODE_TAG);
-            if let Some(ref id) = request_id {
-                if !id.ends_with(&privacy_suffix) {
-                    request_id = Some(format!("{}_{}", id, PRIVACY_MODE_TAG));
-                }
+        let privacy_suffix = format!("_{}", PRIVACY_MODE_TAG);
+        if let Some(ref id) = request_id {
+            if !id.ends_with(&privacy_suffix) {
+                request_id = Some(format!("{}_{}", id, PRIVACY_MODE_TAG));
             }
-            if let Some(ref id) = correlation_id {
-                if !id.ends_with(&privacy_suffix) {
-                    correlation_id = Some(format!("{}_{}", id, PRIVACY_MODE_TAG));
-                }
+        }
+        if let Some(ref id) = correlation_id {
+            if !id.ends_with(&privacy_suffix) {
+                correlation_id = Some(format!("{}_{}", id, PRIVACY_MODE_TAG));
             }
         }
     }
