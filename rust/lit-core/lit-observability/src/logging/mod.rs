@@ -43,7 +43,7 @@ pub fn simple_logging_subscriber(
 
 /// Initialize a `tracing` subscriber that logs to a file.
 /// NOTE: This should ONLY be used during testing currently.
- #[cfg(feature = "testing")]
+#[cfg(feature = "testing")]
 pub fn simple_file_logging_subscriber(
     cfg: &LitConfig, prefix_string: Option<String>,
 ) -> Result<impl Subscriber> {
