@@ -13,7 +13,7 @@ where
         let ctx = get_request_context();
         if let Some(ctx) = ctx {
             if let Some(request_id) = ctx.request_id {
-                if request_id.ends_with(PRIVACY_MODE_TAG) {
+                if request_id.contains(PRIVACY_MODE_TAG) {
                     return false;
                 }
             }
