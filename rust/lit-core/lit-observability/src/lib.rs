@@ -19,6 +19,7 @@ use tracing_subscriber::EnvFilter;
 use tracing_subscriber::{fmt, prelude::*};
 
 use lit_core::error::Result;
+pub const PRIVACY_MODE_TAG: &str = "privacy_mode";
 
 #[cfg(feature = "channels")]
 pub mod channels;
@@ -107,6 +108,8 @@ pub async fn create_providers(
         .with(context_aware_log_layer)
         .with(MetricsLayer::new(meter_provider.clone()))
         .with(OpenTelemetryLayer::new(tracer));
+
+    let sub = sub.with(logging::privacy_filter::PrivacyModeLayer);
 
     Ok((tracing_provider, meter_provider, sub, logger_provider))
 }

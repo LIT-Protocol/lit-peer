@@ -407,6 +407,7 @@ async fn sign_lit_actions_with_lit_action_session_sig() {
         &session_sigs_and_node_set,
         2,
         key_set_id,
+        false,
     )
     .await
     .expect("Could not execute lit action");
@@ -501,6 +502,7 @@ async fn only_permitted_can_sign_with_lit_action_session_sig() {
         &session_sigs_and_node_set,
         epoch,
         key_set_id,
+        false,
     )
     .await
     .expect("Could not execute lit action");
@@ -617,6 +619,7 @@ async fn sign_lit_actions_with_custom_auth_resource_lit_action_session_sig() {
         &session_sigs_and_node_set,
         2,
         key_set_id,
+        false,
     )
     .await
     .expect("Could not execute lit action");
@@ -791,6 +794,7 @@ async fn sign_lit_actions_with_no_auth_method_lit_action_session_sig() {
         &session_sigs_and_node_set,
         2,
         key_set_id,
+        false,
     )
     .await
     .expect("Could not execute lit action");
@@ -904,6 +908,7 @@ async fn execute_js_with_eoa_session_sigs() {
         &session_sigs_and_node_set,
         2,
         key_set_id,
+        false,
     )
     .await
     .expect("Could not execute lit action");
@@ -1444,6 +1449,7 @@ pub async fn session_sig_only_mbg_pkp() {
         &session_sigs_and_node_set,
         2,
         key_set_id.clone(),
+        false,
     )
     .await
     .expect("Could not execute lit action");
@@ -1522,6 +1528,7 @@ async fn explicit_resource_permission_required_for_lit_action() {
         &session_sigs,
         2,
         key_set_id.clone(),
+        false,
     )
     .await
     .expect("Could not execute lit action");

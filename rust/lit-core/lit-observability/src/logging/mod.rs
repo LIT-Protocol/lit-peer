@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use crate::config::LitObservabilityConfig;
+use crate::{config::LitObservabilityConfig, logging::privacy_filter::PrivacyModeLayer};
 use lit_core::{config::LitConfig, error::Result};
 use opentelemetry_otlp::TonicExporterBuilder;
 use opentelemetry_sdk::{Resource, runtime};
@@ -11,7 +11,7 @@ use crate::error::unexpected_err;
 
 mod context_layer;
 mod event_format;
-
+pub mod privacy_filter;
 // Re-export context layer components for use by lit-node
 pub use context_layer::{
     ContextAwareOtelLogLayer, RequestContext, clear_task_request_context, get_request_context,
@@ -37,12 +37,13 @@ pub fn simple_logging_subscriber(
 
     Ok(tracing_subscriber::registry()
         .with(level_filter)
+        .with(PrivacyModeLayer)
         .with(fmt::layer().event_format(custom_formatter)))
 }
 
 /// Initialize a `tracing` subscriber that logs to a file.
 /// NOTE: This should ONLY be used during testing currently.
-#[cfg(feature = "testing")]
+ #[cfg(feature = "testing")]
 pub fn simple_file_logging_subscriber(
     cfg: &LitConfig, prefix_string: Option<String>,
 ) -> Result<impl Subscriber> {
@@ -65,6 +66,7 @@ pub fn simple_file_logging_subscriber(
 
     return Ok(tracing_subscriber::registry()
         .with(level_filter)
+        .with(PrivacyModeLayer)
         .with(fmt::layer().event_format(custom_formatter.clone()))
         .with(fmt::layer().event_format(custom_formatter).with_writer(file_appender)));
 }

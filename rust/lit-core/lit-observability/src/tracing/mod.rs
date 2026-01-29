@@ -12,7 +12,7 @@ pub(crate) fn init_tracing_provider(
     opentelemetry_otlp::new_pipeline()
         .tracing()
         .with_exporter(tonic_exporter_builder)
-        .with_trace_config(trace_config)
+        .with_trace_config(trace_config)        
         .install_batch(runtime::Tokio)
         .map_err(|e| {
             unexpected_err(e.to_string(), Some("Could not build tracing pipeline".to_string()))

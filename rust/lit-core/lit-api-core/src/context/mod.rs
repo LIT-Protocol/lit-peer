@@ -3,6 +3,7 @@ use std::fmt;
 use std::future::Future;
 
 use lit_observability::logging::set_request_context;
+use lit_observability::PRIVACY_MODE_TAG;
 use opentelemetry::propagation::Injector;
 use rocket::Request;
 use rocket::request::{FromRequest, Outcome};
@@ -17,7 +18,7 @@ use crate::error::{EC, Error, Result, conversion_err_code, validation_err_code};
 pub const HEADER_KEY_X_CORRELATION_ID: &str = "X-Correlation-Id";
 pub const HEADER_KEY_X_REQUEST_ID: &str = "X-Request-Id";
 pub const HEADER_KEY_X_LIT_SDK_VERSION: &str = "X-Lit-SDK-Version";
-
+pub const HEADER_KEY_X_PRIVACY_MODE: &str = "X-Privacy-Mode";
 pub const TRACKING_LOG_KEY_LIT_SDK_VERSION: &str = "lit_sdk_version";
 
 task_local! {
@@ -199,6 +200,7 @@ where
 /// Returns (request_id, correlation_id) tuple.
 /// - request_id: X-Request-Id header, falls back to X-Correlation-Id
 /// - correlation_id: X-Correlation-Id header, falls back to X-Request-Id
+/// - privacy_mode: X-Privacy-Mode header, if present, will be added to the request_id and correlation_id
 pub(crate) fn extract_request_and_correlation_ids(
     req: &Request<'_>,
 ) -> (Option<String>, Option<String>) {
@@ -206,10 +208,22 @@ pub(crate) fn extract_request_and_correlation_ids(
     let x_correlation_id =
         req.headers().get(HEADER_KEY_X_CORRELATION_ID).next().map(|v| v.to_string());
 
+    let x_privacy_filter =
+        req.headers().get(HEADER_KEY_X_PRIVACY_MODE).next().map(|v| v.to_string());
+
     // request_id: prefer X-Request-Id, fall back to X-Correlation-Id
-    let request_id = x_request_id.clone().or_else(|| x_correlation_id.clone());
+    let mut request_id = x_request_id.clone().or_else(|| x_correlation_id.clone());
     // correlation_id: prefer X-Correlation-Id, fall back to X-Request-Id
-    let correlation_id = x_correlation_id.or(x_request_id);
+    let mut correlation_id = x_correlation_id.or(x_request_id);
+
+    if x_privacy_filter.is_some() {
+        if request_id.is_some() && !request_id.clone().unwrap().contains(PRIVACY_MODE_TAG) {
+            request_id = Some(format!("{}_{}", request_id.unwrap(), PRIVACY_MODE_TAG));
+        }
+        if correlation_id.is_some() && !correlation_id.clone().unwrap().contains(PRIVACY_MODE_TAG) {
+            correlation_id = Some(format!("{}_{}", correlation_id.unwrap(), PRIVACY_MODE_TAG));
+        }
+    }
 
     (request_id, correlation_id)
 }
