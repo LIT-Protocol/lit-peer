@@ -10043,7 +10043,6 @@ dependencies = [
  "tower 0.5.2",
  "tracing",
  "tracing-appender",
- "tracing-core",
  "tracing-log",
  "tracing-opentelemetry",
  "tracing-subscriber",
