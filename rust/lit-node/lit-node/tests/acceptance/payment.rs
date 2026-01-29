@@ -247,7 +247,10 @@ async fn test_all_payment_methods_for_user() {
     self_pay_user
         .set_wallet_balance(INITIAL_FUNDING_AMOUNT)
         .await;
-    assert!(self_pay_user.new_pkp().await.is_ok(), "Failed to mint PKP");
+    assert!(
+        self_pay_user.new_pkp(DEFAULT_KEY_SET_NAME).await.is_ok(),
+        "Failed to mint PKP"
+    );
 
     // The price for the sign_session_key
     self_pay_user
@@ -376,7 +379,10 @@ async fn test_all_payment_methods_for_user() {
     self_pay_user
         .set_wallet_balance(INITIAL_FUNDING_AMOUNT)
         .await;
-    assert!(self_pay_user.new_pkp().await.is_ok(), "Failed to mint PKP");
+    assert!(
+        self_pay_user.new_pkp(DEFAULT_KEY_SET_NAME).await.is_ok(),
+        "Failed to mint PKP"
+    );
 
     // The price for the sign_session_key
     self_pay_user
@@ -429,11 +435,14 @@ async fn test_all_payment_methods_for_user() {
     info!("2 - Delegation: Testing that someone else can delegate authSig to the user");
     let mut delegation_user = EndUser::new(&testnet);
     delegation_user.fund_wallet_default_amount().await;
-    let _delegation_user_pkp = delegation_user.new_pkp().await.unwrap();
+    let _delegation_user_pkp = delegation_user.new_pkp(DEFAULT_KEY_SET_NAME).await.unwrap();
 
     let mut delegation_payer = EndUser::new(&testnet);
     let _ = delegation_payer.fund_wallet_default_amount().await;
-    let _delegation_payer_pkp = delegation_payer.new_pkp().await.unwrap();
+    let _delegation_payer_pkp = delegation_payer
+        .new_pkp(DEFAULT_KEY_SET_NAME)
+        .await
+        .unwrap();
 
     delegation_payer
         .set_wallet_balance(INITIAL_FUNDING_AMOUNT)
@@ -801,7 +810,10 @@ async fn test_all_payment_methods_for_pkp() {
 
     let mut pkp_owner = EndUser::new(&testnet);
     pkp_owner.set_wallet_balance(INITIAL_FUNDING_AMOUNT).await;
-    pkp_owner.new_pkp().await.expect("Failed to mint PKP");
+    pkp_owner
+        .new_pkp(DEFAULT_KEY_SET_NAME)
+        .await
+        .expect("Failed to mint PKP");
 
     // add the PKP itself as a permitted address, so that our session sig from the PKP will be able to sign with it
     let (pubkey, _token_id, eth_address, _key_set_id) = pkp_owner.first_pkp().info();

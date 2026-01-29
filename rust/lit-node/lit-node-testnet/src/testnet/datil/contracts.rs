@@ -11,6 +11,7 @@ use std::sync::Arc;
 
 #[derive(Clone, Debug)]
 pub struct DatilContracts {
+    pub deployer_provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
     pub staking: Staking<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
     pub pkpnft: PKPNFT<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
     pub pubkey_router: PubkeyRouter<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
@@ -94,6 +95,7 @@ impl DatilContracts {
         let pkp_helper = PKPHelper::new(pkp_helper_address, deployer_signing_provider.clone());
 
         Self {
+            deployer_provider: deployer_signing_provider.clone(),
             staking,
             pkpnft,
             pubkey_router,

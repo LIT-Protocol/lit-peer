@@ -1069,6 +1069,7 @@ pub(crate) async fn execute_function(
         .node_set(json_execution_request.node_set.clone())
         .dynamic_payment(dynamic_payment)
         .client_grpc_channels((*grpc_client_pool).clone())
+        .key_set_id(json_execution_request.key_set_id.clone())
         .build()
         .map_err(|e| {
             unexpected_err_code(

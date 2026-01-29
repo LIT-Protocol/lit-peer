@@ -43,6 +43,17 @@ impl FromStr for UrlPrefix {
     }
 }
 
+impl UrlPrefix {
+    /// Get the url prefix from a socket address
+    pub fn from_socket_address(socket_address: &str) -> Self {
+        if socket_address.contains("127.0.0.1") || socket_address.contains("localhost") {
+            Self::Http
+        } else {
+            Self::Https
+        }
+    }
+}
+
 /// A single request for a single endpoint
 #[derive(Clone, Debug)]
 pub struct EndpointRequest<T>

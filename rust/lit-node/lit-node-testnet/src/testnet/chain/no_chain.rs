@@ -2,7 +2,7 @@ use crate::testnet::SimpleTomlValue;
 
 use super::super::NodeAccount;
 use super::ChainTrait;
-use command_group::{CommandGroup, GroupChild};
+use command_group::GroupChild;
 use ethers::prelude::k256::ecdsa::SigningKey;
 use ethers::prelude::*;
 use ethers::signers::{LocalWallet, Signer};
@@ -10,7 +10,6 @@ use lit_core::utils::binary::hex_to_bytes;
 use lit_core::utils::toml::SimpleToml;
 use lit_node_common::coms_keys::ComsKeys;
 use std::path::Path;
-use std::process::Command;
 use std::sync::Arc;
 use tracing::info;
 
@@ -132,12 +131,8 @@ impl ChainTrait for NoChain {
         self.accounts()[0].clone()
     }
 
-    async fn start_chain(&self) -> GroupChild {
+    async fn start_chain(&self) -> Option<GroupChild> {
         info!("No chain to launch.");
-
-        Command::new("/bin/bash")
-            .args(["-c", "echo 'hi'"])
-            .group_spawn()
-            .expect("Could not spawn echo process")
+        None
     }
 }

@@ -1,6 +1,6 @@
 use crate::testnet::datil::contracts::DatilContracts;
 
-use super::WhichTestnet;
+use super::TestNetName;
 use super::contracts::Contracts;
 use anyhow::Result;
 use ethers::core::k256::ecdsa::SigningKey;
@@ -25,9 +25,9 @@ pub mod validators;
 #[derive(Clone, Debug)]
 pub struct Actions {
     contracts: Contracts,
-    datil_contracts: Option<DatilContracts>,
+    datil_contracts: DatilContracts,
     deployer_signing_provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-    which_testnet: WhichTestnet,
+    selected_testnet: TestNetName,
     deploy_address: Address,
 }
 
@@ -65,16 +65,16 @@ impl Display for NetworkState {
 impl Actions {
     pub fn new(
         contracts: Contracts,
-        datil_contracts: Option<DatilContracts>,
+        datil_contracts: DatilContracts,
         deployer_signing_provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
-        which_testnet: WhichTestnet,
+        selected_testnet: TestNetName,
         deploy_address: Address,
     ) -> Self {
         Self {
             contracts,
             datil_contracts,
             deployer_signing_provider,
-            which_testnet,
+            selected_testnet,
             deploy_address,
         }
     }
@@ -94,10 +94,7 @@ impl Actions {
     }
 
     pub fn datil_contracts(&self) -> &DatilContracts {
-        if self.datil_contracts.is_none() {
-            panic!("Datil contracts not found");
-        }
-        self.datil_contracts.as_ref().unwrap()
+        &self.datil_contracts
     }
 
     pub async fn lit_token_balance(&self, address: Address) -> U256 {
@@ -184,9 +181,9 @@ impl Actions {
     #[doc = "Fast forward by a number of blocks"]
     pub async fn fast_forward_blocks(&self, blocks_to_mine: usize) {
         info!("Fast forwarding by {:?} blocks...", blocks_to_mine);
-        let command = match self.which_testnet {
-            WhichTestnet::Anvil => "anvil_mine",
-            WhichTestnet::Hardhat => "hardhat_mine",
+        let command = match self.selected_testnet {
+            TestNetName::Anvil => "anvil_mine",
+            TestNetName::Hardhat => "hardhat_mine",
             _ => panic!("Unsupported network for fastforwarding blocks!"),
         };
 

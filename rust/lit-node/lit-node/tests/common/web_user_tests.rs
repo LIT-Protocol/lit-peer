@@ -321,7 +321,9 @@ pub async fn retrieve_decryption_key(
     info!("Sending payload {:?}", payload);
     let my_secret_key = rand::rngs::OsRng.r#gen();
     let response = lit_sdk::EncryptionSignRequest::new()
-        .url_prefix(lit_sdk::UrlPrefix::Http)
+        .url_prefix(lit_sdk::UrlPrefix::from_socket_address(
+            &node_set.keys().next().unwrap().socket_address,
+        ))
         .node_set(
             node_set
                 .iter()
@@ -391,7 +393,13 @@ pub async fn retrieve_decryption_key_session_sigs_with_version(
 
     let my_secret_key = rand::rngs::OsRng.r#gen();
     let response = lit_sdk::EncryptionSignRequest::new()
-        .url_prefix(lit_sdk::UrlPrefix::Http)
+        .url_prefix(lit_sdk::UrlPrefix::from_socket_address(
+            &session_sigs_and_node_set
+                .first()
+                .unwrap()
+                .node
+                .socket_address,
+        ))
         .node_set(endpoint_requests)
         .build()
         .unwrap()
@@ -466,7 +474,6 @@ pub async fn test_lit_action_session_sigs(
 pub async fn generate_session_sigs_execute_lit_action(
     validator_collection: &ValidatorCollection,
     lit_action_code: &str,
-
     end_user: &EndUser,
 ) -> Result<Vec<GenericResponse<JsonExecutionResponse>>> {
     let (pubkey, _token_id, pkp_eth_address, key_set_id) = end_user.first_pkp().info();
@@ -503,11 +510,12 @@ pub async fn generate_session_sigs_execute_lit_action(
     .expect("Could not get session sigs");
 
     // run
-    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) =
+    let (lit_action_code, ipfs_id, js_params, auth_methods) =
         lit_action_params(lit_action_code.to_string(), pubkey, key_set_id.clone())
             .await
             .expect("Could not get lit action params");
 
+    info!("Executing lit action with session sigs");
     execute_lit_action_session_sigs(
         Some(lit_action_code),
         ipfs_id,
@@ -515,7 +523,7 @@ pub async fn generate_session_sigs_execute_lit_action(
         auth_methods,
         &session_sigs_and_node_set,
         2,
-        &key_set_id,
+        key_set_id,
     )
     .await
 }

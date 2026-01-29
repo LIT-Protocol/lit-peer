@@ -7,6 +7,7 @@ use crate::tss::common::dkg_type::DkgType;
 use crate::tss::common::tss_state::TssState;
 use crate::tss::dkg::engine::{DkgAfterRestore, DkgEngine};
 use crate::tss::dkg::models::Mode;
+use crate::utils::version_update::peers_not_at_version_2_1_8;
 use crate::version::DataVersionWriter;
 use lit_core::error::Unexpected;
 use std::collections::HashMap;
@@ -78,8 +79,8 @@ impl DkgManager {
                     DkgType::Standard => hd_root_key_count,
                 };
                 // this is temporary code, while we upgrade from 2.1.5->2.1.8
-                let epoch_dkg_id = if new_peers.has_version_lower_than("2.1.8")
-                    || current_peers.has_version_lower_than("2.1.8")
+                let epoch_dkg_id = if peers_not_at_version_2_1_8(new_peers)
+                    || peers_not_at_version_2_1_8(current_peers)
                 {
                     format!("{}.{}.{}", dkg_id, curve_type, self.dkg_type)
                 } else {
