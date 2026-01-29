@@ -58,7 +58,7 @@ impl PresignManager {
             all_presign_list.push(presign_list);
         }
 
-        self.set_chain_defaults();
+        let _ = self.set_chain_defaults(false).await;
 
         let cfg = config.load_full();
         let timeout = cfg
@@ -144,6 +144,9 @@ impl PresignManager {
                             self.broadcast_to_non_participants(request_key_hash, peers).await;
                         }
                         PresignMessage::Clear => {
+                             // avoids re-starting the presign generation process if the chain defaults change.
+                            // this is a blocking function on a hot path, but is intentional.
+                            let _ = self.set_chain_defaults(true).await;
                             for curve_type in [CurveType::K256, CurveType::P256, CurveType::P384] {
                                 if let Some(presign_list) = get_presign_list_by_curve_type(&mut all_presign_list, curve_type) {
                                     self.presign_message_clear(curve_type, presign_list).await;
@@ -192,13 +195,26 @@ impl PresignManager {
                     }
                 }
                 _ = heartbeat.tick() => {
-                    self.set_chain_defaults();
+                    let _ = self.set_chain_defaults(false).await;
                 }
             }
         }
     }
 
-    fn set_chain_defaults(&mut self) {
+    async fn set_chain_defaults(&mut self, invalidate_chain_cache: bool) -> Result<()> {
+        if invalidate_chain_cache {
+            self.tss_state
+                .chain_data_config_manager
+                .set_all_config_from_chain()
+                .await
+                .map_err(|e| {
+                    unexpected_err(
+                        e,
+                        Some("Error setting chain defaults from presign manager.".to_string()),
+                    )
+                })?;
+        }
+
         DataVersionReader::reader_unchecked(
             &self.tss_state.chain_data_config_manager.generic_config,
             |generic_chain_config| {
@@ -208,6 +224,7 @@ impl PresignManager {
                 self.max_presign_concurrency = generic_chain_config.max_presign_concurrency;
             },
         );
+        Ok(())
     }
 
     #[instrument(level = "debug", skip_all, fields(txn_prefix = req.txn_prefix))]
