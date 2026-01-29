@@ -3,6 +3,7 @@ use anyhow::Result;
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::signers::Wallet;
 use ethers::types::U256;
+use lit_api_core::context::HEADER_KEY_X_PRIVACY_MODE;
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::{NodeIdentityKey, get_identity_pubkeys_from_node_set};
 use lit_node_testnet::testnet::Testnet;
@@ -226,6 +227,7 @@ pub async fn generate_session_sigs_and_execute_lit_action(
         &session_sigs_and_node_set,
         epoch,
         key_set_id,
+        false,
     )
     .await;
     debug!("execute_resps: {:?}", execute_resp);
@@ -240,6 +242,7 @@ pub async fn execute_lit_action_session_sigs(
     session_sigs_and_node_set: &[SessionSigAndNodeSet],
     epoch: u64,
     key_set_id: String,
+    add_privacy_mode: bool,
 ) -> Result<Vec<GenericResponse<JsonExecutionResponse>>> {
     info!(
         "executing lit action with session sigs.  Lit Action keyset id: {:?}",
@@ -251,10 +254,15 @@ pub async fn execute_lit_action_session_sigs(
         .map(|sig_and_nodeset| sig_and_nodeset.node.clone())
         .collect::<Vec<_>>();
     let my_private_key = OsRng.r#gen();
-    let response = lit_sdk::ExecuteFunctionRequest::new()
-        .url_prefix(lit_sdk::UrlPrefix::from_socket_address(
-            &nodesets.first().unwrap().socket_address,
-        ))
+    let response = lit_sdk::ExecuteFunctionRequest::new().url_prefix(
+        lit_sdk::UrlPrefix::from_socket_address(&nodesets.first().unwrap().socket_address),
+    );
+    let response = match add_privacy_mode {
+        true => response.add_custom_header(HEADER_KEY_X_PRIVACY_MODE, "true"),
+        false => response,
+    };
+
+    let response = response
         .node_set(
             session_sigs_and_node_set
                 .iter()
