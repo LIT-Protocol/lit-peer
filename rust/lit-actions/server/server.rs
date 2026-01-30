@@ -7,7 +7,12 @@ use deno_core::futures::TryFutureExt as _;
 use deno_lib::util::result::any_and_jserrorbox_downcast_ref;
 use deno_runtime::tokio_util::create_and_run_current_thread;
 use lit_actions_grpc::{proto::*, unix};
-use lit_observability::channels::{ChannelMsg, new_traced_bounded_channel};
+use lit_api_core::context::{HEADER_KEY_X_PRIVACY_MODE, HEADER_KEY_X_REQUEST_ID};
+use lit_observability::{
+    PRIVACY_MODE_TAG,
+    channels::{ChannelMsg, new_traced_bounded_channel},
+    logging::{clear_task_request_context, set_request_context},
+};
 use temp_file::TempFile;
 use tokio_stream::{Stream, StreamExt as _};
 use tonic::{Request, Response, Status};
@@ -93,6 +98,22 @@ impl Action for Server {
             #[allow(clippy::single_match)]
             match req.union {
                 Some(UnionRequest::Execute(req)) => {
+                    let none = &"none".to_string();
+                    let privacy_mode = req
+                        .http_headers
+                        .get(&HEADER_KEY_X_PRIVACY_MODE.to_ascii_lowercase())
+                        .unwrap_or(none);
+                    let request_id = req
+                        .http_headers
+                        .get(&HEADER_KEY_X_REQUEST_ID.to_ascii_lowercase())
+                        .unwrap_or(none);
+                    let request_id = if privacy_mode == "true" {
+                        format!("{request_id}_{PRIVACY_MODE_TAG}")
+                    } else {
+                        request_id.to_string()
+                    };
+                    set_request_context(Some(request_id), None);
+
                     debug!("{:?}", DebugExecutionRequest::from(&req));
 
                     std::thread::spawn(move || {
@@ -145,6 +166,7 @@ impl Action for Server {
             }
         });
 
+        clear_task_request_context();
         Ok(Response::new(Box::pin(outbound_rx.into_stream())))
     }
 }

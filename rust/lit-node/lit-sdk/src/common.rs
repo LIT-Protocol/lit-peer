@@ -448,6 +448,7 @@ where
         let mut headers = Vec::with_capacity(self.node_set.len());
         let mut responses = Vec::with_capacity(self.node_set.len());
         let request_id = self.request_id.to_string();
+        println!("request_id: {}", request_id);
         let mut requests = Vec::with_capacity(self.node_set.len());
 
         for endpoint in &self.node_set {
