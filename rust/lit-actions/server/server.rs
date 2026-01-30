@@ -98,25 +98,24 @@ impl Action for Server {
             #[allow(clippy::single_match)]
             match req.union {
                 Some(UnionRequest::Execute(req)) => {
-                    let none = &"none".to_string();
-                    let privacy_mode = req
-                        .http_headers
-                        .get(&HEADER_KEY_X_PRIVACY_MODE.to_ascii_lowercase())
-                        .unwrap_or(none);
-                    let request_id = req
-                        .http_headers
-                        .get(&HEADER_KEY_X_REQUEST_ID.to_ascii_lowercase())
-                        .unwrap_or(none);
-                    let request_id = if privacy_mode == "true" {
-                        format!("{request_id}_{PRIVACY_MODE_TAG}")
-                    } else {
-                        request_id.to_string()
-                    };
-                    set_request_context(Some(request_id), None);
-
                     debug!("{:?}", DebugExecutionRequest::from(&req));
 
                     std::thread::spawn(move || {
+                        let none = &"none".to_string();
+                        let privacy_mode = req
+                            .http_headers
+                            .get(&HEADER_KEY_X_PRIVACY_MODE.to_ascii_lowercase())
+                            .unwrap_or(none);
+                        let request_id = req
+                            .http_headers
+                            .get(&HEADER_KEY_X_REQUEST_ID.to_ascii_lowercase())
+                            .unwrap_or(none);
+                        let request_id = if privacy_mode == "true" {
+                            format!("{request_id}_{PRIVACY_MODE_TAG}")
+                        } else {
+                            request_id.to_string()
+                        };
+                        set_request_context(Some(request_id), None);
                         create_and_run_current_thread(
                             async move {
                                 let res = crate::runtime::execute_js(
