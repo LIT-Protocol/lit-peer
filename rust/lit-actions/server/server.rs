@@ -126,7 +126,11 @@ impl Action for Server {
                         } else {
                             request_id.to_string()
                         };
-                        set_request_context(Some(request_id), None);
+                        
+                        if request_id != "none" {
+                            set_request_context(Some(request_id), None);
+                        }
+
                         create_and_run_current_thread(
                             async move {
                                 let res = crate::runtime::execute_js(
