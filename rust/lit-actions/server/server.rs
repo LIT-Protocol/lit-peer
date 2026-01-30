@@ -98,9 +98,20 @@ impl Action for Server {
             #[allow(clippy::single_match)]
             match req.union {
                 Some(UnionRequest::Execute(req)) => {
-                    debug!("{:?}", DebugExecutionRequest::from(&req));
+                    // we're outside of the spawned thread, so we can't use the request context
+                    if req
+                        .http_headers
+                        .get(&HEADER_KEY_X_PRIVACY_MODE.to_ascii_lowercase())
+                        .unwrap_or(&"false".to_string())
+                        == "true"
+                    {
+                        debug!("ExecuteJsRequest: **PRIVACY MODE**");
+                    } else {
+                        debug!("{:?}", DebugExecutionRequest::from(&req));
+                    }
 
                     std::thread::spawn(move || {
+                        // Set request context for log injection; no fallback IDs.
                         let none = &"none".to_string();
                         let privacy_mode = req
                             .http_headers

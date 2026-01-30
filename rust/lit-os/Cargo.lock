@@ -9906,6 +9906,7 @@ dependencies = [
  "lit-actions-ext",
  "lit-actions-grpc",
  "lit-actions-snapshot",
+ "lit-api-core",
  "lit-observability",
  "serde_json",
  "sys_traits",
