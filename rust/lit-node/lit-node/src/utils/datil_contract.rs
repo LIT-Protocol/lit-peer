@@ -1,5 +1,5 @@
+use crate::config::chain::ChainDataConfigManager;
 use crate::error::{Result, unexpected_err};
-use crate::tss::common::tss_state::TssState;
 use crate::version::DataVersionReader;
 use ethers::prelude::*;
 use lit_blockchain::resolver::rpc::{ENDPOINT_MANAGER, RpcHealthcheckPoller};
@@ -15,8 +15,7 @@ pub struct DatilContracts {
 }
 
 impl DatilContracts {
-    pub async fn new(tss_state: &TssState, key_set_id: &str) -> Result<Self> {
-        let cdm = tss_state.chain_data_config_manager.clone();
+    pub async fn new(cdm: &ChainDataConfigManager, key_set_id: &str) -> Result<Self> {
         let key_set_config = DataVersionReader::read_field_unchecked(&cdm.key_sets, |key_sets| {
             key_sets.get(key_set_id).cloned().ok_or_else(|| {
                 unexpected_err(
@@ -99,4 +98,8 @@ impl DatilContracts {
             pubkey_router: pubkey_router_contract,
         })
     }
+}
+
+pub fn is_datil_key_set_id(key_set_id: &str) -> bool {
+    key_set_id.to_lowercase().contains("datil")
 }

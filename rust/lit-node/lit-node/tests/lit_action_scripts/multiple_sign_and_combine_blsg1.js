@@ -4,6 +4,7 @@
     publicKey,
     sigName: 'sig1',
     signingScheme: 'Bls12381G1ProofOfPossession',
+    keySetId,
   });
 
   const sig2 = await Lit.Actions.signAndCombine({
@@ -11,6 +12,7 @@
     publicKey,
     sigName: 'sig2',
     signingScheme: 'Bls12381G1ProofOfPossession',
+    keySetId,
   });
 
   const sigs = {

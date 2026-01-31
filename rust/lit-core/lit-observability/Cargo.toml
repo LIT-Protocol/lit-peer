@@ -14,12 +14,12 @@ proxy-collector = []
 channels = ["dep:flume"]
 
 [dependencies]
+dashmap = "6"
 derive_more.workspace = true
 flume = { version = "0.11", optional = true }
 hyper-util.workspace = true
 nu-ansi-term = { version = "0.50.1" }
 opentelemetry.workspace = true
-opentelemetry-appender-tracing = { version = "0.5.0", default-features = false }
 opentelemetry-otlp = { workspace = true, features = ["logs"] }
 opentelemetry-semantic-conventions.workspace = true
 opentelemetry_sdk = { workspace = true, features = ["logs"] }

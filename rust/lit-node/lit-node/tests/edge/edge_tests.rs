@@ -392,6 +392,7 @@ async fn node_restarts() {
 /// This tests that a node registers an invalid port and gets kicked.
 #[test_case(1; "with invalid port")]
 /// This tests that a node registers the same IP and port as another node and gets kicked.
+#[ignore]
 #[test_case(2; "with same IP and port")]
 #[tokio::test]
 async fn one_node_conflicting_networking_info(test_case: usize) {

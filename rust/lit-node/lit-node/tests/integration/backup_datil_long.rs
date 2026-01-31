@@ -26,9 +26,7 @@ use lit_node_testnet::node_collection::get_identity_pubkeys_from_node_set;
 use lit_node_testnet::testnet::Testnet;
 use lit_node_testnet::testnet::actions::{Actions, keysets::RootKeyConfig};
 use lit_node_testnet::validator::ValidatorCollection;
-use lit_node_testnet::{
-    DEFAULT_DATIL_KEY_SET_NAME, DEFAULT_KEY_SET_NAME, DatilTestnetType, TestSetupBuilder,
-};
+use lit_node_testnet::{DEFAULT_DATIL_KEY_SET_NAME, DEFAULT_KEY_SET_NAME, TestSetupBuilder};
 use lit_rust_crypto::k256::ecdsa::{SigningKey, VerifyingKey};
 use reqwest::Client;
 use rocket::serde::Serialize;
@@ -84,7 +82,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
     let (testnet, mut validator_collection, mut end_user) = TestSetupBuilder::default()
         .num_staked_and_joined_validators(number_of_nodes)
         .epoch_length(epoch_length)
-        .include_datil_testnet(DatilTestnetType::NoKeyOverride)
+        .setup_datil_keys(false)
         .build()
         .await;
 
@@ -154,7 +152,7 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
 
     info!("Making sure that {} nodes are offline", number_of_nodes);
     for i in 0..number_of_nodes {
-        let validator = validator_collection.get_validator_by_idx_mut(i);
+        let validator = validator_collection.get_validator_by_index_as_mut(i);
         assert!(validator.is_node_offline());
     }
 
@@ -705,18 +703,19 @@ async fn test_datil_keyset_pkp_signing(
     non_owner_end_user.fund_wallet_default_amount().await;
     non_owner_end_user.deposit_to_wallet_ledger_default().await;
 
-    let (datil_pkp_pubkey, _, _) = end_user
-        .new_datil_pkp()
+    let datil_pkp_pubkey = end_user
+        .new_pkp(DEFAULT_DATIL_KEY_SET_NAME)
         .await
-        .expect("Could not mint Datil PKP");
+        .expect("Could not mint Datil PKP")
+        .0;
     let datil_pkp = end_user.pkp_by_pubkey(datil_pkp_pubkey);
     datil_pkp
-        .datil_add_permitted_address_to_pkp(non_owner_end_user.wallet.address(), &[U256::from(1)])
+        .add_permitted_address_to_pkp(non_owner_end_user.wallet.address(), &[U256::from(1)])
         .await
         .expect("Could not add permitted address to pkp");
 
     // Burn the PKP
-    let burned = datil_pkp.datil_burn_pkp().await;
+    let burned = datil_pkp.burn_pkp().await;
     assert!(burned.is_ok());
 
     let pkp_address = datil_pkp.eth_address;
@@ -752,9 +751,10 @@ async fn test_datil_keyset_pkp_signing(
     let to_sign = keccak256(to_sign.as_bytes()).to_vec();
 
     // Make sure the end user has a PKP
-    end_user.new_pkp().await.expect("Could not mint PKP");
-    let pubkey = end_user.first_pkp().pubkey.clone();
-    let key_set_id = &end_user.first_pkp().key_set_id;
+    let (pubkey, _, _, key_set_id) = end_user
+        .new_pkp(DEFAULT_KEY_SET_NAME)
+        .await
+        .expect("Could not mint PKP");
 
     assert!(
         sign_with_pkp_request(
@@ -764,7 +764,7 @@ async fn test_datil_keyset_pkp_signing(
             pubkey,
             epoch,
             SigningScheme::EcdsaK256Sha256,
-            key_set_id
+            &key_set_id
         )
         .await
         .is_ok()

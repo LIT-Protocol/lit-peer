@@ -151,7 +151,7 @@ async fn test_many_epochs() {
         .await
         .unwrap();
     for i in 0..validator_collection.validator_count() {
-        let validator = validator_collection.get_validator_by_idx(i);
+        let validator = validator_collection.get_validator_by_index(i);
         let attested_wallet = mappings[i].as_ref().unwrap();
         let mut wallet_public_key_bytes = vec![4u8; 65];
         attested_wallet

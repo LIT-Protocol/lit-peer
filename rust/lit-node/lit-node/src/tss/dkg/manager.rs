@@ -7,6 +7,7 @@ use crate::tss::common::dkg_type::DkgType;
 use crate::tss::common::tss_state::TssState;
 use crate::tss::dkg::engine::{DkgAfterRestore, DkgEngine};
 use crate::tss::dkg::models::Mode;
+use crate::utils::version_update::peers_not_at_version_2_1_8;
 use crate::version::DataVersionWriter;
 use lit_core::error::Unexpected;
 use std::collections::HashMap;
@@ -77,10 +78,18 @@ impl DkgManager {
                     DkgType::RecoveryParty => 1,
                     DkgType::Standard => hd_root_key_count,
                 };
-                let epoch_dkg_id = format!(
-                    "{}.{}.{}.{}",
-                    dkg_id, &key_set_config.identifier, curve_type, self.dkg_type
-                );
+                // this is temporary code, while we upgrade from 2.1.5->2.1.8
+                let epoch_dkg_id = if peers_not_at_version_2_1_8(new_peers)
+                    || peers_not_at_version_2_1_8(current_peers)
+                {
+                    format!("{}.{}.{}", dkg_id, curve_type, self.dkg_type)
+                } else {
+                    format!(
+                        "{}.{}.{}.{}",
+                        dkg_id, &key_set_config.identifier, curve_type, self.dkg_type
+                    )
+                };
+
                 let existing_root_keys = key_set_config
                     .root_keys_by_curve
                     .get(&curve_type)

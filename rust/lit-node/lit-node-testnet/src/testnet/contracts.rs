@@ -3,8 +3,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use super::SimpleTomlValue;
+use super::TestNetName;
 use super::Testnet;
-use super::WhichTestnet;
 use anyhow::Result;
 
 use ethers::core::k256::ecdsa::SigningKey;
@@ -224,7 +224,7 @@ pub struct StakingContractGlobalConfig {
     minimum_validator_count: Option<U256>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(unused)]
 pub struct StakingContractRealmConfig {
     realm_id: U256,
@@ -278,7 +278,7 @@ impl ComplaintConfigBuilder {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(unused)]
 pub struct ComplaintConfig {
     tolerance: Option<U256>,
@@ -392,7 +392,9 @@ impl Contracts {
     ) -> Result<Contracts> {
         let contracts = Self::new_contracts(ca, provider.clone()).await;
 
-        if testnet.which != WhichTestnet::NoChain {
+        if testnet.selected_network != TestNetName::NoChain
+            && testnet.selected_network != TestNetName::Naga
+        {
             if let Some(staking_contract_global_config) = staking_contract_global_config {
                 Self::update_staking_global_config(
                     contracts.staking.clone(),
@@ -474,7 +476,7 @@ impl Contracts {
         }
     }
 
-    pub async fn contract_addresses_from_resolver(
+    pub async fn contract_addresses_from_resolver_address(
         contract_resolver: Address,
         provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
     ) -> ContractAddresses {
@@ -595,7 +597,7 @@ impl Contracts {
         // get the resolver contract address from the staking contract
         let staking_contract = Staking::new(staking, provider.clone());
         let contract_resolver = staking_contract.contract_resolver().call().await.unwrap();
-        Self::contract_addresses_from_resolver(contract_resolver, provider).await
+        Self::contract_addresses_from_resolver_address(contract_resolver, provider).await
     }
 
     pub async fn new_blank(
@@ -677,9 +679,7 @@ impl Contracts {
         staking: Staking<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
         realm_config: StakingContractRealmConfig,
     ) -> Result<()> {
-        info!("Updating staking contract realm config: {:?}", realm_config);
-
-        if let Some(complaint_reason_to_config) = realm_config.complaint_reason_to_config {
+        if let Some(complaint_reason_to_config) = realm_config.clone().complaint_reason_to_config {
             info!("Updating staking contract complaint reason configs");
 
             for (reason, new_config) in complaint_reason_to_config {
@@ -724,24 +724,45 @@ impl Contracts {
             Self::process_contract_call(cc, "updating staking epoch length").await;
         }
 
+        let realm_id = realm_config.realm_id;
+        let mut new_config: RealmConfig = staking
+            .realm_config(realm_id)
+            .call()
+            .await
+            .map_err(|e| anyhow::anyhow!("unable to get realm config: {:?}", e))?;
+
         if let Some(max_presign_count) = realm_config.max_presign_count {
-            let realm_id = realm_config.realm_id;
-            info!(
-                "Updating staking contract max presign count to {}",
-                max_presign_count
-            );
-            let mut new_config: RealmConfig = staking
-                .realm_config(realm_id)
-                .call()
-                .await
-                .map_err(|e| anyhow::anyhow!("unable to get realm config: {:?}", e))?;
             new_config.max_presign_count = max_presign_count;
-            if let Some(min_presign_count) = realm_config.min_presign_count {
-                new_config.min_presign_count = min_presign_count
-            }
-            let cc = staking.set_realm_config(realm_id, new_config);
-            Self::process_contract_call(cc, "updating staking max presign count").await;
         }
+
+        if let Some(min_presign_count) = realm_config.min_presign_count {
+            new_config.min_presign_count = min_presign_count;
+        }
+
+        if let Some(max_presign_concurrency) = realm_config.max_presign_concurrency {
+            new_config.max_presign_concurrency = max_presign_concurrency;
+        }
+
+        if let Some(max_concurrent_requests) = realm_config.max_concurrent_requests {
+            new_config.max_concurrent_requests = max_concurrent_requests;
+        }
+
+        if let Some(peer_checking_interval_secs) = realm_config.peer_checking_interval_secs {
+            new_config.peer_checking_interval_secs = peer_checking_interval_secs;
+        }
+
+        if let Some(default_key_set) = realm_config.default_key_set {
+            new_config.default_key_set = default_key_set;
+        }
+
+        let cc = staking.set_realm_config(realm_id, new_config);
+        Self::process_contract_call(cc, "Updating Realm config.").await;
+
+        let new_config: RealmConfig = staking
+            .realm_config(realm_id)
+            .call()
+            .await
+            .map_err(|e| anyhow::anyhow!("unable to get realm config: {:?}", e))?;
 
         Ok(())
     }
@@ -762,6 +783,7 @@ impl Contracts {
 
         let cc = staking.set_config(GlobalConfig {
             token_reward_per_token_per_epoch: global_config.token_reward_per_token_per_epoch,
+            key_types_deprecated: global_config.key_types_deprecated,
             reward_epoch_duration: U256::from(86400), // 1 day
             max_time_lock: U256::from(31536000),      // 1 year
             min_time_lock: U256::from(86400 * 100),   // 100 days

@@ -8,6 +8,7 @@ use crate::tss::common::tss_state::TssState;
 use crate::utils::key_share_proof::{
     KeyShareProofs, compute_key_share_proofs, verify_key_share_proofs,
 };
+use crate::utils::version_update::peers_not_at_version_2_1_8;
 use crate::version::{DataVersionReader, get_version};
 use ethers::types::U256;
 use lit_blockchain::contracts::staking::Version;
@@ -192,7 +193,12 @@ pub(crate) async fn key_share_proofs_check(
     trace!("Key share proof check - root keys: {:?}", root_keys_map);
 
     for (identifier, map) in &root_keys_map {
-        let noonce = format!("{epoch}-{lifecycle_id}-{identifier}");
+        let noonce = if peers_not_at_version_2_1_8(peers) {
+            format!("{epoch}-{lifecycle_id}")
+        } else {
+            format!("{epoch}-{lifecycle_id}-{identifier}")
+        };
+
         trace!("Key share proofs nonce signed: {}", noonce);
         let proofs =
             compute_key_share_proofs(&noonce, map, &tss_state.addr, peers, realm_id, epoch).await?;

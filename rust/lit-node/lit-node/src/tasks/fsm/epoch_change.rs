@@ -9,6 +9,8 @@ use crate::tss::common::key_persistence::RECOVERY_DKG_EPOCH;
 use crate::tss::common::traits::fsm_worker_metadata::FSMWorkerMetadata;
 use crate::tss::dkg::engine::DkgAfterRestore;
 use crate::tss::dkg::manager::DkgManager;
+use crate::utils::datil_contract::is_datil_key_set_id;
+use crate::utils::version_update::peers_not_at_version_2_1_8;
 use crate::version::DataVersionReader;
 use ethers::types::U256;
 use lit_core::error::Result;
@@ -138,7 +140,7 @@ pub(crate) async fn perform_epoch_change(
 
         let restore_key_sets = if dkg_manager.next_dkg_after_restore.value() {
             let mut restore_key_sets: Vec<KeySetConfig> = existing_key_sets.clone();
-            restore_key_sets.retain(|ks| ks.identifier.to_lowercase().contains("datil")); // this will need to be updated to use the actual keyset identifier.
+            restore_key_sets.retain(|ks| is_datil_key_set_id(&ks.identifier)); // this will need to be updated to use the actual keyset identifier.
             if !restore_key_sets.is_empty() {
                 existing_key_sets.retain(|ks| !restore_key_sets.contains(ks));
             }
@@ -392,7 +394,7 @@ async fn process_epoch_for_key_set(
                 };
 
                 let lifecycle_id = fsm_worker_metadata.get_lifecycle_id(realm_id);
-                if false {
+                if peers_not_at_version_2_1_8(new_peers) {
                     match key_share_proofs_check(&dkg_manager.tss_state, &res, new_peers, latest_dkg_id, realm_id, epoch, lifecycle_id).await {
                         Err(e) => {
                             warn!("Key share proofs check failed in realm {}: {}", realm_id, e);

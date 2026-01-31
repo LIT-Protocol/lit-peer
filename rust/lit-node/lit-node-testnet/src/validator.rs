@@ -5,22 +5,19 @@ use std::error::Error;
 use std::fs;
 use std::io::BufReader;
 use std::net::Ipv4Addr;
-use std::path::PathBuf;
-use std::process::Child;
-use std::process::Command;
+use std::path::{Path, PathBuf};
+use std::process::{Child, Command};
 use std::sync::Arc;
 
 use anyhow::Result;
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::middleware::SignerMiddleware;
 use ethers::prelude::*;
-use ethers::providers::Http;
-use ethers::providers::Provider;
+use ethers::providers::{Http, Provider};
 use ethers::signers::Wallet;
 use futures::future::join_all;
 use lit_attestation::attestation::ENV_ATTESTATION_TYPE_OVERRIDE;
-use lit_blockchain::contracts::staking::KeySetConfig;
-use lit_blockchain::contracts::staking::Staking;
+use lit_blockchain::contracts::staking::{KeySetConfig, Staking};
 use lit_core::config::ENV_LIT_CONFIG_FILE;
 use lit_core::error::Unexpected;
 use lit_core::utils::binary::bytes_to_hex;
@@ -32,7 +29,6 @@ use url::Url;
 // use lit_node::p2p_comms::web::chatter_server::chatter::chatter_service_client::ChatterServiceClient;
 use rand::Rng;
 use std::fs::File;
-use std::path::Path;
 use tracing::error;
 use tracing::trace;
 use tracing::{debug, info, warn};
@@ -257,10 +253,6 @@ impl ValidatorCollectionBuilder {
             } else {
                 // only start the nodes meant to be awake.
                 if !asleep_initially.contains(&idx) {
-                    // to avoid breaking old tests, explicit check if the testnet is configured to register inactive validators.
-                    // if testnet.register_inactive_validators {
-                    //     validator.set_node_info_without_joining(&actions).await?;
-                    // }
                     validator.start_node(true, false).await?;
                     validator_ports_to_check_awake.push(validator.node.port);
                 }
@@ -307,7 +299,7 @@ impl ValidatorCollectionBuilder {
         }
 
         if !testnet.is_from_cache {
-            crate::testnet::contracts_repo::save_to_test_state_cache(
+            crate::testnet::anvil_cache::save_to_test_state_cache(
                 testnet.provider.clone(),
                 testnet.num_staked_and_joined_validators,
                 testnet.num_staked_only_validators,
@@ -331,6 +323,7 @@ impl ValidatorCollectionBuilder {
     }
 }
 
+#[derive(Clone)]
 pub struct ValidatorCollection {
     validators: Vec<Validator>,
     actions: Actions,
@@ -344,6 +337,58 @@ pub struct ValidatorCollection {
 }
 
 impl ValidatorCollection {
+    pub async fn new_from_testnet(testnet: &mut Testnet) -> Result<Self> {
+        let mut validators = vec![];
+        let actions = testnet.actions();
+        let structs = actions
+            .get_current_validator_structs(U256::from(testnet.realm_id()))
+            .await;
+        let staker_mappping = actions
+            .get_current_validator_addresses(structs.iter().map(|v| v.node_address).collect())
+            .await;
+
+        let mut node_accounts = vec![];
+        for validator in structs {
+            let node_account = NodeAccount {
+                staker_address: *staker_mappping
+                    .get(&validator.node_address)
+                    .unwrap_or(&Address::zero()),
+                node_address: validator.node_address,
+                node_address_private_key: H256::random(),
+                staker_address_private_key: H256::random(),
+                coms_keys: lit_node_common::coms_keys::ComsKeys::new(), // we're not using coms keys for naga testnet
+                signing_provider: testnet.deploy_account.signing_provider.clone(),
+            };
+            node_accounts.push(node_account.clone());
+
+            validators.push(Validator {
+                node: Node {
+                    process: None,
+                    config_file: "".to_string(),
+                    binary_path: "".to_string(),
+                    log_mode: "".to_string(),
+                    extra_env_vars: vec![],
+                    ip: validator.ip.into(),
+                    port: validator.port as usize,
+                    realm_id: U256::from(testnet.realm_id()),
+                    feature_flags: "".to_string(),
+                },
+                account: node_account,
+            });
+        }
+
+        testnet.node_accounts = Arc::new(node_accounts);
+
+        Ok(Self {
+            validators,
+            actions: testnet.actions(),
+            testnet_deployer_signing_provider: testnet.deploy_account.signing_provider.clone(),
+            testnet_node_accounts: testnet.node_accounts.clone(),
+            node_config_folder_path: "".to_string(),
+            keyset_configs: vec![],
+        })
+    }
+
     pub fn validator_count(&self) -> usize {
         self.validators.len()
     }
@@ -427,11 +472,11 @@ impl ValidatorCollection {
         std::cmp::max(3, (port_count * 2) / 3)
     }
 
-    pub fn get_validator_by_idx(&self, idx: usize) -> &Validator {
+    pub fn get_validator_by_index(&self, idx: usize) -> &Validator {
         &self.validators[idx]
     }
 
-    pub fn get_validator_by_idx_mut(&mut self, idx: usize) -> &mut Validator {
+    pub fn get_validator_by_index_as_mut(&mut self, idx: usize) -> &mut Validator {
         &mut self.validators[idx]
     }
 
@@ -812,7 +857,6 @@ impl ValidatorCollection {
             .filter(|f| ports.contains(&f.node.port))
             .map(|v| v.socket_address())
             .collect();
-
         let nodes_for_epoch2 = nodes_for_epoch.clone();
 
         let threshold = self
@@ -954,14 +998,17 @@ impl ValidatorBuilder {
             node: NodeBuilder::new()
                 .realm_id(self.realm_id)
                 .binary_path(binary_path)
-                .build(node_config_file_path)
+                .build(
+                    node_config_file_path,
+                    self.node_binary_feature_flags.clone(),
+                )
                 .await?,
             account: node_account.clone(),
         });
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Validator {
     node: Node,
     account: NodeAccount,
@@ -997,6 +1044,14 @@ impl Validator {
 
     pub fn port(&self) -> usize {
         self.node.port
+    }
+
+    pub fn set_binary_path(&mut self, binary_path: String) {
+        self.node.binary_path = binary_path;
+    }
+
+    pub fn force_search_binary(&mut self) {
+        self.set_binary_path("".to_string());
     }
 
     pub async fn start_node(&mut self, clean_slate: bool, wait_for_node_awake: bool) -> Result<()> {
@@ -1079,31 +1134,6 @@ impl Validator {
 
         Ok(())
     }
-
-    // pub async fn set_node_info_without_joining(&self, actions: &Actions) -> Result<()> {
-    //     info!(
-    //         "Node {} (s:{} / n:{}) is updating ip/port/details info.",
-    //         self.node.port, self.account.staker_address, self.account.node_address,
-    //     );
-    //
-    //     let staking = Staking::<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>::new(
-    //         actions.contracts().staking.address(),
-    //         self.account.signing_provider.clone(),
-    //     );
-    //
-    //     let cc = staking.set_ip_port_node_address_and_communication_pub_keys(
-    //         self.node.ip.into(),
-    //         0,
-    //         self.node.port as u32,
-    //         self.account.node_address,
-    //         U256::from(self.account.coms_keys.sender_public_key().to_bytes()),
-    //         U256::from(self.account.coms_keys.receiver_public_key().to_bytes()),
-    //     );
-    //     Contracts::process_contract_call_with_delay(cc, "update node info without joining", 10)
-    //         .await;
-    //
-    //     Ok(())
-    // }
 
     pub fn is_node_offline(&mut self) -> bool {
         if let Some(child) = self.node.process.as_mut() {
@@ -1234,7 +1264,7 @@ impl NodeBuilder {
         self
     }
 
-    pub async fn build(self, config_file: String) -> Result<Node> {
+    pub async fn build(self, config_file: String, feature_flags: String) -> Result<Node> {
         // if we're in CI, it's already built and in the root
         let path = self
             .binary_path
@@ -1253,6 +1283,7 @@ impl NodeBuilder {
             realm_id: self.realm_id.unwrap_or_else(|| U256::from(1)),
             process: None,
             config_file,
+            feature_flags,
             binary_path: path,
             log_mode: self.log_mode,
             extra_env_vars: self.extra_env_vars,
@@ -1266,6 +1297,7 @@ impl NodeBuilder {
 pub struct Node {
     process: Option<Child>,
     config_file: String,
+    feature_flags: String,
     binary_path: String,
     log_mode: String,
     extra_env_vars: Vec<(String, String)>,
@@ -1287,6 +1319,25 @@ impl std::fmt::Debug for Node {
             .field("ip", &self.ip)
             .field("realm_id", &self.realm_id)
             .finish()
+    }
+}
+
+impl Clone for Node {
+    fn clone(&self) -> Self {
+        tracing::warn!(
+            "Partially cloning a node - the process for the node is not cloned; it can not be stopped or started through this clone."
+        );
+        Self {
+            process: None,
+            config_file: self.config_file.clone(),
+            feature_flags: self.feature_flags.clone(),
+            binary_path: self.binary_path.clone(),
+            log_mode: self.log_mode.clone(),
+            extra_env_vars: self.extra_env_vars.clone(),
+            port: self.port,
+            ip: self.ip,
+            realm_id: self.realm_id,
+        }
     }
 }
 
@@ -1315,6 +1366,11 @@ impl Node {
         if self.process.is_some() {
             warn!("Node {} is already online", self.port);
             return Ok(());
+        }
+
+        if self.binary_path.is_empty() {
+            self.binary_path =
+                Self::get_binary(self.feature_flags.clone(), self.config_file.clone())?;
         }
 
         info!(

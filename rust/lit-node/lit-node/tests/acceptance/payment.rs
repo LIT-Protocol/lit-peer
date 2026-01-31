@@ -247,7 +247,10 @@ async fn test_all_payment_methods_for_user() {
     self_pay_user
         .set_wallet_balance(INITIAL_FUNDING_AMOUNT)
         .await;
-    assert!(self_pay_user.new_pkp().await.is_ok(), "Failed to mint PKP");
+    assert!(
+        self_pay_user.new_pkp(DEFAULT_KEY_SET_NAME).await.is_ok(),
+        "Failed to mint PKP"
+    );
 
     // The price for the sign_session_key
     self_pay_user
@@ -376,7 +379,10 @@ async fn test_all_payment_methods_for_user() {
     self_pay_user
         .set_wallet_balance(INITIAL_FUNDING_AMOUNT)
         .await;
-    assert!(self_pay_user.new_pkp().await.is_ok(), "Failed to mint PKP");
+    assert!(
+        self_pay_user.new_pkp(DEFAULT_KEY_SET_NAME).await.is_ok(),
+        "Failed to mint PKP"
+    );
 
     // The price for the sign_session_key
     self_pay_user
@@ -429,11 +435,14 @@ async fn test_all_payment_methods_for_user() {
     info!("2 - Delegation: Testing that someone else can delegate authSig to the user");
     let mut delegation_user = EndUser::new(&testnet);
     delegation_user.fund_wallet_default_amount().await;
-    let _delegation_user_pkp = delegation_user.new_pkp().await.unwrap();
+    let _delegation_user_pkp = delegation_user.new_pkp(DEFAULT_KEY_SET_NAME).await.unwrap();
 
     let mut delegation_payer = EndUser::new(&testnet);
     let _ = delegation_payer.fund_wallet_default_amount().await;
-    let _delegation_payer_pkp = delegation_payer.new_pkp().await.unwrap();
+    let _delegation_payer_pkp = delegation_payer
+        .new_pkp(DEFAULT_KEY_SET_NAME)
+        .await
+        .unwrap();
 
     delegation_payer
         .set_wallet_balance(INITIAL_FUNDING_AMOUNT)
@@ -801,7 +810,10 @@ async fn test_all_payment_methods_for_pkp() {
 
     let mut pkp_owner = EndUser::new(&testnet);
     pkp_owner.set_wallet_balance(INITIAL_FUNDING_AMOUNT).await;
-    pkp_owner.new_pkp().await.expect("Failed to mint PKP");
+    pkp_owner
+        .new_pkp(DEFAULT_KEY_SET_NAME)
+        .await
+        .expect("Failed to mint PKP");
 
     // add the PKP itself as a permitted address, so that our session sig from the PKP will be able to sign with it
     let (pubkey, _token_id, eth_address, _key_set_id) = pkp_owner.first_pkp().info();
@@ -1347,6 +1359,153 @@ async fn test_pending_payments_block_usage() {
         DEFAULT_KEY_SET_NAME,
     )
     .await;
+}
+
+#[tokio::test]
+async fn test_payment_tracker_usage_tracking() {
+    // This test verifies that:
+    // 1. Pricing increases with concurrency (usage percentage)
+    // 2. After requests complete, usage tracking correctly returns to 0%
+    //    (verifying that PaymentUsageGuard properly deregisters when requests finish)
+
+    crate::common::setup_logging();
+    let (testnet, _validator_collection, actions, node_set) = setup_testnet_for_payments().await;
+    let realm_id = ethers::types::U256::from(1);
+    let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
+
+    let self_pay_user = EndUser::new(&testnet);
+    self_pay_user
+        .set_wallet_balance(INITIAL_FUNDING_AMOUNT)
+        .await;
+
+    // Get initial price at 0% usage
+    // 3 is the SignSessionKey product ID
+    let product_id = 1;
+    let initial_price = self_pay_user.first_node_price_from_feed(product_id).await;
+    info!("Initial price at 0% usage: {}", initial_price);
+
+    // Prepare valid encryption parameters for successful requests
+    let test_encryption_parameters = prepare_test_encryption_parameters();
+
+    let resource_ability_requests = vec![LitResourceAbilityRequest {
+        resource: LitResourceAbilityRequestResource {
+            resource: format!(
+                "{}/{}",
+                test_encryption_parameters.hashed_access_control_conditions,
+                test_encryption_parameters.data_to_encrypt_hash
+            ),
+            resource_prefix: LitResourcePrefix::ACC.to_string(),
+        },
+        ability: LitAbility::AccessControlConditionDecryption.to_string(),
+    }];
+
+    // Fund the user with enough balance for multiple requests
+    // Use a multiplier for funding to ensure we have enough for concurrent requests
+    let funding_amount = initial_price * 1000 * NUM_STAKED_VALIDATORS;
+    self_pay_user.deposit_to_wallet_ledger(funding_amount).await;
+
+    // Step 1: Make concurrent requests to increase usage and verify pricing increases
+    info!("Step 1: Making concurrent requests to increase usage");
+    let num_concurrent_requests = 30;
+    let mut handles = Vec::new();
+
+    for i in 0..num_concurrent_requests {
+        let session_sigs_and_node_set = get_session_sigs_for_auth(
+            &node_set,
+            resource_ability_requests.clone(),
+            Some(self_pay_user.wallet.clone()),
+            None,
+            Some(initial_price),
+        );
+
+        let params = test_encryption_parameters.clone();
+        let epoch = actions.get_current_epoch(realm_id).await.as_u64();
+
+        let handle = tokio::spawn(async move {
+            // Add small delay to ensure requests are truly concurrent
+            tokio::time::sleep(tokio::time::Duration::from_millis(i * 10)).await;
+            retrieve_decryption_key_session_sigs(
+                params,
+                &session_sigs_and_node_set,
+                epoch,
+                DEFAULT_KEY_SET_NAME,
+            )
+            .await
+        });
+        handles.push(handle);
+    }
+
+    // Wait a bit for requests to register usage
+    tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+
+    // Check that price has increased due to concurrency
+    let price_with_concurrency = self_pay_user.first_node_price_from_feed(product_id).await;
+    info!(
+        "Price with {} concurrent requests: {}",
+        num_concurrent_requests, price_with_concurrency
+    );
+
+    // Price should be higher than initial
+    assert!(
+        price_with_concurrency >= initial_price,
+        "Price should increase or stay the same with concurrent requests. Initial: {}, With concurrency: {}",
+        initial_price,
+        price_with_concurrency
+    );
+
+    // Wait for all requests to complete
+    info!("Waiting for all concurrent requests to complete");
+    for handle in handles {
+        let _ = handle.await;
+    }
+
+    // Step 2: Wait for all requests to fully complete and verify usage returns to 0%
+    info!("Step 2: Waiting for usage to return to 0%");
+
+    // Give some time for all guards to drop and deregister
+    tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+
+    // Check that price has returned to initial (or close to it)
+    // Note: There might be some delay in price feed updates, so we check multiple times
+    let mut final_price = self_pay_user.first_node_price_from_feed(product_id).await;
+    let mut attempts = 0;
+    const MAX_ATTEMPTS: u32 = 10;
+
+    while final_price > initial_price && attempts < MAX_ATTEMPTS {
+        tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+        final_price = self_pay_user.first_node_price_from_feed(product_id).await;
+        attempts += 1;
+        info!(
+            "Attempt {}: Final price: {}, Initial price: {}",
+            attempts, final_price, initial_price
+        );
+    }
+
+    info!("Final price after all requests: {}", final_price);
+    info!("Initial price: {}", initial_price);
+
+    // The final price should be close to the initial price (within reasonable tolerance)
+    // This verifies that usage tracking correctly returned to 0% after all requests completed
+    // Note: We allow some tolerance because price feed updates might have slight delays
+    let price_difference = if final_price > initial_price {
+        final_price - initial_price
+    } else {
+        U256::zero()
+    };
+
+    // Allow up to 5% difference to account for price feed update delays
+    let tolerance = initial_price / 20;
+
+    assert!(
+        price_difference <= tolerance,
+        "Price should return close to initial after all requests complete (including exceptions). \
+         Initial: {}, Final: {}, Difference: {}, Tolerance: {}. \
+         This indicates usage tracking correctly deregistered even after exceptions.",
+        initial_price,
+        final_price,
+        price_difference,
+        tolerance
+    );
 }
 
 async fn setup_testnet_for_payments() -> (Testnet, ValidatorCollection, Actions, Vec<NodeSet>) {

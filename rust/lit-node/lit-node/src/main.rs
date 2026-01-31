@@ -55,6 +55,7 @@ use tracing::error;
 use tracing_subscriber::util::SubscriberInitExt;
 
 use crate::peers::grpc_client_pool::GrpcClientPool;
+use crate::utils::rocket::fairings::RequestContextCleanupFairing;
 use crate::utils::web::default_http_client;
 use rocket::Request;
 use rocket::serde::json::Value;
@@ -222,7 +223,13 @@ pub fn main() {
                 ps_tx.clone(),
                 peer_checker_tx.clone(),
             ))
-            .expect("failed to create PeerState"),
+            .unwrap_or_else(|e| {
+                error!(
+                    err = ?e,
+                    "Failed to create PeerState; aborting lit_node startup (supervisor may restart the process)"
+                );
+                panic!("failed to create PeerState: {:?}", e);
+            }),
     );
 
     let (tss_state, rx_round_manager, rx_batch_manager) = tss_state::TssState::init(
@@ -230,7 +237,13 @@ pub fn main() {
         Arc::new(cfg.clone()),
         chain_data_manager.clone(),
     )
-    .expect("Error initializing tss state");
+    .unwrap_or_else(|e| {
+        error!(
+            err = ?e,
+            "Error initializing TSS state; aborting lit_node startup (supervisor may restart the process)"
+        );
+        panic!("Error initializing tss state: {:?}", e);
+    });
 
     let delegation_usage_db = Arc::new(DelegatedUsageDB::default_with_chain_data_config_manager(
         chain_data_manager.clone(),
@@ -382,6 +395,7 @@ pub fn main() {
                 .mount("/", endpoints::versions::v1::routes())
                 // include the v2 routes
                 .mount("/", endpoints::versions::v2::routes())
+                .attach(RequestContextCleanupFairing)
                 .attach(cors)
                 .attach(AdHoc::on_response("Version Header", |_, resp| {
                     Box::pin(async move {

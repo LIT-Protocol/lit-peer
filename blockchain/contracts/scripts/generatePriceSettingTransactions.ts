@@ -72,6 +72,15 @@ const PRICE_MAP: PriceMap = {
 // ENUMS AND CONSTANTS
 // ============================================================================
 
+/**
+ * Most PriceFeed products are priced *per node*, and users typically must talk to at least
+ * a threshold number of nodes. We treat the USD values in PRICE_MAP as the *expected total*
+ * cost to the user, and divide by this expected threshold when setting on-chain per-node prices.
+ *
+ * PKP minting is global (not per-node) and is NOT divided by this value.
+ */
+const EXPECTED_THRESHOLD_NODES = 5;
+
 enum ProductId {
   PkpSign = 0,
   EncSign = 1,
@@ -327,6 +336,22 @@ async function main() {
     return priceWei;
   };
 
+  // Helper: convert "expected total user cost" (USD) into a per-node USD price for on-chain setting.
+  const totalUsdToPerNodeUsd = (totalUsd: number): number => {
+    if (!Number.isFinite(totalUsd) || totalUsd < 0) {
+      throw new Error(`Invalid USD price: ${totalUsd}`);
+    }
+    if (
+      !Number.isInteger(EXPECTED_THRESHOLD_NODES) ||
+      EXPECTED_THRESHOLD_NODES <= 0
+    ) {
+      throw new Error(
+        `EXPECTED_THRESHOLD_NODES must be a positive integer; got ${EXPECTED_THRESHOLD_NODES}`
+      );
+    }
+    return totalUsd / EXPECTED_THRESHOLD_NODES;
+  };
+
   // Get contract instances
   const pkpNft = await ethers.getContractAt('PKPNFTDiamond', pkpNftAddress);
   const priceFeed = await ethers.getContractAt(
@@ -341,8 +366,9 @@ async function main() {
     data: string;
     operation: number;
     description: string;
-    priceUSD: number;
-    priceLITKEY: string;
+    priceUSD: number; // Per-node USD price
+    priceUSDTotal?: number; // Total USD price across all nodes
+    priceLITKEY: string; // Per-node LITKEY price
   }> = [];
 
   // ============================================================================
@@ -389,28 +415,41 @@ async function main() {
     PRICE_MAP.basePrices.signSessionKey,
   ];
 
-  const basePriceWeis = basePrices.map((usdPrice) =>
-    adjustPriceForEnv(usdToLitKeyWei(usdPrice, litKeyPriceUSD))
+  const basePricesPerNodeUsd = basePrices.map((usdTotal) =>
+    totalUsdToPerNodeUsd(usdTotal)
+  );
+  const basePriceWeis = basePricesPerNodeUsd.map((usdPerNode) =>
+    adjustPriceForEnv(usdToLitKeyWei(usdPerNode, litKeyPriceUSD))
   );
 
   for (let i = 0; i < productIds.length; i++) {
     const productId = productIds[i];
-    const usdPrice = basePrices[i];
+    const usdPriceTotal = basePrices[i];
+    const usdPricePerNode = basePricesPerNodeUsd[i];
     const priceWei = basePriceWeis[i];
     const priceTokens = parseFloat(ethers.formatUnits(priceWei, 18));
     const maxPriceWei = priceWei * 10n; // Max price is 10x base price
     const maxPriceTokens = parseFloat(ethers.formatUnits(maxPriceWei, 18));
-    const maxUsdPrice = usdPrice * 10;
+    const maxUsdPricePerNode = usdPricePerNode * 10;
+    const maxUsdPriceTotal = usdPriceTotal * 10;
 
     console.log(
-      `${PRODUCT_NAMES[productId]} Base: ${priceTokens.toFixed(
+      `${PRODUCT_NAMES[productId]} Base (per-node): ${priceTokens.toFixed(
         6
-      )} LITKEY ($${usdPrice.toFixed(4)} USD)`
+      )} LITKEY ($${usdPricePerNode.toFixed(
+        4
+      )} USD per node; $${usdPriceTotal.toFixed(
+        4
+      )} total @ ${EXPECTED_THRESHOLD_NODES} nodes)`
     );
     console.log(
-      `${PRODUCT_NAMES[productId]} Max: ${maxPriceTokens.toFixed(
+      `${PRODUCT_NAMES[productId]} Max (per-node): ${maxPriceTokens.toFixed(
         6
-      )} LITKEY ($${maxUsdPrice.toFixed(4)} USD)`
+      )} LITKEY ($${maxUsdPricePerNode.toFixed(
+        4
+      )} USD per node; $${maxUsdPriceTotal.toFixed(
+        4
+      )} total @ ${EXPECTED_THRESHOLD_NODES} nodes)`
     );
 
     // Set base price
@@ -422,7 +461,8 @@ async function main() {
     transactions.push({
       ...createSafeTransaction(priceFeedAddress, setBasePriceData),
       description: `Set Base Network Price - ${PRODUCT_NAMES[productId]}`,
-      priceUSD: usdPrice,
+      priceUSD: usdPricePerNode,
+      priceUSDTotal: usdPriceTotal,
       priceLITKEY: priceTokens.toFixed(6),
     });
 
@@ -435,7 +475,8 @@ async function main() {
     transactions.push({
       ...createSafeTransaction(priceFeedAddress, setMaxPriceData),
       description: `Set Max Network Price - ${PRODUCT_NAMES[productId]}`,
-      priceUSD: maxUsdPrice,
+      priceUSD: maxUsdPricePerNode,
+      priceUSDTotal: maxUsdPriceTotal,
       priceLITKEY: maxPriceTokens.toFixed(6),
     });
   }
@@ -520,8 +561,10 @@ async function main() {
   ];
 
   for (const config of litActionComponentMap) {
+    const usdPriceTotal = config.usdPrice;
+    const usdPricePerNode = totalUsdToPerNodeUsd(usdPriceTotal);
     const priceWei = adjustPriceForEnv(
-      usdToLitKeyWei(config.usdPrice, litKeyPriceUSD)
+      usdToLitKeyWei(usdPricePerNode, litKeyPriceUSD)
     );
     const priceTokens = parseFloat(ethers.formatUnits(priceWei, 18));
     const measurementName =
@@ -531,9 +574,13 @@ async function main() {
         ? '/MB'
         : '/count';
     console.log(
-      `${config.name} ${measurementName}: ${priceTokens.toFixed(
+      `${config.name} ${measurementName} (per-node): ${priceTokens.toFixed(
         6
-      )} LITKEY ($${config.usdPrice.toFixed(4)} USD)`
+      )} LITKEY ($${usdPricePerNode.toFixed(
+        6
+      )} USD per node; $${usdPriceTotal.toFixed(
+        6
+      )} total @ ${EXPECTED_THRESHOLD_NODES} nodes)`
     );
 
     const setLitActionPriceData = priceFeed.interface.encodeFunctionData(
@@ -548,7 +595,8 @@ async function main() {
     transactions.push({
       ...createSafeTransaction(priceFeedAddress, setLitActionPriceData),
       description: `Set Lit Action Price - ${config.name} ${measurementName}`,
-      priceUSD: config.usdPrice,
+      priceUSD: usdPricePerNode,
+      priceUSDTotal: usdPriceTotal,
       priceLITKEY: priceTokens.toFixed(6),
     });
   }
@@ -580,7 +628,7 @@ async function main() {
   const updatedGlobalConfig = {
     tokenRewardPerTokenPerEpoch:
       currentGlobalConfig.tokenRewardPerTokenPerEpoch,
-    keyTypes: currentGlobalConfig.keyTypes,
+    keyTypes_deprecated: currentGlobalConfig.keyTypes_deprecated,
     minimumValidatorCount: currentGlobalConfig.minimumValidatorCount,
     rewardEpochDuration: currentGlobalConfig.rewardEpochDuration,
     maxTimeLock: currentGlobalConfig.maxTimeLock,

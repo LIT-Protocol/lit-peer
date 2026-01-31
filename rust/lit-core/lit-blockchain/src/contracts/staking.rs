@@ -22931,6 +22931,7 @@ pub mod staking {
     )]
     pub struct GlobalConfig {
         pub token_reward_per_token_per_epoch: ::ethers::core::types::U256,
+        pub key_types_deprecated: ::std::vec::Vec<::ethers::core::types::U256>,
         pub minimum_validator_count: ::ethers::core::types::U256,
         pub reward_epoch_duration: ::ethers::core::types::U256,
         pub max_time_lock: ::ethers::core::types::U256,
