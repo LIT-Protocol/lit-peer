@@ -1,6 +1,5 @@
 use crate::{models::GlobalState, utils::base_path};
 use leptos::prelude::*;
-use leptos_use::{BreakpointsTailwind, breakpoints_tailwind, use_breakpoints};
 use thaw::{NavCategory, NavCategoryItem, NavDrawer, NavItem, NavSubItem};
 use web_sys::window;
 
@@ -44,12 +43,12 @@ pub fn NavMenu(page_name_signal: RwSignal<String>, open_menu_set: WriteSignal<bo
                 <NavItem icon=icondata::AiLinkOutlined value="/history">
                     "History"
                 </NavItem>
-                <NavItem icon=icondata::AiClockCircleOutlined value="/status_at_time">
-                    "Status At Time"
-                </NavItem>
-                <NavItem icon=icondata::AiUserOutlined value="/account_inspector">
-                    "Account Inspector"
-                </NavItem>
+                // <NavItem icon=icondata::AiClockCircleOutlined value="/status_at_time">
+                //     "Status At Time"
+                // </NavItem>
+                // <NavItem icon=icondata::AiUserOutlined value="/account_inspector">
+                //     "Account Inspector"
+                // </NavItem>
                 <NavItem value="/pkps" icon=icondata::AiKeyOutlined>
                     "PKPs"
                 </NavItem>

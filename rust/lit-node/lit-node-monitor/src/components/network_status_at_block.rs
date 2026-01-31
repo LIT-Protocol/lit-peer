@@ -160,7 +160,7 @@ pub async fn get_network_status(
         .collect::<Vec<String>>();
 
     let gs = use_context::<GlobalState>().expect("Global State Failed to Load");
-    let subnet_id = gs.active_network().subnet_id;
+    let _subnet_id = gs.active_network().subnet_id;
     let gcp_project = gs.active_network().gcp_project;
     let cursor_timestamp = block_time.format("%Y-%m-%dT%H:%M:%S.%fZ").to_string();
     let time_delta = TimeDelta::minutes(3);

@@ -353,7 +353,7 @@ async fn get_network_data(network_src_url: &str) -> Result<ChainDetails, String>
     let mut results: ChainDetails = serde_json::from_str(&body.unwrap()).unwrap();
     results.rpc_api_type = RpcApiType::BlockScout;
 
-    log::info!("results: {:?}", results);
+    // log::info!("results: {:?}", results);
     Ok(results)
 }
 

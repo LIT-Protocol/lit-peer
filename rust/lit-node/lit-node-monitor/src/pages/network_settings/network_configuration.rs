@@ -1,10 +1,8 @@
 use crate::utils::datetime::{format_duration, format_timelock};
 use crate::utils::{get_address, get_lit_config, table_classes::TailwindClassesPreset};
-use ethers::types::U256;
 use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_struct_table::*;
-use lit_blockchain_lite::contracts::price_feed::PriceFeed;
 use lit_blockchain_lite::contracts::staking::Staking;
 use serde::{Deserialize, Serialize};
 use thaw::{Card, CardHeader, CardPreview};
@@ -26,8 +24,6 @@ pub fn NetworkConfiguration() -> impl IntoView {
     let global_data = LocalResource::new(|| async move { get_global_config().await });
     let data =
         LocalResource::new(|| async move { get_realm_config(ethers::types::U256::from(1)).await });
-
-    let price_feed_data = LocalResource::new(|| async move { get_price_feed().await });
 
     view! {
         <Title text="Network Configuration"/>
@@ -58,17 +54,7 @@ pub fn NetworkConfiguration() -> impl IntoView {
                         }.into_any()
                 }}
             </CardPreview>
-            <CardPreview class="p-3">
-                <h5 class="card-title">Base Network Prices</h5>
-                {move || match price_feed_data.get().as_deref() {
-                    None => view! { <p>"Loading..."</p> }.into_any(),
-                    Some(rows) => view! {
-                        <table class="table w-full">
-                            <TableContent rows = rows.clone() scroll_container="html"  />
-                        </table>
-                        }.into_any()
-                }}
-            </CardPreview>
+       
         </Card>
     }
 }
@@ -84,7 +70,7 @@ pub async fn get_realm_config(realm_id: ethers::types::U256) -> Vec<NetworkConfi
     let config : lit_blockchain_lite::contracts::staking::RealmConfig = match config {
         Ok(config) => config,
         Err(e) => {
-            log::error!("Error getting config: {:?}", e);
+            log::error!("Error getting realm config: {:?}", e);
             return vec![];
         }
     };
@@ -235,39 +221,5 @@ pub async fn get_global_config() -> Vec<NetworkConfig> {
             value: config.vote_to_advance_time_out.to_string(),
         },
     ];
-    rows
-}
-
-pub async fn get_price_feed() -> Vec<NetworkConfig> {
-    let address = get_address(crate::contracts::PRICE_FEED_CONTRACT)
-        .await
-        .unwrap();
-    let cfg = &get_lit_config();
-    let price_feed = PriceFeed::node_monitor_load(cfg, address).unwrap();
-    let product_ids = vec![U256::from(1), U256::from(2), U256::from(3), U256::from(4)];
-    let product_id_desc = vec![
-        "Encryption Sign",
-        "Lit Action",
-        "PKP Sign",
-        "Session Key Sign",
-    ];
-    let config = price_feed.base_network_prices(product_ids).call().await;
-
-    let config = match config {
-        Ok(config) => config,
-        Err(e) => {
-            log::error!("Error getting price feed: {:?}", e);
-            return vec![];
-        }
-    };
-
-    let mut rows = vec![];
-    for (i, price) in config.iter().enumerate() {
-        rows.push(NetworkConfig {
-            name: product_id_desc[i].to_string(),
-            value: price.to_string(),
-        });
-    }
-
     rows
 }

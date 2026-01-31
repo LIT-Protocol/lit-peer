@@ -8,9 +8,6 @@ use lit_blockchain_lite::contracts::staking::Staking;
 use serde::{Deserialize, Serialize};
 use thaw::{Card, CardHeader, CardPreview};
 
-use leptos_use::{use_breakpoints, breakpoints_tailwind, BreakpointsTailwind};
-
-
 #[derive(TableRow, Clone, Serialize, Deserialize)]
 #[table(
     sortable,

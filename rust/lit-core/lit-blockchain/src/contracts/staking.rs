@@ -3514,6 +3514,11 @@ pub mod staking {
                                     kind: ::ethers::core::abi::ethabi::ParamType::Tuple(
                                         ::std::vec![
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                            ::ethers::core::abi::ethabi::ParamType::Array(
+                                                ::std::boxed::Box::new(
+                                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                                ),
+                                            ),
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
@@ -5085,6 +5090,11 @@ pub mod staking {
                                     kind: ::ethers::core::abi::ethabi::ParamType::Tuple(
                                         ::std::vec![
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                            ::ethers::core::abi::ethabi::ParamType::Array(
+                                                ::std::boxed::Box::new(
+                                                    ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
+                                                ),
+                                            ),
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
                                             ::ethers::core::abi::ethabi::ParamType::Uint(256usize),
@@ -10228,13 +10238,13 @@ pub mod staking {
                 .method_hash([68, 14, 141, 34], (reason, config))
                 .expect("method not found (this should never happen)")
         }
-        ///Calls the contract's `setConfig` (0xd94c412d) function
+        ///Calls the contract's `setConfig` (0x077b0d40) function
         pub fn set_config(
             &self,
             new_config: GlobalConfig,
         ) -> ::ethers::contract::builders::ContractCall<M, ()> {
             self.0
-                .method_hash([217, 76, 65, 45], (new_config,))
+                .method_hash([7, 123, 13, 64], (new_config,))
                 .expect("method not found (this should never happen)")
         }
         ///Calls the contract's `setContractResolver` (0xf95d71b1) function
@@ -17684,7 +17694,7 @@ pub mod staking {
         pub reason: ::ethers::core::types::U256,
         pub config: ComplaintConfig,
     }
-    ///Container type for all input parameters for the `setConfig` function with signature `setConfig((uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))` and selector `0xd94c412d`
+    ///Container type for all input parameters for the `setConfig` function with signature `setConfig((uint256,uint256[],uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))` and selector `0x077b0d40`
     #[derive(
         Clone,
         ::ethers::contract::EthCall,
@@ -17694,7 +17704,7 @@ pub mod staking {
     )]
     #[ethcall(
         name = "setConfig",
-        abi = "setConfig((uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))"
+        abi = "setConfig((uint256,uint256[],uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256))"
     )]
     pub struct SetConfigCall {
         pub new_config: GlobalConfig,
@@ -22916,7 +22926,7 @@ pub mod staking {
         pub start_time: ::ethers::core::types::U256,
         pub last_advance_vote_time: ::ethers::core::types::U256,
     }
-    ///`GlobalConfig(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)`
+    ///`GlobalConfig(uint256,uint256[],uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bool,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)`
     #[derive(
         Clone,
         ::ethers::contract::EthAbiType,
