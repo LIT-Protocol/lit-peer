@@ -1,6 +1,7 @@
 use crate::components::bottom_modal::BottomModal;
 use crate::components::validator_details::ValidatorDetails;
 use crate::components::validator_handshake::ValidatorHandshake;
+use crate::utils::sdk_models::{JsonSDKHandshakeResponse, ResponseWrapper};
 use crate::utils::table_classes::TailwindClassesPreset;
 use crate::{
     components::network_status::NetworkStatus,

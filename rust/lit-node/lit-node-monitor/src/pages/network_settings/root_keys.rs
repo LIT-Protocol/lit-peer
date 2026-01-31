@@ -5,6 +5,8 @@ use leptos_struct_table::*;
 use lit_blockchain_lite::contracts::{pubkey_router::PubkeyRouter, staking::Staking};
 use serde::{Deserialize, Serialize};
 use thaw::{Card, CardHeader, CardPreview};
+const DEFAULT_KEY_SET_NAME: &str = "naga-keyset1";
+
 #[derive(TableRow, Clone, Serialize, Deserialize)]
 #[table(
     sortable,
@@ -63,6 +65,7 @@ pub async fn get_root_keys() -> Vec<(String, Vec<RootKeys>)> {
         .call()
         .await;
 
+    let staking = Staking::node_monitor_load(cfg, staking_contract_address).unwrap();
     let key_configs = staking.key_sets().call().await;
     let key_configs = match key_configs {
         Ok(key_configs) => key_configs,
