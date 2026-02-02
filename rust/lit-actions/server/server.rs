@@ -126,7 +126,7 @@ impl Action for Server {
                         } else {
                             request_id.to_string()
                         };
-                        
+
                         if request_id != "none" {
                             set_request_context(Some(request_id), None);
                         }
