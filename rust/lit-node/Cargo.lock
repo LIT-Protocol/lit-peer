@@ -9978,6 +9978,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "lit-node-simple-api"
+version = "2.0.1"
+dependencies = [
+ "data-encoding",
+ "ed25519-dalek 2.2.0",
+ "ethabi",
+ "ethers",
+ "hd-keys-curves-wasm 1.0.5",
+ "hex",
+ "lit-core",
+ "lit-node-core",
+ "lit-node-testnet",
+ "lit-rust-crypto 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand 0.8.5",
+ "rand_chacha 0.3.1",
+ "rand_core 0.6.4",
+ "rocket",
+ "rocket_cors",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.17",
+ "tracing",
+]
+
+[[package]]
 name = "lit-node-testnet"
 version = "0.1.0"
 dependencies = [
@@ -9986,20 +10011,26 @@ dependencies = [
  "bs58 0.5.1",
  "chrono",
  "command-group",
+ "data-encoding",
+ "ecdsa 0.16.9",
+ "ed25519-dalek 2.2.0",
  "ethers",
  "fs_extra",
  "futures",
  "hex",
  "hex-literal",
  "k256 0.13.4",
+ "lit-api-core",
  "lit-attestation",
  "lit-blockchain",
  "lit-blockchain-lite",
  "lit-core",
+ "lit-ecdsa-wasm-combine",
  "lit-logging",
  "lit-node-common",
  "lit-node-core",
  "lit-observability",
+ "lit-rust-crypto 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lit-sdk",
  "multiexp",
  "once_cell",
@@ -10010,6 +10041,8 @@ dependencies = [
  "reqwest 0.11.27",
  "serde",
  "serde_json",
+ "siwe",
+ "siwe-recap",
  "sodalite",
  "tokio",
  "toml_edit 0.22.27",

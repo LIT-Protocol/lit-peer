@@ -1,7 +1,6 @@
 use ethers::abi::AbiEncode;
 use std::collections::{BTreeMap, HashMap};
 use std::ops::Add;
-use std::str::FromStr;
 
 use anyhow::Result;
 use chrono::{Duration, SecondsFormat};
@@ -12,9 +11,10 @@ use ethers::types::{Address, H256, U256};
 use lit_api_core::error::Unexpected;
 use lit_blockchain::config::LitBlockchainConfig;
 use lit_core::config::LitConfig;
-use lit_node::models::auth::SessionKeySignedMessageV2;
-use lit_node::payment::payed_endpoint::PayedEndpoint;
-use lit_node::utils::encoding::{self, hex_to_bytes};
+use lit_core::utils::binary::{bytes_to_hex, hex_to_bytes};
+use lit_node_core::PayedEndpoint;
+use lit_node_core::SessionKeySignedMessageV2;
+
 use lit_node_core::{
     AuthMethod, AuthSigItem, CurveType, JsonAuthSig, LitResourceAbilityRequest, LitResourcePrefix,
     NodeSet,
@@ -37,7 +37,7 @@ use lit_node_core::response::GenericResponse;
 use rand_core::RngCore;
 
 use super::session_sigs::SessionSigAndNodeSet;
-use lit_node_testnet::node_collection::NodeIdentityKey;
+use crate::node_collection::NodeIdentityKey;
 use lit_rust_crypto::k256;
 use lit_sdk::UrlPrefix;
 
@@ -99,7 +99,8 @@ Expiration Time: {expiration_datetime}"
 
 #[tokio::test]
 async fn test_generate_authsig() {
-    super::setup_logging();
+    use std::str::FromStr;
+    use tracing::error;
 
     unsafe {
         std::env::set_var("LIT_CONFIG_FILE", "./config/test/lit_sig_cfg.toml");
@@ -193,7 +194,7 @@ pub fn get_auth_sig_with_payment_resources(
         sig.to_string(),
         "web3.eth.personal.sign".to_string(),
         siwe_message.to_string(),
-        encoding::bytes_to_hex(delegator_wallet.address()),
+        bytes_to_hex(delegator_wallet.address()),
         None,
     )
 }
@@ -253,7 +254,7 @@ pub fn get_auth_sig_for_session_sig(
         sig.expect("Could not parse sig").to_string(),
         "web3.eth.personal.sign".to_string(),
         siwe_message.to_string(),
-        encoding::bytes_to_hex(wallet.address()),
+        bytes_to_hex(wallet.address()),
         None,
     )
 }
@@ -269,7 +270,7 @@ pub fn get_session_sigs_for_auth(
     // Generate ed25519 keypair for signing.
     let signing_key = ed25519_dalek::SigningKey::generate(&mut rand::rngs::OsRng);
     let verifying_key = signing_key.verifying_key();
-    let session_pub_key = encoding::bytes_to_hex(verifying_key.to_bytes());
+    let session_pub_key = bytes_to_hex(verifying_key.to_bytes());
 
     // Sign SIWE first using the local wallet.
     let auth_sig = get_auth_sig_for_session_sig(
@@ -409,7 +410,7 @@ pub async fn get_session_delegation_sig_for_pkp(
         serialized_signature,
         "lit.bls".to_string(),
         one_response_with_share.siwe_message.clone(),
-        encoding::bytes_to_hex(eth_address),
+        bytes_to_hex(eth_address),
         Some("LIT_BLS".to_string()),
     ))
 }
@@ -430,7 +431,7 @@ pub async fn get_session_sigs_and_node_set_for_pkp(
     // Generate ed25519 keypair for signing.
     let signing_key = ed25519_dalek::SigningKey::generate(&mut rand::rngs::OsRng);
     let verifying_key = signing_key.verifying_key();
-    let session_pub_key = encoding::bytes_to_hex(verifying_key.to_bytes());
+    let session_pub_key = bytes_to_hex(verifying_key.to_bytes());
 
     let pkp_owner_auth_sig = generate_authsig(&auth_sig_wallet).await?;
 

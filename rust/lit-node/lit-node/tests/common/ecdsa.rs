@@ -1,5 +1,5 @@
-use crate::common::pkp::generate_data_to_send;
-use crate::common::pkp::sign_message_with_pkp_custom_headers;
+use lit_node_testnet::common::pkp::generate_data_to_send;
+use lit_node_testnet::common::pkp::sign_message_with_pkp_custom_headers;
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::{
     get_identity_pubkeys_from_node_set, hit_ports_with_json_body_join_all,

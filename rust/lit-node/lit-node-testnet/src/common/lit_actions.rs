@@ -1,30 +1,28 @@
-use crate::common::auth_sig::get_session_sigs_for_auth;
 use anyhow::Result;
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::signers::Wallet;
 use ethers::types::U256;
 use lit_api_core::context::HEADER_KEY_X_PRIVACY_MODE;
-use lit_node_testnet::end_user::EndUser;
-use lit_node_testnet::node_collection::{NodeIdentityKey, get_identity_pubkeys_from_node_set};
-use lit_node_testnet::testnet::Testnet;
-use lit_node_testnet::testnet::actions::Actions;
-use lit_node_testnet::validator::ValidatorCollection;
+use crate::common::auth_sig::get_session_sigs_for_auth;
+use crate::end_user::EndUser;
+use crate::node_collection::{NodeIdentityKey, get_identity_pubkeys_from_node_set};
+use crate::testnet::Testnet;
+use crate::testnet::actions::Actions;
+use crate::validator::ValidatorCollection;
 
-use super::session_sigs::SessionSigAndNodeSet;
-use lazy_static::lazy_static;
 use lit_core::config::ENV_LIT_CONFIG_FILE;
-use lit_node::pkp::utils::pkp_permissions_get_permitted;
 use lit_node_core::{
     AuthMethod, AuthSigItem, Invocation, LitAbility, LitResourceAbilityRequest,
     LitResourceAbilityRequestResource, LitResourcePrefix, NodeSet, SignableOutput, SigningScheme,
     request::JsonExecutionRequest,
     response::{GenericResponse, JsonExecutionResponse},
 };
+use crate::common::session_sigs::SessionSigAndNodeSet;
 use lit_rust_crypto::{k256, p256, p384};
 use rand::Rng;
 use rand_core::OsRng;
 use std::collections::HashMap;
-use tracing::{error, info};
+use tracing::{error, info, debug};
 
 pub const HELLO_WORLD_LIT_ACTION_CODE: &str = "const go = async () => {
   // this requests a signature share from the Lit Node
@@ -48,34 +46,6 @@ const CALL_CHILD_LIT_ACTION_CODE: &str = "const go = async () => {
     }});
   };
   go();";
-
-lazy_static! {
-    static ref CONTRACT_CALL_LIT_ACTION_CODE: String = r#"
-            const go = async () => {
-                // https://sepolia.etherscan.io/address/0xD2f13AeACd77bB8D0aD79c6dB5F081e358b481C2#code
-                const toContract = "0xD2f13AeACd77bB8D0aD79c6dB5F081e358b481C2";
-
-                const abi = [{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[{"internalType":"uint256","name":"a","type":"uint256"},{"internalType":"uint256","name":"b","type":"uint256"}],"name":"add","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"}];
-
-                const contract = new ethers.Contract(toContract, abi);
-                const rawTxn = await contract.populateTransaction.add(1,2);
-                const txn = ethers.utils.serializeTransaction(rawTxn);
-                
-                const chain = "sepolia";
-
-                const res = await LitActions.callContract({
-                    chain,
-                    txn
-                });
-
-                // decode response
-                const decodedResult = contract.interface.decodeFunctionResult("add", res)[0].toString();
-
-                Lit.Actions.setResponse({response: decodedResult});
-            };
-            go();
-            "#.to_string();
-}
 
 pub const INFINITE_LOOP_LIT_ACTION_CODE: &str = "const go = async () => {
   while (true) {}
@@ -434,41 +404,6 @@ pub async fn assert_signed_action(
             Ok(false)
         }
     }
-}
-
-pub async fn generate_pkp_check_get_permitted_pkp_action(
-    ipfs_cid: &str,
-    validator_collection: &ValidatorCollection,
-    end_user: &EndUser,
-) -> Result<(String, Vec<serde_json::Value>)> {
-    let config_file = validator_collection.config_files()[0].clone();
-
-    unsafe {
-        std::env::set_var(ENV_LIT_CONFIG_FILE, config_file);
-    }
-
-    let cfg = lit_node_common::config::load_cfg().expect("failed to load LitConfig");
-    let loaded_config = &cfg.load_full();
-
-    let (pkp_pubkey, token_id, _, _) = end_user.first_pkp().info();
-
-    let pkp = end_user.pkp_by_pubkey(pkp_pubkey.clone());
-    let res = pkp
-        .add_permitted_action_to_pkp(ipfs_cid, &[U256::from(1)])
-        .await;
-
-    assert!(res.is_ok());
-
-    let res = pkp_permissions_get_permitted(
-        String::from("getPermittedActions"),
-        loaded_config.as_ref(),
-        token_id.to_string(),
-    )
-    .await
-    .map_err(|e| anyhow::anyhow!("Error getting permitted actions: {e:?}"));
-
-    assert!(res.is_ok());
-    Ok((pkp_pubkey, res?))
 }
 
 pub async fn generate_pkp_check_is_permitted_pkp_action(

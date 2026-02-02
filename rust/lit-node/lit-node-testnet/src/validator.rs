@@ -686,8 +686,9 @@ impl ValidatorCollection {
     }
 
     pub async fn stop_random_node(&mut self) -> Result<usize> {
-        let mut rng = crate::rand::thread_rng();
-        let random_node_idx_to_shutdown = rng.gen_range(0..self.size());
+        let locked_rng = crate::rand::shared_rng();
+        let mut locked_rng = locked_rng.lock().expect("Failed to lock rng");
+        let random_node_idx_to_shutdown = locked_rng.gen_range(0..self.size());
         info!("Stopping node at index: {}", random_node_idx_to_shutdown);
         self.validators[random_node_idx_to_shutdown]
             .node
@@ -827,8 +828,6 @@ impl ValidatorCollection {
         realm: u64,
         validators_to_include: &Vec<&Validator>,
     ) -> Vec<NodeSet> {
-        let mut rng = crate::rand::thread_rng();
-
         let realm_id = U256::from(realm);
 
         let kicked = self
@@ -887,8 +886,12 @@ impl ValidatorCollection {
             nodes_for_epoch.retain(|node| node != &validator.socket_address());
         }
 
+        let locked_rng = crate::rand::shared_rng();
+        let mut locked_rng = locked_rng.lock().expect("Failed to lock rng");
+
         for _ in 0..validators_to_add {
-            let random_node = nodes_for_epoch.remove(rng.gen_range(0..nodes_for_epoch.len()));
+            let random_node =
+                nodes_for_epoch.remove(locked_rng.gen_range(0..nodes_for_epoch.len()));
             let random_node_set = NodeSet {
                 socket_address: random_node,
                 value: 1,
@@ -1757,10 +1760,11 @@ fn choose_random_nums_in_range(random_nums: usize, min: usize, max: usize) -> Ve
         "Choosing {} random numbers in range {} to {}",
         random_nums, min, max
     );
-    let mut rng = crate::rand::thread_rng();
+    let locked_rng = crate::rand::shared_rng();
+    let mut locked_rng = locked_rng.lock().expect("Failed to lock rng");
     let mut random_nums_in_range = vec![];
     while random_nums_in_range.len() < random_nums {
-        let random_num = rng.gen_range(min..max);
+        let random_num = locked_rng.gen_range(min..max);
         if !random_nums_in_range.contains(&random_num) {
             random_nums_in_range.push(random_num);
         }

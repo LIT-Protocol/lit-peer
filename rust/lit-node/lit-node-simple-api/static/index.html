@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lit Node Simple API – Tests</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.25rem; }
+    label { display: block; margin-top: 1rem; font-weight: 500; }
+    input[type="text"] { width: 100%; padding: 0.5rem; margin-top: 0.25rem; box-sizing: border-box; }
+    button { margin-top: 1rem; padding: 0.5rem 1rem; cursor: pointer; }
+    #output { margin-top: 1rem; padding: 1rem; background: #f5f5f5; border-radius: 6px; font-family: ui-monospace, monospace; font-size: 0.875rem; white-space: pre-wrap; word-break: break-all; min-height: 8rem; }
+    #output:empty::before { content: 'Click "Run tests" to run.'; color: #888; }
+    #output.error { background: #fef2f2; color: #991b1b; }
+    #output.success { background: #f0fdf4; color: #166534; }
+    .section { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e5e5e5; }
+    .section h2 { font-size: 1rem; margin: 0 0 1rem; }
+    textarea { width: 100%; padding: 0.5rem; margin-top: 0.25rem; box-sizing: border-box; min-height: 4rem; font-family: ui-monospace, monospace; font-size: 0.875rem; resize: vertical; }
+    #signOutput { margin-top: 0.5rem; padding: 1rem; background: #f5f5f5; border-radius: 6px; font-family: ui-monospace, monospace; font-size: 0.875rem; white-space: pre-wrap; word-break: break-all; min-height: 4rem; }
+    #signOutput:empty::before { content: 'Result will appear here.'; color: #888; }
+    #signOutput.error { background: #fef2f2; color: #991b1b; }
+    #signOutput.success { background: #f0fdf4; color: #166534; }
+    #litActionOutput { margin-top: 0.5rem; padding: 1rem; background: #f5f5f5; border-radius: 6px; font-family: ui-monospace, monospace; font-size: 0.875rem; white-space: pre-wrap; word-break: break-all; min-height: 4rem; }
+    #litActionOutput:empty::before { content: 'Result will appear here.'; color: #888; }
+    #litActionOutput.error { background: #fef2f2; color: #991b1b; }
+    #litActionOutput.success { background: #f0fdf4; color: #166534; }
+  </style>
+</head>
+<body>
+  <h1>Lit Node Simple API – Tests</h1>
+  <p>Runs: get API key → mint PKP → sign "hello world" with that PKP.</p>
+  <label for="baseUrl">API base URL</label>
+  <input type="text" id="baseUrl" value="http://localhost:8000" placeholder="http://localhost:8000">
+  <button type="button" id="run">Run tests</button>
+  <pre id="output"></pre>
+
+  <section class="section">
+    <h2>Sign with PKP</h2>
+    <p>Provide API key, PKP public key, and message to sign.</p>
+    <label for="signApiKey">API key</label>
+    <input type="text" id="signApiKey" placeholder="Hex-encoded API key (from get_api_key)">
+    <label for="signPkpPublicKey">PKP public key</label>
+    <input type="text" id="signPkpPublicKey" placeholder="PKP public key (e.g. from mint_pkp)">
+    <label for="signMessage">Message</label>
+    <textarea id="signMessage" placeholder="Message to sign (e.g. hello world)">hello world</textarea>
+    <button type="button" id="signBtn">Sign with PKP</button>
+    <pre id="signOutput"></pre>
+  </section>
+
+  <section class="section">
+    <h2>Lit action</h2>
+    <p>Execute a lit action with API key, JavaScript code, and optional JSON params.</p>
+    <label for="litActionApiKey">API key</label>
+    <input type="text" id="litActionApiKey" placeholder="Hex-encoded API key (from get_api_key)">
+    <label for="litActionCode">Code</label>
+    <textarea id="litActionCode" placeholder="Lit action JavaScript code (e.g. const go = async () => ({ message: 'hello' }); go();">const go = async () => {
+  Lit.Actions.setResponse({ response: JSON.stringify("Hello from lit action!") });
+};
+go();</textarea>
+    <label for="litActionJsParams">js_params (optional JSON)</label>
+    <textarea id="litActionJsParams" placeholder='Optional JSON, e.g. {"key": "value"} or leave empty'>{"testParam": "hello"}</textarea>
+    <button type="button" id="litActionBtn">Execute lit action</button>
+    <pre id="litActionOutput"></pre>
+  </section>
+
+  <script>
+    const output = document.getElementById('output');
+    const baseUrlInput = document.getElementById('baseUrl');
+    const runBtn = document.getElementById('run');
+
+    function log(line) {
+      output.textContent += line + '\n';
+      output.classList.remove('error', 'success');
+    }
+
+    function setResult(success, message) {
+      output.classList.add(success ? 'success' : 'error');
+      if (message) output.textContent += message + '\n';
+    }
+
+    async function runTests() {
+      output.textContent = '';
+      runBtn.disabled = true;
+      const baseUrl = baseUrlInput.value.trim() || 'http://localhost:8000';
+      window.LIT_SIMPLE_API_BASE_URL = baseUrl;
+
+      const originalLog = console.log;
+      const originalError = console.error;
+      console.log = (...args) => { log(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')); originalLog.apply(console, args); };
+      console.error = (...args) => { log('ERROR: ' + args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')); setResult(false); originalError.apply(console, args); };
+
+      try {
+        const { runTests } = await import('./test.js');
+        await runTests();
+        setResult(true);
+      } catch (err) {
+        log('Test failed: ' + (err && err.message ? err.message : String(err)));
+        setResult(false);
+      } finally {
+        console.log = originalLog;
+        console.error = originalError;
+        runBtn.disabled = false;
+      }
+    }
+
+    runBtn.addEventListener('click', runTests);
+
+    // Sign with PKP
+    const signApiKeyInput = document.getElementById('signApiKey');
+    const signPkpPublicKeyInput = document.getElementById('signPkpPublicKey');
+    const signMessageInput = document.getElementById('signMessage');
+    const signBtn = document.getElementById('signBtn');
+    const signOutput = document.getElementById('signOutput');
+
+    signBtn.addEventListener('click', async () => {
+      const apiKey = signApiKeyInput.value.trim();
+      const pkpPublicKey = signPkpPublicKeyInput.value.trim();
+      const message = signMessageInput.value;
+
+      if (!apiKey || !pkpPublicKey) {
+        signOutput.textContent = 'Please fill in API key and PKP public key.';
+        signOutput.className = 'error';
+        return;
+      }
+
+      signOutput.textContent = 'Signing…';
+      signOutput.className = '';
+      signBtn.disabled = true;
+
+      try {
+        const { createClient } = await import('./js_sdk.js');
+        const baseUrl = baseUrlInput.value.trim() || 'http://localhost:8000';
+        const client = createClient(baseUrl);
+        const result = await client.signWithPkp({ apiKey, pkpPublicKey, message });
+        signOutput.textContent = JSON.stringify(result, null, 2);
+        signOutput.className = 'success';
+      } catch (err) {
+        signOutput.textContent = 'Error: ' + (err && err.message ? err.message : String(err));
+        signOutput.className = 'error';
+      } finally {
+        signBtn.disabled = false;
+      }
+    });
+
+    // Lit action
+    const litActionApiKeyInput = document.getElementById('litActionApiKey');
+    const litActionCodeInput = document.getElementById('litActionCode');
+    const litActionJsParamsInput = document.getElementById('litActionJsParams');
+    const litActionBtn = document.getElementById('litActionBtn');
+    const litActionOutput = document.getElementById('litActionOutput');
+
+    litActionBtn.addEventListener('click', async () => {
+      const apiKey = litActionApiKeyInput.value.trim();
+      const code = litActionCodeInput.value.trim();
+      const jsParamsRaw = litActionJsParamsInput.value.trim();
+
+      if (!apiKey || !code) {
+        litActionOutput.textContent = 'Please fill in API key and Code.';
+        litActionOutput.className = 'error';
+        return;
+      }
+
+      let jsParams = null;
+      if (jsParamsRaw) {
+        try {
+          jsParams = JSON.parse(jsParamsRaw);
+        } catch (e) {
+          litActionOutput.textContent = 'Invalid JSON in js_params: ' + (e && e.message ? e.message : String(e));
+          litActionOutput.className = 'error';
+          return;
+        }
+      }
+
+      litActionOutput.textContent = 'Executing…';
+      litActionOutput.className = '';
+      litActionBtn.disabled = true;
+
+      try {
+        const { createClient } = await import('./js_sdk.js');
+        const baseUrl = baseUrlInput.value.trim() || 'http://localhost:8000';
+        const client = createClient(baseUrl);
+        const result = await client.litAction({ apiKey, code, jsParams });
+        litActionOutput.textContent = JSON.stringify(result, null, 2);
+        litActionOutput.className = 'success';
+      } catch (err) {
+        litActionOutput.textContent = 'Error: ' + (err && err.message ? err.message : String(err));
+        litActionOutput.className = 'error';
+      } finally {
+        litActionBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

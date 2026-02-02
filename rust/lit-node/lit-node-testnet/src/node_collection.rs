@@ -197,16 +197,25 @@ pub async fn get_identity_pubkeys_from_node_set(
     map
 }
 
-async fn handshake_nodes(
+pub async fn handshake_nodes(
     actions: &Actions,
     realm_id: U256,
 ) -> Vec<GenericResponse<SDKHandshakeResponseV0>> {
     let validators = actions.get_current_validator_structs(realm_id).await;
     let node_set = validators
         .iter()
-        .map(|validator| NodeSet {
-            socket_address: format!("127.0.0.1:{}", validator.port.to_string().clone()),
-            value: 1,
+        .map(|validator| {
+            let ip = Ipv4Addr::from_bits(validator.ip);
+            let scheme = if ip == Ipv4Addr::LOCALHOST {
+                "http"
+            } else {
+                "https"
+            };
+            let socket_address = format!("{}://{}:{}", scheme, ip, validator.port);
+            NodeSet {
+                socket_address: socket_address,
+                value: 1,
+            }
         })
         .collect::<Vec<NodeSet>>();
 

@@ -23,8 +23,6 @@ use std::time::{Duration, SystemTime};
 use tokio::sync::RwLock;
 use web3::types::{Bytes, CallRequest};
 
-pub mod auth;
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct JsonAdminSetRequest {

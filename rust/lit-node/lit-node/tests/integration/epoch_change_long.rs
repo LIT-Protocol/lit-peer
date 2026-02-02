@@ -410,15 +410,22 @@ mod network_state {
         prev_validator_count: usize,
         epoch_number: usize,
     ) -> NetworkState {
-        let rng = &mut lit_node_testnet::rand::thread_rng();
-
         let mut valid_dealt_in_and_out;
         loop {
             // We want to make sure that we're not dealing out such that < threshold of current validators remain in the new epoch!
-            let validators_dealt_out = rng
-                .gen_range(0..=(prev_validator_count - get_threshold_count(prev_validator_count)));
-            let validators_dealt_in = rng
-                .gen_range(0..(maximum_validators - prev_validator_count + validators_dealt_out));
+            let validators_dealt_out = {
+                let locked_rng = lit_node_testnet::rand::shared_rng();
+                let mut rng = locked_rng.lock().expect("Failed to lock rng");
+                rng.gen_range(
+                    0..=(prev_validator_count - get_threshold_count(prev_validator_count)),
+                )
+            };
+
+            let validators_dealt_in = {
+                let locked_rng = lit_node_testnet::rand::shared_rng();
+                let mut rng = locked_rng.lock().expect("Failed to lock rng");
+                rng.gen_range(0..(maximum_validators - prev_validator_count + validators_dealt_out))
+            };
 
             // The change is valid if the new validator count is within the bounds, inclusive.
             let new_validator_count =

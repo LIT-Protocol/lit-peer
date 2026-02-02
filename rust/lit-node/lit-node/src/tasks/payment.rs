@@ -15,14 +15,14 @@ use lit_core::config::{LitConfig, ReloadableLitConfig};
 
 use crate::error::{Result, unexpected_err};
 use crate::payment::{
-    batches::Batch, payed_endpoint::PayedEndpoint, payment_tracker::NodeCapacityConfig,
-    payment_tracker::PaymentTracker,
+    batches::Batch, payment_tracker::NodeCapacityConfig, payment_tracker::PaymentTracker,
 };
 use crate::peers::PeerState;
 use crate::utils::contract::get_ledger_contract_with_gas_relay;
 use crate::utils::contract::get_price_feed_contract;
 use crate::utils::contract::get_price_feed_contract_with_gas_relay;
 use lit_node_common::config::{CFG_KEY_PAYMENT_INTERVAL_MS_DEFAULT, LitNodeConfig};
+use lit_node_core::PayedEndpoint;
 
 // Main Batch Payment Processor.
 pub async fn batch_payment_processor(

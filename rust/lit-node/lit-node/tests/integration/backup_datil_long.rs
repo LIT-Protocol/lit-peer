@@ -1,5 +1,3 @@
-use crate::common::auth_sig::get_session_sigs_for_auth;
-use crate::common::pkp::sign_with_pkp_request;
 use crate::common::recovery_party::SiweSignature;
 use crate::common::web_user_tests::{
     assert_decrypted, prepare_test_encryption_parameters,
@@ -16,6 +14,8 @@ use lit_node::auth::auth_material::JsonAuthSigExtended;
 use lit_node::endpoints::auth_sig::LITNODE_ADMIN_RES;
 use lit_node::peers::peer_state::models::NetworkState;
 use lit_node::tss::common::restore::NodeRecoveryStatus;
+use lit_node_testnet::common::auth_sig::get_session_sigs_for_auth;
+use lit_node_testnet::common::pkp::sign_with_pkp_request;
 
 use lit_node_core::{
     CurveType, JsonAuthSig, LitAbility, LitResourceAbilityRequest,

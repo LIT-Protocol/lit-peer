@@ -1,8 +1,8 @@
 use crate::error::{EC, Result, conversion_err_code, parser_err_code, validation_err_code};
-use crate::models::auth::SessionKeySignedMessageV2;
 use crate::siwe_db::utils::check_expiration_validity;
 use lit_core::config::LitConfig;
 use lit_node_common::config::LitNodeConfig;
+use lit_node_core::SessionKeySignedMessageV2;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -450,9 +450,9 @@ mod validate_session_sig_tests {
 
     use crate::auth::session_sigs::validate_session_sig;
     use crate::error::EC;
-    use crate::models::auth::SessionKeySignedMessageV2;
     use crate::tests::common::{get_test_config, get_test_config_with_key};
     use crate::utils::encoding;
+    use lit_node_core::SessionKeySignedMessageV2;
     use lit_node_core::{
         AccessControlConditionResource, JsonAuthSig, LitAbility, LitResource,
         LitResourceAbilityRequest, LitResourceAbilityRequestResource,
@@ -898,10 +898,8 @@ mod extract_requested_resources_tests {
     use ethers::types::U256;
     use std::sync::Arc;
 
-    use crate::{
-        auth::session_sigs::extract_requested_resources_from_session_sig,
-        models::auth::SessionKeySignedMessageV2,
-    };
+    use crate::auth::session_sigs::extract_requested_resources_from_session_sig;
+    use lit_node_core::SessionKeySignedMessageV2;
     use lit_node_core::{
         AccessControlConditionResource, JsonAuthSig, LitAbility, LitResource,
         LitResourceAbilityRequest, LitResourceAbilityRequestResource,

@@ -5,18 +5,19 @@ use std::sync::Arc;
 use lit_blockchain::contracts::ledger::Ledger;
 
 use crate::error::{EC, Result, generic_err_code, unexpected_err};
-use crate::models::auth::SessionKeySignedMessageV2;
 use crate::payment::delegated_usage::DelegatedUsageDB;
 use crate::payment::payment_delegation::check_for_payment_db;
 use lit_core::config::LitConfig;
+use lit_node_core::SessionKeySignedMessageV2;
 
 use crate::payment::{
-    batches::PendingPayment, payed_endpoint::PayedEndpoint,
-    payment_delegation::check_for_payment_delegation, payment_tracker::PaymentTracker,
+    batches::PendingPayment, payment_delegation::check_for_payment_delegation,
+    payment_tracker::PaymentTracker,
 };
 use crate::utils::contract::{
     get_ledger_contract, get_pkp_nft_contract, get_price_feed_contract, get_pub_key_router_contract,
 };
+use lit_node_core::PayedEndpoint;
 
 #[allow(clippy::too_many_arguments)]
 pub async fn get_payment_method(

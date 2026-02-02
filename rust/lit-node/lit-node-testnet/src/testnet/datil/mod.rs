@@ -121,6 +121,11 @@ impl DatilTestnet {
             .unwrap();
 
         let cached_node_accounts_path = "tests/test_data/datil_cache/datil-node-accounts.json";
+
+        if !Path::new(cached_node_accounts_path).exists() {
+            return Arc::new(Vec::new());
+        }
+
         let cached_node_accounts = std::fs::read_to_string(cached_node_accounts_path).unwrap();
         let cached_node_accounts: Vec<DatilNodeAccount> =
             serde_json::from_str(&cached_node_accounts).unwrap();

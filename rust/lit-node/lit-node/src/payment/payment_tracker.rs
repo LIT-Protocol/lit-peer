@@ -1,5 +1,6 @@
-use crate::payment::{batches::Batches, payed_endpoint::PayedEndpoint};
+use crate::payment::batches::Batches;
 use crate::version::{DataVersionReader, DataVersionWriter};
+use lit_node_core::PayedEndpoint;
 use sdd::AtomicShared;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};

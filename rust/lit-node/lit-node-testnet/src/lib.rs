@@ -1,3 +1,4 @@
+pub mod common;
 pub mod end_user;
 pub mod models;
 pub mod node_collection;

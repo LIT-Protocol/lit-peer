@@ -17,8 +17,8 @@ use rand_core::OsRng;
 use std::sync::Arc;
 use std::time::Duration;
 const RETRY_WAIT_TIME_MS: u64 = 200;
-const INITIAL_FUNDING_AMOUNT: &str = "100000000000000000000";
-// const INITIAL_FUNDING_AMOUNT: &str = "2000000000000000000";
+// pub const INITIAL_FUNDING_AMOUNT: &str = "100000000000000000000";
+pub const INITIAL_FUNDING_AMOUNT: &str = "2000000000000000000";
 
 #[derive(Clone, Debug)]
 pub struct EndUser {
@@ -51,6 +51,22 @@ impl EndUser {
         info!("New wallet: {:?}", new_wallet.address());
         Self {
             wallet: new_wallet,
+            actions: testnet.actions().clone(),
+            pkps: vec![],
+            provider,
+            datil_provider,
+            datil_deployer_provider: testnet.datil_testnet.deployer_signing_provider.clone(),
+        }
+    }
+
+    pub fn from_secret_key(testnet: &Testnet, secret_key: &[u8]) -> Self {
+        
+        let wallet = LocalWallet::from_bytes(secret_key).unwrap().with_chain_id(testnet.chain_id);
+        info!("Wallet address from secret key: {:?}", wallet.address());
+        let provider = testnet.provider.clone();
+        let datil_provider = testnet.datil_testnet.provider.clone();
+        Self {
+            wallet: wallet,
             actions: testnet.actions().clone(),
             pkps: vec![],
             provider,
@@ -114,18 +130,23 @@ impl EndUser {
 
         let pending_tx = provider.send_transaction(tx, None).await;
         if let Err(e) = pending_tx {
-            panic!("Couldn't set balance on wallet {:?} to {:?}:: {:?}", self.wallet.address(), amount, e);
+            panic!(
+                "Couldn't set balance on wallet {:?} to {:?}:: {:?}",
+                self.wallet.address(),
+                amount,
+                e
+            );
         }
         let pending_tx = pending_tx.unwrap().interval(Duration::from_millis(100));
         let receipt = pending_tx.await.unwrap().expect("No receipt from txn");
 
         info!("Transaction receipt: {:?}", receipt);
         info!(
-            "Wallet balance: {:?}",
+            "End User Wallet balance: {:?}",
             provider.get_balance(self.wallet.address(), None).await
         );
         info!(
-            "Deployer provider balance: {:?}",
+            "Deployer provider remaining balance: {:?}",
             provider.get_balance(provider.address(), None).await
         );
     }
@@ -348,6 +369,9 @@ impl EndUser {
 
         let log = &receipt.logs[0];
         trace!("log: {:?}", log);
+
+        let stable_balance =ledger_contract.stable_balance(user_address).await;
+        info!("Ledger balance for user {:?} after deposit: {:?}", user_address, stable_balance);
     }
 
     pub async fn ledger_request_withdraw(&self, amount: I256, notes: &str) {

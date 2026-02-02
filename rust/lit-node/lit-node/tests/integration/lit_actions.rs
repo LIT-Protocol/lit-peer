@@ -1,12 +1,8 @@
 pub mod litactions {
-    use crate::common::auth_sig::{
-        generate_authsig, get_session_sigs_and_node_set_for_pkp, get_session_sigs_for_auth,
-    };
-    use crate::common::lit_actions::{
+    use lit_node_testnet::common::lit_actions::{
         execute_lit_action_session_sigs, generate_pkp_check_is_permitted_pkp_action,
         generate_session_sigs_and_execute_lit_action,
     };
-    use crate::common::pkp::{SignedDatak256, recombine_shares_using_wasm};
     use crate::common::setup_logging;
     use base64_light::base64_encode_bytes;
     use lit_core::utils::binary::bytes_to_hex;
@@ -20,6 +16,10 @@ pub mod litactions {
         UnifiedAccessControlConditionItem, constants::CHAIN_LOCALCHAIN,
     };
     use lit_node_testnet::DEFAULT_DATIL_KEY_SET_NAME;
+    use lit_node_testnet::common::auth_sig::{
+        generate_authsig, get_session_sigs_and_node_set_for_pkp, get_session_sigs_for_auth,
+    };
+    use lit_node_testnet::common::pkp::{SignedDatak256, recombine_shares_using_wasm};
     use lit_node_testnet::end_user::EndUser;
     use lit_node_testnet::testnet::Testnet;
     use lit_node_testnet::validator::ValidatorCollection;

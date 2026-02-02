@@ -26,12 +26,15 @@ async-trait.workspace = true
 bs58 = "0.5.0"
 command-group = "1.0.8"
 chrono = "0.4.24"
+data-encoding.workspace = true
 ethers = { version = "2.0.8", features = [ "abigen", "legacy" ]}
 fs_extra = "1.3.0"
 futures = "0.3.17"
 hex.workspace = true
 hex-literal = "0.4.1"
 
+ecdsa = { version = "0.16", features = ["arithmetic"] }
+ed25519-dalek.workspace = true
 k256 = { version = "0.13.0", features = ["sha256", "ecdsa", "serde", "ecdsa-core", "expose-field", "hash2curve", "schnorr"], optional = false }
 once_cell = { version = "1" }
 rand = { workspace = true, features = ["std_rng"]}
@@ -42,12 +45,16 @@ regex = "1.7.1"
 # used to verify JWTs.  must match the version in the crate overrides at the bottom of this file
 sodalite = "0.4"
 serde_json.workspace = true
+siwe.workspace = true
+siwe-recap.workspace = true
 tokio = { version = "1.23.0", features = ["rt-multi-thread"] }
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3" }
 url = { version = "2", features = ["serde"] }
 #ECDSA
+lit-ecdsa-wasm-combine = { git = "https://github.com/LIT-Protocol/lit-ecdsa-wasm-combine", branch = "0.2.0" }
 lit-core = { path = "../../lit-core/lit-core", features = ["ipfs", "chrono"] }
+lit-api-core = { path = "../../lit-core/lit-api-core" }
 lit-logging = { path = "../../lit-core/lit-logging", features = ["service"] }
 lit-blockchain = { path = "../../lit-core/lit-blockchain" }
 lit-blockchain-lite = { git="https://github.com/LIT-Protocol/datil-lit-blockchain-lite.git" }
@@ -55,6 +62,17 @@ lit-attestation = { path = "../../lit-core/lit-attestation", features = ["genera
 lit-node-common ={ path = "../lit-node-common" }
 lit-node-core = { path = "../lit-node-core" }
 lit-sdk = { path = "../lit-sdk" }
+lit-rust-crypto = { workspace = true, features = [
+    "arithmetic",
+    "default",
+    "ecdsa",
+    "ecdsa-core",
+    "expose-field",
+    "hash2curve",
+    "schnorr",
+    "sha",
+    "serde"
+] }
 toml_edit = "0.22"
 toxiproxy_rust = "*"
 uuid = { version = "1.4", features = ["v4"] }

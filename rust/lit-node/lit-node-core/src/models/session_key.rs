@@ -1,6 +1,6 @@
 use super::JsonAuthSig;
+use crate::LitResourceAbilityRequest;
 use ethers::types::U256;
-use lit_node_core::LitResourceAbilityRequest;
 use serde::{Deserialize, Deserializer, Serialize, de::Error};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -26,11 +26,5 @@ where
         false => U256::from_str_radix(s, 10).map_err(D::Error::custom),
     };
 
-    if result.is_err() {
-        debug!(
-            "Deserializing max_price '{}' to U256 failed: {:?}",
-            s, result
-        );
-    }
     result
 }

@@ -1,14 +1,14 @@
-use crate::common::lit_actions::HELLO_WORLD_LIT_ACTION_CODE;
-use crate::common::lit_actions::{
+use lit_node_testnet::common::lit_actions::HELLO_WORLD_LIT_ACTION_CODE;
+use lit_node_testnet::common::lit_actions::{
     assert_signed_action, execute_lit_action_auth_sig, execute_lit_action_session_sigs,
     lit_action_params,
 };
-use crate::common::pkp::generate_session_sigs_and_send_signing_requests;
 use crate::common::web_user_tests::{
     assert_decrypted, prepare_test_encryption_parameters_with_wallet_address,
     retrieve_decryption_key_session_sigs,
 };
-use crate::common::{
+use lit_node_testnet::common::pkp::generate_session_sigs_and_send_signing_requests;
+use lit_node_testnet::common::{
     auth_sig::{
         generate_authsig_item, get_auth_sig_for_session_sig_from_nodes,
         get_session_sigs_and_node_set_for_pkp, get_session_sigs_for_auth,
@@ -19,7 +19,7 @@ use crate::common::{
         INVALID_SESSION_SIG_LIT_ACTION_CODE, MGB_PKP_SESSION_SIG_LIT_ACTION_CODE,
         NO_AUTH_METHOD_PKP_SIGNING_LIT_ACTION_CODE, NO_AUTH_METHOD_SESSION_SIG_LIT_ACTION_CODE,
         SIGN_ECDSA_LIT_ACTION_CODE, VALID_PKP_SIGNING_LIT_ACTION_CODE,
-        VALID_SESSION_SIG_LIT_ACTION_CODE, get_pkp_sign, init_test,
+        VALID_SESSION_SIG_LIT_ACTION_CODE, get_pkp_sign,
     },
 };
 
@@ -37,10 +37,21 @@ use lit_node_core::{
     AccessControlConditionResource, AuthMaterialType, AuthMethod, AuthSigItem, LitAbility,
     LitResource, LitResourceAbilityRequest, LitResourceAbilityRequestResource, LitResourcePrefix,
 };
+use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::get_identity_pubkeys_from_node_set;
+use lit_node_testnet::testnet::Testnet;
+use lit_node_testnet::validator::ValidatorCollection;
 use lit_node_testnet::{DEFAULT_KEY_SET_NAME, TestSetupBuilder};
 use rand_core::OsRng;
 use tracing::info;
+
+pub async fn init_test() -> (Testnet, ValidatorCollection, EndUser) {
+    crate::common::setup_logging();
+    let (testnet, validator_collection, end_user) = TestSetupBuilder::default().build().await;
+
+    end_user.deposit_to_first_pkp_ledger_default().await;
+    (testnet, validator_collection, end_user)
+}
 
 #[doc = "Test that users can run a Lit Action before signing the sessionSig. Also test that you can't `signEcdsa` in that Lit Action."]
 #[tokio::test]
