@@ -44,6 +44,42 @@
  * @property {*} execute_resp - Lit action execution response
  */
 
+/**
+ * @typedef {Object} EncryptOptions
+ * @property {string} apiKey - Hex-encoded API key (from getApiKey)
+ * @property {string} message - Plaintext message to encrypt
+ */
+
+/**
+ * @typedef {Object} EncryptResponse
+ * @property {string} ciphertext - Base64-encoded ciphertext
+ */
+
+/**
+ * @typedef {Object} DecryptOptions
+ * @property {string} apiKey - Hex-encoded API key (from getApiKey)
+ * @property {string[]} shares - Array of hex-encoded decryption share strings
+ * @property {string} ciphertext - Base64-encoded ciphertext (from encrypt)
+ * @property {string} dataToEncryptHash - Hex-encoded SHA-256 hash of the original plaintext
+ */
+
+/**
+ * @typedef {Object} DecryptResponse
+ * @property {string} derypted-text - Decrypted plaintext (API typo: key is "derypted-text")
+ */
+
+/**
+ * @typedef {Object} CombineSignatureSharesOptions
+ * @property {string} apiKey - Hex-encoded API key (from getApiKey)
+ * @property {string[]} shares - Array of hex-encoded signature share strings
+ */
+
+/**
+ * @typedef {Object} CombineSignatureSharesResponse
+ * @property {string} signature - Hex-encoded combined signature
+ * @property {number} recovery_id - Recovery id byte
+ */
+
 export class LitNodeSimpleApiClient {
   /**
    * @param {Object} options
@@ -126,6 +162,62 @@ export class LitNodeSimpleApiClient {
       body: JSON.stringify(body),
     });
     if (!res.ok) throw new Error(`lit_action failed: ${res.status} ${res.statusText}`);
+    return res.json();
+  }
+
+  /**
+   * POST /encrypt
+   * Encrypts a message (time-lock encryption) for the wallet identified by the API key.
+   * @param {EncryptOptions} options
+   * @returns {Promise<EncryptResponse>}
+   */
+  async encrypt({ apiKey, message }) {
+    const body = { api_key: apiKey, message };
+    const res = await fetch(`${this.baseUrl}/encrypt`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`encrypt failed: ${res.status} ${res.statusText}`);
+    return res.json();
+  }
+
+  /**
+   * POST /decrypt
+   * Decrypts ciphertext using decryption shares (from network/nodes).
+   * @param {DecryptOptions} options
+   * @returns {Promise<DecryptResponse>}
+   */
+  async decrypt({ apiKey, shares, ciphertext, dataToEncryptHash }) {
+    const body = {
+      api_key: apiKey,
+      shares,
+      ciphertext,
+      data_to_encrypt_hash: dataToEncryptHash,
+    };
+    const res = await fetch(`${this.baseUrl}/decrypt`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`decrypt failed: ${res.status} ${res.statusText}`);
+    return res.json();
+  }
+
+  /**
+   * POST /combine_signature_shares
+   * Combines signature shares (e.g. from sign_with_pkp endpoint_responses) into a single signature.
+   * @param {CombineSignatureSharesOptions} options
+   * @returns {Promise<CombineSignatureSharesResponse>}
+   */
+  async combineSignatureShares({ apiKey, shares }) {
+    const body = { api_key: apiKey, shares };
+    const res = await fetch(`${this.baseUrl}/combine_signature_shares`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`combine_signature_shares failed: ${res.status} ${res.statusText}`);
     return res.json();
   }
 }

@@ -53,6 +53,23 @@ export async function runTests(baseUrl = getBaseUrl()) {
   });
   console.log('   execute_resp:', JSON.stringify(execute_resp, null, 2));
 
+  // console.log('5. Encrypt...');
+  // const plaintext = 'secret message for encryption test';
+  // const { ciphertext } = await client.encrypt({ apiKey: api_key, message: plaintext });
+  // console.log('   ciphertext (first 60 chars):', (ciphertext || '').slice(0, 60) + '...');
+
+  console.log('6. Combine signature shares...');
+  const shares = (endpoint_responses || [])
+    .filter((r) => r && (r.signature_share != null))
+    .map((r) => r.signature_share);
+  if (shares.length > 0) {
+    const { signature, recovery_id } = await client.combineSignatureShares({ apiKey: api_key, shares });
+    console.log('   signature (first 40 chars):', (signature || '').slice(0, 40) + '...');
+    console.log('   recovery_id:', recovery_id);
+  } else {
+    console.log('   (no signature_share in endpoint_responses; skipping combine)');
+  }
+
   console.log('Done.');
 }
 

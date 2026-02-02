@@ -2328,7 +2328,7 @@ dependencies = [
  "rand_chacha 0.3.1",
  "rand_core 0.6.4",
  "serde",
- "serde_bare",
+ "serde_bare 0.5.0",
  "sha2 0.10.9",
  "sha3 0.10.8",
  "subtle",
@@ -9697,7 +9697,7 @@ dependencies = [
  "reddsa",
  "schnorrkel",
  "serde",
- "serde_bare",
+ "serde_bare 0.5.0",
  "sha2 0.10.9",
  "subtle",
  "thiserror 2.0.17",
@@ -9981,6 +9981,8 @@ dependencies = [
 name = "lit-node-simple-api"
 version = "2.0.1"
 dependencies = [
+ "anyhow",
+ "base64_light",
  "data-encoding",
  "ed25519-dalek 2.2.0",
  "ethabi",
@@ -9991,12 +9993,14 @@ dependencies = [
  "lit-node-core",
  "lit-node-testnet",
  "lit-rust-crypto 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "lit-sdk",
  "rand 0.8.5",
  "rand_chacha 0.3.1",
  "rand_core 0.6.4",
  "rocket",
  "rocket_cors",
  "serde",
+ "serde_bare 0.1.1",
  "serde_json",
  "thiserror 2.0.17",
  "tracing",
@@ -10104,7 +10108,7 @@ dependencies = [
  "rand 0.8.5",
  "rayon",
  "serde",
- "serde_bare",
+ "serde_bare 0.5.0",
 ]
 
 [[package]]
@@ -10313,7 +10317,7 @@ dependencies = [
  "sdd",
  "semver 1.0.26",
  "serde",
- "serde_bare",
+ "serde_bare 0.5.0",
  "serde_json",
  "sha2 0.10.9",
  "sha3 0.10.8",
@@ -14389,6 +14393,15 @@ dependencies = [
 
 [[package]]
 name = "serde_bare"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a0e2c1445921006b103ab03fe28114952e9d179223d550e1312d57f20c9c4c3f"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "serde_bare"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "51c55386eed0f1ae957b091dc2ca8122f287b60c79c774cbe3d5f2b69fded660"
@@ -15739,7 +15752,7 @@ dependencies = [
  "merlin",
  "rand 0.8.5",
  "serde",
- "serde_bare",
+ "serde_bare 0.5.0",
  "string-error",
  "subtle",
  "zeroize",
