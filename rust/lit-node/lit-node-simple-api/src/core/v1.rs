@@ -4,7 +4,7 @@ use ethers::utils::keccak256;
 use lit_core::utils::binary::hex_to_bytes;
 use lit_node_core::SigningScheme;
 use lit_node_testnet::common::lit_actions::generate_session_sigs_and_execute_lit_action;
-use lit_node_testnet::common::pkp::generate_session_sigs_and_send_signing_requests;
+use lit_node_testnet::common::pkp::{generate_session_sigs_and_send_signing_requests, recombine_shares_using_wasm};
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::{get_identity_pubkeys_from_node_set, handshake_nodes};
 use lit_node_testnet::testnet::Testnet;
@@ -18,7 +18,8 @@ use tracing::info;
 pub fn routes() -> Vec<Route> {
     routes![
         handshake, sign_with_pkp, get_api_key, mint_pkp,
-        // decrypt,
+        encrypt, decrypt,
+        combine_signature_shares,
         lit_action
     ]
 }
@@ -35,6 +36,24 @@ pub struct LitActionRequest {
     pub api_key: String,
     pub code: String,
     pub js_params: Option<serde_json::Value>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct EncryptRequest {
+    pub api_key: String,
+    pub message: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct DecryptRequest {
+    pub api_key: String,
+    pub shares: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct CombineSignatureSharesRequest {
+    pub api_key: String,    
+    pub shares: Vec<String>,
 }
 
 #[get("/get_api_key")]
@@ -186,5 +205,52 @@ async fn lit_action(
     let execute_resp = execute_resp.unwrap();
     Ok(serde_json::json!({
         "execute_resp": execute_resp
+    }))
+}
+
+#[post("/encrypt", format = "json", data = "<encrypt_request>")]
+async fn encrypt(
+    testnet: &State<Arc<Testnet>>,
+    validator_collection: &State<Arc<ValidatorCollection>>,
+    encrypt_request: Json<EncryptRequest>,
+) -> Result<serde_json::Value, Status> {
+    let testnet = testnet.inner();
+    let validator_collection = validator_collection.inner();
+
+    
+    Ok(serde_json::json!({
+        "message": "Hello, world!"
+    }))
+}
+
+#[post("/decrypt", format = "json", data = "<decrypt_request>")]
+async fn decrypt(
+    testnet: &State<Arc<Testnet>>,
+    validator_collection: &State<Arc<ValidatorCollection>>,
+    decrypt_request: Json<DecryptRequest>,
+) -> Result<serde_json::Value, Status> {
+    let testnet = testnet.inner();
+    let validator_collection = validator_collection.inner();
+
+    let shares = decrypt_request.shares.clone();
+    let shares: Vec<Vec<u8>> = shares.iter().map(|share| hex_to_bytes(share).unwrap()).collect();
+
+    Ok(serde_json::json!({
+        "message": "Hello, world!"
+    }))
+}   
+
+#[post("/combine_signature_shares", format = "json", data = "<combine_signature_shares_request>")]
+async fn combine_signature_shares(
+    combine_signature_shares_request: Json<CombineSignatureSharesRequest>,
+) -> Result<serde_json::Value, Status> {
+
+    let shares = combine_signature_shares_request.shares.clone();
+    let (signature, recovery_id) = recombine_shares_using_wasm(shares).unwrap();
+    let hex_signature = hex::encode(signature.to_bytes());
+    
+    Ok(serde_json::json!({
+        "signature": hex_signature,
+        "recovery_id": recovery_id.to_byte()
     }))
 }

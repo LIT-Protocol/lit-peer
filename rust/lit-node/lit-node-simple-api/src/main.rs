@@ -1,4 +1,4 @@
-pub mod base;
+pub mod core;
 
 use lit_node_testnet::TestSetupBuilder;
 use rocket::fs::{FileServer, relative};
@@ -33,7 +33,7 @@ async fn main() -> Result<(), rocket::Error> {
         .manage(testnet)
         .manage(validator_collection)
         .attach(cors)
-        .mount("/", base::v1::routes())
+        .mount("/", core::v1::routes())
         .mount("/", FileServer::from(relative!("static")));
     r.launch().await?;
     Ok(())
