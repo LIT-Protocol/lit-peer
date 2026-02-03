@@ -472,7 +472,7 @@ impl Attestation {
         let result = self.generate_via_system().await;
 
         #[cfg(all(not(feature = "generate-via-service"), not(feature = "generate-via-system")))]
-        return unimplemented!(
+        let result = unimplemented!(
             "Unexpected: generate called for type {} and neither generate-via-service nor generate-via-system feature enabled",
             self.typ
         );
