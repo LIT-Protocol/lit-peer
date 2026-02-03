@@ -95,15 +95,16 @@ pub fn validate_host_name(
             if let Some(matched) = matches.get(1) {
                 if GuestType::Custom.eq(guest_type) {
                     if let Some(guest_kind) = guest_kind
-                        && !guest_kind.eq(matched.as_str()) {
-                            return Err(validation_err(
+                        && !guest_kind.eq(matched.as_str())
+                    {
+                        return Err(validation_err(
                                 format!(
                                     "hostname '{host}' does not contain provided guest_kind '{guest_kind}'"
                                 ),
                                 None,
                             )
                                 .add_field("hostname", String(host.to_string())));
-                        }
+                    }
                 } else if !guest_type.eq_str(matched.as_str()) {
                     return Err(validation_err(
                         format!(

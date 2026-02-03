@@ -181,9 +181,10 @@ async fn download_assets(
     }
 
     if let Some(from_cids) = from_cids
-        && from_cids.len() != assets.len() {
-            panic!("download_assets: from_cids len != assets.len()");
-        }
+        && from_cids.len() != assets.len()
+    {
+        panic!("download_assets: from_cids len != assets.len()");
+    }
 
     for i in 0..assets.len() {
         let asset_key = assets[i];
