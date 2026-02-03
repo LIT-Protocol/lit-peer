@@ -26,9 +26,10 @@ pub(crate) async fn unwrap_or_create_contract_resolver(
     };
 
     if let Some(subnet_id) = subnet_id
-        && !resolver.subnet_id().eq(subnet_id) {
-            return Ok(resolver.for_subnet(subnet_id.clone()));
-        }
+        && !resolver.subnet_id().eq(subnet_id)
+    {
+        return Ok(resolver.for_subnet(subnet_id.clone()));
+    }
 
     Ok(resolver)
 }
@@ -49,9 +50,10 @@ pub(crate) async fn get_release(
     let cache_key = format!("rr:rel:{}:{}", subnet_id, bytes_to_hex(release_id));
 
     if let Some(release) = CACHE.get(&cache_key)
-        && let Some(release) = release.as_release() {
-            return Ok(release.clone());
-        }
+        && let Some(release) = release.as_release()
+    {
+        return Ok(release.clone());
+    }
 
     let release = contract.get_release(release_id).call().await.map_err(|e| {
         blockchain_err(e, Some(format!("{label}: failed to call ReleaseRegister.get_release")))
@@ -69,9 +71,10 @@ pub(crate) async fn release_has_allowed_admin_signing_public_key(
     let cache_key = format!("rr:aspk:{}:{}", subnet_id, bytes_to_hex(&public_key));
 
     if let Some(has) = CACHE.get(&cache_key)
-        && let Some(has) = has.as_bool() {
-            return Ok(*has);
-        }
+        && let Some(has) = has.as_bool()
+    {
+        return Ok(*has);
+    }
 
     let public_key_bytes = Bytes::from(public_key.clone());
 
@@ -100,9 +103,10 @@ pub(crate) async fn release_has_allowed_author_key_digest(
     let cache_key = format!("rr:aakd:{}:{}", subnet_id, bytes_to_hex(&author_key_digest));
 
     if let Some(has) = CACHE.get(&cache_key)
-        && let Some(has) = has.as_bool() {
-            return Ok(*has);
-        }
+        && let Some(has) = has.as_bool()
+    {
+        return Ok(*has);
+    }
 
     let author_key_digest_bytes = Bytes::from(author_key_digest.clone());
 
@@ -140,9 +144,10 @@ pub(crate) async fn staking_has_allowed_node_signing_public_key(
     let cache_key = format!("s:anspk:{}:{}", subnet_id, bytes_to_hex(public_key));
 
     if let Some(has) = CACHE.get(&cache_key)
-        && let Some(has) = has.as_bool() {
-            return Ok(*has);
-        }
+        && let Some(has) = has.as_bool()
+    {
+        return Ok(*has);
+    }
 
     let node_address = public_key_to_address(public_key)?;
 
