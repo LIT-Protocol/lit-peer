@@ -1,16 +1,30 @@
 use crate::server::hyper::handler::router::Router;
 use http_body_util::BodyExt;
+use hyper::header;
 use hyperlocal::UnixListenerExt;
 use sd_notify::NotifyState;
+use std::collections::HashMap;
 use std::error::Error;
 use std::io;
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, OnceLock};
 use std::thread;
 use std::time::Duration;
-use tracing::warn;
+use tracing::{info, warn};
 
 pub mod handler;
+
+static REQUEST_COUNTERS: OnceLock<Mutex<HashMap<String, u64>>> = OnceLock::new();
+
+fn increment_request_counter(request_type: &str) -> u64 {
+    let counters = REQUEST_COUNTERS.get_or_init(|| Mutex::new(HashMap::new()));
+    let mut guard = counters
+        .lock()
+        .unwrap_or_else(|e| panic!("request counter mutex poisoned: {:?}", e));
+    let entry = guard.entry(request_type.to_string()).or_insert(0);
+    *entry += 1;
+    *entry
+}
 
 pub async fn bind_unix_socket(socket_path: PathBuf, r: Router) {
     let r = Arc::new(r);
@@ -56,6 +70,51 @@ pub async fn bind_unix_socket(socket_path: PathBuf, r: Router) {
                 |req| async {
                     let r = r.clone();
                     let (parts, body) = req.into_parts();
+                    let method = parts.method.clone();
+                    let uri = parts.uri.clone();
+                    let version = parts.version;
+                    let headers = parts.headers.clone();
+                    let path = uri.path().to_string();
+                    let query = uri.query().map(str::to_string);
+                    let request_type = format!("{} {}", method, path);
+                    let request_count = increment_request_counter(&request_type);
+                    let content_length = headers
+                        .get(header::CONTENT_LENGTH)
+                        .and_then(|value| value.to_str().ok())
+                        .map(str::to_string);
+                    let user_agent = headers
+                        .get(header::USER_AGENT)
+                        .and_then(|value| value.to_str().ok())
+                        .map(str::to_string);
+                    let forwarded_for = headers
+                        .get("x-forwarded-for")
+                        .and_then(|value| value.to_str().ok())
+                        .map(str::to_string);
+                    let real_ip = headers
+                        .get("x-real-ip")
+                        .and_then(|value| value.to_str().ok())
+                        .map(str::to_string);
+                    let request_id = headers
+                        .get("x-request-id")
+                        .and_then(|value| value.to_str().ok())
+                        .map(str::to_string);
+
+                    info!(
+                        request_type = %request_type,
+                        request_count,
+                        method = %method,
+                        uri = %uri,
+                        path = %path,
+                        query = query.as_deref(),
+                        version = ?version,
+                        content_length = content_length.as_deref(),
+                        user_agent = user_agent.as_deref(),
+                        forwarded_for = forwarded_for.as_deref(),
+                        real_ip = real_ip.as_deref(),
+                        request_id = request_id.as_deref(),
+                        headers = ?headers,
+                        "handling request"
+                    );
 
                     let bytes = body.collect().await.unwrap().to_bytes();
                     let full_body = http_body_util::Full::new(bytes.into());
