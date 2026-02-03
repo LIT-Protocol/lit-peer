@@ -2,6 +2,8 @@ use crate::server::hyper::handler::router::Router;
 use http_body_util::BodyExt;
 use hyperlocal::UnixListenerExt;
 use sd_notify::NotifyState;
+use std::error::Error;
+use std::io;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::thread;
@@ -38,21 +40,59 @@ pub async fn bind_unix_socket(socket_path: PathBuf, r: Router) {
         panic!("Unable to set non-blocking on Unix socket: {:?}", &socket_path)
     });
 
-    let listener = tokio::net::UnixListener::from_std(std_listener)
-        .unwrap_or_else(|_| panic!("Unable to convert UnixListener to tokio: {:?}", &socket_path));
-
-    listener
-        .serve(|| {
-            |req| async {
-                let r = r.clone();
-                let (parts, body) = req.into_parts();
-
-                let bytes = body.collect().await.unwrap().to_bytes();
-                let full_body = http_body_util::Full::new(bytes.into());
-                let new_req = hyper::Request::from_parts(parts, full_body);
-                r.route(new_req).await
+    loop {
+        let listener = match std_listener.try_clone() {
+            Ok(listener) => tokio::net::UnixListener::from_std(listener).unwrap_or_else(|_| {
+                panic!("Unable to convert UnixListener to tokio: {:?}", &socket_path)
+            }),
+            Err(e) => {
+                warn!(error = ?e, "failed to clone unix listener; retrying");
+                continue;
             }
-        })
-        .await
-        .expect("failed to await on unix socket");
+        };
+
+        let serve_result = listener
+            .serve(|| {
+                |req| async {
+                    let r = r.clone();
+                    let (parts, body) = req.into_parts();
+
+                    let bytes = body.collect().await.unwrap().to_bytes();
+                    let full_body = http_body_util::Full::new(bytes.into());
+                    let new_req = hyper::Request::from_parts(parts, full_body);
+                    r.route(new_req).await
+                }
+            })
+            .await;
+
+        if let Err(e) = serve_result {
+            if is_broken_pipe_error(e.as_ref()) {
+                warn!(error = ?e, "unix socket client dropped; continuing");
+                continue;
+            }
+
+            panic!("unix socket server exited: {:?}", e);
+        }
+
+        break;
+    }
+}
+
+fn is_broken_pipe_error(err: &(dyn Error + 'static)) -> bool {
+    if let Some(io_err) = err.downcast_ref::<io::Error>() {
+        if io_err.kind() == io::ErrorKind::BrokenPipe {
+            return true;
+        }
+    }
+
+    let mut source = err.source();
+    while let Some(source_err) = source {
+        if let Some(io_err) = source_err.downcast_ref::<io::Error>() {
+            if io_err.kind() == io::ErrorKind::BrokenPipe {
+                return true;
+            }
+        }
+        source = source_err.source();
+    }
+    false
 }
