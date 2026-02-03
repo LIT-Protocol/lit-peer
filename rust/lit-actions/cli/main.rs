@@ -115,12 +115,14 @@ impl ObservabilityProviders {
 
     fn shutdown(self) {
         if let Some(meter_provider) = self.meter_provider
-            && let Err(e) = meter_provider.shutdown() {
-                error!("Failed to shutdown metrics provider: {:?}", e);
-            }
+            && let Err(e) = meter_provider.shutdown()
+        {
+            error!("Failed to shutdown metrics provider: {:?}", e);
+        }
         if let Some(logger_provider) = self.logger_provider
-            && let Err(e) = logger_provider.shutdown() {
-                error!("Failed to shutdown logger provider: {:?}", e);
-            }
+            && let Err(e) = logger_provider.shutdown()
+        {
+            error!("Failed to shutdown logger provider: {:?}", e);
+        }
     }
 }
