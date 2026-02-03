@@ -180,11 +180,10 @@ async fn download_assets(
         save_path.push(install_suffix);
     }
 
-    if let Some(from_cids) = from_cids {
-        if from_cids.len() != assets.len() {
+    if let Some(from_cids) = from_cids
+        && from_cids.len() != assets.len() {
             panic!("download_assets: from_cids len != assets.len()");
         }
-    }
 
     for i in 0..assets.len() {
         let asset_key = assets[i];
