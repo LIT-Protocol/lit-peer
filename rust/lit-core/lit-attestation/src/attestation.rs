@@ -323,15 +323,15 @@ impl Attestation {
     /// that signature was created (signature N only includes signatures 0..N-1).
     fn update_hash(&self, hasher: &mut impl Digest, last_sig_idx: Option<isize>) {
         hasher.update("noonce");
-        hasher.update(&(self.noonce.len() as u64).to_be_bytes()); // Length prefix
+        hasher.update((self.noonce.len() as u64).to_be_bytes()); // Length prefix
         hasher.update(self.noonce.as_slice());
 
         hasher.update("data");
-        hasher.update(&(self.data.len() as u64).to_be_bytes()); // Number of pairs
+        hasher.update((self.data.len() as u64).to_be_bytes()); // Number of pairs
         for (key, val) in self.data.iter() {
-            hasher.update(&(key.len() as u64).to_be_bytes()); // Key length
+            hasher.update((key.len() as u64).to_be_bytes()); // Key length
             hasher.update(key);
-            hasher.update(&(val.len() as u64).to_be_bytes()); // Value length  
+            hasher.update((val.len() as u64).to_be_bytes()); // Value length  
             hasher.update(val.as_slice());
         }
 
@@ -348,11 +348,11 @@ impl Attestation {
 
             if last_sig_idx >= 0 {
                 hasher.update("signatures");
-                hasher.update(&((last_sig_idx + 1) as u64).to_be_bytes()); // Number of signatures
+                hasher.update(((last_sig_idx + 1) as u64).to_be_bytes()); // Number of signatures
 
                 for idx in 0..=(last_sig_idx as usize) {
                     if let Some(sig) = self.signatures.get(idx) {
-                        hasher.update(&(sig.len() as u64).to_be_bytes()); // Signature length
+                        hasher.update((sig.len() as u64).to_be_bytes()); // Signature length
                         hasher.update(sig.as_slice());
                     }
                 }
