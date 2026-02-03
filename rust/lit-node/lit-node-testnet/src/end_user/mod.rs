@@ -114,7 +114,12 @@ impl EndUser {
 
         let pending_tx = provider.send_transaction(tx, None).await;
         if let Err(e) = pending_tx {
-            panic!("Couldn't set balance on wallet {:?} to {:?}:: {:?}", self.wallet.address(), amount, e);
+            panic!(
+                "Couldn't set balance on wallet {:?} to {:?}:: {:?}",
+                self.wallet.address(),
+                amount,
+                e
+            );
         }
         let pending_tx = pending_tx.unwrap().interval(Duration::from_millis(100));
         let receipt = pending_tx.await.unwrap().expect("No receipt from txn");
