@@ -9987,6 +9987,7 @@ dependencies = [
  "lit-core",
  "lit-core-derive",
  "lit-node-core",
+ "lit-observability",
  "moka 0.11.3",
  "once_cell",
  "serde",
