@@ -10,7 +10,6 @@ use lit_node_testnet::testnet::actions::Actions;
 use once_cell::sync::Lazy;
 use tracing::info;
 
-
 const FAULT_TEST_NUM_NODES: usize = 5;
 const STARTING_PORT: usize = 7470;
 static PROXY_MAPPINGS: Lazy<ClientProxyMapping> = Lazy::new(|| {
@@ -99,7 +98,7 @@ async fn auto_rejoin_faulty_node() {
 
     // Advance and check the current and next validators.
     advance_and_check_current_and_next_validators(&actions, realm_id).await;
-    
+
     let faulty_node_port =
         disable_chain_for_random_faulty_node(STARTING_PORT, FAULT_TEST_NUM_NODES);
     info!("Faulty node port: {}", faulty_node_port);
@@ -113,11 +112,10 @@ async fn auto_rejoin_faulty_node() {
 
     // Update the epoch, forcing a kick due to DKG non-participation.
     advance_and_check_current_and_next_validators(&actions, realm_id).await;
-    
-    
+
     // advance again
     advance_and_check_current_and_next_validators(&actions, realm_id).await;
-    
+
     // Test to see if our validator was kicked.
 
     // wait for the kicked node to try to call rejion.
@@ -132,7 +130,11 @@ async fn advance_and_check_current_and_next_validators(actions: &Actions, realm_
 
     let validator_structs = actions.get_current_validator_structs(realm_id).await;
     let next_validator_structs = actions.get_next_validator_structs(realm_id).await;
-    info!("Current/next validator count before advance: {} / {}", validator_structs.len(), next_validator_structs.len());
+    info!(
+        "Current/next validator count before advance: {} / {}",
+        validator_structs.len(),
+        next_validator_structs.len()
+    );
 
     let epoch = actions.get_current_epoch(realm_id).await;
     info!("Current epoch: {}", epoch);
@@ -147,6 +149,9 @@ async fn advance_and_check_current_and_next_validators(actions: &Actions, realm_
 
     let validator_structs = actions.get_current_validator_structs(realm_id).await;
     let next_validator_structs = actions.get_next_validator_structs(realm_id).await;
-    info!("Current/next validator count after advance: {} / {}", validator_structs.len(), next_validator_structs.len());
- 
+    info!(
+        "Current/next validator count after advance: {} / {}",
+        validator_structs.len(),
+        next_validator_structs.len()
+    );
 }
