@@ -1,6 +1,7 @@
 use lit_core::config::LitConfig;
 use std::backtrace::Backtrace;
 use std::{fmt, panic};
+use tracing::error;
 
 use env_logger::fmt::{Color, Style, StyledValue};
 use log::Level;
@@ -95,6 +96,7 @@ pub fn set_panic_hook() {
         let err =
             Error::new(Some(Kind::Unexpected), PKG_NAME, Some(msg.clone()), None, source, None);
 
+        // We log the backtrace to stderr and (if enabled) also to the tracing crate.
         eprintln!(
             "Unexpectedly panicked!: {}\nFull error: {}\nFiltered backtrace: \n{}\nFull backtrace:{}",
             msg,
@@ -102,6 +104,15 @@ pub fn set_panic_hook() {
             filtered,
             backtrace_vec.join("\n")
         );
+        if tracing::enabled!(tracing::Level::ERROR) {
+            error!(
+                message = %msg,
+                error = %err,
+                filtered_backtrace = %filtered,
+                backtrace = %backtrace_vec.join("\n"),
+                "Unexpectedly panicked!"
+            );
+        }
     }));
 }
 
