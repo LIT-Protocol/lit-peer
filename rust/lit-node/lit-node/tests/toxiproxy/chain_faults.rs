@@ -118,7 +118,7 @@ async fn auto_rejoin_faulty_node() {
 
     // Test to see if our validator was kicked.
 
-    // wait for the kicked node to try to call rejion.
+    // wait for the kicked node to try to call request_to_join.
     enable_chain_for_node(faulty_node_port);
     actions.sleep_millis(3000).await;
 
