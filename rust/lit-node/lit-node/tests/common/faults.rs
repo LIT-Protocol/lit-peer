@@ -566,7 +566,7 @@ pub fn enable_fault_channel_direct(source_url: Url, target_url: Url, target_is_c
         assert!(get_proxy_result.is_ok());
         let r = get_proxy_result.as_ref().unwrap().enable();
         assert!(r.is_ok());
-        info!("Enabled fault for {:?}", proxy_name);
+        info!("Enabled fault channel for {:?}", proxy_name);
     })
     .join()
     .expect("Failed to enable fault");
