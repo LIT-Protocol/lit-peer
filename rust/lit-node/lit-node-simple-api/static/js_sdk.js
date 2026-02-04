@@ -14,7 +14,7 @@
 
 /**
  * @typedef {Object} SignWithPkpResponse
- * @property {Array} endpoint_responses - Signing endpoint responses
+ * @property {string[]} endpoint_responses - Array of hex-encoded signature share strings (for combineSignatureShares)
  */
 
 /**

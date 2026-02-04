@@ -162,18 +162,25 @@ async fn sign_with_pkp(
     )
     .await;
 
-    // let endpoint_responses = endpoint_responses.iter().map(|response| {
-    //     match response.data.clone().is_some() {
-    //         true => {
-    //             let signature_share = response.data.clone().unwrap().signature_share.clone();
-    //             let signature_share = signature_share.ecdsa_signed_message_share().unwrap().signature_share.clone();
-    //             signature_share
-    //         }
-    //         false => {
-    //             "".to_string()
-    //         }
-    //     }
-    // }).collect::<Vec<_>>();
+    let endpoint_responses = endpoint_responses.iter().map(|response| {
+        match response.data.clone().is_some() {
+            true => {
+                let signature_share = match response.data.is_some() {
+                    true => {
+                        let signature_share = response.data.clone().unwrap().signature_share.clone();
+                        let signature_share = signature_share.ecdsa_signed_message_share().unwrap().signature_share.clone();
+                        signature_share
+                    }
+                    false => {
+                        "".to_string()
+                    }
+                };
+                signature_share
+            },
+            false => {
+                "".to_string()
+            }
+        }}).collect::<Vec<_>>();
     info!("endpoint_responses: {:?}", endpoint_responses);
 
     Ok(serde_json::json!({
