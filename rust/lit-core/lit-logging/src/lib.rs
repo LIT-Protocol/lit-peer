@@ -96,6 +96,14 @@ pub fn set_panic_hook() {
         let err =
             Error::new(Some(Kind::Unexpected), PKG_NAME, Some(msg.clone()), None, source, None);
 
+        // We log the backtrace to stderr and (if enabled) also to the tracing crate.
+        eprintln!(
+            "Unexpectedly panicked!: {}\nFull error: {}\nFiltered backtrace: \n{}\nFull backtrace:{}",
+            msg,
+            err,
+            filtered,
+            backtrace_vec.join("\n")
+        );
         if tracing::enabled!(tracing::Level::ERROR) {
             error!(
                 message = %msg,
@@ -103,14 +111,6 @@ pub fn set_panic_hook() {
                 filtered_backtrace = %filtered,
                 backtrace = %backtrace_vec.join("\n"),
                 "Unexpectedly panicked!"
-            );
-        } else {
-            eprintln!(
-                "Unexpectedly panicked!: {}\nFull error: {}\nFiltered backtrace: \n{}\nFull backtrace:{}",
-                msg,
-                err,
-                filtered,
-                backtrace_vec.join("\n")
             );
         }
     }));
