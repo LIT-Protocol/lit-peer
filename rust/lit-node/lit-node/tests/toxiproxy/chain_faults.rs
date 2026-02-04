@@ -93,7 +93,7 @@ async fn auto_rejoin_faulty_node() {
 
     let actions = testnet.actions().clone();
 
-    // wait for a few seconds to led the nodes chat with each other.
+    // wait for a few seconds to let the nodes chat with each other.
     actions.sleep_millis(1000).await;
 
     // Advance and check the current and next validators.
