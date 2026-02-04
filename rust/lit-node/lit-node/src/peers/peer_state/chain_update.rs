@@ -202,6 +202,7 @@ impl PeerState {
                 let check_staking_amounts = self
                     .staking_contract
                     .check_staking_amounts(self.staker_address)
+                    .call()
                     .await;
                 match check_staking_amounts {
                     Ok(true) => {
@@ -210,9 +211,6 @@ impl PeerState {
                         );
                     }
                     Ok(false) => {
-                        trace!(
-                            "Staking amount is not valid for a node to join a network.  Returning error."
-                        );
                         return Err(unexpected_err(
                             "Staking amount is not valid for this node to request to join."
                                 .to_string(),
