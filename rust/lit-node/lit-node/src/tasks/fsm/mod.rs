@@ -578,18 +578,17 @@ pub async fn handle_not_part_of_validators_union(
             );
             let _ = get_current_and_new_peer_addresses(is_shadow, peer_state.clone()).await;
             // requesting to auto rejoin if online but not part of the current validators
-            if peer_state.auto_join {
-                if peer_state
+            if peer_state.auto_join
+                && peer_state
                     .peers_in_prior_epoch()
                     .contains_address(&peer_state.addr)
-                    && !peer_state
-                        .peers_in_next_epoch()
-                        .contains_address(&peer_state.addr)
-                {
-                    match peer_state.request_to_join().await {
-                        Ok(_) => info!("Auto requested to join the network"),
-                        Err(e) => error!("Error in request_to_join: {}", e),
-                    }
+                && !peer_state
+                    .peers_in_next_epoch()
+                    .contains_address(&peer_state.addr)
+            {
+                match peer_state.request_to_join().await {
+                    Ok(_) => info!("Auto requested to join the network"),
+                    Err(e) => error!("Error in request_to_join: {}", e),
                 }
             }
         }
