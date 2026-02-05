@@ -111,11 +111,6 @@ pub async fn node_fsm_worker(
                 }
             };
 
-        // if we're not able to proceed, based on some checks while getting the fsm state, just do another loop.
-        if !can_proceed {
-            continue;
-        }
-
         // If we're not part of the validators union - attempt to join, do some logging and restart our loop.
         if !peer_state.part_of_validators_union() {
             handle_not_part_of_validators_union(
@@ -127,6 +122,11 @@ pub async fn node_fsm_worker(
                 realm_id,
             )
             .await;
+            continue;
+        }
+
+        // if we're not able to proceed, based on some checks while getting the fsm state, just do another loop.
+        if !can_proceed {
             continue;
         }
 
