@@ -110,9 +110,9 @@ where
         client_keys.push(key_pair);
     }
 
-    info!("Starting sign for {:?}", body);
+    info!("Starting {} for {:?}", cmd, body);
     let results = join_all(v).await;
-    info!("Finished sign for {:?}", body);
+    info!("Finished {} for {:?}", cmd, body);
 
     let mut responses: Vec<GenericResponse<D>> = Vec::new();
     for (result, key_pair) in results.into_iter().zip(client_keys.iter()) {

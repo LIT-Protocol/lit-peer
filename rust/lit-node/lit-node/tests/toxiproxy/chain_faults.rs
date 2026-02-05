@@ -6,6 +6,7 @@ use crate::common::setup_logging;
 use ethers::types::U256;
 use lit_node_common::proxy_mapping::ClientProxyMapping;
 use lit_node_testnet::TestSetupBuilder;
+use lit_node_testnet::testnet::actions::Actions;
 use once_cell::sync::Lazy;
 use tracing::info;
 
@@ -82,7 +83,6 @@ async fn auto_rejoin_faulty_node() {
 
     info!("TEST: auto_rejoin_faulty_node");
     let realm_id = U256::from(1);
-    let seconds_to_increase = 300;
 
     // Start a new node collection
     let (testnet, _validator_collection, _end_user) = TestSetupBuilder::default()
@@ -93,8 +93,11 @@ async fn auto_rejoin_faulty_node() {
 
     let actions = testnet.actions().clone();
 
-    // wait for a few seconds to led the nodes chat with each other.
+    // wait for a few seconds to let the nodes chat with each other.
     actions.sleep_millis(1000).await;
+
+    // Advance and check the current and next validators.
+    advance_and_check_current_and_next_validators(&actions, realm_id).await;
 
     let faulty_node_port =
         disable_chain_for_random_faulty_node(STARTING_PORT, FAULT_TEST_NUM_NODES);
@@ -108,22 +111,30 @@ async fn auto_rejoin_faulty_node() {
     );
 
     // Update the epoch, forcing a kick due to DKG non-participation.
-    let epoch = actions.get_current_epoch(realm_id).await;
-    info!("Current epoch: {}", epoch);
-    actions
-        .increase_blockchain_timestamp(seconds_to_increase)
-        .await;
+    advance_and_check_current_and_next_validators(&actions, realm_id).await;
 
-    let next_epoch = epoch + U256::from(1);
-    info!("Next epoch: {}", next_epoch);
-    actions.wait_for_epoch(realm_id, next_epoch).await;
-    info!("Advanced to next epoch: {}", next_epoch);
+    // advance again
+    advance_and_check_current_and_next_validators(&actions, realm_id).await;
 
     // Test to see if our validator was kicked.
 
-    // wait for the kicked node to try to call rejion.
+    // wait for the kicked node to try to call request_to_join.
     enable_chain_for_node(faulty_node_port);
     actions.sleep_millis(3000).await;
+
+    advance_and_check_current_and_next_validators(&actions, realm_id).await;
+}
+
+async fn advance_and_check_current_and_next_validators(actions: &Actions, realm_id: U256) {
+    let seconds_to_increase = 300;
+
+    let validator_structs = actions.get_current_validator_structs(realm_id).await;
+    let next_validator_structs = actions.get_next_validator_structs(realm_id).await;
+    info!(
+        "Current/next validator count before advance: {} / {}",
+        validator_structs.len(),
+        next_validator_structs.len()
+    );
 
     let epoch = actions.get_current_epoch(realm_id).await;
     info!("Current epoch: {}", epoch);
@@ -135,4 +146,12 @@ async fn auto_rejoin_faulty_node() {
     info!("Next epoch: {}", next_epoch);
     actions.wait_for_epoch(realm_id, next_epoch).await;
     info!("Advanced to next epoch: {}", next_epoch);
+
+    let validator_structs = actions.get_current_validator_structs(realm_id).await;
+    let next_validator_structs = actions.get_next_validator_structs(realm_id).await;
+    info!(
+        "Current/next validator count after advance: {} / {}",
+        validator_structs.len(),
+        next_validator_structs.len()
+    );
 }

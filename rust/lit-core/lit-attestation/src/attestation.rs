@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::io::Cursor;
 use std::path::Path;
 #[cfg(feature = "generate")]
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Instant, SystemTime, UNIX_EPOCH};
 use std::{env, fmt, fs};
 
 use aleo_std_cpu::{Cpu, get_cpu};
@@ -40,6 +40,8 @@ use lit_core::config::LitConfig;
 use lit_core::error::Unexpected;
 use lit_core::utils::binary::bytes_to_hex;
 use lit_node_core::AttestationType;
+#[cfg(feature = "generate")]
+use lit_observability::opentelemetry::global;
 
 pub static FACILITY_GUEST_INIT: &str = "GI";
 pub static FACILITY_GUEST_SERVICE: &str = "GS";
@@ -323,15 +325,15 @@ impl Attestation {
     /// that signature was created (signature N only includes signatures 0..N-1).
     fn update_hash(&self, hasher: &mut impl Digest, last_sig_idx: Option<isize>) {
         hasher.update("noonce");
-        hasher.update(&(self.noonce.len() as u64).to_be_bytes()); // Length prefix
+        hasher.update((self.noonce.len() as u64).to_be_bytes()); // Length prefix
         hasher.update(self.noonce.as_slice());
 
         hasher.update("data");
-        hasher.update(&(self.data.len() as u64).to_be_bytes()); // Number of pairs
+        hasher.update((self.data.len() as u64).to_be_bytes()); // Number of pairs
         for (key, val) in self.data.iter() {
-            hasher.update(&(key.len() as u64).to_be_bytes()); // Key length
+            hasher.update((key.len() as u64).to_be_bytes()); // Key length
             hasher.update(key);
-            hasher.update(&(val.len() as u64).to_be_bytes()); // Value length  
+            hasher.update((val.len() as u64).to_be_bytes()); // Value length  
             hasher.update(val.as_slice());
         }
 
@@ -348,11 +350,11 @@ impl Attestation {
 
             if last_sig_idx >= 0 {
                 hasher.update("signatures");
-                hasher.update(&((last_sig_idx + 1) as u64).to_be_bytes()); // Number of signatures
+                hasher.update(((last_sig_idx + 1) as u64).to_be_bytes()); // Number of signatures
 
                 for idx in 0..=(last_sig_idx as usize) {
                     if let Some(sig) = self.signatures.get(idx) {
-                        hasher.update(&(sig.len() as u64).to_be_bytes()); // Signature length
+                        hasher.update((sig.len() as u64).to_be_bytes()); // Signature length
                         hasher.update(sig.as_slice());
                     }
                 }
@@ -461,16 +463,30 @@ impl Attestation {
             return Ok(self);
         }
 
+        let generation_start = Instant::now();
+
         #[cfg(feature = "generate-via-service")]
-        return self.generate_via_service().await;
+        let result = self.generate_via_service().await;
 
-        #[cfg(feature = "generate-via-system")]
-        return self.generate_via_system().await;
+        #[cfg(all(not(feature = "generate-via-service"), feature = "generate-via-system"))]
+        let result = self.generate_via_system().await;
 
-        unimplemented!(
+        #[cfg(all(not(feature = "generate-via-service"), not(feature = "generate-via-system")))]
+        let result = unimplemented!(
             "Unexpected: generate called for type {} and neither generate-via-service nor generate-via-system feature enabled",
             self.typ
-        )
+        );
+
+        let generation_duration = generation_start.elapsed().as_millis();
+        let meter = global::meter("lit.attestation");
+        let gauge = meter
+            .f64_gauge("attestation.report.generation.duration_milliseconds")
+            .with_description("Time to generate AMD SEV-SNP attestation report in milliseconds")
+            .with_unit("ms")
+            .init();
+        gauge.record(generation_duration as f64, &[]);
+
+        result
     }
 
     #[cfg(feature = "generate-via-system")]
