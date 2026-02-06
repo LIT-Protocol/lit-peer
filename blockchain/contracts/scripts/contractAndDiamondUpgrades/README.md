@@ -1,6 +1,6 @@
 **IMPORTANT** You must run `npx hardhat clean` then `npx hardhat compile` before running the scripts in this directory. Otherwise, you'll deploy all the old contracts.
 
-If you're upgrading a bunch of diamond facets, you can use the `deployMultipleContracts.ts` script to deploy them all in parallel. This will create a JSON file called `deployedMultipleContracts.json` in the root of the project.
+If you're upgrading a bunch of diamond facets, you can use the `HARDHAT_NETWORK=yellowstone npx ts-node --files scripts/contractAndDiamondUpgrades/deployMultipleContracts.ts --deployer-private-key <PRIVATE_KEY> [--delay-ms 2000]` script to deploy them all in parallel. This will create a JSON file called `deployedMultipleContracts.json` in the root of the project.
 
 Go to the networks repo and grab the `deployed-lit-node-contracts-temp.json` file for the network you're upgrading, and put it in the root of this project (the contracts folder).
 

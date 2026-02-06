@@ -41,6 +41,25 @@ const DIAMOND_GROUP_TO_ADDRESS_KEY: Record<string, DiamondAddressKey> = {
   PriceFeed: 'priceFeedContractAddress',
 };
 
+/**
+ * Infer the diamond group for a facet that doesn't exist in the previous deploy
+ * (i.e. a brand-new facet). We check if the contract name starts with any known
+ * diamond group name (e.g. "PubkeyRouterViewsFacet" → "PubkeyRouter").
+ * Returns the matching group name, or undefined if none match.
+ */
+function inferDiamondGroup(contractName: string): string | undefined {
+  // Sort by longest group name first so that more specific prefixes match first
+  const sortedGroups = Object.keys(DIAMOND_GROUP_TO_ADDRESS_KEY).sort(
+    (a, b) => b.length - a.length
+  );
+  for (const group of sortedGroups) {
+    if (contractName.startsWith(group)) {
+      return group;
+    }
+  }
+  return undefined;
+}
+
 async function run() {
   const inputs = await getInputsFromCliOptions();
 
@@ -91,14 +110,26 @@ async function run() {
 
   for (const contractName of facetNames) {
     const newFacetAddress = deployedMultiple[contractName];
-    const groupName = facetToGroup[contractName];
+    let groupName: string | undefined = facetToGroup[contractName];
     const oldFacetAddress = facetToOldAddress[contractName];
+    const isNewFacet = !groupName;
 
-    if (!groupName) {
-      throw new Error(
-        `Unable to find diamond group for facet "${contractName}" in ${inputs.previousDeployJson}`
+    // If the facet isn't in the previous deploy, it's brand new.
+    // Infer its diamond group from the contract name.
+    if (isNewFacet) {
+      groupName = inferDiamondGroup(contractName);
+      if (!groupName) {
+        throw new Error(
+          `Unable to find diamond group for new facet "${contractName}". ` +
+            `It was not in ${inputs.previousDeployJson} and its name doesn't match any known group in DIAMOND_GROUP_TO_ADDRESS_KEY. ` +
+            `Known groups: ${Object.keys(DIAMOND_GROUP_TO_ADDRESS_KEY).join(', ')}`
+        );
+      }
+      console.log(
+        `\n[NEW FACET] "${contractName}" not found in previous deploy; inferred diamond group "${groupName}". Will add only (no removal).`
       );
     }
+
     const diamondAddressKey = DIAMOND_GROUP_TO_ADDRESS_KEY[groupName];
     if (!diamondAddressKey) {
       throw new Error(
@@ -111,7 +142,7 @@ async function run() {
         `Missing "${diamondAddressKey}" in ${inputs.previousDeployJson}; needed for facet "${contractName}"`
       );
     }
-    if (!oldFacetAddress) {
+    if (!isNewFacet && !oldFacetAddress) {
       throw new Error(
         `Unable to find old facet address for "${contractName}" in ${inputs.previousDeployJson}`
       );
@@ -122,32 +153,45 @@ async function run() {
       );
     }
 
-    // We still create a contract instance even for Remove; the manifest builder
-    // uses the live diamond + old facet address to discover selectors for removal.
     const newFacet = await ethers.getContractAt(contractName, newFacetAddress);
 
-    console.log(
-      `\n${contractName}\n  diamond: ${diamondAddress}\n  old:    ${oldFacetAddress}\n  new:    ${newFacetAddress}`
-    );
+    if (isNewFacet) {
+      console.log(
+        `\n${contractName}\n  diamond: ${diamondAddress}\n  old:    (none — new facet)\n  new:    ${newFacetAddress}`
+      );
 
-    // 1) Remove old facet selectors from the diamond (uses oldFacetAddress)
-    await appendDiamondCutOperationToManifest(
-      manifestFilePath,
-      diamondAddress,
-      newFacet,
-      FacetCutAction.Remove,
-      contractName,
-      oldFacetAddress
-    );
+      // Only add — nothing to remove for a brand-new facet
+      await appendDiamondCutOperationToManifest(
+        manifestFilePath,
+        diamondAddress,
+        newFacet,
+        FacetCutAction.Add,
+        contractName
+      );
+    } else {
+      console.log(
+        `\n${contractName}\n  diamond: ${diamondAddress}\n  old:    ${oldFacetAddress}\n  new:    ${newFacetAddress}`
+      );
 
-    // 2) Add new facet selectors to the diamond
-    await appendDiamondCutOperationToManifest(
-      manifestFilePath,
-      diamondAddress,
-      newFacet,
-      FacetCutAction.Add,
-      contractName
-    );
+      // 1) Remove old facet selectors from the diamond (uses oldFacetAddress)
+      await appendDiamondCutOperationToManifest(
+        manifestFilePath,
+        diamondAddress,
+        newFacet,
+        FacetCutAction.Remove,
+        contractName,
+        oldFacetAddress
+      );
+
+      // 2) Add new facet selectors to the diamond
+      await appendDiamondCutOperationToManifest(
+        manifestFilePath,
+        diamondAddress,
+        newFacet,
+        FacetCutAction.Add,
+        contractName
+      );
+    }
   }
 
   console.log(`\nDiamond cut manifest updated at ${manifestFilePath}`);
