@@ -10,7 +10,10 @@ import yargs from 'yargs';
 import fs from 'fs/promises';
 import path from 'path';
 
-import { MANIFESTS_DIR, appendDiamondCutOperationToManifest } from '../diamondContracts/lib/diamondCutManifest';
+import {
+  MANIFESTS_DIR,
+  appendDiamondCutOperationToManifest,
+} from '../diamondContracts/lib/diamondCutManifest';
 import { FacetCutAction } from '../diamondContracts/lib/types';
 
 const { ethers } = hre;
@@ -66,7 +69,10 @@ async function run() {
 
   if (inputs.resetManifest) {
     await fs.mkdir(path.dirname(manifestFilePath), { recursive: true });
-    await fs.writeFile(manifestFilePath, JSON.stringify({ operations: [] }, null, 2));
+    await fs.writeFile(
+      manifestFilePath,
+      JSON.stringify({ operations: [] }, null, 2)
+    );
     console.log(`Reset manifest at ${manifestFilePath}`);
   }
 

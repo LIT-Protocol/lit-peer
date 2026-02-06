@@ -39,7 +39,9 @@ async function run() {
   );
 
   const delayMs = inputs.delayMs || DEFAULT_DELAY_MS;
-  const deploymentPromises: Array<Promise<{ contractName: string; contract: any }>> = [];
+  const deploymentPromises: Array<
+    Promise<{ contractName: string; contract: any }>
+  > = [];
 
   console.log(`\n🚀 Starting deployment of ${toDeploy.length} contracts...`);
   console.log(`⏱️  Delay between starting each deployment: ${delayMs}ms`);
@@ -108,16 +110,15 @@ async function run() {
 
   // Save all successfully deployed contract addresses to JSON file
   const outputPath = 'deployedMultipleContracts.json';
-  await fs.writeFile(
-    outputPath,
-    JSON.stringify(deployedContracts, null, 2)
-  );
+  await fs.writeFile(outputPath, JSON.stringify(deployedContracts, null, 2));
 
   if (failedDeployments.length === 0) {
     console.log(`\n✨ All contracts deployed successfully!`);
   } else {
     console.log(
-      `\n⚠️  Partial deployment: ${settledResults.length - failedDeployments.length} succeeded, ${failedDeployments.length} failed.`
+      `\n⚠️  Partial deployment: ${
+        settledResults.length - failedDeployments.length
+      } succeeded, ${failedDeployments.length} failed.`
     );
     console.log('Failed deployments:');
     failedDeployments.forEach(({ index, reason }) => {
@@ -146,22 +147,20 @@ run().catch((error) => {
 });
 
 async function getInputsFromCliOptions(): Promise<Inputs> {
-  const argv = await yargs(process.argv.slice(2))
-    .options({
-      'deployer-private-key': {
-        type: 'string',
-        describe:
-          'Private key of the wallet that will be used to deploy the contracts',
-        required: true,
-      },
-      'delay-ms': {
-        type: 'number',
-        describe:
-          'Delay in milliseconds between each contract deployment (default: 2000)',
-        default: DEFAULT_DELAY_MS,
-      },
-    })
-    .argv;
+  const argv = await yargs(process.argv.slice(2)).options({
+    'deployer-private-key': {
+      type: 'string',
+      describe:
+        'Private key of the wallet that will be used to deploy the contracts',
+      required: true,
+    },
+    'delay-ms': {
+      type: 'number',
+      describe:
+        'Delay in milliseconds between each contract deployment (default: 2000)',
+      default: DEFAULT_DELAY_MS,
+    },
+  }).argv;
 
   return argv;
 }
