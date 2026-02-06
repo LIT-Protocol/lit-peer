@@ -53,6 +53,5 @@ pub struct CombineSignatureSharesResponse {
     pub verifying_key: String,
     pub r: String,
     pub s: String,
-    pub v: u8,
     pub recovery_id: u8,
 }

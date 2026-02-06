@@ -32,6 +32,11 @@ pub async fn get_pkp_balance(pkp_public_key: &str, chain: Chain) -> Result<Json<
     get_balance(pkp_address, chain).await
 }
 
+pub async fn get_address_balance(address: &str, chain: Chain) -> Result<Json<GetBalanceResponse>, Status> {
+    let address = H160::from_slice( hex_to_bytes(address).unwrap().as_slice());
+    get_balance(address, chain).await
+}
+
 async fn get_balance( address: H160, chain: Chain) -> Result<Json<GetBalanceResponse>, Status> {
 
     let provider = Provider::<Http>::try_from(chain.info().rpc_url).unwrap();
@@ -50,7 +55,7 @@ async fn get_balance( address: H160, chain: Chain) -> Result<Json<GetBalanceResp
 }
 
 async fn get_pkp_address(pkp_public_key: &str) -> Result<H160, Status> {
-    let pkp_address = hex::decode(&pkp_public_key.replace("0x","")).unwrap();
+    let pkp_address = hex::decode(&pkp_public_key.replace("0x","")[2..]).unwrap();
     let pkp_address = keccak256(&pkp_address);
     let pkp_address = H160::from_slice(&pkp_address[12..]);
 
@@ -111,7 +116,7 @@ pub async fn send(testnet: &Arc<Testnet>, validator_collection: &Arc<ValidatorCo
     let signature = Signature {
         r: U256::from_str_radix(&signature_response.r, 16).unwrap(),
         s: U256::from_str_radix(&signature_response.s, 16).unwrap(),
-        v: signature_response.v as u64 + chain_id_offset,
+        v: signature_response.recovery_id as u64 + chain_id_offset,
     };
 
     info!("signature: {:?}", signature);
@@ -123,7 +128,7 @@ pub async fn send(testnet: &Arc<Testnet>, validator_collection: &Arc<ValidatorCo
     let address = H160::from_slice(&address[12..]);
 
     let result = signature.verify(message, address);
-    info!("result: {:?}", result);
+    info!("result for address {:?}: {:?}", address, result);
     if !result.is_ok() {
         return Err(Status::InternalServerError);
     }
@@ -146,7 +151,7 @@ pub async fn send(testnet: &Arc<Testnet>, validator_collection: &Arc<ValidatorCo
     Ok(Json(TransferResponse {
         txn_id: bytes_to_hex(&tx_receipt.transaction_hash.as_bytes()),
         success: true,
-        chain: Chain::Ethereum,
+        chain: chain.clone(),
         origin_symbol: chain.info().token.to_string(),
         origin_amount: request.amount.clone(),
         gas: tx_receipt.gas_used.unwrap().to_string(),

@@ -33,8 +33,8 @@ async fn main() -> Result<(), rocket::Error> {
         .manage(testnet)
         .manage(validator_collection)
         .attach(cors)
-        .mount("/", core::v1::endpoints::routes())
-        .mount("/", abstractions::transfer::endpoints::routes())
+        .mount("/core/v1/", core::v1::endpoints::routes())
+        .mount("/transfer/v1/", abstractions::transfer::endpoints::routes())
         .mount("/", FileServer::from(relative!("static")));
     r.launch().await?;
     Ok(())

@@ -343,12 +343,12 @@ pub async fn combine_signature_shares(
 
     let r = &signature[0..64];
     let s = &signature[64..];
-    let v = signed_output.recovery_id.unwrap_or(0);
+    let recovery_id = signed_output.recovery_id.unwrap_or(0);
 
     let signature = ethers::types::Signature {
         r: U256::from_str_radix(r, 16).unwrap(),
         s: U256::from_str_radix(s, 16).unwrap(),
-        v: v as u64,
+        v: recovery_id as u64,
     };
 
     info!("signature: {:?}", signature);
@@ -367,8 +367,7 @@ pub async fn combine_signature_shares(
         verifying_key: signed_output.verifying_key.clone(),
         r: r.to_string(),
         s: s.to_string(),
-        v: v,
-        recovery_id: v,
+        recovery_id,
     }))
 }
 

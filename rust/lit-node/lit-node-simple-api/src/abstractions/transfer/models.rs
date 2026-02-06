@@ -31,3 +31,20 @@ pub struct GetBalanceResponse {
     pub chain: Chain,
     pub symbol: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChainInfoResponse {
+    pub name: String,
+    pub token: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetChainsResponse {
+    pub chains: Vec<ChainInfoResponse>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetChainsRequest {
+    pub is_evm: bool,
+    pub is_testnet: bool,
+}

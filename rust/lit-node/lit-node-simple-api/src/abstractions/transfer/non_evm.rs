@@ -29,6 +29,15 @@ pub async fn get_pkp_balance( pkp_public_key: &str, chain: Chain) -> Result<Json
     }))
 }
 
+pub async fn get_address_balance(address: &str, chain: Chain) -> Result<Json<GetBalanceResponse>, Status> {
+    Ok(Json(GetBalanceResponse {
+        address: address.to_string(),
+        balance: String::new(),
+        chain: chain.clone(),
+        symbol: String::new(),
+    }))
+}
+
 pub async fn send(_testnet: &Arc<Testnet>, _validator_collection: &Arc<ValidatorCollection>, request: &Json<TransferRequest>, _chain: Chain) -> Result<Json<TransferResponse>, Status> {
 
 
