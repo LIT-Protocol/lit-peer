@@ -67,6 +67,7 @@ jobs:
           cd ../lit-os-prov-api && cargo clippy
           cd ../lit-os-prov-api-client && cargo clippy
           cd ../lit-os-prov-core && cargo clippy
+          cd ../lit-node-operator && cargo clippy
       - name: Install cargo check tools
         run: |
           #cargo install --locked cargo-udeps || true

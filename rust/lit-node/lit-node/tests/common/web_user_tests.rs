@@ -524,6 +524,7 @@ pub async fn generate_session_sigs_execute_lit_action(
         &session_sigs_and_node_set,
         2,
         key_set_id,
+        false,
     )
     .await
 }

@@ -386,6 +386,7 @@ pub mod litactions {
         // currently designed to handle just a single siganture.
         let mut shares = vec![];
         for resp in execute_resp {
+            info!("resp: {:?}", resp);
             assert!(resp.ok);
             let data = resp.data.as_ref().unwrap();
             info!("json_object: {:?}", data);
@@ -681,15 +682,26 @@ pub mod litactions {
     }
 
     #[doc = "Signing with MGB PKP within its permitted Lit Action"]
-    #[test_case(true, "Anyone can sign with a MGB PKP within its permitted Lit Action")]
+    #[test_case(
+        true,
+        "Anyone can sign with a MGB PKP within its permitted Lit Action",
+        false
+    )]
     #[test_case(
         false,
-        "Any other PKP can sign with a different MGB PKP within its permitted Lit Action"
+        "Any other PKP can sign with a different MGB PKP within its permitted Lit Action",
+        false
+    )]
+    #[test_case(
+        true,
+        "Anyone can sign with a MGB PKP within its permitted Lit Action - Privacy Mode Enabled",
+        true
     )]
     #[tokio::test]
     pub async fn session_sig_with_mgb_pkp_lit_action(
         use_eoa_session_sig: bool,
         test_description: &str,
+        add_privacy_mode: bool,
     ) {
         setup_logging();
         info!(test_description);
@@ -813,6 +825,7 @@ pub mod litactions {
             &session_sigs_and_node_set,
             2,
             key_set_id,
+            add_privacy_mode,
         )
         .await
         .expect("Could not execute lit action");

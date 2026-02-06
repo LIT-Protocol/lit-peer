@@ -48,9 +48,10 @@ pub async fn verify_full(
             .await
             .map_err(|e| err_add_fields(e, data, policy.as_ref())),
         AttestationType::AdminSigned => {
-            if let Some(allowed) = policy.allowed_attestation_types() {
-                if !allowed.contains(data.typ()) {
-                    return Err(err_add_fields(validation_err_code(
+            if let Some(allowed) = policy.allowed_attestation_types()
+                && !allowed.contains(data.typ())
+            {
+                return Err(err_add_fields(validation_err_code(
                         "attestation verify full failed due to policy: type not in allowed_attestation_types",
                         EC::AttestationPolicyVerifyFailed,
                         None,
@@ -59,7 +60,6 @@ pub async fn verify_full(
                           "Policy forbids 'AttestationType: {}' (reason: allowed_attestation_types)",
                           AttestationType::AdminSigned
                       )), data, policy.as_ref()));
-                }
             }
             if let Some(allowed) = policy.require_signed() {
                 Ok(Some(
