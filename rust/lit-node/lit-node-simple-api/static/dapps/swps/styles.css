@@ -53,6 +53,12 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .logo {
   font-weight: 700;
   font-size: 1.25rem;

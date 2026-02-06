@@ -130,6 +130,7 @@ function showOverviewAccount() {
   document.getElementById('overview-chain-wrap').style.display = 'block';
   const legend = document.getElementById('overview-balance-legend');
   if (legend) legend.style.display = 'block';
+  updateLogoutButtonVisibility();
 }
 
 async function createAccount() {
@@ -177,8 +178,10 @@ async function refreshBalances() {
     }
     if (state.pkpPublicKey) {
       const bal = await client.getPkpBalance(state.pkpPublicKey, chain);
+      const selectedChain = state.chainList.find((c) => c.name === chain);
+      const symbol = selectedChain?.token ?? bal.symbol ?? chain;
       const li = document.createElement('li');
-      li.innerHTML = `<span class="balance-symbol">PKP (${bal.symbol})</span><span>${bal.balance}</span>`;
+      li.innerHTML = `<span class="balance-symbol">PKP (${symbol})</span><span>${bal.balance}</span>`;
       list.appendChild(li);
     }
     wrap.innerHTML = '';
@@ -230,6 +233,26 @@ function saveAccount() {
       })
     );
   }
+}
+
+function updateLogoutButtonVisibility() {
+  const btn = document.getElementById('btn-logout');
+  if (btn) btn.style.display = state.apiKey ? 'inline-flex' : 'none';
+}
+
+function logout() {
+  state.apiKey = null;
+  state.pkpPublicKey = null;
+  state.walletAddress = null;
+  localStorage.removeItem('swps_account');
+  document.getElementById('overview-actions').style.display = 'block';
+  document.getElementById('overview-account').style.display = 'none';
+  document.getElementById('overview-chain-wrap').style.display = 'none';
+  const legend = document.getElementById('overview-balance-legend');
+  if (legend) legend.style.display = 'none';
+  document.getElementById('overview-balances').innerHTML =
+    '<p class="history-empty">Load an account and choose a chain to see balances.</p>';
+  updateLogoutButtonVisibility();
 }
 
 // --- Transfer ---
@@ -379,12 +402,14 @@ function init() {
   loadChains();
   loadStoredAccount();
   if (state.apiKey && state.pkpPublicKey) showOverviewAccount();
+  updateLogoutButtonVisibility();
 
   document.getElementById('baseUrl').addEventListener('change', () => {
     initClients();
     loadChains();
   });
 
+  document.getElementById('btn-logout').addEventListener('click', logout);
   document.getElementById('btn-create-account').addEventListener('click', createAccount);
   document.getElementById('btn-load-account').addEventListener('click', loadPastedAccount);
   document.getElementById('btn-refresh-balance').addEventListener('click', refreshBalances);

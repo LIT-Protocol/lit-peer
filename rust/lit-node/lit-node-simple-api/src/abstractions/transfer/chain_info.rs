@@ -811,7 +811,7 @@ impl Chain {
                 is_evm: true,
                 testnet: true,
                 token: "AVAX",
-                rpc_url: "https://api.avax-test.network/ext/bc/C/rpc",
+                rpc_url: "https://avalanche-fuji-c-chain-rpc.publicnode.com",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/x",
             },

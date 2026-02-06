@@ -107,18 +107,20 @@ export class LitTransferApiClient {
   }
 
   /**
-   * GET /transfer/v1/get_chains
+   * GET /transfer/v1/get_chains?is_evm=&is_testnet=
    * Returns the list of supported chains (EVM, non-EVM, or testnet EVM) with name and token symbol.
+   * Uses query params so GET works reliably in browsers (GET with body is often stripped).
    * @param {GetChainsOptions} [options] - { isEvm, isTestnet }; default { isEvm: true, isTestnet: false }
    * @returns {Promise<GetChainsResponse>} { chains: { name, token }[] }
    */
   async getAllChains(options = {}) {
     const { isEvm = true, isTestnet = false } = options;
-    const res = await fetch(`${this.baseUrl}/get_chains`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ is_evm: isEvm, is_testnet: isTestnet }),
+    const params = new URLSearchParams({
+      is_evm: String(isEvm),
+      is_testnet: String(isTestnet),
     });
+    const url = `${this.baseUrl}/get_chains?${params.toString()}`;
+    const res = await fetch(url, { method: 'GET' });
     if (!res.ok) throw new Error(`get_chains failed: ${res.status} ${res.statusText}`);
     return res.json();
   }
