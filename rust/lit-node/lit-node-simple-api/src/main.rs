@@ -34,6 +34,7 @@ async fn main() -> Result<(), rocket::Error> {
         .manage(validator_collection)
         .attach(cors)
         .mount("/", core::v1::endpoints::routes())
+        .mount("/", abstractions::transfer::endpoints::routes())
         .mount("/", FileServer::from(relative!("static")));
     r.launch().await?;
     Ok(())

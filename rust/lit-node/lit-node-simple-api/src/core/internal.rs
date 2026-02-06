@@ -92,8 +92,13 @@ pub async fn sign_with_pkp(
 ) -> Result<Json<SignWithPkpResponse>, Status> {
     let node_set = validator_collection.random_threshold_nodeset().await;
     let node_set_with_keys = get_identity_pubkeys_from_node_set(&node_set).await;
+    
+    let to_sign = match sign_request.message.starts_with("0x") {
+        true => hex_to_bytes(&sign_request.message[2..]).unwrap(),
+        false => sign_request.message.as_bytes().to_vec(),
+    };
 
-    let to_sign = sign_request.message.as_bytes().to_vec();
+    info!("to_sign: {:?}", to_sign);
     let to_sign = keccak256(to_sign.as_slice()).to_vec();
     let pubkey = sign_request.pkp_public_key.clone();
     let epoch = validator_collection
@@ -112,8 +117,6 @@ pub async fn sign_with_pkp(
     let wallet = end_user.wallet.clone();
 
     info!("Signing with PKP: {:?}", pubkey);
-    info!("Wallet address: {:?}", wallet.address());
-    info!("Key set id: {:?}", key_set_id);
 
     let endpoint_responses = generate_session_sigs_and_send_signing_requests(
         &node_set_with_keys,
@@ -126,13 +129,16 @@ pub async fn sign_with_pkp(
     )
     .await;
 
-    info!("endpoint_responses: {:?}", endpoint_responses);
     let shares = endpoint_responses
         .iter()
         .filter(|response| response.data.is_some())
         .map(|response| response.data.clone().unwrap())
         .collect::<Vec<_>>();
-    info!("shares: {:?}", shares);
+    // info!("shares: {:?}", shares);
+
+    if shares.len() == 0 {
+        info!("endpoint_responses: {:?}", endpoint_responses);
+    }
 
     Ok(Json(SignWithPkpResponse {
         shares,

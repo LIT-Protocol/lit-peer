@@ -22,7 +22,7 @@ export async function runTests(baseUrl = getBaseUrl()) {
 
   console.log('1. Getting API key...');
   const { api_key, wallet_address } = await client.getApiKey();
-  console.log('   api_key:', api_key.slice(0, 18) + '...');
+  console.log('   api_key:', api_key);
   console.log('   wallet_address:', wallet_address ?? '(none)');
 
   console.log('2. Minting PKP...');

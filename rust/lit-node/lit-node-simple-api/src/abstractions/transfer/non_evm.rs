@@ -8,13 +8,23 @@ use rocket::serde::json::Json;
 use rocket::http::Status;
 
 
-pub async fn get_balance(_testnet: &Testnet, _api_key: &str, chain: Chain) -> Result<Json<GetBalanceResponse>, Status> {
+pub async fn get_api_key_balance(_testnet: &Testnet, _api_key: &str, chain: Chain) -> Result<Json<GetBalanceResponse>, Status> {
     let _ = (_testnet, _api_key, chain);
 
     Ok(Json(GetBalanceResponse {
         address: String::new(),
         balance: String::new(),
         chain: Chain::Ethereum,
+        symbol: String::new(),
+    }))
+}
+
+pub async fn get_pkp_balance( pkp_public_key: &str, chain: Chain) -> Result<Json<GetBalanceResponse>, Status> {
+
+    Ok(Json(GetBalanceResponse {
+        address: pkp_public_key.to_string(),
+        balance: String::new(),
+        chain: chain.clone(),
         symbol: String::new(),
     }))
 }
