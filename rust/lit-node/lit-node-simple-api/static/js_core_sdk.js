@@ -117,37 +117,6 @@ export const SIGNING_SCHEME_ECDSA_K256_SHA256 = 'EcdsaK256Sha256';
  * @property {number} recovery_id - Recovery id byte
  */
 
-// --- Transfer (abstractions/transfer); mount transfer routes to use ---
-
-/**
- * @typedef {Object} TransferOptions
- * @property {string} apiKey - Hex-encoded API key (from getApiKey)
- * @property {string} pkpPublicKey - PKP public key
- * @property {string} chain - Chain identifier (e.g. "Ethereum", "Solana")
- * @property {string} destinationAddress - Destination address
- * @property {string} amount - Amount as string
- */
-
-/**
- * @typedef {Object} TransferResponse
- * @property {string} txn_id - Transaction id
- * @property {boolean} success - Whether the transfer succeeded
- * @property {string} chain - Chain identifier
- * @property {string} origin_symbol - Symbol of the asset sent
- * @property {string} origin_amount - Amount sent
- * @property {string} gas - Gas used/cost
- * @property {string} timestamp - Timestamp
- * @property {string} destination_address - Destination address
- */
-
-/**
- * @typedef {Object} GetBalanceResponse
- * @property {string} address - Wallet address
- * @property {string} balance - Balance as string
- * @property {string} chain - Chain identifier
- * @property {string} symbol - Asset symbol
- */
-
 export class LitNodeSimpleApiClient {
   /**
    * @param {Object} options
@@ -288,45 +257,6 @@ export class LitNodeSimpleApiClient {
       body: JSON.stringify(body),
     });
     if (!res.ok) throw new Error(`combine_signature_shares failed: ${res.status} ${res.statusText}`);
-    return res.json();
-  }
-
-  /**
-   * GET /get_balance/<api_key>/<chain>
-   * Gets balance for the wallet identified by the API key on the given chain.
-   * Requires transfer routes to be mounted.
-   * @param {string} apiKey - Hex-encoded API key (from getApiKey)
-   * @param {string} chain - Chain identifier (e.g. "Ethereum", "Solana")
-   * @returns {Promise<GetBalanceResponse>} { address, balance, chain, symbol }
-   */
-  async getBalance(apiKey, chain) {
-    const res = await fetch(
-      `${this.baseUrl}/get_balance/${encodeURIComponent(apiKey)}/${encodeURIComponent(chain)}`
-    );
-    if (!res.ok) throw new Error(`get_balance failed: ${res.status} ${res.statusText}`);
-    return res.json();
-  }
-
-  /**
-   * POST /send
-   * Sends funds to a destination address on a chain (PKP-signed). Requires transfer routes to be mounted.
-   * @param {TransferOptions} options
-   * @returns {Promise<TransferResponse>}
-   */
-  async send({ apiKey, pkpPublicKey, chain, destinationAddress, amount }) {
-    const body = {
-      api_key: apiKey,
-      pkp_public_key: pkpPublicKey,
-      chain,
-      destination_address: destinationAddress,
-      amount,
-    };
-    const res = await fetch(`${this.baseUrl}/send`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) throw new Error(`send failed: ${res.status} ${res.statusText}`);
     return res.json();
   }
 }
