@@ -85,30 +85,57 @@ async function run() {
     deploymentPromises.push(deploymentPromise);
   }
 
-  // Wait for all deployments to complete
+  // Wait for all deployments to complete (collecting both successes and failures)
   console.log(`\n⏳ Waiting for all deployments to complete...\n`);
-  const results = await Promise.all(deploymentPromises);
+  const settledResults = await Promise.allSettled(deploymentPromises);
 
-  // Extract addresses from all completed contracts
+  // Extract addresses from all successfully completed contracts
   const deployedContracts: Record<string, string> = {};
-  for (const result of results) {
-    const contractAddress = await result.contract.getAddress();
-    deployedContracts[result.contractName] = contractAddress;
+  const failedDeployments: Array<{ index: number; reason: unknown }> = [];
+
+  for (let i = 0; i < settledResults.length; i++) {
+    const result = settledResults[i];
+    if (result.status === 'fulfilled') {
+      const { contractName, contract } = result.value;
+      const contractAddress = await contract.getAddress();
+      deployedContracts[contractName] = contractAddress;
+    } else {
+      failedDeployments.push({ index: i, reason: result.reason });
+    }
   }
 
-  // Save all deployed contract addresses to JSON file
+  // Save all successfully deployed contract addresses to JSON file
   const outputPath = 'deployedMultipleContracts.json';
   await fs.writeFile(
     outputPath,
     JSON.stringify(deployedContracts, null, 2)
   );
 
-  console.log(`\n✨ All contracts deployed successfully!`);
+  if (failedDeployments.length === 0) {
+    console.log(`\n✨ All contracts deployed successfully!`);
+  } else {
+    console.log(
+      `\n⚠️  Partial deployment: ${settledResults.length - failedDeployments.length} succeeded, ${failedDeployments.length} failed.`
+    );
+    console.log('Failed deployments:');
+    failedDeployments.forEach(({ index, reason }) => {
+      const contractName = toDeploy[index] ?? `<index ${index}>`;
+      console.log(`  - ${contractName} (index ${index}):`, reason);
+    });
+  }
+
   console.log(`📄 Deployed addresses saved to ${outputPath}\n`);
   console.log('Deployed contracts:');
   Object.entries(deployedContracts).forEach(([name, address]) => {
     console.log(`  ${name}: ${address}`);
   });
+
+  // If any deployments failed, signal an overall failure so run().catch(...) can exit non-zero
+  if (failedDeployments.length > 0) {
+    throw new Error(
+      `One or more contract deployments failed. See log above for details.`
+    );
+  }
 }
 
 run().catch((error) => {
