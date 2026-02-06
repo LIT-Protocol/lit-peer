@@ -4,7 +4,7 @@ import hre from 'hardhat';
 import yargs from 'yargs';
 import fs from 'fs/promises';
 
-import { hardhatDeployAndVerifySingleContract } from '../utils';
+import { hardhatCompile, hardhatDeployAndVerifySingleContract } from '../utils';
 
 const { ethers } = hre;
 
@@ -31,6 +31,8 @@ const DEFAULT_DELAY_MS = 2000;
 
 async function run() {
   const inputs = await getInputsFromCliOptions();
+
+  await hardhatCompile();
 
   const deployer = new ethers.Wallet(inputs.deployerPrivateKey).connect(
     ethers.provider
