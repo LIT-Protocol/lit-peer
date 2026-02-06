@@ -2,7 +2,7 @@
 Lit Node Simple API - Python SDK
 
 Wrapper for the v1 API endpoints defined in lit-node-simple-api.
-Mirrors the functionality of js_sdk.js.
+Mirrors the functionality of js_core_sdk.js.
 """
 
 from __future__ import annotations

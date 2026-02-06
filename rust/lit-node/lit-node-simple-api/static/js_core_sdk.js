@@ -1,5 +1,5 @@
 /**
- * Lit Node Simple API - JavaScript SDK
+ * Lit Node Simple API - JavaScript Core SDK
  *
  * Wrapper for the v1 API endpoints defined in lit-node-simple-api.
  * Types match core/v1/models (request.rs, response.rs) and core/v1/endpoints.rs.
@@ -7,11 +7,15 @@
 
 // --- Request types (match core/v1/models/request.rs) ---
 
+/** Default signing scheme for signWithPkp (secp256k1 + SHA-256). */
+export const SIGNING_SCHEME_ECDSA_K256_SHA256 = 'EcdsaK256Sha256';
+
 /**
  * @typedef {Object} SignWithPkpOptions
  * @property {string} apiKey - Hex-encoded API key (from getApiKey)
  * @property {string} pkpPublicKey - PKP public key
  * @property {string} message - Message to sign
+ * @property {string} [signingScheme='EcdsaK256Sha256'] - Signing scheme (use SIGNING_SCHEME_ECDSA_K256_SHA256)
  */
 
 /**
@@ -105,6 +109,8 @@
 /**
  * @typedef {Object} CombineSignatureSharesResponse
  * @property {string} signature - Hex-encoded combined signature
+ * @property {string} signed_data - Signed data (hex)
+ * @property {string} verifying_key - Verifying key (hex)
  * @property {string} r - ECDSA r component (hex)
  * @property {string} s - ECDSA s component (hex)
  * @property {number} v - ECDSA v component
@@ -188,14 +194,16 @@ export class LitNodeSimpleApiClient {
   /**
    * POST /sign_with_pkp
    * Signs a message with the given PKP using the provided API key.
+   * Uses EcdsaK256Sha256 signing scheme by default.
    * @param {SignWithPkpOptions} options
    * @returns {Promise<SignWithPkpResponse>} { shares, curve_type }
    */
-  async signWithPkp({ apiKey, pkpPublicKey, message }) {
+  async signWithPkp({ apiKey, pkpPublicKey, message, signingScheme = SIGNING_SCHEME_ECDSA_K256_SHA256 }) {
     const body = {
       api_key: apiKey,
       pkp_public_key: pkpPublicKey,
       message,
+      signing_scheme: signingScheme,
     };
     const res = await fetch(`${this.baseUrl}/sign_with_pkp`, {
       method: 'POST',
@@ -270,7 +278,7 @@ export class LitNodeSimpleApiClient {
    * POST /combine_signature_shares
    * Combines signature shares (pass signWithPkp response.shares as-is).
    * @param {CombineSignatureSharesOptions} options
-   * @returns {Promise<CombineSignatureSharesResponse>} { signature, r, s, v, recovery_id }
+   * @returns {Promise<CombineSignatureSharesResponse>} { signature, signed_data, verifying_key, r, s, v, recovery_id }
    */
   async combineSignatureShares({ apiKey, shares }) {
     const body = { api_key: apiKey, shares };

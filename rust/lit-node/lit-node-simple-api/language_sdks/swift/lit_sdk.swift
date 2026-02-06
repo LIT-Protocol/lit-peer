@@ -2,7 +2,7 @@
  Lit Node Simple API - Swift SDK
 
  Wrapper for the v1 API endpoints defined in lit-node-simple-api.
- Mirrors the functionality of js_sdk.js.
+ Mirrors the functionality of js_core_sdk.js.
 
  Uses: Foundation URLSession, async/await (Swift 5.5+).
  */

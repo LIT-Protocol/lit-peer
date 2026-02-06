@@ -170,7 +170,7 @@ go();</textarea>
       signBtn.disabled = true;
 
       try {
-        const { createClient } = await import('./js_sdk.js');
+        const { createClient } = await import('./js_core_sdk.js');
         const baseUrl = baseUrlInput.value.trim() || 'http://localhost:8000';
         const client = createClient(baseUrl);
         const result = await client.signWithPkp({ apiKey, pkpPublicKey, message });
@@ -218,7 +218,7 @@ go();</textarea>
       litActionBtn.disabled = true;
 
       try {
-        const { createClient } = await import('./js_sdk.js');
+        const { createClient } = await import('./js_core_sdk.js');
         const baseUrl = baseUrlInput.value.trim() || 'http://localhost:8000';
         const client = createClient(baseUrl);
         const result = await client.litAction({ apiKey, code, jsParams });
@@ -250,7 +250,7 @@ go();</textarea>
       encryptOutput.className = 'api-output';
       encryptBtn.disabled = true;
       try {
-        const { createClient } = await import('./js_sdk.js');
+        const { createClient } = await import('./js_core_sdk.js');
         const baseUrl = baseUrlInput.value.trim() || 'http://localhost:8000';
         const client = createClient(baseUrl);
         const result = await client.encrypt({ apiKey, message });
@@ -293,7 +293,7 @@ go();</textarea>
       decryptOutput.className = 'api-output';
       decryptBtn.disabled = true;
       try {
-        const { createClient } = await import('./js_sdk.js');
+        const { createClient } = await import('./js_core_sdk.js');
         const baseUrl = baseUrlInput.value.trim() || 'http://localhost:8000';
         const client = createClient(baseUrl);
         const result = await client.decrypt({ apiKey, shares, ciphertext, dataToEncryptHash });
@@ -332,7 +332,7 @@ go();</textarea>
       combineOutput.className = 'api-output';
       combineBtn.disabled = true;
       try {
-        const { createClient } = await import('./js_sdk.js');
+        const { createClient } = await import('./js_core_sdk.js');
         const baseUrl = baseUrlInput.value.trim() || 'http://localhost:8000';
         const client = createClient(baseUrl);
         const result = await client.combineSignatureShares({ apiKey, shares });

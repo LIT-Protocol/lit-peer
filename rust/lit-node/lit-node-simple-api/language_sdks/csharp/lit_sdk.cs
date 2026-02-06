@@ -1,7 +1,7 @@
 // Lit Node Simple API - C# SDK
 //
 // Wrapper for the v1 API endpoints defined in lit-node-simple-api.
-// Mirrors the functionality of js_sdk.js.
+// Mirrors the functionality of js_core_sdk.js.
 
 using System.Net.Http.Json;
 using System.Text.Json;

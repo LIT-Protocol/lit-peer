@@ -4,7 +4,7 @@
  * - Browser: load from index.html; set window.LIT_SIMPLE_API_BASE_URL or use the page input.
  */
 
-import { createClient } from './js_sdk.js';
+import { createClient } from './js_core_sdk.js';
 
 function getBaseUrl() {
   if (typeof process !== 'undefined' && process.env && process.env.API_BASE_URL) return process.env.API_BASE_URL;

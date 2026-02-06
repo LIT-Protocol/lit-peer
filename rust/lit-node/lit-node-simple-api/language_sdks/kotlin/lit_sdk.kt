@@ -2,7 +2,7 @@
  * Lit Node Simple API - Kotlin SDK
  *
  * Wrapper for the v1 API endpoints defined in lit-node-simple-api.
- * Mirrors the functionality of js_sdk.js.
+ * Mirrors the functionality of js_core_sdk.js.
  *
  * Uses: Java 11+ [java.net.http.HttpClient], [kotlinx.serialization] for JSON.
  * Add to your build (e.g. build.gradle.kts):
