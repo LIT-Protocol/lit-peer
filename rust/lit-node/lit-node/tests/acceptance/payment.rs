@@ -1,4 +1,3 @@
-use lit_node_testnet::common::lit_actions::{INFINITE_LOOP_LIT_ACTION_CODE, INVALID_LIT_ACTION_CODE};
 use crate::common::web_user_tests::{
     assert_decrypted, generate_session_sigs_execute_lit_action, prepare_test_encryption_parameters,
     retrieve_decryption_key_session_sigs,
@@ -17,6 +16,9 @@ use lit_node_testnet::common::auth_sig::{
 };
 use lit_node_testnet::common::auth_sig::{
     get_session_sigs_and_node_set_for_pkp, get_session_sigs_for_auth,
+};
+use lit_node_testnet::common::lit_actions::{
+    INFINITE_LOOP_LIT_ACTION_CODE, INVALID_LIT_ACTION_CODE,
 };
 use lit_node_testnet::common::session_sigs::VALID_SESSION_SIG_LIT_ACTION_CODE;
 use lit_node_testnet::node_collection::{get_identity_pubkeys_from_node_set, get_network_pubkey};

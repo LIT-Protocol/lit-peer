@@ -21,23 +21,23 @@ export async function runTests(baseUrl = getBaseUrl()) {
   const client = createClient(baseUrl);
 
   console.log('1. Getting API key...');
-  const { api_key } = await client.getApiKey();
+  const { api_key, wallet_address } = await client.getApiKey();
   console.log('   api_key:', api_key.slice(0, 18) + '...');
+  console.log('   wallet_address:', wallet_address ?? '(none)');
 
   console.log('2. Minting PKP...');
   const { pkp_public_key } = await client.mintPkp(api_key);
   console.log('   pkp_public_key:', pkp_public_key);
 
   console.log('3. Signing "hello world" with PKP...');
-  const { endpoint_responses } = await client.signWithPkp({
+  const signResp = await client.signWithPkp({
     apiKey: api_key,
     pkpPublicKey: pkp_public_key,
     message: 'hello world',
   });
-  console.log('   endpoint_responses count:', endpoint_responses?.length ?? 0);
-  if (endpoint_responses?.length) {
-    console.log('   first response keys:', Object.keys(endpoint_responses[0]));
-  }
+  const { shares: signShares, curve_type } = signResp;
+  console.log('   shares count:', signShares?.length ?? 0);
+  console.log('   curve_type:', curve_type ?? '(none)');
 
   console.log('4. Executing lit action...');
   const litActionCode = `
@@ -46,26 +46,32 @@ export async function runTests(baseUrl = getBaseUrl()) {
     };
     go();
   `;
-  const { execute_resp } = await client.litAction({
+  const { responses: litResponses } = await client.litAction({
     apiKey: api_key,
     code: litActionCode,
     jsParams: { testParam: 'hello' },
   });
-  console.log('   execute_resp:', JSON.stringify(execute_resp, null, 2));
+  console.log('   responses count:', litResponses?.length ?? 0);
+  if (litResponses?.length) {
+    const first = litResponses[0];
+    console.log('   first response.response:', first?.response ?? '(none)');
+    console.log('   first response.logs (first 80 chars):', (first?.logs ?? '').slice(0, 80) + '...');
+  }
 
-  // console.log('5. Encrypt...');
-  // const plaintext = 'secret message for encryption test';
-  // const { ciphertext } = await client.encrypt({ apiKey: api_key, message: plaintext });
-  // console.log('   ciphertext (first 60 chars):', (ciphertext || '').slice(0, 60) + '...');
+  console.log('5. Encrypt...');
+  const plaintext = 'secret message for encryption test';
+  const { ciphertext, data_to_encrypt_hash } = await client.encrypt({ apiKey: api_key, message: plaintext });
+  console.log('   ciphertext (first 60 chars):', (ciphertext || '').slice(0, 60) + '...');
+  console.log('   data_to_encrypt_hash:', data_to_encrypt_hash?.slice(0, 24) + '...');
 
   console.log('6. Combine signature shares...');
-  const shares = (endpoint_responses || []).filter((s) => s && s.length > 0);
+  const shares = (signShares || []).filter((s) => s && s.length > 0);
   if (shares.length > 0) {
     const { signature, recovery_id } = await client.combineSignatureShares({ apiKey: api_key, shares });
     console.log('   signature (first 40 chars):', (signature || '').slice(0, 40) + '...');
     console.log('   recovery_id:', recovery_id);
   } else {
-    console.log('   (no signature shares in endpoint_responses; skipping combine)');
+    console.log('   (no signature shares; skipping combine)');
   }
 
   console.log('Done.');

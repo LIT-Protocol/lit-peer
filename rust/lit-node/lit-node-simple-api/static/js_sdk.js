@@ -2,34 +2,16 @@
  * Lit Node Simple API - JavaScript SDK
  *
  * Wrapper for the v1 API endpoints defined in lit-node-simple-api.
- * @see lit-node-simple-api/src/base/v1.rs
+ * Types match core/v1/models (request.rs, response.rs) and core/v1/endpoints.rs.
  */
+
+// --- Request types (match core/v1/models/request.rs) ---
 
 /**
  * @typedef {Object} SignWithPkpOptions
  * @property {string} apiKey - Hex-encoded API key (from getApiKey)
  * @property {string} pkpPublicKey - PKP public key
  * @property {string} message - Message to sign
- */
-
-/**
- * @typedef {Object} SignWithPkpResponse
- * @property {string[]} endpoint_responses - Array of hex-encoded signature share strings (for combineSignatureShares)
- */
-
-/**
- * @typedef {Object} GetApiKeyResponse
- * @property {string} api_key - Hex-encoded API key
- */
-
-/**
- * @typedef {Object} HandshakeResponse
- * @property {Array} responses - Handshake responses from validators
- */
-
-/**
- * @typedef {Object} MintPkpResponse
- * @property {string} pkp_public_key - Minted PKP public key
  */
 
 /**
@@ -40,19 +22,9 @@
  */
 
 /**
- * @typedef {Object} LitActionResponse
- * @property {*} execute_resp - Lit action execution response
- */
-
-/**
  * @typedef {Object} EncryptOptions
  * @property {string} apiKey - Hex-encoded API key (from getApiKey)
  * @property {string} message - Plaintext message to encrypt
- */
-
-/**
- * @typedef {Object} EncryptResponse
- * @property {string} ciphertext - Base64-encoded ciphertext
  */
 
 /**
@@ -64,14 +36,62 @@
  */
 
 /**
- * @typedef {Object} DecryptResponse
- * @property {string} derypted-text - Decrypted plaintext (API typo: key is "derypted-text")
- */
-
-/**
  * @typedef {Object} CombineSignatureSharesOptions
  * @property {string} apiKey - Hex-encoded API key (from getApiKey)
  * @property {string[]} shares - Array of hex-encoded signature share strings
+ */
+
+// --- Response types (match core/v1/models/response.rs) ---
+
+/**
+ * @typedef {Object} GetApiKeyResponse
+ * @property {string} api_key - Hex-encoded API key
+ * @property {string} wallet_address - Wallet address for the API key
+ */
+
+/**
+ * @typedef {Object} HandshakeResponse
+ * @property {string[]} responses - Handshake responses from validators
+ */
+
+/**
+ * @typedef {Object} MintPkpResponse
+ * @property {string} pkp_public_key - Minted PKP public key
+ */
+
+/**
+ * @typedef {Object} SignWithPkpResponse
+ * @property {string[]} shares - Array of hex-encoded signature share strings (for combineSignatureShares)
+ * @property {string} curve_type - Curve type used for signing (e.g. EcdsaK256Sha256)
+ */
+
+/**
+ * @typedef {Object} SignWithPkpResponseItem - Single signing result within a lit action
+ * @property {string[]} shares - Signature shares
+ * @property {string} curve_type - Curve type
+ */
+
+/**
+ * @typedef {Object} LitActionResponse - Single lit action execution result
+ * @property {SignWithPkpResponseItem[]} signatures - Signing results from the action
+ * @property {string} response - Action response payload
+ * @property {string} logs - Action logs
+ */
+
+/**
+ * @typedef {Object} LitActionResponses - Top-level lit_action endpoint response
+ * @property {LitActionResponse[]} responses - One entry per execution (e.g. per node)
+ */
+
+/**
+ * @typedef {Object} EncryptResponse
+ * @property {string} ciphertext - Base64-encoded ciphertext
+ * @property {string} data_to_encrypt_hash - Hex-encoded SHA-256 hash of the plaintext (use for decrypt)
+ */
+
+/**
+ * @typedef {Object} DecryptResponse
+ * @property {string} decrypted_text - Decrypted plaintext
  */
 
 /**
@@ -127,7 +147,7 @@ export class LitNodeSimpleApiClient {
    * POST /sign_with_pkp
    * Signs a message with the given PKP using the provided API key.
    * @param {SignWithPkpOptions} options
-   * @returns {Promise<SignWithPkpResponse>}
+   * @returns {Promise<SignWithPkpResponse>} { shares, curve_type }
    */
   async signWithPkp({ apiKey, pkpPublicKey, message }) {
     const body = {
@@ -148,7 +168,7 @@ export class LitNodeSimpleApiClient {
    * POST /lit_action
    * Executes a lit action with the given code and optional params.
    * @param {LitActionOptions} options
-   * @returns {Promise<LitActionResponse>}
+   * @returns {Promise<LitActionResponses>} { responses: LitActionResponse[] }
    */
   async litAction({ apiKey, code, jsParams }) {
     const body = {
@@ -169,7 +189,7 @@ export class LitNodeSimpleApiClient {
    * POST /encrypt
    * Encrypts a message (time-lock encryption) for the wallet identified by the API key.
    * @param {EncryptOptions} options
-   * @returns {Promise<EncryptResponse>}
+   * @returns {Promise<EncryptResponse>} { ciphertext, data_to_encrypt_hash }
    */
   async encrypt({ apiKey, message }) {
     const body = { api_key: apiKey, message };
@@ -186,7 +206,7 @@ export class LitNodeSimpleApiClient {
    * POST /decrypt
    * Decrypts ciphertext using decryption shares (from network/nodes).
    * @param {DecryptOptions} options
-   * @returns {Promise<DecryptResponse>}
+   * @returns {Promise<DecryptResponse>} { decrypted_text }
    */
   async decrypt({ apiKey, shares, ciphertext, dataToEncryptHash }) {
     const body = {
@@ -206,9 +226,9 @@ export class LitNodeSimpleApiClient {
 
   /**
    * POST /combine_signature_shares
-   * Combines signature shares (e.g. from sign_with_pkp endpoint_responses) into a single signature.
+   * Combines signature shares (e.g. from signWithPkp response.shares) into a single signature.
    * @param {CombineSignatureSharesOptions} options
-   * @returns {Promise<CombineSignatureSharesResponse>}
+   * @returns {Promise<CombineSignatureSharesResponse>} { signature, recovery_id }
    */
   async combineSignatureShares({ apiKey, shares }) {
     const body = { api_key: apiKey, shares };

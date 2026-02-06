@@ -1,4 +1,3 @@
-
 use crate::common::ecdsa::simple_single_sign_with_hd_key;
 use crate::common::web_user_tests::{
     assert_decrypted, prepare_test_encryption_parameters,
