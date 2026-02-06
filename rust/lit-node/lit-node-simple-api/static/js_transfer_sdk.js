@@ -2,7 +2,7 @@
  * Lit Node Simple API - JavaScript Transfer SDK
  *
  * Wrapper for transfer endpoints in abstractions/transfer/endpoints.rs.
- * Requires transfer routes to be mounted (e.g. get_balance, send).
+ * Requires transfer routes to be mounted (get_api_key_balance, get_pkp_balance, send).
  */
 
 /**
@@ -44,17 +44,32 @@ export class LitTransferApiClient {
   }
 
   /**
-   * GET /get_balance/<api_key>/<chain>
+   * GET /get_api_key_balance/<api_key>/<chain>
    * Gets balance for the wallet identified by the API key on the given chain.
    * @param {string} apiKey - Hex-encoded API key (from getApiKey)
    * @param {string} chain - Chain identifier (e.g. "Ethereum", "Solana")
    * @returns {Promise<GetBalanceResponse>} { address, balance, chain, symbol }
    */
-  async getBalance(apiKey, chain) {
+  async getApiKeyBalance(apiKey, chain) {
     const res = await fetch(
-      `${this.baseUrl}/get_balance/${encodeURIComponent(apiKey)}/${encodeURIComponent(chain)}`
+      `${this.baseUrl}/get_api_key_balance/${encodeURIComponent(apiKey)}/${encodeURIComponent(chain)}`
     );
-    if (!res.ok) throw new Error(`get_balance failed: ${res.status} ${res.statusText}`);
+    if (!res.ok) throw new Error(`get_api_key_balance failed: ${res.status} ${res.statusText}`);
+    return res.json();
+  }
+
+  /**
+   * GET /get_pkp_balance/<pkp_public_key>/<chain>
+   * Gets balance for the PKP (programmable key pair) address on the given chain.
+   * @param {string} pkpPublicKey - PKP public key
+   * @param {string} chain - Chain identifier (e.g. "Ethereum", "Solana")
+   * @returns {Promise<GetBalanceResponse>} { address, balance, chain, symbol }
+   */
+  async getPkpBalance(pkpPublicKey, chain) {
+    const res = await fetch(
+      `${this.baseUrl}/get_pkp_balance/${encodeURIComponent(pkpPublicKey)}/${encodeURIComponent(chain)}`
+    );
+    if (!res.ok) throw new Error(`get_pkp_balance failed: ${res.status} ${res.statusText}`);
     return res.json();
   }
 

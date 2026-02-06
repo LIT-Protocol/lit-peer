@@ -29,6 +29,13 @@
     .api-output:empty::before { content: 'Result will appear here.'; color: #888; }
     .api-output.error { background: #fef2f2; color: #991b1b; }
     .api-output.success { background: #f0fdf4; color: #166534; }
+    .accordion { border: 1px solid #e5e5e5; border-radius: 8px; margin-top: 0.75rem; overflow: hidden; }
+    .accordion-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; font: inherit; font-weight: 600; text-align: left; background: #fafafa; border: none; cursor: pointer; }
+    .accordion-header:hover { background: #f0f0f0; }
+    .accordion-icon { transition: transform 0.2s ease; font-size: 0.75rem; color: #666; }
+    .accordion.collapsed .accordion-icon { transform: rotate(-90deg); }
+    .accordion-body { padding: 1rem; border-top: 1px solid #e5e5e5; }
+    .accordion.collapsed .accordion-body { display: none; }
   </style>
 </head>
 <body>
@@ -39,8 +46,12 @@
   <button type="button" id="run">Run tests</button>
   <pre id="output"></pre>
 
-  <section class="section">
-    <h2>Sign with PKP</h2>
+  <section class="section accordion">
+    <button type="button" class="accordion-header" aria-expanded="true">
+      <span class="accordion-title">Sign with PKP</span>
+      <span class="accordion-icon" aria-hidden="true">▼</span>
+    </button>
+    <div class="accordion-body">
     <p>Provide API key, PKP public key, and message to sign.</p>
     <label for="signApiKey">API key</label>
     <input type="text" id="signApiKey" placeholder="Hex-encoded API key (from get_api_key)">
@@ -50,10 +61,15 @@
     <textarea id="signMessage" placeholder="Message to sign (e.g. hello world)">hello world</textarea>
     <button type="button" id="signBtn">Sign with PKP</button>
     <pre id="signOutput"></pre>
+    </div>
   </section>
 
-  <section class="section">
-    <h2>Lit action</h2>
+  <section class="section accordion">
+    <button type="button" class="accordion-header" aria-expanded="true">
+      <span class="accordion-title">Lit action</span>
+      <span class="accordion-icon" aria-hidden="true">▼</span>
+    </button>
+    <div class="accordion-body">
     <p>Execute a lit action with API key, JavaScript code, and optional JSON params.</p>
     <label for="litActionApiKey">API key</label>
     <input type="text" id="litActionApiKey" placeholder="Hex-encoded API key (from get_api_key)">
@@ -66,10 +82,15 @@ go();</textarea>
     <textarea id="litActionJsParams" placeholder='Optional JSON, e.g. {"key": "value"} or leave empty'>{"testParam": "hello"}</textarea>
     <button type="button" id="litActionBtn">Execute lit action</button>
     <pre id="litActionOutput"></pre>
+    </div>
   </section>
 
-  <section class="section">
-    <h2>Encrypt</h2>
+  <section class="section accordion">
+    <button type="button" class="accordion-header" aria-expanded="true">
+      <span class="accordion-title">Encrypt</span>
+      <span class="accordion-icon" aria-hidden="true">▼</span>
+    </button>
+    <div class="accordion-body">
     <p>Encrypt a message (time-lock) for the wallet identified by the API key.</p>
     <label for="encryptApiKey">API key</label>
     <input type="text" id="encryptApiKey" placeholder="Hex-encoded API key (from get_api_key)">
@@ -77,10 +98,15 @@ go();</textarea>
     <textarea id="encryptMessage" placeholder="Plaintext to encrypt">secret message</textarea>
     <button type="button" id="encryptBtn">Encrypt</button>
     <pre id="encryptOutput" class="api-output"></pre>
+    </div>
   </section>
 
-  <section class="section">
-    <h2>Decrypt</h2>
+  <section class="section accordion">
+    <button type="button" class="accordion-header" aria-expanded="true">
+      <span class="accordion-title">Decrypt</span>
+      <span class="accordion-icon" aria-hidden="true">▼</span>
+    </button>
+    <div class="accordion-body">
     <p>Decrypt ciphertext using decryption shares (from network/nodes). data_to_encrypt_hash is the hex SHA-256 of the original plaintext.</p>
     <label for="decryptApiKey">API key</label>
     <input type="text" id="decryptApiKey" placeholder="Hex-encoded API key">
@@ -92,10 +118,15 @@ go();</textarea>
     <input type="text" id="decryptDataHash" placeholder="Hex hash">
     <button type="button" id="decryptBtn">Decrypt</button>
     <pre id="decryptOutput" class="api-output"></pre>
+    </div>
   </section>
 
-  <section class="section">
-    <h2>Combine signature shares</h2>
+  <section class="section accordion">
+    <button type="button" class="accordion-header" aria-expanded="true">
+      <span class="accordion-title">Combine signature shares</span>
+      <span class="accordion-icon" aria-hidden="true">▼</span>
+    </button>
+    <div class="accordion-body">
     <p>Combine signature shares (e.g. from Sign with PKP response.shares) into a single signature.</p>
     <label for="combineApiKey">API key</label>
     <input type="text" id="combineApiKey" placeholder="Hex-encoded API key">
@@ -103,21 +134,47 @@ go();</textarea>
     <textarea id="combineShares" placeholder='Paste response.shares from signWithPkp (array of objects)'>[]</textarea>
     <button type="button" id="combineBtn">Combine signature shares</button>
     <pre id="combineOutput" class="api-output"></pre>
+    </div>
   </section>
 
-  <section class="section">
-    <h2>Transfer: Get balance</h2>
+  <section class="section accordion">
+    <button type="button" class="accordion-header" aria-expanded="true">
+      <span class="accordion-title">Transfer: Get API key balance</span>
+      <span class="accordion-icon" aria-hidden="true">▼</span>
+    </button>
+    <div class="accordion-body">
     <p>Get balance for the wallet (from API key) on a chain. Uses js_transfer_sdk.js; requires transfer routes mounted.</p>
     <label for="getBalanceApiKey">API key</label>
     <input type="text" id="getBalanceApiKey" placeholder="Hex-encoded API key (from get_api_key)">
     <label for="getBalanceChain">Chain</label>
     <input type="text" id="getBalanceChain" placeholder="e.g. Ethereum, Solana" value="Ethereum">
-    <button type="button" id="getBalanceBtn">Get balance</button>
+    <button type="button" id="getBalanceBtn">Get API key balance</button>
     <pre id="getBalanceOutput" class="api-output"></pre>
+    </div>
   </section>
 
-  <section class="section">
-    <h2>Transfer: Send</h2>
+  <section class="section accordion">
+    <button type="button" class="accordion-header" aria-expanded="true">
+      <span class="accordion-title">Transfer: Get PKP balance</span>
+      <span class="accordion-icon" aria-hidden="true">▼</span>
+    </button>
+    <div class="accordion-body">
+    <p>Get balance for a PKP (programmable key pair) address on a chain. Uses js_transfer_sdk.js.</p>
+    <label for="getPkpBalancePkpKey">PKP public key</label>
+    <input type="text" id="getPkpBalancePkpKey" placeholder="PKP public key (e.g. from mint_pkp)">
+    <label for="getPkpBalanceChain">Chain</label>
+    <input type="text" id="getPkpBalanceChain" placeholder="e.g. Ethereum, Solana" value="Ethereum">
+    <button type="button" id="getPkpBalanceBtn">Get PKP balance</button>
+    <pre id="getPkpBalanceOutput" class="api-output"></pre>
+    </div>
+  </section>
+
+  <section class="section accordion">
+    <button type="button" class="accordion-header" aria-expanded="true">
+      <span class="accordion-title">Transfer: Send</span>
+      <span class="accordion-icon" aria-hidden="true">▼</span>
+    </button>
+    <div class="accordion-body">
     <p>Send funds to a destination address on a chain (PKP-signed). Uses js_transfer_sdk.js; requires transfer routes mounted.</p>
     <label for="sendApiKey">API key</label>
     <input type="text" id="sendApiKey" placeholder="Hex-encoded API key">
@@ -131,9 +188,19 @@ go();</textarea>
     <input type="text" id="sendAmount" placeholder="e.g. 1000000000000000000" value="0">
     <button type="button" id="sendBtn">Send</button>
     <pre id="sendOutput" class="api-output"></pre>
+    </div>
   </section>
 
   <script>
+    // Accordion: toggle collapse on header click
+    document.querySelectorAll('.accordion').forEach((accordion) => {
+      const header = accordion.querySelector('.accordion-header');
+      header.addEventListener('click', () => {
+        const isCollapsed = accordion.classList.toggle('collapsed');
+        header.setAttribute('aria-expanded', !isCollapsed);
+      });
+    });
+
     const output = document.getElementById('output');
     const baseUrlInput = document.getElementById('baseUrl');
     const runBtn = document.getElementById('run');
@@ -395,7 +462,7 @@ go();</textarea>
         const { createTransferClient } = await import('./js_transfer_sdk.js');
         const baseUrl = baseUrlInput.value.trim() || 'http://localhost:8000';
         const client = createTransferClient(baseUrl);
-        const result = await client.getBalance(apiKey, chain);
+        const result = await client.getApiKeyBalance(apiKey, chain);
         getBalanceOutput.textContent = JSON.stringify(result, null, 2);
         getBalanceOutput.className = 'api-output success';
       } catch (err) {
@@ -403,6 +470,38 @@ go();</textarea>
         getBalanceOutput.className = 'api-output error';
       } finally {
         getBalanceBtn.disabled = false;
+      }
+    });
+
+    // Transfer: Get PKP balance (js_transfer_sdk.js)
+    const getPkpBalancePkpKeyInput = document.getElementById('getPkpBalancePkpKey');
+    const getPkpBalanceChainInput = document.getElementById('getPkpBalanceChain');
+    const getPkpBalanceBtn = document.getElementById('getPkpBalanceBtn');
+    const getPkpBalanceOutput = document.getElementById('getPkpBalanceOutput');
+
+    getPkpBalanceBtn.addEventListener('click', async () => {
+      const pkpPublicKey = getPkpBalancePkpKeyInput.value.trim();
+      const chain = getPkpBalanceChainInput.value.trim();
+      if (!pkpPublicKey || !chain) {
+        getPkpBalanceOutput.textContent = 'Please fill in PKP public key and Chain.';
+        getPkpBalanceOutput.className = 'api-output error';
+        return;
+      }
+      getPkpBalanceOutput.textContent = 'Loading…';
+      getPkpBalanceOutput.className = 'api-output';
+      getPkpBalanceBtn.disabled = true;
+      try {
+        const { createTransferClient } = await import('./js_transfer_sdk.js');
+        const baseUrl = baseUrlInput.value.trim() || 'http://localhost:8000';
+        const client = createTransferClient(baseUrl);
+        const result = await client.getPkpBalance(pkpPublicKey, chain);
+        getPkpBalanceOutput.textContent = JSON.stringify(result, null, 2);
+        getPkpBalanceOutput.className = 'api-output success';
+      } catch (err) {
+        getPkpBalanceOutput.textContent = 'Error: ' + (err && err.message ? err.message : String(err));
+        getPkpBalanceOutput.className = 'api-output error';
+      } finally {
+        getPkpBalanceBtn.disabled = false;
       }
     });
 
