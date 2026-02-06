@@ -65,6 +65,7 @@ pub async fn send(testnet: &Arc<Testnet>, validator_collection: &Arc<ValidatorCo
         api_key: request.api_key.clone(),
         message: encode_tx_string,
         pkp_public_key: request.pkp_public_key.clone(),
+        signing_scheme: chain.info().signing_scheme.to_string(),
     })).await.unwrap();
 
 

@@ -5,8 +5,8 @@ pub struct SignWithPKPRequest {
     pub api_key: String,
     pub pkp_public_key: String,
     pub message: String,
+    pub signing_scheme: String,
 }
-
 
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

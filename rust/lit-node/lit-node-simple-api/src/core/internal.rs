@@ -126,12 +126,13 @@ pub async fn sign_with_pkp(
     )
     .await;
 
+    info!("endpoint_responses: {:?}", endpoint_responses);
     let shares = endpoint_responses
         .iter()
         .filter(|response| response.data.is_some())
         .map(|response| response.data.clone().unwrap())
         .collect::<Vec<_>>();
-    info!("endpoint_responses: {:?}", shares);
+    info!("shares: {:?}", shares);
 
     Ok(Json(SignWithPkpResponse {
         shares,

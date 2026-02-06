@@ -1,5 +1,6 @@
 use rocket::http::Status;
 use serde::{Deserialize, Serialize};
+use lit_node_core::SigningScheme;
 /// EVM chain RPC and wallet info.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 
@@ -9,7 +10,7 @@ pub struct ChainInfo {
     pub is_evm: bool,
     pub token: &'static str,
     pub rpc_url: &'static str,
-    pub signing_curve: &'static str,
+    pub signing_scheme: SigningScheme,
     pub derivation_path: &'static str,
 }
 
@@ -155,7 +156,7 @@ impl Chain {
                 is_evm: true,
                 token: "LitKey",
                 rpc_url: "https://yellowstone-rpc.litprotocol.com",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Ethereum => ChainInfo {
@@ -164,7 +165,7 @@ impl Chain {
                 is_evm: true,
                 token: "ETH",
                 rpc_url: "https://eth.llamarpc.com",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::BnbSmartChain => ChainInfo {
@@ -173,7 +174,7 @@ impl Chain {
                 is_evm: true,
                 token: "BNB",
                 rpc_url: "https://bsc-dataseed.binance.org",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::ArbitrumOne => ChainInfo {
@@ -182,7 +183,7 @@ impl Chain {
                 is_evm: true,
                 token: "ETH",
                 rpc_url: "https://arb1.arbitrum.io",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Base => ChainInfo {
@@ -191,7 +192,7 @@ impl Chain {
                 is_evm: true,
                 token: "ETH",
                 rpc_url: "https://mainnet.base.org",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::AvalancheCChain => ChainInfo {
@@ -200,7 +201,7 @@ impl Chain {
                 is_evm: true,
                 token: "AVAX",
                 rpc_url: "https://api.avax.network",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::PolygonPos => ChainInfo {
@@ -209,7 +210,7 @@ impl Chain {
                 is_evm: true,
                 token: "POL",
                 rpc_url: "https://polygon-rpc.com",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Optimism => ChainInfo {
@@ -218,7 +219,7 @@ impl Chain {
                 is_evm: true,
                 token: "ETH",
                 rpc_url: "https://mainnet.optimism.io",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Blast => ChainInfo {
@@ -227,7 +228,7 @@ impl Chain {
                 is_evm: true,
                 token: "ETH",
                 rpc_url: "https://rpc.blast.io",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Scroll => ChainInfo {
@@ -236,7 +237,7 @@ impl Chain {
                 is_evm: true,
                 token: "ETH",
                 rpc_url: "https://rpc.scroll.io",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Mantle => ChainInfo {
@@ -245,7 +246,7 @@ impl Chain {
                 is_evm: true,
                 token: "MNT",
                 rpc_url: "https://rpc.mantle.xyz",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Linea => ChainInfo {
@@ -254,7 +255,7 @@ impl Chain {
                 is_evm: true,
                 token: "ETH",
                 rpc_url: "https://rpc.linea.build",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Cronos => ChainInfo {
@@ -263,7 +264,7 @@ impl Chain {
                 is_evm: true,
                 token: "CRO",
                 rpc_url: "https://evm.cronos.org",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Mode => ChainInfo {
@@ -272,7 +273,7 @@ impl Chain {
                 is_evm: true,
                 token: "ETH",
                 rpc_url: "https://mainnet.mode.network",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::ZkSyncEra => ChainInfo {
@@ -281,7 +282,7 @@ impl Chain {
                 is_evm: true,
                 token: "ETH",
                 rpc_url: "https://mainnet.era.zksync.io",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::PulseChain => ChainInfo {
@@ -290,7 +291,7 @@ impl Chain {
                 is_evm: true,
                 token: "PLS",
                 rpc_url: "https://rpc.pulsechain.com",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Fantom => ChainInfo {
@@ -299,7 +300,7 @@ impl Chain {
                 is_evm: true,
                 token: "FTM",
                 rpc_url: "https://rpc.ftm.tools",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::MantaPacific => ChainInfo {
@@ -308,7 +309,7 @@ impl Chain {
                 is_evm: true,
                 token: "ETH",
                 rpc_url: "https://pacific-rpc.manta.network",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Celo => ChainInfo {
@@ -317,7 +318,7 @@ impl Chain {
                 is_evm: true,
                 token: "CELO",
                 rpc_url: "https://forno.celo.org",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/52734'/0'/0/0",
             },
             Self::Kava => ChainInfo {
@@ -326,7 +327,7 @@ impl Chain {
                 is_evm: true,
                 token: "KAVA",
                 rpc_url: "https://evm.kava.io",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/459'/0'/0/0",
             },
             Self::Gnosis => ChainInfo {
@@ -335,7 +336,7 @@ impl Chain {
                 is_evm: true,
                 token: "xDAI",
                 rpc_url: "https://rpc.gnosischain.com",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/700'/0'/0/0",
             },
             Self::Metis => ChainInfo {
@@ -344,7 +345,7 @@ impl Chain {
                 is_evm: true,
                 token: "METIS",
                 rpc_url: "https://andromeda.metis.io",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Astar => ChainInfo {
@@ -353,7 +354,7 @@ impl Chain {
                 is_evm: true,
                 token: "ASTR",
                 rpc_url: "https://evm.astar.network",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Moonbeam => ChainInfo {
@@ -362,7 +363,7 @@ impl Chain {
                 is_evm: true,
                 token: "GLMR",
                 rpc_url: "https://rpc.api.moonbeam.network",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/1284'/0'/0/0",
             },
             Self::Core => ChainInfo {
@@ -371,7 +372,7 @@ impl Chain {
                 is_evm: true,
                 token: "CORE",
                 rpc_url: "https://rpc.coredao.org",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Zora => ChainInfo {
@@ -380,7 +381,7 @@ impl Chain {
                 is_evm: true,
                 token: "ETH",
                 rpc_url: "https://rpc.zora.energy",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Klaytn => ChainInfo {
@@ -389,7 +390,7 @@ impl Chain {
                 is_evm: true,
                 token: "KLAY",
                 rpc_url: "https://public-node-api.klaytnapi.com",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/8217'/0'/0/0",
             },
             Self::Canto => ChainInfo {
@@ -398,7 +399,7 @@ impl Chain {
                 is_evm: true,
                 token: "CANTO",
                 rpc_url: "https://canto.slingshot.observer",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Moonriver => ChainInfo {
@@ -407,7 +408,7 @@ impl Chain {
                 is_evm: true,
                 token: "MOVR",
                 rpc_url: "https://rpc.api.moonriver.moonbeam.network",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/1285'/0'/0/0",
             },
             Self::Taiko => ChainInfo {
@@ -416,7 +417,7 @@ impl Chain {
                 is_evm: true,
                 token: "ETH",
                 rpc_url: "https://rpc.mainnet.taiko.xyz",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Flare => ChainInfo {
@@ -425,7 +426,7 @@ impl Chain {
                 is_evm: true,
                 token: "FLR",
                 rpc_url: "https://flare-api.flare.network",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::ConfluxESpace => ChainInfo {
@@ -434,7 +435,7 @@ impl Chain {
                 is_evm: true,
                 token: "CFX",
                 rpc_url: "https://evm.confluxrpc.com",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/503'/0'/0/0",
             },
             Self::Aurora => ChainInfo {
@@ -443,7 +444,7 @@ impl Chain {
                 is_evm: true,
                 token: "ETH",
                 rpc_url: "https://mainnet.aurora.dev",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Telos => ChainInfo {
@@ -452,7 +453,7 @@ impl Chain {
                 is_evm: true,
                 token: "TLOS",
                 rpc_url: "https://mainnet.telos.net",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::BobaNetwork => ChainInfo {
@@ -461,7 +462,7 @@ impl Chain {
                 is_evm: true,
                 token: "ETH",
                 rpc_url: "https://mainnet.boba.network",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Heco => ChainInfo {
@@ -470,7 +471,7 @@ impl Chain {
                 is_evm: true,
                 token: "HT",
                 rpc_url: "https://http-mainnet.hecochain.com",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::OkxChain => ChainInfo {
@@ -479,7 +480,7 @@ impl Chain {
                 is_evm: true,
                 token: "OKT",
                 rpc_url: "https://exchainrpc.okex.org",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::ZkFair => ChainInfo {
@@ -488,7 +489,7 @@ impl Chain {
                 is_evm: true,
                 token: "ZKF",
                 rpc_url: "https://rpc.zkfair.io",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Wemix30 => ChainInfo {
@@ -497,7 +498,7 @@ impl Chain {
                 is_evm: true,
                 token: "WEMIX",
                 rpc_url: "https://api.wemix.com",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Kcc => ChainInfo {
@@ -506,7 +507,7 @@ impl Chain {
                 is_evm: true,
                 token: "KCS",
                 rpc_url: "https://rpc-mainnet.kcc.network",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::IoTeX => ChainInfo {
@@ -515,7 +516,7 @@ impl Chain {
                 is_evm: true,
                 token: "IOTX",
                 rpc_url: "https://babel-api.mainnet.iotex.io",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/304'/0'/0/0",
             },
             Self::Evmos => ChainInfo {
@@ -524,7 +525,7 @@ impl Chain {
                 is_evm: true,
                 token: "EVMOS",
                 rpc_url: "https://eth.bd.evmos.org:8545",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Meter => ChainInfo {
@@ -533,7 +534,7 @@ impl Chain {
                 is_evm: true,
                 token: "MTRG",
                 rpc_url: "https://rpc.meter.io",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::MilkomedaC1 => ChainInfo {
@@ -542,7 +543,7 @@ impl Chain {
                 is_evm: true,
                 token: "ADA",
                 rpc_url: "https://rpc-mainnet-cardano-evm.milkomeda.com",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Syscoin => ChainInfo {
@@ -551,7 +552,7 @@ impl Chain {
                 is_evm: true,
                 token: "SYS",
                 rpc_url: "https://rpc.syscoin.org",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/57'/0'/0/0",
             },
             Self::Dogechain => ChainInfo {
@@ -560,7 +561,7 @@ impl Chain {
                 is_evm: true,
                 token: "DC",
                 rpc_url: "https://rpc.dogechain.dog",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Fuse => ChainInfo {
@@ -569,7 +570,7 @@ impl Chain {
                 is_evm: true,
                 token: "FUSE",
                 rpc_url: "https://rpc.fuse.io",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Shibarium => ChainInfo {
@@ -578,7 +579,7 @@ impl Chain {
                 is_evm: true,
                 token: "BONE",
                 rpc_url: "https://www.shibariumscan.com",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::ThunderCore => ChainInfo {
@@ -587,7 +588,7 @@ impl Chain {
                 is_evm: true,
                 token: "TT",
                 rpc_url: "https://mainnet-rpc.thundercore.com",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::ReiNetwork => ChainInfo {
@@ -596,7 +597,7 @@ impl Chain {
                 is_evm: true,
                 token: "REI",
                 rpc_url: "https://rpc.rei.network",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::XLayer => ChainInfo {
@@ -605,7 +606,7 @@ impl Chain {
                 is_evm: true,
                 token: "OKB",
                 rpc_url: "https://xlayerrpc.okx.com",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             // Non-EVM chains (is_evm: false)
@@ -615,7 +616,7 @@ impl Chain {
                 is_evm: false,
                 token: "TRX",
                 rpc_url: "https://api.trongrid.io",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/195'/0'/0/0",
             },
             Self::Solana => ChainInfo {
@@ -624,7 +625,7 @@ impl Chain {
                 is_evm: false,
                 token: "SOL",
                 rpc_url: "https://api.mainnet-beta.solana.com",
-                signing_curve: "Ed25519",
+                signing_scheme: SigningScheme::SchnorrEd25519Sha512,
                 derivation_path: "m/44'/501'/0'/0'",
             },
             Self::Sui => ChainInfo {
@@ -633,7 +634,7 @@ impl Chain {
                 is_evm: false,
                 token: "SUI",
                 rpc_url: "https://fullnode.mainnet.sui.io:443",
-                signing_curve: "Ed25519",
+                signing_scheme: SigningScheme::SchnorrEd25519Sha512,
                 derivation_path: "m/44'/784'/0'/0'/0'",
             },
             Self::Bitcoin => ChainInfo {
@@ -642,7 +643,7 @@ impl Chain {
                 is_evm: false,
                 token: "BTC",
                 rpc_url: "https://blockstream.info",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/84'/0'/0'/0/0",
             },
             Self::Aptos => ChainInfo {
@@ -651,7 +652,7 @@ impl Chain {
                 is_evm: false,
                 token: "APT",
                 rpc_url: "https://fullnode.mainnet.aptoslabs.com",
-                signing_curve: "Ed25519",
+                signing_scheme: SigningScheme::SchnorrEd25519Sha512,
                 derivation_path: "m/44'/637'/0'/0'/0'",
             },
             Self::Near => ChainInfo {
@@ -660,7 +661,7 @@ impl Chain {
                 is_evm: false,
                 token: "NEAR",
                 rpc_url: "https://rpc.mainnet.near.org",
-                signing_curve: "Ed25519",
+                signing_scheme: SigningScheme::SchnorrEd25519Sha512,
                 derivation_path: "m/44'/397'/0'",
             },
             Self::Cardano => ChainInfo {
@@ -669,7 +670,7 @@ impl Chain {
                 is_evm: false,
                 token: "ADA",
                 rpc_url: "https://cardano-mainnet.blockfrost.io",
-                signing_curve: "Ed25519",
+                signing_scheme: SigningScheme::SchnorrEd25519Sha512,
                 derivation_path: "m/1852'/1815'/0'",
             },
             Self::Stacks => ChainInfo {
@@ -678,7 +679,7 @@ impl Chain {
                 is_evm: false,
                 token: "STX",
                 rpc_url: "https://stacks-node-api.mainnet.stacks.co",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/5757'/0'/0/0",
             },
             Self::CosmosHub => ChainInfo {
@@ -687,7 +688,7 @@ impl Chain {
                 is_evm: false,
                 token: "ATOM",
                 rpc_url: "https://rpc.cosmos.network",
-                signing_curve: "secp256k1",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/118'/0'/0/0",
             },
             Self::Stellar => ChainInfo {
@@ -696,7 +697,7 @@ impl Chain {
                 is_evm: false,
                 token: "XLM",
                 rpc_url: "https://horizon.stellar.org",
-                signing_curve: "Ed25519",
+                signing_scheme: SigningScheme::SchnorrEd25519Sha512,
                 derivation_path: "m/44'/148'/0'",
             },
         }
