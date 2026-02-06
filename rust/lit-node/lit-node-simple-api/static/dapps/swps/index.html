@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Swps – Lit PKP Wallet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <span class="logo">Swps</span>
+      <div class="api-url-wrap">
+        <label for="baseUrl">API</label>
+        <input type="text" id="baseUrl" class="api-url" value="http://localhost:8000" placeholder="http://localhost:8000">
+      </div>
+    </header>
+
+    <nav class="nav">
+      <a href="#overview" data-page="overview" class="active">Overview</a>
+      <a href="#transfer" data-page="transfer">Transfer</a>
+      <a href="#swap" data-page="swap">Swap</a>
+      <a href="#history" data-page="history">History</a>
+    </nav>
+
+    <!-- Page 1: PKP Account Overview -->
+    <section id="page-overview" class="page active">
+      <h1 class="page-title">PKP Account Overview</h1>
+      <p class="page-desc">Create or use an existing API key and PKP to view balances.</p>
+      <div id="overview-status" class="status info" style="display: none;"></div>
+      <div class="card">
+        <div class="card-title">Account</div>
+        <div id="overview-actions">
+          <button type="button" id="btn-create-account" class="btn btn-primary btn-block">Create account (API key + PKP)</button>
+          <div class="form-group" style="margin-top: 1rem;">
+            <label for="overview-api-key">Or use existing API key</label>
+            <input type="text" id="overview-api-key" class="input" placeholder="Hex API key">
+          </div>
+          <div class="form-group">
+            <label for="overview-pkp-key">PKP public key</label>
+            <input type="text" id="overview-pkp-key" class="input" placeholder="PKP public key">
+          </div>
+          <button type="button" id="btn-load-account" class="btn btn-secondary btn-block">Load account</button>
+        </div>
+        <div id="overview-account" style="display: none;">
+          <div class="overview-grid">
+            <div class="overview-row">
+              <span class="label">Wallet address</span>
+              <span id="overview-wallet" class="value mono">–</span>
+            </div>
+            <div class="overview-row">
+              <span class="label">PKP public key</span>
+              <span id="overview-pkp" class="value mono">–</span>
+            </div>
+          </div>
+          <button type="button" id="btn-refresh-balance" class="btn btn-secondary btn-block" style="margin-top: 1rem;">Refresh balances</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Balances</div>
+        <div id="overview-balances">
+          <p class="history-empty">Load an account and choose a chain to see balances.</p>
+        </div>
+        <p class="history-empty" id="overview-balance-legend" style="display: none; margin-top: 0.5rem; font-size: 0.8rem;">Wallet balance is always LitKey on Yellowstone. Chain selector applies to PKP balance only.</p>
+        <div class="form-group" id="overview-chain-wrap" style="display: none;">
+          <label for="overview-chain">Chain (PKP balance)</label>
+          <select id="overview-chain" class="input">
+            <option value="">Loading chains…</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 2: Transfer -->
+    <section id="page-transfer" class="page">
+      <h1 class="page-title">Transfer</h1>
+      <p class="page-desc">Send funds to an address using your PKP.</p>
+      <div id="transfer-status" class="status" style="display: none;"></div>
+      <div class="card">
+        <form id="transfer-form" class="transfer-form">
+          <div class="form-group">
+            <label for="transfer-chain">Chain</label>
+            <select id="transfer-chain" class="input" required>
+              <option value="">Loading chains…</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="transfer-destination">Destination address</label>
+            <input type="text" id="transfer-destination" class="input" placeholder="0x... or address" required>
+          </div>
+          <div class="form-group">
+            <label for="transfer-amount">Amount (wei/smallest unit)</label>
+            <input type="text" id="transfer-amount" class="input" placeholder="e.g. 1000000000000000000" value="0" required>
+          </div>
+          <button type="submit" id="btn-transfer" class="btn btn-primary btn-block">Send</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Page 3: Swap (NEAR Intents style) -->
+    <section id="page-swap" class="page">
+      <h1 class="page-title">Swap</h1>
+      <p class="page-desc">Swap between two tokens. Intent-based flow (connect to swap API when available).</p>
+      <div id="swap-status" class="status" style="display: none;"></div>
+      <div class="swap-box">
+        <div class="swap-row">
+          <div class="swap-input-wrap">
+            <input type="text" id="swap-amount-from" class="input" placeholder="0.0" value="">
+          </div>
+          <select id="swap-token-from" class="swap-token">
+            <option value="ETH">ETH</option>
+            <option value="USDC">USDC</option>
+            <option value="USDT">USDT</option>
+            <option value="NEAR">NEAR</option>
+          </select>
+        </div>
+        <button type="button" id="swap-flip" class="swap-flip" aria-label="Flip tokens">⇅</button>
+        <div class="swap-row">
+          <div class="swap-input-wrap">
+            <input type="text" id="swap-amount-to" class="input" placeholder="0.0" value="" readonly>
+          </div>
+          <select id="swap-token-to" class="swap-token">
+            <option value="USDC">USDC</option>
+            <option value="ETH">ETH</option>
+            <option value="USDT">USDT</option>
+            <option value="NEAR">NEAR</option>
+          </select>
+        </div>
+        <div class="swap-btn-wrap">
+          <button type="button" id="btn-swap" class="btn btn-primary btn-block">Swap</button>
+        </div>
+      </div>
+      <p class="page-desc" style="margin-top: 1rem; font-size: 0.8rem;">Swap execution requires an intent/swap API integration. Use Transfer for direct sends.</p>
+    </section>
+
+    <!-- Page 4: History -->
+    <section id="page-history" class="page">
+      <h1 class="page-title">Transaction History</h1>
+      <p class="page-desc">Recent transfers for the selected address (in-session and explorer link).</p>
+      <div class="card">
+        <div class="form-group">
+          <label for="history-address">Address</label>
+          <input type="text" id="history-address" class="input" placeholder="Wallet or PKP-derived address">
+        </div>
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+          <button type="button" id="btn-history-use-wallet" class="btn btn-secondary">Use wallet address</button>
+          <button type="button" id="btn-load-history" class="btn btn-primary">Load history</button>
+        </div>
+      </div>
+      <div id="history-list-wrap">
+        <ul id="history-list" class="history-list"></ul>
+        <p id="history-empty" class="history-empty">No in-session transactions. Load an address to see stored history or use a block explorer.</p>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

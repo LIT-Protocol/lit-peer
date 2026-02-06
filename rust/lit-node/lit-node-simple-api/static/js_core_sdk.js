@@ -3,6 +3,7 @@
  *
  * Wrapper for the v1 API endpoints defined in lit-node-simple-api.
  * Types match core/v1/models (request.rs, response.rs) and core/v1/endpoints.rs.
+ * Routes are mounted at /core/v1/ (see src/main.rs).
  */
 
 // --- Request types (match core/v1/models/request.rs) ---
@@ -123,11 +124,12 @@ export class LitNodeSimpleApiClient {
    * @param {string} [options.baseUrl='http://localhost:8000'] - Base URL of the API
    */
   constructor({ baseUrl = 'http://localhost:8000' } = {}) {
-    this.baseUrl = baseUrl.replace(/\/$/, '');
+    const base = baseUrl.replace(/\/$/, '');
+    this.baseUrl = `${base}/core/v1`;
   }
 
   /**
-   * GET /get_api_key
+   * GET /core/v1/get_api_key
    * Generates and returns a new API key (hex-encoded wallet secret).
    * @returns {Promise<GetApiKeyResponse>}
    */
@@ -138,7 +140,7 @@ export class LitNodeSimpleApiClient {
   }
 
   /**
-   * GET /handshake
+   * GET /core/v1/handshake
    * Performs handshake with validators and returns their responses.
    * @returns {Promise<HandshakeResponse>}
    */
@@ -149,7 +151,7 @@ export class LitNodeSimpleApiClient {
   }
 
   /**
-   * GET /mint_pkp/<api_key>
+   * GET /core/v1/mint_pkp/<api_key>
    * Mints a new PKP for the wallet identified by the API key.
    * @param {string} apiKey - Hex-encoded API key (from getApiKey)
    * @returns {Promise<MintPkpResponse>}
@@ -161,7 +163,7 @@ export class LitNodeSimpleApiClient {
   }
 
   /**
-   * POST /sign_with_pkp
+   * POST /core/v1/sign_with_pkp
    * Signs a message with the given PKP using the provided API key.
    * Uses EcdsaK256Sha256 signing scheme by default.
    * @param {SignWithPkpOptions} options
@@ -184,7 +186,7 @@ export class LitNodeSimpleApiClient {
   }
 
   /**
-   * POST /lit_action
+   * POST /core/v1/lit_action
    * Executes a lit action with the given code and optional params.
    * @param {LitActionOptions} options
    * @returns {Promise<LitActionResponses>} { responses: LitActionResponse[] }
@@ -205,7 +207,7 @@ export class LitNodeSimpleApiClient {
   }
 
   /**
-   * POST /encrypt
+   * POST /core/v1/encrypt
    * Encrypts a message (time-lock encryption) for the wallet identified by the API key.
    * @param {EncryptOptions} options
    * @returns {Promise<EncryptResponse>} { ciphertext, data_to_encrypt_hash }
@@ -222,7 +224,7 @@ export class LitNodeSimpleApiClient {
   }
 
   /**
-   * POST /decrypt
+   * POST /core/v1/decrypt
    * Decrypts ciphertext using decryption shares (from network/nodes).
    * @param {DecryptOptions} options
    * @returns {Promise<DecryptResponse>} { decrypted_text }
@@ -244,7 +246,7 @@ export class LitNodeSimpleApiClient {
   }
 
   /**
-   * POST /combine_signature_shares
+   * POST /core/v1/combine_signature_shares
    * Combines signature shares (pass signWithPkp response.shares as-is).
    * @param {CombineSignatureSharesOptions} options
    * @returns {Promise<CombineSignatureSharesResponse>} { signature, signed_data, verifying_key, r, s, v, recovery_id }

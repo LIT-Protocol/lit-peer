@@ -2,7 +2,7 @@
  * Lit Node Simple API - JavaScript Transfer SDK
  *
  * Wrapper for transfer endpoints in abstractions/transfer/endpoints.rs.
- * Requires transfer routes to be mounted (get_api_key_balance, get_pkp_balance, send).
+ * Routes are mounted at /transfer/v1/ (see src/main.rs).
  */
 
 /**
@@ -34,17 +34,35 @@
  * @property {string} destination_address - Destination address
  */
 
+/**
+ * @typedef {Object} GetChainsOptions
+ * @property {boolean} [isEvm=true] - If true return EVM chains; if false return non-EVM chains
+ * @property {boolean} [isTestnet=false] - If true (and isEvm) return testnet EVM chains only; ignored when isEvm is false
+ */
+
+/**
+ * @typedef {Object} ChainInfoItem
+ * @property {string} name - Chain display name
+ * @property {string} token - Asset/token symbol
+ */
+
+/**
+ * @typedef {Object} GetChainsResponse
+ * @property {ChainInfoItem[]} chains - List of supported chains with name and token
+ */
+
 export class LitTransferApiClient {
   /**
    * @param {Object} options
    * @param {string} [options.baseUrl='http://localhost:8000'] - Base URL of the API
    */
   constructor({ baseUrl = 'http://localhost:8000' } = {}) {
-    this.baseUrl = baseUrl.replace(/\/$/, '');
+    const base = baseUrl.replace(/\/$/, '');
+    this.baseUrl = `${base}/transfer/v1`;
   }
 
   /**
-   * GET /get_api_key_balance/<api_key>/<chain>
+   * GET /transfer/v1/get_api_key_balance/<api_key>/<chain>
    * Gets balance for the wallet identified by the API key on the given chain.
    * @param {string} apiKey - Hex-encoded API key (from getApiKey)
    * @param {string} chain - Chain identifier (e.g. "Ethereum", "Solana")
@@ -59,7 +77,7 @@ export class LitTransferApiClient {
   }
 
   /**
-   * GET /get_pkp_balance/<pkp_public_key>/<chain>
+   * GET /transfer/v1/get_pkp_balance/<pkp_public_key>/<chain>
    * Gets balance for the PKP (programmable key pair) address on the given chain.
    * @param {string} pkpPublicKey - PKP public key
    * @param {string} chain - Chain identifier (e.g. "Ethereum", "Solana")
@@ -74,7 +92,39 @@ export class LitTransferApiClient {
   }
 
   /**
-   * POST /send
+   * GET /transfer/v1/get_address_balance/<address>/<chain>
+   * Gets balance for an arbitrary address on the given chain.
+   * @param {string} address - Wallet or contract address (e.g. 0x... for EVM)
+   * @param {string} chain - Chain identifier (e.g. "Ethereum", "Solana")
+   * @returns {Promise<GetBalanceResponse>} { address, balance, chain, symbol }
+   */
+  async getAddressBalance(address, chain) {
+    const res = await fetch(
+      `${this.baseUrl}/get_address_balance/${encodeURIComponent(address)}/${encodeURIComponent(chain)}`
+    );
+    if (!res.ok) throw new Error(`get_address_balance failed: ${res.status} ${res.statusText}`);
+    return res.json();
+  }
+
+  /**
+   * GET /transfer/v1/get_chains
+   * Returns the list of supported chains (EVM, non-EVM, or testnet EVM) with name and token symbol.
+   * @param {GetChainsOptions} [options] - { isEvm, isTestnet }; default { isEvm: true, isTestnet: false }
+   * @returns {Promise<GetChainsResponse>} { chains: { name, token }[] }
+   */
+  async getAllChains(options = {}) {
+    const { isEvm = true, isTestnet = false } = options;
+    const res = await fetch(`${this.baseUrl}/get_chains`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_evm: isEvm, is_testnet: isTestnet }),
+    });
+    if (!res.ok) throw new Error(`get_chains failed: ${res.status} ${res.statusText}`);
+    return res.json();
+  }
+
+  /**
+   * POST /transfer/v1/send
    * Sends funds to a destination address on a chain (PKP-signed).
    * @param {TransferOptions} options
    * @returns {Promise<TransferResponse>}

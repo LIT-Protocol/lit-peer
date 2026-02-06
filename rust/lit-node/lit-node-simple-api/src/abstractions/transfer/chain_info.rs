@@ -8,6 +8,7 @@ pub struct ChainInfo {
     pub chain_name: &'static str,
     pub chain_id: u64,
     pub is_evm: bool,
+    pub testnet: bool,
     pub token: &'static str,
     pub rpc_url: &'static str,
     pub signing_scheme: SigningScheme,
@@ -79,11 +80,22 @@ pub enum Chain {
     Stacks,
     CosmosHub,
     Stellar,
+    // Testnets (from TESTNETS)
+    AptosTestnet,
+    ArbitrumSepolia,
+    AvalancheFuji,
+    BaseSepolia,
+    BitcoinSignet,
+    BnbSmartChainTestnet,
+    EthereumHolesky,
+    EthereumSepolia,
+    PolygonAmoy,
+    SolanaDevnet,
 }
 
 impl Chain {
     pub fn try_from_str(chain: &str) -> Result<Self, Status> {
-        match chain {
+        match chain.to_lowercase().as_str() {
             "ethereum" => Ok(Self::Ethereum),
             "bnb" => Ok(Self::BnbSmartChain),
             "arbitrum" => Ok(Self::ArbitrumOne),
@@ -145,6 +157,17 @@ impl Chain {
             "cosmos" => Ok(Self::CosmosHub),
             "stellar" => Ok(Self::Stellar),
             "yellowstone" => Ok(Self::Yellowstone),
+            // Testnets
+            "aptos_testnet" | "aptos testnet" => Ok(Self::AptosTestnet),
+            "arbitrum_sepolia" | "arbitrum sepolia" => Ok(Self::ArbitrumSepolia),
+            "avalanche_fuji" | "avalanche fuji" | "fuji" => Ok(Self::AvalancheFuji),
+            "base_sepolia" | "base sepolia" => Ok(Self::BaseSepolia),
+            "bitcoin_signet" | "bitcoin signet" | "signet" => Ok(Self::BitcoinSignet),
+            "bnb_testnet" | "bnb testnet" | "bsc_testnet" | "bsc testnet" => Ok(Self::BnbSmartChainTestnet),
+            "ethereum_holesky" | "ethereum holesky" | "holesky" => Ok(Self::EthereumHolesky),
+            "ethereum_sepolia" | "ethereum sepolia" | "sepolia" => Ok(Self::EthereumSepolia),
+            "polygon_amoy" | "polygon amoy" | "amoy" => Ok(Self::PolygonAmoy),
+            "solana_devnet" | "solana devnet" | "solana testnet" => Ok(Self::SolanaDevnet),
             _ => Err(Status::NotFound),
         }
     }
@@ -154,6 +177,7 @@ impl Chain {
                 chain_name: "Yellowstone",
                 chain_id: 175188,
                 is_evm: true,
+                testnet: false,
                 token: "LitKey",
                 rpc_url: "https://yellowstone-rpc.litprotocol.com",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -163,6 +187,7 @@ impl Chain {
                 chain_name: "Ethereum",
                 chain_id: 1,
                 is_evm: true,
+                testnet: false,
                 token: "ETH",
                 rpc_url: "https://eth.llamarpc.com",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -172,6 +197,7 @@ impl Chain {
                 chain_name: "BNB Smart Chain",
                 chain_id: 56,
                 is_evm: true,
+                testnet: false,
                 token: "BNB",
                 rpc_url: "https://bsc-dataseed.binance.org",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -181,6 +207,7 @@ impl Chain {
                 chain_name: "Arbitrum One",
                 chain_id: 42161,
                 is_evm: true,
+                testnet: false,
                 token: "ETH",
                 rpc_url: "https://arb1.arbitrum.io",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -190,6 +217,7 @@ impl Chain {
                 chain_name: "Base",
                 chain_id: 8453,
                 is_evm: true,
+                testnet: false,
                 token: "ETH",
                 rpc_url: "https://mainnet.base.org",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -199,6 +227,7 @@ impl Chain {
                 chain_name: "Avalanche C-Chain",
                 chain_id: 43114,
                 is_evm: true,
+                testnet: false,
                 token: "AVAX",
                 rpc_url: "https://api.avax.network",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -208,6 +237,7 @@ impl Chain {
                 chain_name: "Polygon POS",
                 chain_id: 137,
                 is_evm: true,
+                testnet: false,
                 token: "POL",
                 rpc_url: "https://polygon-rpc.com",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -217,6 +247,7 @@ impl Chain {
                 chain_name: "Optimism",
                 chain_id: 10,
                 is_evm: true,
+                testnet: false,
                 token: "ETH",
                 rpc_url: "https://mainnet.optimism.io",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -226,6 +257,7 @@ impl Chain {
                 chain_name: "Blast",
                 chain_id: 81457,
                 is_evm: true,
+                testnet: false,
                 token: "ETH",
                 rpc_url: "https://rpc.blast.io",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -235,6 +267,7 @@ impl Chain {
                 chain_name: "Scroll",
                 chain_id: 534352,
                 is_evm: true,
+                testnet: false,
                 token: "ETH",
                 rpc_url: "https://rpc.scroll.io",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -244,6 +277,7 @@ impl Chain {
                 chain_name: "Mantle",
                 chain_id: 5000,
                 is_evm: true,
+                testnet: false,
                 token: "MNT",
                 rpc_url: "https://rpc.mantle.xyz",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -253,6 +287,7 @@ impl Chain {
                 chain_name: "Linea",
                 chain_id: 59144,
                 is_evm: true,
+                testnet: false,
                 token: "ETH",
                 rpc_url: "https://rpc.linea.build",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -262,6 +297,7 @@ impl Chain {
                 chain_name: "Cronos",
                 chain_id: 25,
                 is_evm: true,
+                testnet: false,
                 token: "CRO",
                 rpc_url: "https://evm.cronos.org",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -271,6 +307,7 @@ impl Chain {
                 chain_name: "Mode",
                 chain_id: 34443,
                 is_evm: true,
+                testnet: false,
                 token: "ETH",
                 rpc_url: "https://mainnet.mode.network",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -280,6 +317,7 @@ impl Chain {
                 chain_name: "zkSync Era",
                 chain_id: 324,
                 is_evm: true,
+                testnet: false,
                 token: "ETH",
                 rpc_url: "https://mainnet.era.zksync.io",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -289,6 +327,7 @@ impl Chain {
                 chain_name: "PulseChain",
                 chain_id: 369,
                 is_evm: true,
+                testnet: false,
                 token: "PLS",
                 rpc_url: "https://rpc.pulsechain.com",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -298,6 +337,7 @@ impl Chain {
                 chain_name: "Fantom",
                 chain_id: 250,
                 is_evm: true,
+                testnet: false,
                 token: "FTM",
                 rpc_url: "https://rpc.ftm.tools",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -307,6 +347,7 @@ impl Chain {
                 chain_name: "Manta Pacific",
                 chain_id: 169,
                 is_evm: true,
+                testnet: false,
                 token: "ETH",
                 rpc_url: "https://pacific-rpc.manta.network",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -316,6 +357,7 @@ impl Chain {
                 chain_name: "Celo",
                 chain_id: 42220,
                 is_evm: true,
+                testnet: false,
                 token: "CELO",
                 rpc_url: "https://forno.celo.org",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -325,6 +367,7 @@ impl Chain {
                 chain_name: "Kava",
                 chain_id: 2222,
                 is_evm: true,
+                testnet: false,
                 token: "KAVA",
                 rpc_url: "https://evm.kava.io",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -334,6 +377,7 @@ impl Chain {
                 chain_name: "Gnosis",
                 chain_id: 100,
                 is_evm: true,
+                testnet: false,
                 token: "xDAI",
                 rpc_url: "https://rpc.gnosischain.com",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -343,6 +387,7 @@ impl Chain {
                 chain_name: "Metis",
                 chain_id: 1088,
                 is_evm: true,
+                testnet: false,
                 token: "METIS",
                 rpc_url: "https://andromeda.metis.io",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -352,6 +397,7 @@ impl Chain {
                 chain_name: "Astar",
                 chain_id: 592,
                 is_evm: true,
+                testnet: false,
                 token: "ASTR",
                 rpc_url: "https://evm.astar.network",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -361,6 +407,7 @@ impl Chain {
                 chain_name: "Moonbeam",
                 chain_id: 1284,
                 is_evm: true,
+                testnet: false,
                 token: "GLMR",
                 rpc_url: "https://rpc.api.moonbeam.network",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -370,6 +417,7 @@ impl Chain {
                 chain_name: "Core",
                 chain_id: 1116,
                 is_evm: true,
+                testnet: false,
                 token: "CORE",
                 rpc_url: "https://rpc.coredao.org",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -379,6 +427,7 @@ impl Chain {
                 chain_name: "Zora",
                 chain_id: 7777777,
                 is_evm: true,
+                testnet: false,
                 token: "ETH",
                 rpc_url: "https://rpc.zora.energy",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -388,6 +437,7 @@ impl Chain {
                 chain_name: "Klaytn",
                 chain_id: 8217,
                 is_evm: true,
+                testnet: false,
                 token: "KLAY",
                 rpc_url: "https://public-node-api.klaytnapi.com",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -397,6 +447,7 @@ impl Chain {
                 chain_name: "Canto",
                 chain_id: 7700,
                 is_evm: true,
+                testnet: false,
                 token: "CANTO",
                 rpc_url: "https://canto.slingshot.observer",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -406,6 +457,7 @@ impl Chain {
                 chain_name: "Moonriver",
                 chain_id: 1285,
                 is_evm: true,
+                testnet: false,
                 token: "MOVR",
                 rpc_url: "https://rpc.api.moonriver.moonbeam.network",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -415,6 +467,7 @@ impl Chain {
                 chain_name: "Taiko",
                 chain_id: 167000,
                 is_evm: true,
+                testnet: false,
                 token: "ETH",
                 rpc_url: "https://rpc.mainnet.taiko.xyz",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -424,6 +477,7 @@ impl Chain {
                 chain_name: "Flare",
                 chain_id: 14,
                 is_evm: true,
+                testnet: false,
                 token: "FLR",
                 rpc_url: "https://flare-api.flare.network",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -433,6 +487,7 @@ impl Chain {
                 chain_name: "Conflux eSpace",
                 chain_id: 1030,
                 is_evm: true,
+                testnet: false,
                 token: "CFX",
                 rpc_url: "https://evm.confluxrpc.com",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -442,6 +497,7 @@ impl Chain {
                 chain_name: "Aurora",
                 chain_id: 1313161554,
                 is_evm: true,
+                testnet: false,
                 token: "ETH",
                 rpc_url: "https://mainnet.aurora.dev",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -451,6 +507,7 @@ impl Chain {
                 chain_name: "Telos",
                 chain_id: 40,
                 is_evm: true,
+                testnet: false,
                 token: "TLOS",
                 rpc_url: "https://mainnet.telos.net",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -460,6 +517,7 @@ impl Chain {
                 chain_name: "Boba Network",
                 chain_id: 288,
                 is_evm: true,
+                testnet: false,
                 token: "ETH",
                 rpc_url: "https://mainnet.boba.network",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -469,6 +527,7 @@ impl Chain {
                 chain_name: "Heco",
                 chain_id: 128,
                 is_evm: true,
+                testnet: false,
                 token: "HT",
                 rpc_url: "https://http-mainnet.hecochain.com",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -478,6 +537,7 @@ impl Chain {
                 chain_name: "OKXChain",
                 chain_id: 66,
                 is_evm: true,
+                testnet: false,
                 token: "OKT",
                 rpc_url: "https://exchainrpc.okex.org",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -487,6 +547,7 @@ impl Chain {
                 chain_name: "ZkFair",
                 chain_id: 42766,
                 is_evm: true,
+                testnet: false,
                 token: "ZKF",
                 rpc_url: "https://rpc.zkfair.io",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -496,6 +557,7 @@ impl Chain {
                 chain_name: "WEMIX 3.0",
                 chain_id: 1111,
                 is_evm: true,
+                testnet: false,
                 token: "WEMIX",
                 rpc_url: "https://api.wemix.com",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -505,6 +567,7 @@ impl Chain {
                 chain_name: "KCC",
                 chain_id: 321,
                 is_evm: true,
+                testnet: false,
                 token: "KCS",
                 rpc_url: "https://rpc-mainnet.kcc.network",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -514,6 +577,7 @@ impl Chain {
                 chain_name: "IoTeX",
                 chain_id: 4689,
                 is_evm: true,
+                testnet: false,
                 token: "IOTX",
                 rpc_url: "https://babel-api.mainnet.iotex.io",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -523,6 +587,7 @@ impl Chain {
                 chain_name: "Evmos",
                 chain_id: 9001,
                 is_evm: true,
+                testnet: false,
                 token: "EVMOS",
                 rpc_url: "https://eth.bd.evmos.org:8545",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -532,6 +597,7 @@ impl Chain {
                 chain_name: "Meter",
                 chain_id: 82,
                 is_evm: true,
+                testnet: false,
                 token: "MTRG",
                 rpc_url: "https://rpc.meter.io",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -541,6 +607,7 @@ impl Chain {
                 chain_name: "Milkomeda C1",
                 chain_id: 2002,
                 is_evm: true,
+                testnet: false,
                 token: "ADA",
                 rpc_url: "https://rpc-mainnet-cardano-evm.milkomeda.com",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -550,6 +617,7 @@ impl Chain {
                 chain_name: "Syscoin",
                 chain_id: 57,
                 is_evm: true,
+                testnet: false,
                 token: "SYS",
                 rpc_url: "https://rpc.syscoin.org",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -559,6 +627,7 @@ impl Chain {
                 chain_name: "Dogechain",
                 chain_id: 2000,
                 is_evm: true,
+                testnet: false,
                 token: "DC",
                 rpc_url: "https://rpc.dogechain.dog",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -568,6 +637,7 @@ impl Chain {
                 chain_name: "Fuse",
                 chain_id: 122,
                 is_evm: true,
+                testnet: false,
                 token: "FUSE",
                 rpc_url: "https://rpc.fuse.io",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -577,6 +647,7 @@ impl Chain {
                 chain_name: "Shibarium",
                 chain_id: 109,
                 is_evm: true,
+                testnet: false,
                 token: "BONE",
                 rpc_url: "https://www.shibariumscan.com",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -586,6 +657,7 @@ impl Chain {
                 chain_name: "ThunderCore",
                 chain_id: 108,
                 is_evm: true,
+                testnet: false,
                 token: "TT",
                 rpc_url: "https://mainnet-rpc.thundercore.com",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -595,6 +667,7 @@ impl Chain {
                 chain_name: "REI Network",
                 chain_id: 47805,
                 is_evm: true,
+                testnet: false,
                 token: "REI",
                 rpc_url: "https://rpc.rei.network",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -604,6 +677,7 @@ impl Chain {
                 chain_name: "X Layer",
                 chain_id: 196,
                 is_evm: true,
+                testnet: false,
                 token: "OKB",
                 rpc_url: "https://xlayerrpc.okx.com",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -614,6 +688,7 @@ impl Chain {
                 chain_name: "Tron",
                 chain_id: 0,
                 is_evm: false,
+                testnet: false,
                 token: "TRX",
                 rpc_url: "https://api.trongrid.io",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -623,6 +698,7 @@ impl Chain {
                 chain_name: "Solana",
                 chain_id: 0,
                 is_evm: false,
+                testnet: false,
                 token: "SOL",
                 rpc_url: "https://api.mainnet-beta.solana.com",
                 signing_scheme: SigningScheme::SchnorrEd25519Sha512,
@@ -632,6 +708,7 @@ impl Chain {
                 chain_name: "Sui",
                 chain_id: 0,
                 is_evm: false,
+                testnet: false,
                 token: "SUI",
                 rpc_url: "https://fullnode.mainnet.sui.io:443",
                 signing_scheme: SigningScheme::SchnorrEd25519Sha512,
@@ -641,6 +718,7 @@ impl Chain {
                 chain_name: "Bitcoin",
                 chain_id: 0,
                 is_evm: false,
+                testnet: false,
                 token: "BTC",
                 rpc_url: "https://blockstream.info",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -650,6 +728,7 @@ impl Chain {
                 chain_name: "Aptos",
                 chain_id: 0,
                 is_evm: false,
+                testnet: false,
                 token: "APT",
                 rpc_url: "https://fullnode.mainnet.aptoslabs.com",
                 signing_scheme: SigningScheme::SchnorrEd25519Sha512,
@@ -659,6 +738,7 @@ impl Chain {
                 chain_name: "Near",
                 chain_id: 0,
                 is_evm: false,
+                testnet: false,
                 token: "NEAR",
                 rpc_url: "https://rpc.mainnet.near.org",
                 signing_scheme: SigningScheme::SchnorrEd25519Sha512,
@@ -668,6 +748,7 @@ impl Chain {
                 chain_name: "Cardano",
                 chain_id: 0,
                 is_evm: false,
+                testnet: false,
                 token: "ADA",
                 rpc_url: "https://cardano-mainnet.blockfrost.io",
                 signing_scheme: SigningScheme::SchnorrEd25519Sha512,
@@ -677,6 +758,7 @@ impl Chain {
                 chain_name: "Stacks",
                 chain_id: 0,
                 is_evm: false,
+                testnet: false,
                 token: "STX",
                 rpc_url: "https://stacks-node-api.mainnet.stacks.co",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -686,6 +768,7 @@ impl Chain {
                 chain_name: "Cosmos Hub",
                 chain_id: 0,
                 is_evm: false,
+                testnet: false,
                 token: "ATOM",
                 rpc_url: "https://rpc.cosmos.network",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
@@ -695,17 +778,118 @@ impl Chain {
                 chain_name: "Stellar",
                 chain_id: 0,
                 is_evm: false,
+                testnet: false,
                 token: "XLM",
                 rpc_url: "https://horizon.stellar.org",
                 signing_scheme: SigningScheme::SchnorrEd25519Sha512,
                 derivation_path: "m/44'/148'/0'",
             },
+            // Testnets (from TESTNETS)
+            Self::AptosTestnet => ChainInfo {
+                chain_name: "Aptos Testnet",
+                chain_id: 2,
+                is_evm: false,
+                testnet: true,
+                token: "APT",
+                rpc_url: "https://fullnode.testnet.aptoslabs.com",
+                signing_scheme: SigningScheme::SchnorrEd25519Sha512,
+                derivation_path: "m/44'/637'/0'/0'/0'",
+            },
+            Self::ArbitrumSepolia => ChainInfo {
+                chain_name: "Arbitrum Sepolia",
+                chain_id: 421614,
+                is_evm: true,
+                testnet: true,
+                token: "ETH",
+                rpc_url: "https://sepolia-rollup.arbitrum.io/rpc",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
+                derivation_path: "m/44'/60'/0'/0/x",
+            },
+            Self::AvalancheFuji => ChainInfo {
+                chain_name: "Avalanche Fuji Testnet",
+                chain_id: 43113,
+                is_evm: true,
+                testnet: true,
+                token: "AVAX",
+                rpc_url: "https://api.avax-test.network/ext/bc/C/rpc",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
+                derivation_path: "m/44'/60'/0'/0/x",
+            },
+            Self::BaseSepolia => ChainInfo {
+                chain_name: "Base Sepolia Testnet",
+                chain_id: 84532,
+                is_evm: true,
+                testnet: true,
+                token: "ETH",
+                rpc_url: "https://sepolia.base.org",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
+                derivation_path: "m/44'/60'/0'/0/x",
+            },
+            Self::BitcoinSignet => ChainInfo {
+                chain_name: "Bitcoin Signet",
+                chain_id: 0,
+                is_evm: false,
+                testnet: true,
+                token: "sBTC",
+                rpc_url: "https://signet.bc-2.jp",
+                signing_scheme: SigningScheme::SchnorrK256Taproot,
+                derivation_path: "m/84'/1'/0'/0/x",
+            },
+            Self::BnbSmartChainTestnet => ChainInfo {
+                chain_name: "BNB Smart Chain Testnet",
+                chain_id: 97,
+                is_evm: true,
+                testnet: true,
+                token: "tBNB",
+                rpc_url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
+                derivation_path: "m/44'/60'/0'/0/x",
+            },
+            Self::EthereumHolesky => ChainInfo {
+                chain_name: "Ethereum Holesky",
+                chain_id: 17000,
+                is_evm: true,
+                testnet: true,
+                token: "ETH",
+                rpc_url: "https://ethereum-holesky-rpc.publicnode.com",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
+                derivation_path: "m/44'/60'/0'/0/x",
+            },
+            Self::EthereumSepolia => ChainInfo {
+                chain_name: "Ethereum Sepolia",
+                chain_id: 11155111,
+                is_evm: true,
+                testnet: true,
+                token: "ETH",
+                rpc_url: "https://rpc.sepolia.org",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
+                derivation_path: "m/44'/60'/0'/0/x",
+            },
+            Self::PolygonAmoy => ChainInfo {
+                chain_name: "Polygon Amoy Testnet",
+                chain_id: 80002,
+                is_evm: true,
+                testnet: true,
+                token: "POL",
+                rpc_url: "https://rpc-amoy.polygon.technology",
+                signing_scheme: SigningScheme::EcdsaK256Sha256,
+                derivation_path: "m/44'/60'/0'/0/x",
+            },
+            Self::SolanaDevnet => ChainInfo {
+                chain_name: "Solana Devnet",
+                chain_id: 0,
+                is_evm: false,
+                testnet: true,
+                token: "SOL",
+                rpc_url: "https://api.devnet.solana.com",
+                signing_scheme: SigningScheme::SchnorrEd25519Sha512,
+                derivation_path: "m/44'/501'/0'/0'",
+            },
         }
     }
 
-    /// All supported EVM chains in the same order as the original data.
-    pub fn all_evm_chains() -> &'static [Chain] {
-        const ALL: &[Chain] = &[
+    pub fn all_chains() -> &'static [Chain] {
+        &[
             Chain::Ethereum,
             Chain::BnbSmartChain,
             Chain::ArbitrumOne,
@@ -756,15 +940,9 @@ impl Chain {
             Chain::ThunderCore,
             Chain::ReiNetwork,
             Chain::XLayer,
-        ];
-        ALL
-    }
-
-    /// All supported non-EVM chains.
-    pub fn all_non_evm_chains() -> &'static [Chain] {
-        const ALL: &[Chain] = &[
+            Chain::Yellowstone,
             Chain::Tron,
-            Chain::Solana,
+            Chain::Solana,  
             Chain::Sui,
             Chain::Bitcoin,
             Chain::Aptos,
@@ -773,7 +951,54 @@ impl Chain {
             Chain::Stacks,
             Chain::CosmosHub,
             Chain::Stellar,
-        ];
-        ALL
+            Chain::AptosTestnet,
+            Chain::ArbitrumSepolia,
+            Chain::AvalancheFuji,
+            Chain::BaseSepolia,
+            Chain::BitcoinSignet,
+            Chain::BnbSmartChainTestnet,
+            Chain::EthereumHolesky,
+            Chain::EthereumSepolia,
+            Chain::PolygonAmoy,
+            Chain::SolanaDevnet,
+        ]
+    }
+
+    /// All supported EVM chains in the same order as the original data.
+    pub fn all_evm_chains() ->  Vec<Chain> {
+       let mut all = Vec::new();
+       for chain in Chain::all_chains() {
+        if chain.info().is_evm {
+            all.push(chain.clone());
+        }
+       }
+       all
+    }
+    pub fn all_non_evm_chains() -> Vec<Chain> {
+        let mut all = Vec::new();
+        for chain in Chain::all_chains() {
+            if !chain.info().is_evm {
+                all.push(chain.clone());
+            }
+        }
+        all
+    }
+    pub fn all_testnet_chains() -> Vec<Chain> {
+        let mut all = Vec::new();
+        for chain in Chain::all_chains() {
+            if chain.info().testnet {
+                all.push(chain.clone());
+            }
+        }
+        all
+    }
+    pub fn all_testnet_evm_chains() -> Vec<Chain> {
+        let mut all = Vec::new();
+        for chain in Chain::all_evm_chains() {
+            if chain.info().testnet {
+                all.push(chain.clone());
+            }
+        }
+        all
     }
 }
