@@ -8,8 +8,8 @@ use rocket::serde::json::Json;
 use rocket::http::Status;
 
 
-pub async fn get_balance(testnet: &Testnet, api_key: &str, chain: Chain) -> Result<Json<GetBalanceResponse>, Status> {
-    let _ = (testnet, api_key, chain);
+pub async fn get_balance(_testnet: &Testnet, _api_key: &str, chain: Chain) -> Result<Json<GetBalanceResponse>, Status> {
+    let _ = (_testnet, _api_key, chain);
 
     Ok(Json(GetBalanceResponse {
         address: String::new(),
@@ -19,7 +19,7 @@ pub async fn get_balance(testnet: &Testnet, api_key: &str, chain: Chain) -> Resu
     }))
 }
 
-pub async fn send(testnet: &Arc<Testnet>, validator_collection: &Arc<ValidatorCollection>, request: &Json<TransferRequest>, chain: Chain) -> Result<Json<TransferResponse>, Status> {
+pub async fn send(_testnet: &Arc<Testnet>, _validator_collection: &Arc<ValidatorCollection>, request: &Json<TransferRequest>, _chain: Chain) -> Result<Json<TransferResponse>, Status> {
 
 
     let _ = request;

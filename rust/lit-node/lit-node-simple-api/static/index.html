@@ -99,8 +99,8 @@ go();</textarea>
     <p>Combine signature shares (e.g. from Sign with PKP response.shares) into a single signature.</p>
     <label for="combineApiKey">API key</label>
     <input type="text" id="combineApiKey" placeholder="Hex-encoded API key">
-    <label for="combineShares">Shares (JSON array of hex strings)</label>
-    <textarea id="combineShares" placeholder='["0x...", "0x..."]'>[]</textarea>
+    <label for="combineShares">Shares (JSON array of objects from Sign with PKP response.shares)</label>
+    <textarea id="combineShares" placeholder='Paste response.shares from signWithPkp (array of objects)'>[]</textarea>
     <button type="button" id="combineBtn">Combine signature shares</button>
     <pre id="combineOutput" class="api-output"></pre>
   </section>

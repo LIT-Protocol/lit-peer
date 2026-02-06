@@ -38,7 +38,15 @@
 /**
  * @typedef {Object} CombineSignatureSharesOptions
  * @property {string} apiKey - Hex-encoded API key (from getApiKey)
- * @property {string[]} shares - Array of hex-encoded signature share strings
+ * @property {JsonPKPSigningResponse[]} shares - Array of signing response objects (from signWithPkp response.shares)
+ */
+
+/**
+ * Single PKP signing response (lit_node_core::response::JsonPKPSigningResponse; camelCase in JSON).
+ * @typedef {Object} JsonPKPSigningResponse
+ * @property {boolean} success - Whether the signing succeeded
+ * @property {number[]|Uint8Array} signedData - Signed data bytes
+ * @property {Object} signatureShare - SignableOutput (e.g. EcdsaSignedMessageShare with signature_share)
  */
 
 // --- Response types (match core/v1/models/response.rs) ---
@@ -61,13 +69,13 @@
 
 /**
  * @typedef {Object} SignWithPkpResponse
- * @property {string[]} shares - Array of hex-encoded signature share strings (for combineSignatureShares)
+ * @property {JsonPKPSigningResponse[]} shares - Array of PKP signing responses (pass to combineSignatureShares)
  * @property {string} curve_type - Curve type used for signing (e.g. EcdsaK256Sha256)
  */
 
 /**
  * @typedef {Object} SignWithPkpResponseItem - Single signing result within a lit action
- * @property {string[]} shares - Signature shares
+ * @property {JsonPKPSigningResponse[]} shares - Signature share objects
  * @property {string} curve_type - Curve type
  */
 
@@ -97,7 +105,41 @@
 /**
  * @typedef {Object} CombineSignatureSharesResponse
  * @property {string} signature - Hex-encoded combined signature
+ * @property {string} r - ECDSA r component (hex)
+ * @property {string} s - ECDSA s component (hex)
+ * @property {number} v - ECDSA v component
  * @property {number} recovery_id - Recovery id byte
+ */
+
+// --- Transfer (abstractions/transfer); mount transfer routes to use ---
+
+/**
+ * @typedef {Object} TransferOptions
+ * @property {string} apiKey - Hex-encoded API key (from getApiKey)
+ * @property {string} pkpPublicKey - PKP public key
+ * @property {string} chain - Chain identifier (e.g. "Ethereum", "Solana")
+ * @property {string} destinationAddress - Destination address
+ * @property {string} amount - Amount as string
+ */
+
+/**
+ * @typedef {Object} TransferResponse
+ * @property {string} txn_id - Transaction id
+ * @property {boolean} success - Whether the transfer succeeded
+ * @property {string} chain - Chain identifier
+ * @property {string} origin_symbol - Symbol of the asset sent
+ * @property {string} origin_amount - Amount sent
+ * @property {string} gas - Gas used/cost
+ * @property {string} timestamp - Timestamp
+ * @property {string} destination_address - Destination address
+ */
+
+/**
+ * @typedef {Object} GetBalanceResponse
+ * @property {string} address - Wallet address
+ * @property {string} balance - Balance as string
+ * @property {string} chain - Chain identifier
+ * @property {string} symbol - Asset symbol
  */
 
 export class LitNodeSimpleApiClient {
@@ -226,9 +268,9 @@ export class LitNodeSimpleApiClient {
 
   /**
    * POST /combine_signature_shares
-   * Combines signature shares (e.g. from signWithPkp response.shares) into a single signature.
+   * Combines signature shares (pass signWithPkp response.shares as-is).
    * @param {CombineSignatureSharesOptions} options
-   * @returns {Promise<CombineSignatureSharesResponse>} { signature, recovery_id }
+   * @returns {Promise<CombineSignatureSharesResponse>} { signature, r, s, v, recovery_id }
    */
   async combineSignatureShares({ apiKey, shares }) {
     const body = { api_key: apiKey, shares };
@@ -238,6 +280,45 @@ export class LitNodeSimpleApiClient {
       body: JSON.stringify(body),
     });
     if (!res.ok) throw new Error(`combine_signature_shares failed: ${res.status} ${res.statusText}`);
+    return res.json();
+  }
+
+  /**
+   * GET /get_balance/<api_key>/<chain>
+   * Gets balance for the wallet identified by the API key on the given chain.
+   * Requires transfer routes to be mounted.
+   * @param {string} apiKey - Hex-encoded API key (from getApiKey)
+   * @param {string} chain - Chain identifier (e.g. "Ethereum", "Solana")
+   * @returns {Promise<GetBalanceResponse>} { address, balance, chain, symbol }
+   */
+  async getBalance(apiKey, chain) {
+    const res = await fetch(
+      `${this.baseUrl}/get_balance/${encodeURIComponent(apiKey)}/${encodeURIComponent(chain)}`
+    );
+    if (!res.ok) throw new Error(`get_balance failed: ${res.status} ${res.statusText}`);
+    return res.json();
+  }
+
+  /**
+   * POST /send
+   * Sends funds to a destination address on a chain (PKP-signed). Requires transfer routes to be mounted.
+   * @param {TransferOptions} options
+   * @returns {Promise<TransferResponse>}
+   */
+  async send({ apiKey, pkpPublicKey, chain, destinationAddress, amount }) {
+    const body = {
+      api_key: apiKey,
+      pkp_public_key: pkpPublicKey,
+      chain,
+      destination_address: destinationAddress,
+      amount,
+    };
+    const res = await fetch(`${this.baseUrl}/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`send failed: ${res.status} ${res.statusText}`);
     return res.json();
   }
 }

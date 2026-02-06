@@ -33,5 +33,5 @@ pub struct DecryptRequest {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CombineSignatureSharesRequest {
     pub api_key: String,    
-    pub shares: Vec<String>,
+    pub shares: Vec<lit_node_core::response::JsonPKPSigningResponse>,
 }

@@ -1,3 +1,4 @@
+use lit_node_core::response::JsonPKPSigningResponse;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -18,7 +19,7 @@ pub struct MintPkpResponse {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct SignWithPkpResponse {
-    pub shares: Vec<String>,
+    pub shares: Vec<JsonPKPSigningResponse>,
     pub curve_type: String,
 }
 
@@ -48,6 +49,8 @@ pub struct DecryptResponse {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct CombineSignatureSharesResponse {
     pub signature: String,
+    pub signed_data: String,
+    pub verifying_key: String,
     pub r: String,
     pub s: String,
     pub v: u8,

@@ -8,7 +8,7 @@ use crate::core::v1::models::response::{
 };
 use base64_light::base64_decode;
 use ethers::signers::{LocalWallet, Signer};
-use ethers::types::U256;
+use ethers::types::{H160, H256, U256};
 use ethers::utils::keccak256;
 use lit_core::utils::binary::{bytes_to_hex, hex_to_bytes};
 use lit_node_core::{
@@ -17,7 +17,7 @@ use lit_node_core::{
 };
 use lit_node_testnet::common::lit_actions::generate_session_sigs_and_execute_lit_action;
 use lit_node_testnet::common::pkp::{
-    generate_session_sigs_and_send_signing_requests, recombine_shares_using_wasm,
+    generate_session_sigs_and_send_signing_requests, 
 };
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::{
@@ -29,12 +29,13 @@ use lit_rust_crypto::k256::sha2::{Digest, Sha256};
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use std::sync::Arc;
-use tracing::info;
+use tracing::{error, info};
 
 pub async fn get_api_key(testnet: &Arc<Testnet>) -> Result<Json<GetApiKeyResponse>, Status> {
     let wallet = LocalWallet::new(&mut rand::thread_rng());
     info!("New wallet address: {:?}", wallet.address());
     let secret_key = wallet.signer().to_bytes().to_vec();
+    info!("Secret key: {:?}", secret_key);
 
     let end_user = EndUser::from_secret_key(testnet, &secret_key);
 
@@ -127,25 +128,8 @@ pub async fn sign_with_pkp(
 
     let shares = endpoint_responses
         .iter()
-        .map(|response| match response.data.clone().is_some() {
-            true => {
-                let signature_share = match response.data.is_some() {
-                    true => {
-                        let signature_share =
-                            response.data.clone().unwrap().signature_share.clone();
-                        let signature_share = signature_share
-                            .ecdsa_signed_message_share()
-                            .unwrap()
-                            .signature_share
-                            .clone();
-                        signature_share
-                    }
-                    false => "".to_string(),
-                };
-                signature_share
-            }
-            false => "".to_string(),
-        })
+        .filter(|response| response.data.is_some())
+        .map(|response| response.data.clone().unwrap())
         .collect::<Vec<_>>();
     info!("endpoint_responses: {:?}", shares);
 
@@ -294,6 +278,7 @@ pub async fn decrypt(
     let result = match std::str::from_utf8(&decrypted) {
         Ok(result) => result.to_string(),
         Err(e) => {
+            error!("Error decrypting: {:?}", e);
             return Err(Status::InternalServerError);
         }
     };
@@ -343,17 +328,40 @@ pub async fn combine_signature_shares(
     combine_signature_shares_request: Json<CombineSignatureSharesRequest>,
 ) -> Result<Json<CombineSignatureSharesResponse>, Status> {
     let shares = combine_signature_shares_request.shares.clone();
-    let (signature, recovery_id) = recombine_shares_using_wasm(shares).unwrap();
-    let r = signature.r();
-    let s = signature.s();
-    let v = recovery_id.to_byte();
-    let hex_signature = hex::encode(signature.to_bytes());
+    
+    let signed_output = lit_node_testnet::common::pkp::decode_endpoint_responses(shares);
+
+    let signature = signed_output.signature.clone().replace("\"","");
+    info!("signed_output: {:?}", signed_output);
+
+    let r = &signature[0..64];
+    let s = &signature[64..];
+    let v = signed_output.recovery_id.unwrap_or(0);
+
+    let signature = ethers::types::Signature {
+        r: U256::from_str_radix(r, 16).unwrap(),
+        s: U256::from_str_radix(s, 16).unwrap(),
+        v: v as u64,
+    };
+
+    info!("signature: {:?}", signature);
+    let message = hex::decode(&signed_output.signed_data).unwrap();
+    let message = H256::from_slice(&message); // if the message is already a hash, pass it as such.
+
+    let address = hex::decode(&signed_output.verifying_key[2..]).unwrap();
+    let address = keccak256(&address);
+    let address = H160::from_slice(&address[12..]);
+    info!("address: {:?}", address);
+    info!("Verification results: {:?}", signature.verify(message, address));
 
     Ok(Json(CombineSignatureSharesResponse {
-        signature: hex_signature,
-        r: hex::encode(r.to_bytes()),
-        s: hex::encode(s.to_bytes()),
+        signature: signed_output.signature.clone(),
+        signed_data: signed_output.signed_data.clone(),
+        verifying_key: signed_output.verifying_key.clone(),
+        r: r.to_string(),
+        s: s.to_string(),
         v: v,
-        recovery_id: recovery_id.to_byte() as u8,
+        recovery_id: v,
     }))
 }
+

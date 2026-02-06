@@ -65,7 +65,7 @@ export async function runTests(baseUrl = getBaseUrl()) {
   console.log('   data_to_encrypt_hash:', data_to_encrypt_hash?.slice(0, 24) + '...');
 
   console.log('6. Combine signature shares...');
-  const shares = (signShares || []).filter((s) => s && s.length > 0);
+  const shares = (signShares || []).filter((s) => s && (typeof s === 'object'));
   if (shares.length > 0) {
     const { signature, recovery_id } = await client.combineSignatureShares({ apiKey: api_key, shares });
     console.log('   signature (first 40 chars):', (signature || '').slice(0, 40) + '...');
