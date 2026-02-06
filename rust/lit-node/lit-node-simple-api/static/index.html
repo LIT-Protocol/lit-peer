@@ -105,6 +105,34 @@ go();</textarea>
     <pre id="combineOutput" class="api-output"></pre>
   </section>
 
+  <section class="section">
+    <h2>Transfer: Get balance</h2>
+    <p>Get balance for the wallet (from API key) on a chain. Uses js_transfer_sdk.js; requires transfer routes mounted.</p>
+    <label for="getBalanceApiKey">API key</label>
+    <input type="text" id="getBalanceApiKey" placeholder="Hex-encoded API key (from get_api_key)">
+    <label for="getBalanceChain">Chain</label>
+    <input type="text" id="getBalanceChain" placeholder="e.g. Ethereum, Solana" value="Ethereum">
+    <button type="button" id="getBalanceBtn">Get balance</button>
+    <pre id="getBalanceOutput" class="api-output"></pre>
+  </section>
+
+  <section class="section">
+    <h2>Transfer: Send</h2>
+    <p>Send funds to a destination address on a chain (PKP-signed). Uses js_transfer_sdk.js; requires transfer routes mounted.</p>
+    <label for="sendApiKey">API key</label>
+    <input type="text" id="sendApiKey" placeholder="Hex-encoded API key">
+    <label for="sendPkpPublicKey">PKP public key</label>
+    <input type="text" id="sendPkpPublicKey" placeholder="PKP public key">
+    <label for="sendChain">Chain</label>
+    <input type="text" id="sendChain" placeholder="e.g. Ethereum, Solana" value="Ethereum">
+    <label for="sendDestinationAddress">Destination address</label>
+    <input type="text" id="sendDestinationAddress" placeholder="0x... or address">
+    <label for="sendAmount">Amount (string)</label>
+    <input type="text" id="sendAmount" placeholder="e.g. 1000000000000000000" value="0">
+    <button type="button" id="sendBtn">Send</button>
+    <pre id="sendOutput" class="api-output"></pre>
+  </section>
+
   <script>
     const output = document.getElementById('output');
     const baseUrlInput = document.getElementById('baseUrl');
@@ -343,6 +371,82 @@ go();</textarea>
         combineOutput.className = 'api-output error';
       } finally {
         combineBtn.disabled = false;
+      }
+    });
+
+    // Transfer: Get balance (js_transfer_sdk.js)
+    const getBalanceApiKeyInput = document.getElementById('getBalanceApiKey');
+    const getBalanceChainInput = document.getElementById('getBalanceChain');
+    const getBalanceBtn = document.getElementById('getBalanceBtn');
+    const getBalanceOutput = document.getElementById('getBalanceOutput');
+
+    getBalanceBtn.addEventListener('click', async () => {
+      const apiKey = getBalanceApiKeyInput.value.trim();
+      const chain = getBalanceChainInput.value.trim();
+      if (!apiKey || !chain) {
+        getBalanceOutput.textContent = 'Please fill in API key and Chain.';
+        getBalanceOutput.className = 'api-output error';
+        return;
+      }
+      getBalanceOutput.textContent = 'Loading…';
+      getBalanceOutput.className = 'api-output';
+      getBalanceBtn.disabled = true;
+      try {
+        const { createTransferClient } = await import('./js_transfer_sdk.js');
+        const baseUrl = baseUrlInput.value.trim() || 'http://localhost:8000';
+        const client = createTransferClient(baseUrl);
+        const result = await client.getBalance(apiKey, chain);
+        getBalanceOutput.textContent = JSON.stringify(result, null, 2);
+        getBalanceOutput.className = 'api-output success';
+      } catch (err) {
+        getBalanceOutput.textContent = 'Error: ' + (err && err.message ? err.message : String(err));
+        getBalanceOutput.className = 'api-output error';
+      } finally {
+        getBalanceBtn.disabled = false;
+      }
+    });
+
+    // Transfer: Send (js_transfer_sdk.js)
+    const sendApiKeyInput = document.getElementById('sendApiKey');
+    const sendPkpPublicKeyInput = document.getElementById('sendPkpPublicKey');
+    const sendChainInput = document.getElementById('sendChain');
+    const sendDestinationAddressInput = document.getElementById('sendDestinationAddress');
+    const sendAmountInput = document.getElementById('sendAmount');
+    const sendBtn = document.getElementById('sendBtn');
+    const sendOutput = document.getElementById('sendOutput');
+
+    sendBtn.addEventListener('click', async () => {
+      const apiKey = sendApiKeyInput.value.trim();
+      const pkpPublicKey = sendPkpPublicKeyInput.value.trim();
+      const chain = sendChainInput.value.trim();
+      const destinationAddress = sendDestinationAddressInput.value.trim();
+      const amount = sendAmountInput.value.trim();
+      if (!apiKey || !pkpPublicKey || !chain || !destinationAddress) {
+        sendOutput.textContent = 'Please fill in API key, PKP public key, Chain, and Destination address.';
+        sendOutput.className = 'api-output error';
+        return;
+      }
+      sendOutput.textContent = 'Sending…';
+      sendOutput.className = 'api-output';
+      sendBtn.disabled = true;
+      try {
+        const { createTransferClient } = await import('./js_transfer_sdk.js');
+        const baseUrl = baseUrlInput.value.trim() || 'http://localhost:8000';
+        const client = createTransferClient(baseUrl);
+        const result = await client.send({
+          apiKey,
+          pkpPublicKey,
+          chain,
+          destinationAddress,
+          amount: amount || '0',
+        });
+        sendOutput.textContent = JSON.stringify(result, null, 2);
+        sendOutput.className = 'api-output success';
+      } catch (err) {
+        sendOutput.textContent = 'Error: ' + (err && err.message ? err.message : String(err));
+        sendOutput.className = 'api-output error';
+      } finally {
+        sendBtn.disabled = false;
       }
     });
   </script>
