@@ -3,7 +3,7 @@ use super::models::{GetBalanceResponse, TransferRequest, TransferResponse};
 use ethers::providers::{Http, Middleware, Provider};
 use ethers::signers::Signer;
 use ethers::types::{H160, U256};
-use ethers::utils::keccak256;
+use ethers::utils::{eip1559_default_estimator, keccak256};
 use lit_core::utils::binary::{bytes_to_hex, hex_to_bytes};
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::testnet::Testnet;
@@ -11,7 +11,7 @@ use lit_node_testnet::validator::ValidatorCollection;
 use rocket::serde::json::Json;
 use rocket::http::Status;
 use ethers::types::{
-    transaction::eip2718::TypedTransaction, TransactionRequest, Signature
+    transaction::eip2718::TypedTransaction, Signature
 };
 use crate::core::internal::{combine_signature_shares, sign_with_pkp};
 use crate::core::v1::models::request::{CombineSignatureSharesRequest, SignWithPKPRequest};
@@ -22,6 +22,7 @@ pub async fn get_api_key_balance(testnet: &Arc<Testnet>, api_key: &str, chain: C
 
     let secret_key = hex_to_bytes(api_key).unwrap();
     let end_user = EndUser::from_secret_key(testnet, &secret_key);
+    end_user.deposit_to_wallet_ledger(U256::from(10000000000000000u128)).await;
     let from = end_user.wallet.address();
 
     get_balance(from, chain).await
@@ -68,36 +69,45 @@ pub async fn send(testnet: &Arc<Testnet>, validator_collection: &Arc<ValidatorCo
 
     let pkp_address = get_pkp_address(&request.pkp_public_key).await.unwrap();
 
-    info!("pkp_address: {:?}", pkp_address);
 
     let nonce = provider.get_transaction_count(pkp_address, None).await.unwrap();
     let gas_price = provider.get_gas_price().await.unwrap();
 
     info!("gas_price: {:?}", gas_price);
-    let gas = gas_price * U256::from(10);
-
-    info!("chain info: {:?}", chain.info());
+    let block = provider.get_block(ethers::types::BlockNumber::Latest).await.unwrap();
+    let block = block.unwrap();
+    let base_fee_per_gas = block.base_fee_per_gas.unwrap();
+    let gas_limit = block.gas_limit;
+    info!("base_fee_per_gas: {:?}, gas_limit: {:?}", base_fee_per_gas, gas_limit);
+    
+    let gas_price = U256::from(21000);
+    info!("limited gas_price: {:?}", gas_price);
+    
     
     let to = request.destination_address.parse::<H160>().expect("Invalid destination address");
     // 1. Structure the transaction
-    let tx = TransactionRequest::new()
+    // let tx = TransactionRequest::new()
+    let mut tx = ethers::types::Eip1559TransactionRequest::new()
         .from(pkp_address)
         .to(to)
         .value(U256::from_dec_str(request.amount.as_str()).unwrap())
-        .gas_price(gas_price)
-        .gas(gas)
+        // .gas_price(gas_price)
+        .gas(gas_price)
         .nonce(nonce)
         .chain_id(chain.info().chain_id);
-    
+        
+    let (max_fee_per_gas, max_priority_fee_per_gas) = provider.estimate_eip1559_fees(Some(eip1559_default_estimator)).await.unwrap();
+    info!("estimated gas fees - max: {:?}, priority:{:?}", max_fee_per_gas, max_priority_fee_per_gas);
+    tx = tx.max_fee_per_gas(max_fee_per_gas).max_priority_fee_per_gas(max_priority_fee_per_gas);
+
     info!("tx: {:?}", tx);
     // 2. RLP encode the transaction
-    let typed_tx = TypedTransaction::Legacy(tx);
+    let typed_tx = TypedTransaction::Eip1559(tx);
+    // let typed_tx = TypedTransaction::Eip1559(tx);
     let encoded_tx = typed_tx.rlp();
 
-    info!("encoded_tx: {:?}", encoded_tx.0.to_vec());
     // normally we'd keccak256 the transaction and sign that, but the function we're about to call does this for us
     let encode_tx_string = format!("0x{}", bytes_to_hex(&encoded_tx.0.to_vec()));
-    info!("encode_tx_string: {:?}", encode_tx_string);
 
     let signature = sign_with_pkp(testnet, validator_collection, Json(SignWithPKPRequest {
         api_key: request.api_key.clone(),

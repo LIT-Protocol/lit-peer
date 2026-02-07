@@ -12,13 +12,11 @@
 <body>
   <div class="app">
     <header class="header">
-      <span class="logo">Swps</span>
+      <a href="https://developer.litprotocol.com/" target="_blank" rel="noopener noreferrer" class="header-brand">
+        <span class="logo">LIT Swps</span>
+      </a>
       <div class="header-actions">
         <button type="button" id="btn-logout" class="btn btn-secondary" style="display: none;">Log out</button>
-        <div class="api-url-wrap">
-          <label for="baseUrl">API</label>
-          <input type="text" id="baseUrl" class="api-url" value="http://localhost:8000" placeholder="http://localhost:8000">
-        </div>
       </div>
     </header>
 
@@ -52,11 +50,24 @@
           <div class="overview-grid">
             <div class="overview-row">
               <span class="label">Wallet address</span>
-              <span id="overview-wallet" class="value mono">–</span>
+              <span class="overview-value-wrap">
+                <span id="overview-wallet" class="value mono">–</span>
+                <button type="button" class="btn-copy" id="btn-copy-wallet" title="Copy wallet address">Copy</button>
+              </span>
             </div>
             <div class="overview-row">
               <span class="label">PKP public key</span>
-              <span id="overview-pkp" class="value mono">–</span>
+              <span class="overview-value-wrap">
+                <span id="overview-pkp" class="value mono">–</span>
+                <button type="button" class="btn-copy" id="btn-copy-pkp" title="Copy PKP public key">Copy</button>
+              </span>
+            </div>
+            <div class="overview-row">
+              <span class="label">PKP address</span>
+              <span class="overview-value-wrap">
+                <span id="overview-pkp-address" class="value mono">–</span>
+                <button type="button" class="btn-copy" id="btn-copy-pkp-address" title="Copy PKP address">Copy</button>
+              </span>
             </div>
           </div>
           <button type="button" id="btn-refresh-balance" class="btn btn-secondary btn-block" style="margin-top: 1rem;">Refresh balances</button>
@@ -67,7 +78,6 @@
         <div id="overview-balances">
           <p class="history-empty">Load an account and choose a chain to see balances.</p>
         </div>
-        <p class="history-empty" id="overview-balance-legend" style="display: none; margin-top: 0.5rem; font-size: 0.8rem;">Wallet balance is always LitKey on Yellowstone. Chain selector applies to PKP balance only.</p>
         <div class="form-group" id="overview-chain-wrap" style="display: none;">
           <label for="overview-chain">Chain (PKP balance)</label>
           <select id="overview-chain" class="input">
@@ -114,10 +124,7 @@
             <input type="text" id="swap-amount-from" class="input" placeholder="0.0" value="">
           </div>
           <select id="swap-token-from" class="swap-token">
-            <option value="ETH">ETH</option>
-            <option value="USDC">USDC</option>
-            <option value="USDT">USDT</option>
-            <option value="NEAR">NEAR</option>
+            <option value="">Loading tokens…</option>
           </select>
         </div>
         <button type="button" id="swap-flip" class="swap-flip" aria-label="Flip tokens">⇅</button>
@@ -126,10 +133,7 @@
             <input type="text" id="swap-amount-to" class="input" placeholder="0.0" value="" readonly>
           </div>
           <select id="swap-token-to" class="swap-token">
-            <option value="USDC">USDC</option>
-            <option value="ETH">ETH</option>
-            <option value="USDT">USDT</option>
-            <option value="NEAR">NEAR</option>
+            <option value="">Loading tokens…</option>
           </select>
         </div>
         <div class="swap-btn-wrap">
@@ -158,6 +162,18 @@
         <p id="history-empty" class="history-empty">No in-session transactions. Load an address to see stored history or use a block explorer.</p>
       </div>
     </section>
+
+    <footer class="footer">
+      <label class="toggle-wrap" title="When on, chain list shows testnets; when off, mainnets">
+        <span class="toggle-label">Testnet</span>
+        <input type="checkbox" id="toggle-testnet" class="toggle-input" checked>
+        <span class="toggle-slider"></span>
+      </label>
+      <div class="api-url-wrap">
+        <label for="baseUrl">API</label>
+        <input type="text" id="baseUrl" class="api-url" value="http://localhost:8000" placeholder="http://localhost:8000">
+      </div>
+    </footer>
   </div>
 
   <script type="module" src="app.js"></script>

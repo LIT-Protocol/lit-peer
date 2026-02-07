@@ -9,6 +9,7 @@ use crate::core::v1::models::response::{
 };
 use lit_node_testnet::testnet::Testnet;
 use lit_node_testnet::validator::ValidatorCollection;
+use ethers::types::U256;
 use rocket::serde::json::Json;
 use rocket::{Route, State, get, http::Status, post, routes};
 use std::sync::Arc;
@@ -22,7 +23,8 @@ pub fn routes() -> Vec<Route> {
         encrypt,
         decrypt,
         combine_signature_shares,
-        lit_action
+        lit_action,
+        get_ledger_balance
     ]
 }
 
@@ -112,4 +114,12 @@ async fn combine_signature_shares(
     combine_signature_shares_request: Json<CombineSignatureSharesRequest>,
 ) -> Result<Json<CombineSignatureSharesResponse>, Status> {
     internal::combine_signature_shares(combine_signature_shares_request).await
+}
+
+#[get("/get_ledger_balance/<api_key>")]
+async fn get_ledger_balance(
+    testnet: &State<Arc<Testnet>>,
+    api_key: &str,
+) -> Result<Json<String>, Status> {
+    internal::get_ledger_balance(testnet, api_key).await
 }

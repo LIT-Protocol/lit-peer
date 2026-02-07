@@ -118,6 +118,11 @@ export const SIGNING_SCHEME_ECDSA_K256_SHA256 = 'EcdsaK256Sha256';
  * @property {number} recovery_id - Recovery id byte
  */
 
+/**
+ * Get ledger balance response: the raw balance value (U256 serialized as string or number).
+ * @typedef {string|number} GetLedgerBalanceResponse
+ */
+
 export class LitNodeSimpleApiClient {
   /**
    * @param {Object} options
@@ -159,6 +164,18 @@ export class LitNodeSimpleApiClient {
   async mintPkp(apiKey) {
     const res = await fetch(`${this.baseUrl}/mint_pkp/${encodeURIComponent(apiKey)}`);
     if (!res.ok) throw new Error(`mint_pkp failed: ${res.status} ${res.statusText}`);
+    return res.json();
+  }
+
+  /**
+   * GET /core/v1/get_ledger_balance/<api_key>
+   * Returns the wallet ledger balance for the API key (inquiry balance).
+   * @param {string} apiKey - Hex-encoded API key (from getApiKey)
+   * @returns {Promise<GetLedgerBalanceResponse>} Balance value (string or number, U256)
+   */
+  async getLedgerBalance(apiKey) {
+    const res = await fetch(`${this.baseUrl}/get_ledger_balance/${encodeURIComponent(apiKey)}`);
+    if (!res.ok) throw new Error(`get_ledger_balance failed: ${res.status} ${res.statusText}`);
     return res.json();
   }
 

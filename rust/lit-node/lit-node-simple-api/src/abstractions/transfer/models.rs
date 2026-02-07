@@ -34,7 +34,8 @@ pub struct GetBalanceResponse {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChainInfoResponse {
-    pub name: String,
+    pub chain: String,
+    pub display_name: String,
     pub token: String,
 }
 

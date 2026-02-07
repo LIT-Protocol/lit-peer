@@ -12,11 +12,21 @@ let state = {
   apiKey: null,
   pkpPublicKey: null,
   walletAddress: null,
-  chainList: [], // { name, token }[] from getAllChains({ isEvm: true, isTestnet: true })
+  pkpAddress: null, // EVM address derived from PKP (from balance API response)
+  isTestnet: true, // when true, getAllChains uses isTestnet: true (testnet EVM chains)
+  chainList: [], // { chain, display_name, token }[] from getAllChains({ isEvm: true, isTestnet: state.isTestnet })
 };
 
 function getBaseUrl() {
   return (document.getElementById('baseUrl').value || 'http://localhost:8000').trim().replace(/\/$/, '');
+}
+
+/** Format address or key as first 8 + "..." + last 8. */
+function formatAddress(str) {
+  if (!str || typeof str !== 'string') return '–';
+  const s = str.trim();
+  if (s.length <= 16) return s;
+  return `${s.slice(0, 8)}...${s.slice(-8)}`;
 }
 
 function initClients() {
@@ -76,20 +86,49 @@ function initRouting() {
   });
 }
 
-// --- Chains (getAllChains: isEvm=true, isTestnet=true) ---
+// --- Chains (getAllChains: isEvm=true, isTestnet from toggle) ---
 async function loadChains() {
   try {
     const client = await getTransferClient();
-    const res = await client.getAllChains({ isEvm: true, isTestnet: true });
+    const res = await client.getAllChains({ isEvm: true, isTestnet: state.isTestnet });
     state.chainList = res.chains || [];
     populateChainSelect('overview-chain', state.chainList);
     populateChainSelect('transfer-chain', state.chainList);
+    populateSwapTokenSelects();
   } catch (err) {
     console.error('loadChains failed:', err);
     state.chainList = [];
     populateChainSelect('overview-chain', []);
     populateChainSelect('transfer-chain', []);
+    populateSwapTokenSelects();
   }
+}
+
+/** Unique token symbols from state.chainList for swap dropdowns. */
+function getTokenListFromChains() {
+  const tokens = [...new Set((state.chainList || []).map((c) => c.token).filter(Boolean))];
+  return tokens.sort((a, b) => a.localeCompare(b));
+}
+
+function populateSwapTokenSelects() {
+  const tokens = getTokenListFromChains();
+  const options = tokens.length
+    ? tokens.map((token) => ({ value: token, text: token }))
+    : [{ value: '', text: 'No tokens loaded' }];
+  const fromSel = document.getElementById('swap-token-from');
+  const toSel = document.getElementById('swap-token-to');
+  [fromSel, toSel].forEach((sel) => {
+    if (!sel) return;
+    sel.innerHTML = '';
+    options.forEach((o) => {
+      const opt = document.createElement('option');
+      opt.value = o.value;
+      opt.textContent = o.text;
+      sel.appendChild(opt);
+    });
+  });
+  if (fromSel && options[0]?.value) fromSel.value = options[0].value;
+  if (toSel && options.length > 1) toSel.value = options[1].value; else if (toSel && options[0]?.value) toSel.value = options[0].value;
 }
 
 function populateChainSelect(selectId, chains) {
@@ -105,8 +144,8 @@ function populateChainSelect(selectId, chains) {
   }
   chains.forEach((c) => {
     const opt = document.createElement('option');
-    opt.value = c.name;
-    opt.textContent = c.name;
+    opt.value = c.chain;
+    opt.textContent = c.display_name;
     sel.appendChild(opt);
   });
 }
@@ -123,14 +162,29 @@ function showOverviewAccount() {
   document.getElementById('overview-actions').style.display = 'none';
   const wrap = document.getElementById('overview-account');
   wrap.style.display = 'block';
-  document.getElementById('overview-wallet').textContent = state.walletAddress || '–';
-  document.getElementById('overview-pkp').textContent = state.pkpPublicKey
-    ? `${state.pkpPublicKey.slice(0, 12)}...${state.pkpPublicKey.slice(-8)}`
-    : '–';
+  document.getElementById('overview-wallet').textContent = formatAddress(state.walletAddress);
+  document.getElementById('overview-pkp').textContent = formatAddress(state.pkpPublicKey);
+  const addrEl = document.getElementById('overview-pkp-address');
+  if (addrEl) addrEl.textContent = formatAddress(state.pkpAddress);
   document.getElementById('overview-chain-wrap').style.display = 'block';
-  const legend = document.getElementById('overview-balance-legend');
-  if (legend) legend.style.display = 'block';
+  updateCopyButtonStates();
   updateLogoutButtonVisibility();
+  fetchPkpAddressIfNeeded();
+}
+
+function updateCopyButtonStates() {
+  document.getElementById('btn-copy-wallet').disabled = !state.walletAddress;
+  document.getElementById('btn-copy-pkp').disabled = !state.pkpPublicKey;
+  document.getElementById('btn-copy-pkp-address').disabled = !state.pkpAddress;
+}
+
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
 
 async function createAccount() {
@@ -154,11 +208,11 @@ async function createAccount() {
   }
 }
 
-const WALLET_BALANCE_CHAIN = 'Yellowstone'; // Wallet balance always shown for Yellowstone (Litkey)
+const WALLET_BALANCE_CHAIN = 'yellowstone'; // Chain key for API; wallet balance always shown for Yellowstone (Litkey)
 
 async function refreshBalances() {
   const chainEl = document.getElementById('overview-chain');
-  const chain = (chainEl && chainEl.value ? chainEl.value : (state.chainList[0]?.name || '')).trim();
+  const chain = (chainEl && chainEl.value ? chainEl.value : (state.chainList[0]?.chain || '')).trim();
   if (!chain) return;
   const wrap = document.getElementById('overview-balances');
   if (!state.apiKey && !state.pkpPublicKey) {
@@ -172,16 +226,38 @@ async function refreshBalances() {
     list.className = 'balance-list';
     if (state.apiKey) {
       const bal = await client.getApiKeyBalance(state.apiKey, WALLET_BALANCE_CHAIN);
+      if (bal.address) {
+        state.walletAddress = bal.address;
+        const walletEl = document.getElementById('overview-wallet');
+        if (walletEl) walletEl.textContent = formatAddress(bal.address);
+        updateCopyButtonStates();
+      }
       const li = document.createElement('li');
-      li.innerHTML = `<span class="balance-symbol">API Key balance (Litkey - ${WALLET_BALANCE_CHAIN})</span><span>${bal.balance}</span>`;
+      li.innerHTML = `<span class="balance-symbol">API Key balance (Litkey - Yellowstone)</span><span>${bal.balance}</span>`;
       list.appendChild(li);
+      const coreClient = await getCoreClient();
+      let ledgerBalance = '–';
+      try {
+        const ledger = await coreClient.getLedgerBalance(state.apiKey);
+        ledgerBalance = typeof ledger === 'string' ? ledger : String(ledger);
+      } catch (_) {}
+      const liLedger = document.createElement('li');
+      liLedger.innerHTML = `<span class="balance-symbol">Network Ledger Balance (Litkey)</span><span>${ledgerBalance}</span>`;
+      list.appendChild(liLedger);
     }
     if (state.pkpPublicKey) {
       const bal = await client.getPkpBalance(state.pkpPublicKey, chain);
-      const selectedChain = state.chainList.find((c) => c.name === chain);
+      if (bal.address) {
+        state.pkpAddress = bal.address;
+        const addrEl = document.getElementById('overview-pkp-address');
+        if (addrEl) addrEl.textContent = formatAddress(bal.address);
+        updateCopyButtonStates();
+      }
+      const selectedChain = state.chainList.find((c) => c.chain === chain);
       const symbol = selectedChain?.token ?? bal.symbol ?? chain;
+      const displayName = selectedChain?.display_name ?? chain;
       const li = document.createElement('li');
-      li.innerHTML = `<span class="balance-symbol">PKP (${symbol})</span><span>${bal.balance}</span>`;
+      li.innerHTML = `<span class="balance-symbol">PKP (${symbol} – ${displayName})</span><span>${bal.balance}</span>`;
       list.appendChild(li);
     }
     wrap.innerHTML = '';
@@ -235,6 +311,23 @@ function saveAccount() {
   }
 }
 
+/** Fetch PKP address once from balance API when we have PKP but no cached address. */
+async function fetchPkpAddressIfNeeded() {
+  if (!state.pkpPublicKey || state.pkpAddress) return;
+  const chain = state.chainList[0]?.chain;
+  if (!chain) return;
+  try {
+    const client = await getTransferClient();
+    const bal = await client.getPkpBalance(state.pkpPublicKey, chain);
+    if (bal.address) {
+      state.pkpAddress = bal.address;
+      const addrEl = document.getElementById('overview-pkp-address');
+      if (addrEl) addrEl.textContent = formatAddress(bal.address);
+      updateCopyButtonStates();
+    }
+  } catch (_) {}
+}
+
 function updateLogoutButtonVisibility() {
   const btn = document.getElementById('btn-logout');
   if (btn) btn.style.display = state.apiKey ? 'inline-flex' : 'none';
@@ -244,12 +337,11 @@ function logout() {
   state.apiKey = null;
   state.pkpPublicKey = null;
   state.walletAddress = null;
+  state.pkpAddress = null;
   localStorage.removeItem('swps_account');
   document.getElementById('overview-actions').style.display = 'block';
   document.getElementById('overview-account').style.display = 'none';
   document.getElementById('overview-chain-wrap').style.display = 'none';
-  const legend = document.getElementById('overview-balance-legend');
-  if (legend) legend.style.display = 'none';
   document.getElementById('overview-balances').innerHTML =
     '<p class="history-empty">Load an account and choose a chain to see balances.</p>';
   updateLogoutButtonVisibility();
@@ -404,6 +496,15 @@ function init() {
   if (state.apiKey && state.pkpPublicKey) showOverviewAccount();
   updateLogoutButtonVisibility();
 
+  const toggleTestnet = document.getElementById('toggle-testnet');
+  if (toggleTestnet) {
+    toggleTestnet.checked = state.isTestnet;
+    toggleTestnet.addEventListener('change', () => {
+      state.isTestnet = toggleTestnet.checked;
+      loadChains();
+    });
+  }
+
   document.getElementById('baseUrl').addEventListener('change', () => {
     initClients();
     loadChains();
@@ -414,6 +515,16 @@ function init() {
   document.getElementById('btn-load-account').addEventListener('click', loadPastedAccount);
   document.getElementById('btn-refresh-balance').addEventListener('click', refreshBalances);
   document.getElementById('overview-chain').addEventListener('change', refreshBalances);
+
+  document.getElementById('btn-copy-wallet').addEventListener('click', () => {
+    if (state.walletAddress) copyToClipboard(state.walletAddress);
+  });
+  document.getElementById('btn-copy-pkp').addEventListener('click', () => {
+    if (state.pkpPublicKey) copyToClipboard(state.pkpPublicKey);
+  });
+  document.getElementById('btn-copy-pkp-address').addEventListener('click', () => {
+    if (state.pkpAddress) copyToClipboard(state.pkpAddress);
+  });
 
   document.getElementById('transfer-form').addEventListener('submit', submitTransfer);
 

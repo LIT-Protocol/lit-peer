@@ -39,6 +39,8 @@ async fn get_api_key_balance(testnet: &State<Arc<Testnet>>, api_key: &str, chain
 
 #[get("/get_pkp_balance/<pkp_public_key>/<chain>")]
 async fn get_pkp_balance( pkp_public_key: &str, chain: &str) -> Result<Json<GetBalanceResponse>, Status> {
+    info!("get_pkp_balance: {:?}, {:?}", pkp_public_key, chain);
+    
     let chain = match Chain::try_from_str(chain) {
         Ok(chain) => chain,
         Err(e) => {
@@ -94,7 +96,8 @@ async fn get_all_chains(
         chains: chains
             .iter()
             .map(|chain| ChainInfoResponse {
-                name: chain.info().chain_name.to_string(),
+                chain: chain.info().chain.to_string(),
+                display_name: chain.info().chain_name.to_string(),
                 token: chain.info().token.to_string(),
             })
             .collect(),

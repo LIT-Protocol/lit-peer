@@ -6,6 +6,8 @@ use lit_node_core::SigningScheme;
 
 pub struct ChainInfo {
     pub chain_name: &'static str,
+    /// Lowercase enum variant name (e.g. "ethereum", "bnbsmartchain").
+    pub chain: &'static str,
     pub chain_id: u64,
     pub is_evm: bool,
     pub testnet: bool,
@@ -97,11 +99,11 @@ impl Chain {
     pub fn try_from_str(chain: &str) -> Result<Self, Status> {
         match chain.to_lowercase().as_str() {
             "ethereum" => Ok(Self::Ethereum),
-            "bnb" => Ok(Self::BnbSmartChain),
-            "arbitrum" => Ok(Self::ArbitrumOne),
+            "bnbsmartchain" => Ok(Self::BnbSmartChain),
+            "arbitrumone" => Ok(Self::ArbitrumOne),
             "base" => Ok(Self::Base),
-            "avalanche" => Ok(Self::AvalancheCChain),
-            "polygon" => Ok(Self::PolygonPos),
+            "avalanchecchain"  => Ok(Self::AvalancheCChain),
+            "polygonpos" => Ok(Self::PolygonPos),
             "optimism" => Ok(Self::Optimism),
             "blast" => Ok(Self::Blast),
             "scroll" => Ok(Self::Scroll),
@@ -109,10 +111,10 @@ impl Chain {
             "linea" => Ok(Self::Linea),
             "cronos" => Ok(Self::Cronos),
             "mode" => Ok(Self::Mode),
-            "zksync" => Ok(Self::ZkSyncEra),
+            "zksyncera" => Ok(Self::ZkSyncEra),
             "pulsechain" => Ok(Self::PulseChain),
             "fantom" => Ok(Self::Fantom),
-            "manta" => Ok(Self::MantaPacific),
+            "mantapacific" => Ok(Self::MantaPacific),
             "celo" => Ok(Self::Celo),
             "kava" => Ok(Self::Kava),
             "gnosis" => Ok(Self::Gnosis),
@@ -138,13 +140,13 @@ impl Chain {
             "iotex" => Ok(Self::IoTeX),
             "evmos" => Ok(Self::Evmos),
             "meter" => Ok(Self::Meter),
-            "milkomeda" => Ok(Self::MilkomedaC1),
+            "milkomedac1" => Ok(Self::MilkomedaC1),
             "syscoin" => Ok(Self::Syscoin),
             "dogechain" => Ok(Self::Dogechain),
             "fuse" => Ok(Self::Fuse),
             "shibarium" => Ok(Self::Shibarium),
             "thundercore" => Ok(Self::ThunderCore),
-            "rei" => Ok(Self::ReiNetwork),
+            "reinetwork" => Ok(Self::ReiNetwork),
             "xlayer" => Ok(Self::XLayer),
             "tron" => Ok(Self::Tron),
             "solana" => Ok(Self::Solana),
@@ -158,32 +160,112 @@ impl Chain {
             "stellar" => Ok(Self::Stellar),
             "yellowstone" => Ok(Self::Yellowstone),
             // Testnets
-            "aptos_testnet" | "aptos testnet" => Ok(Self::AptosTestnet),
-            "arbitrum_sepolia" | "arbitrum sepolia" => Ok(Self::ArbitrumSepolia),
-            "avalanche_fuji" | "avalanche fuji" | "fuji" => Ok(Self::AvalancheFuji),
-            "base_sepolia" | "base sepolia" => Ok(Self::BaseSepolia),
-            "bitcoin_signet" | "bitcoin signet" | "signet" => Ok(Self::BitcoinSignet),
-            "bnb_testnet" | "bnb testnet" | "bsc_testnet" | "bsc testnet" => Ok(Self::BnbSmartChainTestnet),
-            "ethereum_holesky" | "ethereum holesky" | "holesky" => Ok(Self::EthereumHolesky),
-            "ethereum_sepolia" | "ethereum sepolia" | "sepolia" => Ok(Self::EthereumSepolia),
-            "polygon_amoy" | "polygon amoy" | "amoy" => Ok(Self::PolygonAmoy),
-            "solana_devnet" | "solana devnet" | "solana testnet" => Ok(Self::SolanaDevnet),
+            "aptostestnet" => Ok(Self::AptosTestnet),
+            "arbitrumsepolia" => Ok(Self::ArbitrumSepolia),
+            "avalanchefuji" => Ok(Self::AvalancheFuji),
+            "basesepolia" => Ok(Self::BaseSepolia),
+            "bitcoinsignet" => Ok(Self::BitcoinSignet),
+            "bnbsmartchaintestnet" => Ok(Self::BnbSmartChainTestnet),
+            "ethereumholesky" => Ok(Self::EthereumHolesky),
+            "ethereumsepolia" => Ok(Self::EthereumSepolia),
+            "polygonamoy" => Ok(Self::PolygonAmoy),
+            "solanadevnet" => Ok(Self::SolanaDevnet),
             _ => Err(Status::NotFound),
         }
     }
+
+    /// Lowercase enum variant name for API/identification (e.g. "ethereum", "arbitrumsepolia").
+    pub fn chain_key(self) -> &'static str {
+        match self {
+            Self::Yellowstone => "yellowstone",
+            Self::Ethereum => "ethereum",
+            Self::BnbSmartChain => "bnbsmartchain",
+            Self::ArbitrumOne => "arbitrumone",
+            Self::Base => "base",
+            Self::AvalancheCChain => "avalanchecchain",
+            Self::PolygonPos => "polygonpos",
+            Self::Optimism => "optimism",
+            Self::Blast => "blast",
+            Self::Scroll => "scroll",
+            Self::Mantle => "mantle",
+            Self::Linea => "linea",
+            Self::Cronos => "cronos",
+            Self::Mode => "mode",
+            Self::ZkSyncEra => "zksyncera",
+            Self::PulseChain => "pulsechain",
+            Self::Fantom => "fantom",
+            Self::MantaPacific => "mantapacific",
+            Self::Celo => "celo",
+            Self::Kava => "kava",
+            Self::Gnosis => "gnosis",
+            Self::Metis => "metis",
+            Self::Astar => "astar",
+            Self::Moonbeam => "moonbeam",
+            Self::Core => "core",
+            Self::Zora => "zora",
+            Self::Klaytn => "klaytn",
+            Self::Canto => "canto",
+            Self::Moonriver => "moonriver",
+            Self::Taiko => "taiko",
+            Self::Flare => "flare",
+            Self::ConfluxESpace => "confluxespace",
+            Self::Aurora => "aurora",
+            Self::Telos => "telos",
+            Self::BobaNetwork => "bobanetwork",
+            Self::Heco => "heco",
+            Self::OkxChain => "okxchain",
+            Self::ZkFair => "zkfair",
+            Self::Wemix30 => "wemix30",
+            Self::Kcc => "kcc",
+            Self::IoTeX => "iotex",
+            Self::Evmos => "evmos",
+            Self::Meter => "meter",
+            Self::MilkomedaC1 => "milkomedac1",
+            Self::Syscoin => "syscoin",
+            Self::Dogechain => "dogechain",
+            Self::Fuse => "fuse",
+            Self::Shibarium => "shibarium",
+            Self::ThunderCore => "thundercore",
+            Self::ReiNetwork => "reinetwork",
+            Self::XLayer => "xlayer",
+            Self::Tron => "tron",
+            Self::Solana => "solana",
+            Self::Sui => "sui",
+            Self::Bitcoin => "bitcoin",
+            Self::Aptos => "aptos",
+            Self::Near => "near",
+            Self::Cardano => "cardano",
+            Self::Stacks => "stacks",
+            Self::CosmosHub => "cosmoshub",
+            Self::Stellar => "stellar",
+            Self::AptosTestnet => "aptostestnet",
+            Self::ArbitrumSepolia => "arbitrumsepolia",
+            Self::AvalancheFuji => "avalanchefuji",
+            Self::BaseSepolia => "basesepolia",
+            Self::BitcoinSignet => "bitcoinsignet",
+            Self::BnbSmartChainTestnet => "bnbsmartchaintestnet",
+            Self::EthereumHolesky => "ethereumholesky",
+            Self::EthereumSepolia => "ethereumsepolia",
+            Self::PolygonAmoy => "polygonamoy",
+            Self::SolanaDevnet => "solanadevnet",
+        }
+    }
+
     pub fn info(self) -> ChainInfo {
         match self {
             Self::Yellowstone => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Yellowstone",
                 chain_id: 175188,
                 is_evm: true,
-                testnet: false,
+                testnet: true,
                 token: "LitKey",
                 rpc_url: "https://yellowstone-rpc.litprotocol.com",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Ethereum => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Ethereum",
                 chain_id: 1,
                 is_evm: true,
@@ -194,6 +276,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::BnbSmartChain => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "BNB Smart Chain",
                 chain_id: 56,
                 is_evm: true,
@@ -204,16 +287,18 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::ArbitrumOne => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Arbitrum One",
                 chain_id: 42161,
                 is_evm: true,
                 testnet: false,
-                token: "ETH",
+                token: "ARB",
                 rpc_url: "https://arb1.arbitrum.io",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Base => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Base",
                 chain_id: 8453,
                 is_evm: true,
@@ -224,6 +309,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::AvalancheCChain => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Avalanche C-Chain",
                 chain_id: 43114,
                 is_evm: true,
@@ -234,6 +320,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::PolygonPos => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Polygon POS",
                 chain_id: 137,
                 is_evm: true,
@@ -244,6 +331,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Optimism => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Optimism",
                 chain_id: 10,
                 is_evm: true,
@@ -254,6 +342,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Blast => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Blast",
                 chain_id: 81457,
                 is_evm: true,
@@ -264,16 +353,18 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Scroll => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Scroll",
                 chain_id: 534352,
                 is_evm: true,
                 testnet: false,
-                token: "ETH",
+                token: "SCR",
                 rpc_url: "https://rpc.scroll.io",
                 signing_scheme: SigningScheme::EcdsaK256Sha256,
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Mantle => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Mantle",
                 chain_id: 5000,
                 is_evm: true,
@@ -284,6 +375,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Linea => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Linea",
                 chain_id: 59144,
                 is_evm: true,
@@ -294,6 +386,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Cronos => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Cronos",
                 chain_id: 25,
                 is_evm: true,
@@ -304,6 +397,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Mode => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Mode",
                 chain_id: 34443,
                 is_evm: true,
@@ -314,6 +408,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::ZkSyncEra => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "zkSync Era",
                 chain_id: 324,
                 is_evm: true,
@@ -324,6 +419,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::PulseChain => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "PulseChain",
                 chain_id: 369,
                 is_evm: true,
@@ -334,6 +430,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Fantom => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Fantom",
                 chain_id: 250,
                 is_evm: true,
@@ -344,6 +441,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::MantaPacific => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Manta Pacific",
                 chain_id: 169,
                 is_evm: true,
@@ -354,6 +452,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Celo => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Celo",
                 chain_id: 42220,
                 is_evm: true,
@@ -364,6 +463,7 @@ impl Chain {
                 derivation_path: "m/44'/52734'/0'/0/0",
             },
             Self::Kava => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Kava",
                 chain_id: 2222,
                 is_evm: true,
@@ -374,6 +474,7 @@ impl Chain {
                 derivation_path: "m/44'/459'/0'/0/0",
             },
             Self::Gnosis => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Gnosis",
                 chain_id: 100,
                 is_evm: true,
@@ -384,6 +485,7 @@ impl Chain {
                 derivation_path: "m/44'/700'/0'/0/0",
             },
             Self::Metis => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Metis",
                 chain_id: 1088,
                 is_evm: true,
@@ -394,6 +496,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Astar => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Astar",
                 chain_id: 592,
                 is_evm: true,
@@ -404,6 +507,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Moonbeam => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Moonbeam",
                 chain_id: 1284,
                 is_evm: true,
@@ -414,6 +518,7 @@ impl Chain {
                 derivation_path: "m/44'/1284'/0'/0/0",
             },
             Self::Core => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Core",
                 chain_id: 1116,
                 is_evm: true,
@@ -424,6 +529,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Zora => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Zora",
                 chain_id: 7777777,
                 is_evm: true,
@@ -434,6 +540,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Klaytn => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Klaytn",
                 chain_id: 8217,
                 is_evm: true,
@@ -444,6 +551,7 @@ impl Chain {
                 derivation_path: "m/44'/8217'/0'/0/0",
             },
             Self::Canto => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Canto",
                 chain_id: 7700,
                 is_evm: true,
@@ -454,6 +562,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Moonriver => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Moonriver",
                 chain_id: 1285,
                 is_evm: true,
@@ -464,6 +573,7 @@ impl Chain {
                 derivation_path: "m/44'/1285'/0'/0/0",
             },
             Self::Taiko => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Taiko",
                 chain_id: 167000,
                 is_evm: true,
@@ -474,6 +584,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Flare => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Flare",
                 chain_id: 14,
                 is_evm: true,
@@ -484,6 +595,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::ConfluxESpace => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Conflux eSpace",
                 chain_id: 1030,
                 is_evm: true,
@@ -494,6 +606,7 @@ impl Chain {
                 derivation_path: "m/44'/503'/0'/0/0",
             },
             Self::Aurora => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Aurora",
                 chain_id: 1313161554,
                 is_evm: true,
@@ -504,6 +617,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Telos => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Telos",
                 chain_id: 40,
                 is_evm: true,
@@ -514,6 +628,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::BobaNetwork => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Boba Network",
                 chain_id: 288,
                 is_evm: true,
@@ -524,6 +639,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Heco => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Heco",
                 chain_id: 128,
                 is_evm: true,
@@ -534,6 +650,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::OkxChain => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "OKXChain",
                 chain_id: 66,
                 is_evm: true,
@@ -544,6 +661,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::ZkFair => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "ZkFair",
                 chain_id: 42766,
                 is_evm: true,
@@ -554,6 +672,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Wemix30 => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "WEMIX 3.0",
                 chain_id: 1111,
                 is_evm: true,
@@ -564,6 +683,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Kcc => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "KCC",
                 chain_id: 321,
                 is_evm: true,
@@ -574,6 +694,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::IoTeX => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "IoTeX",
                 chain_id: 4689,
                 is_evm: true,
@@ -584,6 +705,7 @@ impl Chain {
                 derivation_path: "m/44'/304'/0'/0/0",
             },
             Self::Evmos => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Evmos",
                 chain_id: 9001,
                 is_evm: true,
@@ -594,6 +716,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Meter => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Meter",
                 chain_id: 82,
                 is_evm: true,
@@ -604,6 +727,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::MilkomedaC1 => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Milkomeda C1",
                 chain_id: 2002,
                 is_evm: true,
@@ -614,6 +738,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Syscoin => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Syscoin",
                 chain_id: 57,
                 is_evm: true,
@@ -624,6 +749,7 @@ impl Chain {
                 derivation_path: "m/44'/57'/0'/0/0",
             },
             Self::Dogechain => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Dogechain",
                 chain_id: 2000,
                 is_evm: true,
@@ -634,6 +760,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Fuse => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Fuse",
                 chain_id: 122,
                 is_evm: true,
@@ -644,6 +771,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::Shibarium => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Shibarium",
                 chain_id: 109,
                 is_evm: true,
@@ -654,6 +782,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::ThunderCore => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "ThunderCore",
                 chain_id: 108,
                 is_evm: true,
@@ -664,6 +793,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::ReiNetwork => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "REI Network",
                 chain_id: 47805,
                 is_evm: true,
@@ -674,6 +804,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/0",
             },
             Self::XLayer => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "X Layer",
                 chain_id: 196,
                 is_evm: true,
@@ -685,6 +816,7 @@ impl Chain {
             },
             // Non-EVM chains (is_evm: false)
             Self::Tron => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Tron",
                 chain_id: 0,
                 is_evm: false,
@@ -695,6 +827,7 @@ impl Chain {
                 derivation_path: "m/44'/195'/0'/0/0",
             },
             Self::Solana => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Solana",
                 chain_id: 0,
                 is_evm: false,
@@ -705,6 +838,7 @@ impl Chain {
                 derivation_path: "m/44'/501'/0'/0'",
             },
             Self::Sui => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Sui",
                 chain_id: 0,
                 is_evm: false,
@@ -715,6 +849,7 @@ impl Chain {
                 derivation_path: "m/44'/784'/0'/0'/0'",
             },
             Self::Bitcoin => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Bitcoin",
                 chain_id: 0,
                 is_evm: false,
@@ -725,6 +860,7 @@ impl Chain {
                 derivation_path: "m/84'/0'/0'/0/0",
             },
             Self::Aptos => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Aptos",
                 chain_id: 0,
                 is_evm: false,
@@ -735,6 +871,7 @@ impl Chain {
                 derivation_path: "m/44'/637'/0'/0'/0'",
             },
             Self::Near => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Near",
                 chain_id: 0,
                 is_evm: false,
@@ -745,6 +882,7 @@ impl Chain {
                 derivation_path: "m/44'/397'/0'",
             },
             Self::Cardano => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Cardano",
                 chain_id: 0,
                 is_evm: false,
@@ -755,6 +893,7 @@ impl Chain {
                 derivation_path: "m/1852'/1815'/0'",
             },
             Self::Stacks => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Stacks",
                 chain_id: 0,
                 is_evm: false,
@@ -765,6 +904,7 @@ impl Chain {
                 derivation_path: "m/44'/5757'/0'/0/0",
             },
             Self::CosmosHub => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Cosmos Hub",
                 chain_id: 0,
                 is_evm: false,
@@ -775,6 +915,7 @@ impl Chain {
                 derivation_path: "m/44'/118'/0'/0/0",
             },
             Self::Stellar => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Stellar",
                 chain_id: 0,
                 is_evm: false,
@@ -786,6 +927,7 @@ impl Chain {
             },
             // Testnets (from TESTNETS)
             Self::AptosTestnet => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Aptos Testnet",
                 chain_id: 2,
                 is_evm: false,
@@ -796,6 +938,7 @@ impl Chain {
                 derivation_path: "m/44'/637'/0'/0'/0'",
             },
             Self::ArbitrumSepolia => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Arbitrum Sepolia",
                 chain_id: 421614,
                 is_evm: true,
@@ -806,6 +949,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/x",
             },
             Self::AvalancheFuji => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Avalanche Fuji Testnet",
                 chain_id: 43113,
                 is_evm: true,
@@ -816,6 +960,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/x",
             },
             Self::BaseSepolia => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Base Sepolia Testnet",
                 chain_id: 84532,
                 is_evm: true,
@@ -826,6 +971,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/x",
             },
             Self::BitcoinSignet => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Bitcoin Signet",
                 chain_id: 0,
                 is_evm: false,
@@ -836,6 +982,7 @@ impl Chain {
                 derivation_path: "m/84'/1'/0'/0/x",
             },
             Self::BnbSmartChainTestnet => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "BNB Smart Chain Testnet",
                 chain_id: 97,
                 is_evm: true,
@@ -846,6 +993,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/x",
             },
             Self::EthereumHolesky => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Ethereum Holesky",
                 chain_id: 17000,
                 is_evm: true,
@@ -856,6 +1004,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/x",
             },
             Self::EthereumSepolia => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Ethereum Sepolia",
                 chain_id: 11155111,
                 is_evm: true,
@@ -866,6 +1015,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/x",
             },
             Self::PolygonAmoy => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Polygon Amoy Testnet",
                 chain_id: 80002,
                 is_evm: true,
@@ -876,6 +1026,7 @@ impl Chain {
                 derivation_path: "m/44'/60'/0'/0/x",
             },
             Self::SolanaDevnet => ChainInfo {
+                chain: self.chain_key(),
                 chain_name: "Solana Devnet",
                 chain_id: 0,
                 is_evm: false,

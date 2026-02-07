@@ -64,6 +64,18 @@ pub async fn handshake(
     }))
 }
 
+pub async fn get_ledger_balance(
+    testnet: &Arc<Testnet>,
+    api_key: &str,
+) -> Result<Json<String>, Status> {
+    let end_user = EndUser::from_secret_key(testnet, &hex_to_bytes(&api_key).unwrap());
+    let balance = end_user.get_wallet_ledger_balance("inquiry").await;
+    let mut balance_bytes = [0u8; 32];
+    balance.to_big_endian(&mut balance_bytes);
+    let balance = U256::from_big_endian(&balance_bytes);
+    Ok(Json(balance.to_string()))
+}
+
 pub async fn mint_pkp(
     testnet: &Arc<Testnet>,
     api_key: &str,
@@ -98,7 +110,7 @@ pub async fn sign_with_pkp(
         false => sign_request.message.as_bytes().to_vec(),
     };
 
-    info!("to_sign: {:?}", to_sign);
+    // info!("to_sign: {:?}", to_sign);
     let to_sign = keccak256(to_sign.as_slice()).to_vec();
     let pubkey = sign_request.pkp_public_key.clone();
     let epoch = validator_collection

@@ -9,7 +9,7 @@
  * @typedef {Object} GetBalanceResponse
  * @property {string} address - Wallet address
  * @property {string} balance - Balance as string
- * @property {string} chain - Chain identifier (e.g. "Ethereum", "Solana")
+ * @property {string} chain - Chain key (lowercase, e.g. "ethereum", "solana")
  * @property {string} symbol - Asset symbol
  */
 
@@ -17,7 +17,7 @@
  * @typedef {Object} TransferOptions
  * @property {string} apiKey - Hex-encoded API key (from getApiKey)
  * @property {string} pkpPublicKey - PKP public key
- * @property {string} chain - Chain identifier (e.g. "Ethereum", "Solana")
+ * @property {string} chain - Chain key (lowercase, e.g. "ethereum", "solana"); use ChainInfoItem.chain from get_chains
  * @property {string} destinationAddress - Destination address
  * @property {string} amount - Amount as string
  */
@@ -26,7 +26,7 @@
  * @typedef {Object} TransferResponse
  * @property {string} txn_id - Transaction id
  * @property {boolean} success - Whether the transfer succeeded
- * @property {string} chain - Chain identifier
+ * @property {string} chain - Chain key (lowercase)
  * @property {string} origin_symbol - Symbol of the asset sent
  * @property {string} origin_amount - Amount sent
  * @property {string} gas - Gas used/cost
@@ -42,13 +42,14 @@
 
 /**
  * @typedef {Object} ChainInfoItem
- * @property {string} name - Chain display name
+ * @property {string} chain - Chain key (lowercase identifier for API calls, e.g. "ethereum", "bnbsmartchain")
+ * @property {string} display_name - Human-readable chain name for UI
  * @property {string} token - Asset/token symbol
  */
 
 /**
  * @typedef {Object} GetChainsResponse
- * @property {ChainInfoItem[]} chains - List of supported chains with name and token
+ * @property {ChainInfoItem[]} chains - List of supported chains with chain, display_name, and token
  */
 
 export class LitTransferApiClient {
@@ -65,7 +66,7 @@ export class LitTransferApiClient {
    * GET /transfer/v1/get_api_key_balance/<api_key>/<chain>
    * Gets balance for the wallet identified by the API key on the given chain.
    * @param {string} apiKey - Hex-encoded API key (from getApiKey)
-   * @param {string} chain - Chain identifier (e.g. "Ethereum", "Solana")
+   * @param {string} chain - Chain key (lowercase, e.g. "ethereum", "yellowstone"); use ChainInfoItem.chain from get_chains
    * @returns {Promise<GetBalanceResponse>} { address, balance, chain, symbol }
    */
   async getApiKeyBalance(apiKey, chain) {
@@ -80,7 +81,7 @@ export class LitTransferApiClient {
    * GET /transfer/v1/get_pkp_balance/<pkp_public_key>/<chain>
    * Gets balance for the PKP (programmable key pair) address on the given chain.
    * @param {string} pkpPublicKey - PKP public key
-   * @param {string} chain - Chain identifier (e.g. "Ethereum", "Solana")
+   * @param {string} chain - Chain key (lowercase, e.g. "ethereum", "solana"); use ChainInfoItem.chain from get_chains
    * @returns {Promise<GetBalanceResponse>} { address, balance, chain, symbol }
    */
   async getPkpBalance(pkpPublicKey, chain) {
@@ -95,7 +96,7 @@ export class LitTransferApiClient {
    * GET /transfer/v1/get_address_balance/<address>/<chain>
    * Gets balance for an arbitrary address on the given chain.
    * @param {string} address - Wallet or contract address (e.g. 0x... for EVM)
-   * @param {string} chain - Chain identifier (e.g. "Ethereum", "Solana")
+   * @param {string} chain - Chain key (lowercase, e.g. "ethereum", "solana"); use ChainInfoItem.chain from get_chains
    * @returns {Promise<GetBalanceResponse>} { address, balance, chain, symbol }
    */
   async getAddressBalance(address, chain) {
@@ -108,10 +109,10 @@ export class LitTransferApiClient {
 
   /**
    * GET /transfer/v1/get_chains?is_evm=&is_testnet=
-   * Returns the list of supported chains (EVM, non-EVM, or testnet EVM) with name and token symbol.
-   * Uses query params so GET works reliably in browsers (GET with body is often stripped).
+   * Returns the list of supported chains (EVM, non-EVM, or testnet EVM) with chain key, display_name, and token.
+   * Use chain for API calls (getPkpBalance, send, etc.); use display_name for UI labels.
    * @param {GetChainsOptions} [options] - { isEvm, isTestnet }; default { isEvm: true, isTestnet: false }
-   * @returns {Promise<GetChainsResponse>} { chains: { name, token }[] }
+   * @returns {Promise<GetChainsResponse>} { chains: { chain, display_name, token }[] }
    */
   async getAllChains(options = {}) {
     const { isEvm = true, isTestnet = false } = options;

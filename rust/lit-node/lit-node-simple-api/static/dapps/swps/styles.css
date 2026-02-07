@@ -53,10 +53,81 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.header-lit-logo {
+  height: 1.35rem;
+  width: auto;
+  display: block;
+}
+
 .header-actions {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+/* Toggle switch (Testnet) */
+.toggle-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.toggle-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.toggle-input:checked + .toggle-slider {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+
+.toggle-input:checked + .toggle-slider::before {
+  transform: translateX(16px);
+  background: var(--accent);
+}
+
+.toggle-input:focus-visible + .toggle-slider {
+  box-shadow: 0 0 0 2px var(--accent-dim);
 }
 
 .logo {
@@ -93,6 +164,18 @@ body {
 
 .api-url::placeholder {
   color: var(--text-muted);
+}
+
+/* Footer – testnet toggle and API URL */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-top: 2.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
 }
 
 /* Nav – Lit-style pill tabs */
@@ -282,12 +365,42 @@ select.input {
   color: var(--text-secondary);
 }
 
+.overview-value-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 65%;
+  justify-content: flex-end;
+}
+
 .overview-row .value {
   font-family: ui-monospace, monospace;
   font-size: 0.8rem;
   word-break: break-all;
-  max-width: 60%;
   text-align: right;
+}
+
+.btn-copy {
+  flex-shrink: 0;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-copy:hover:not(:disabled) {
+  background: var(--bg-card-hover);
+  color: var(--text-primary);
+}
+
+.btn-copy:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .balance-list {
