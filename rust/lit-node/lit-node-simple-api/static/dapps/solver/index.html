@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solver – Swap Intents</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <a href="https://developer.litprotocol.com/" target="_blank" rel="noopener noreferrer" class="header-brand">
+        <span class="logo">LIT Solver</span>
+      </a>
+      <div class="header-actions">
+        <button type="button" id="btn-logout" class="btn btn-secondary" style="display: none;">Log out</button>
+      </div>
+    </header>
+
+    <nav class="nav">
+      <a href="#account" data-page="account" class="active">Account</a>
+      <a href="#swap-requests" data-page="swap-requests">Swap requests</a>
+      <a href="#quotes" data-page="quotes">Quotes</a>
+      <a href="#fulfill" data-page="fulfill">Fulfill</a>
+    </nav>
+
+    <!-- Page 1: Sign-in and account -->
+    <section id="page-account" class="page active">
+      <h1 class="page-title">Account</h1>
+      <p class="page-desc">Sign in or use an existing wallet / solver identity to manage swap requests and quotes.</p>
+      <div id="account-status" class="status info" style="display: none;"></div>
+      <div class="card">
+        <div class="card-title">Solver identity</div>
+        <div id="account-actions">
+          <div class="form-group">
+            <label for="account-wallet">Wallet address (solver)</label>
+            <input type="text" id="account-wallet" class="input" placeholder="0x...">
+          </div>
+          <button type="button" id="btn-save-account" class="btn btn-primary btn-block">Save & use</button>
+        </div>
+        <div id="account-loaded" style="display: none;">
+          <div class="overview-grid">
+            <div class="overview-row">
+              <span class="label">Solver address</span>
+              <span class="overview-value-wrap">
+                <span id="account-address-display" class="value mono">–</span>
+                <button type="button" class="btn-copy" id="btn-copy-account" title="Copy">Copy</button>
+              </span>
+            </div>
+          </div>
+          <button type="button" id="btn-clear-account" class="btn btn-secondary btn-block" style="margin-top: 1rem;">Use different address</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Page 2: Open swap requests -->
+    <section id="page-swap-requests" class="page">
+      <h1 class="page-title">Open swap requests</h1>
+      <p class="page-desc">Swap requests from the contract. Fulfill one from the Fulfill page.</p>
+      <div id="swap-requests-status" class="status" style="display: none;"></div>
+      <div class="card">
+        <div class="card-title">List</div>
+        <div id="swap-requests-list-wrap">
+          <ul id="swap-requests-list" class="list-cards"></ul>
+          <p id="swap-requests-empty" class="history-empty">Loading…</p>
+        </div>
+        <button type="button" id="btn-refresh-swap-requests" class="btn btn-secondary btn-block" style="margin-top: 0.75rem;">Refresh</button>
+      </div>
+    </section>
+
+    <!-- Page 3: Open quotes -->
+    <section id="page-quotes" class="page">
+      <h1 class="page-title">Open quotes</h1>
+      <p class="page-desc">Quotes created by solvers for swap requests.</p>
+      <div id="quotes-status" class="status" style="display: none;"></div>
+      <div class="card">
+        <div class="card-title">List</div>
+        <div id="quotes-list-wrap">
+          <ul id="quotes-list" class="list-cards"></ul>
+          <p id="quotes-empty" class="history-empty">Loading…</p>
+        </div>
+        <button type="button" id="btn-refresh-quotes" class="btn btn-secondary btn-block" style="margin-top: 0.75rem;">Refresh</button>
+      </div>
+    </section>
+
+    <!-- Page 4: Fulfill swap request (new quote) -->
+    <section id="page-fulfill" class="page">
+      <h1 class="page-title">Fulfill swap request</h1>
+      <p class="page-desc">Create a new quote for a swap request (fill quote).</p>
+      <div id="fulfill-status" class="status" style="display: none;"></div>
+      <div class="card">
+        <form id="fulfill-form" class="fulfill-form">
+          <div class="form-group">
+            <label for="fulfill-swap-request-id">Swap request ID</label>
+            <input type="text" id="fulfill-swap-request-id" class="input" placeholder="e.g. 1" required>
+          </div>
+          <div class="form-group">
+            <label for="fulfill-quote-deadline">Quote deadline (seconds)</label>
+            <input type="number" id="fulfill-quote-deadline" class="input" value="60" min="1" max="3600">
+          </div>
+          <div class="form-group">
+            <label for="fulfill-provider-refund">Provider refund address</label>
+            <input type="text" id="fulfill-provider-refund" class="input" placeholder="0x...">
+          </div>
+          <div class="form-group">
+            <label for="fulfill-message">Message (optional)</label>
+            <input type="text" id="fulfill-message" class="input" placeholder="Optional">
+          </div>
+          <button type="submit" id="btn-fulfill" class="btn btn-primary btn-block">Create quote (fill)</button>
+        </form>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="api-url-wrap">
+        <label for="baseUrl">API</label>
+        <input type="text" id="baseUrl" class="api-url" value="http://localhost:8000" placeholder="http://localhost:8000">
+      </div>
+    </footer>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -111,6 +111,46 @@ export const SWAP_STATE_REFUNDED = 'Refunded';
 /** Swap state: other (e.g. failed, cancelled). */
 export const SWAP_STATE_OTHER = 'Other';
 
+// --- Open swap requests / open quotes (contract-mirror types) ---
+
+/**
+ * @typedef {Object} SwapRequestData
+ * @property {string} from - Message sender (hex)
+ * @property {string} origin_symbol
+ * @property {string} origin_chain
+ * @property {string|number} origin_amount
+ * @property {string} destination_symbol
+ * @property {string} destination_chain
+ * @property {string|number} destination_amount
+ * @property {string|number} slippage
+ * @property {number} pricing_type - 0 = Origin, 1 = Destination
+ * @property {string|number} quote_deadline_seconds
+ * @property {string} origin_address
+ * @property {string} refund_address
+ * @property {string|number} transaction_deadline_seconds
+ * @property {string} message
+ */
+
+/**
+ * @typedef {Object} QuoteData
+ * @property {string} pkp_address
+ * @property {string|number} swap_request_id
+ * @property {string} provider_refund_address
+ * @property {number} quote_expiry - Unix timestamp
+ * @property {number} created_at - Unix timestamp
+ * @property {string|number} fees_total
+ */
+
+/**
+ * @typedef {Object} GetOpenSwapRequestsResponse
+ * @property {SwapRequestData[]} swap_requests
+ */
+
+/**
+ * @typedef {Object} GetOpenQuotesResponse
+ * @property {QuoteData[]} quotes
+ */
+
 /**
  * @typedef {Object} SwapQuoteDetails
  * @property {string} quote_id - Quote id
@@ -231,6 +271,28 @@ export class LitSwapsApiClient {
       `${this.baseUrl}/get_swap_status/${encodeURIComponent(quoteId)}`
     );
     if (!res.ok) throw new Error(`get_swap_status failed: ${res.status} ${res.statusText}`);
+    return res.json();
+  }
+
+  /**
+   * GET /swaps/v1/get_open_swap_requests
+   * Returns open swap requests from the contract (SwapRequestData[]).
+   * @returns {Promise<GetOpenSwapRequestsResponse>} { swap_requests }
+   */
+  async getOpenSwapRequests() {
+    const res = await fetch(`${this.baseUrl}/get_open_swap_requests`);
+    if (!res.ok) throw new Error(`get_open_swap_requests failed: ${res.status} ${res.statusText}`);
+    return res.json();
+  }
+
+  /**
+   * GET /swaps/v1/get_open_quotes
+   * Returns open quotes from the contract (QuoteData[]).
+   * @returns {Promise<GetOpenQuotesResponse>} { quotes }
+   */
+  async getOpenQuotes() {
+    const res = await fetch(`${this.baseUrl}/get_open_quotes`);
+    if (!res.ok) throw new Error(`get_open_quotes failed: ${res.status} ${res.statusText}`);
     return res.json();
   }
 }

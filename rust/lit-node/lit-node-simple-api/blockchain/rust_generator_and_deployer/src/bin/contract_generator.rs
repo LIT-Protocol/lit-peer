@@ -1,6 +1,7 @@
 use ethers::prelude::*;
 use std::env;
-use std::fs::{read_dir, write};
+use std::fs::{copy, create_dir_all, read_dir, write};
+use std::path::Path;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -13,6 +14,9 @@ fn main() {
     let input_folder = args[1].trim_end_matches('/');
     let output_folder = args[2].trim_end_matches('/');
 
+    if !Path::new(output_folder).exists() {
+        create_dir_all(output_folder).expect("Could not create output folder.");
+    }
     // process lit contracts
     let result = read_dir(input_folder);
 
@@ -22,7 +26,12 @@ fn main() {
 
     let files = result.unwrap();
     for file in files.flatten() {
+        if file.file_type().unwrap().is_dir() {
+            continue;
+        }
         let file_path = file.path().canonicalize().unwrap();
+        let file_name = file.file_name();
+
         let abi_source = file_path.to_str().unwrap();
         let result = Abigen::from_file(abi_source);
 
@@ -43,7 +52,11 @@ fn main() {
                         .replace(abi_source, file.path().to_str().unwrap())
                         .replace(input_folder, ".");
 
-                    write(output_file_name, as_str.clone()).expect("Could not write file.");
+                    write(output_file_name, as_str.clone()).expect("Could not write generated file.");
+
+
+                    let output_file_path = format!("{}/{}", output_folder, file_name.to_str().unwrap());
+                    copy(abi_source, output_file_path).expect("Could not copy abi file to the output folder.");
                     
                 }
             }
