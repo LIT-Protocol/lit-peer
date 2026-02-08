@@ -41,28 +41,84 @@ pub enum QuotePricingType {
 
 /// Request for `/v1/GetQuote`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GetQuoteRequest {
+pub struct NewSwapRequest {
     /// Message sender (origin of the swap).
     pub from: String,
+    pub origin_chain: String,
     pub origin_symbol: String,
-    pub origin_amount: String,
+    pub origin_amount: u128,
     pub destination_symbol: String,
-    pub destination_amount: String,
+    pub destination_chain: String,
+    pub destination_amount: u128,
     /// Acceptable pricing slippage.
-    pub slippage: String,
+    pub slippage: u128,
     /// How the quote is priced (where fees are taken from).
     #[serde(rename = "type")]
     pub pricing_type: QuotePricingType,
     /// How long to wait for a quote (0–60 seconds).
     pub quote_deadline_seconds: u8,
     /// Origin address (e.g. for cross-reference with the transaction).
-    pub origin_address: Option<String>,
+    pub origin_address: String,
     /// Where to refund if the transaction does not go through.
-    pub refund_address: Option<String>,
+    pub refund_address: String,
     /// Max time for the transaction to complete; after this, revert. Optional.
-    pub transaction_deadline_seconds: Option<u64>,
+    pub transaction_deadline_seconds: u16,
     /// Optional message.
     pub message: Option<String>,
+}
+
+// ============== Contract-mirror types (quote.sol / QuoteStorage) ==============
+
+/// Swap request as stored on-chain; mirrors `QuoteStorage.SwapRequest` in quote.sol.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SwapRequestData {
+    /// Message sender (origin of the swap).
+    pub from: String,
+    pub origin_symbol: String,
+    pub origin_chain: String,
+    pub origin_amount: u128,
+    pub destination_symbol: String,
+    pub destination_chain: String,
+    pub destination_amount: u128,
+    /// Acceptable pricing slippage.
+    pub slippage: u128,
+    /// 0 = Origin, 1 = Destination (matches QuotePricingType enum in contract).
+    pub pricing_type: u8,
+    /// How long to wait for a quote (0–60 seconds).
+    pub quote_deadline_seconds: u128,
+    pub origin_address: String,
+    pub refund_address: String,
+    /// Max time for the transaction to complete; 0 if not set.
+    pub transaction_deadline_seconds: u128,
+    pub message: String,
+}
+
+/// Quote as stored on-chain; mirrors `QuoteStorage.Quote` in quote.sol.
+/// The contract stores a mapping from quote id to this data; the linked swap request is referenced by id.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QuoteData {
+    /// PKP address for this quote (from the swap request’s `from` at creation).
+    pub pkp_address: String,
+    /// Id of the swap request this quote fulfils.
+    pub swap_request_id: u128,
+    pub provider_refund_address: String,
+    /// Unix timestamp when the quote expires.
+    pub quote_expiry: u64,
+    /// Unix timestamp when the quote was created.
+    pub created_at: u64,
+    pub fees_total: u128,
+}
+
+/// Response for GET open swap requests.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetOpenSwapRequestsResponse {
+    pub swap_requests: Vec<SwapRequestData>,
+}
+
+/// Response for GET open quotes.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GetOpenQuotesResponse {
+    pub quotes: Vec<QuoteData>,
 }
 
 /// A single fee component in a quote.
@@ -76,13 +132,38 @@ pub struct QuoteFee {
 
 /// Response for `/v1/GetQuote`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GetQuoteResponse {
-    pub quote_id: String,
+pub struct NewSwapResponse {
+    pub swap_request_id: String,
     /// When the quote expires.
-    pub quote_expiry: String,
+    pub swap_request_expiry: String,
     /// List of fee components.
     pub fees: Vec<QuoteFee>,
     /// Hash of input parameters signed by LIT (e.g. with network key).
+    pub signed_input_hash: String,
+    pub transaction_hash: String,
+}
+
+// ============== FillQuote ==============
+
+/// Request for `/v1/FillQuote`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FillQuoteRequest {
+    pub swap_request_id: String,
+    pub quote_deadline_seconds: u32,
+    pub provider_refund_address: String,
+    pub message: Option<String>,
+}
+
+/// Response for `/v1/FillQuote`.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FillQuoteResponse {
+    pub quote_id: String,
+    pub transaction_hash: String,
+    pub pkp_address: String,
+    pub swap_request_id: String,
+    pub quote_expiry: String,
+    pub fees: Vec<QuoteFee>,
+    pub total_fees: u128,
     pub signed_input_hash: String,
 }
 

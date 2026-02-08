@@ -1,3 +1,3 @@
-pub mod v1;
-pub mod internal;
 pub mod copied;
+pub mod internal;
+pub mod v1;

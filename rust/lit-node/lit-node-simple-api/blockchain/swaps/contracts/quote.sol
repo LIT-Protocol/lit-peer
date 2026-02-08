@@ -8,7 +8,7 @@ import { EnumerableSet } from "@openzeppelin/contracts/utils/structs/EnumerableS
 // import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /**
- * Storage for GetQuoteRequest data (mirrors GetQuoteRequest in swaps/models.rs).
+ * Storage for GetSwapRequest data (mirrors GetSwapRequest in swaps/models.rs).
  * Optional fields use empty string or 0 when not set.
  */
 contract QuoteStorage {
@@ -21,7 +21,7 @@ contract QuoteStorage {
         Destination  // Origin fixed; destination amount reduced
     }
 
-    struct QuoteRequest {
+    struct SwapRequest {
         address from;                      // Message sender (origin of the swap)
         string originSymbol;
         string originChain;
@@ -40,7 +40,7 @@ contract QuoteStorage {
 
     struct Quote {
         address pkpAddress;
-        mapping(uint256 => QuoteRequest) request;
+        mapping(uint256 => SwapRequest) request;
         address providerRefundAddress;
         uint256 quoteExpiry;
         uint256 createdAt;
@@ -48,34 +48,34 @@ contract QuoteStorage {
     }
 
     EnumerableSet.UintSet openQuotes;
-    EnumerableSet.UintSet openQuoteRequests;
+    EnumerableSet.UintSet openSwapRequests;
     mapping(uint256 => Quote) quotes;
-    mapping(uint256 => QuoteRequest) quoteRequests;
+    mapping(uint256 => SwapRequest) swapRequests;
     mapping(address => Quote) quoteByPkpAddress;
-    mapping(address => QuoteRequest) lastQuoteRequestFromAddress;
+    mapping(address => SwapRequest) lastSwapRequestFromAddress;
 
-    uint256 public quoteRequestCounter;
+    uint256 public swapRequestCounter;
     uint256 public quoteCounter;
 
     constructor() {
-        quoteRequestCounter = 0;
+        swapRequestCounter = 0;
         quoteCounter = 0;
     }
 
-    function newQuoteRequest(QuoteRequest calldata data) external returns (uint256) {
-        quoteRequestCounter++;
-        quoteRequests[quoteRequestCounter] = data;
-        openQuoteRequests.add(quoteRequestCounter);
-        lastQuoteRequestFromAddress[data.from] = quoteRequests[quoteRequestCounter];
-        emit NewQuoteRequest(quoteRequestCounter);
-        return quoteRequestCounter;
+    function newSwapRequest(SwapRequest calldata data) external returns (uint256) {
+        swapRequestCounter++;
+        swapRequests[swapRequestCounter] = data;
+        openSwapRequests.add(swapRequestCounter);
+        lastSwapRequestFromAddress[data.from] = swapRequests[swapRequestCounter];
+        emit NewSwapRequest(swapRequestCounter);
+        return swapRequestCounter;
     }
 
-    function newQuote(uint256 quoteRequestId, address providerRefundAddress) external returns (uint256) {
+    function newQuote(uint256 swapRequestId, address providerRefundAddress) external returns (uint256) {
         quoteCounter++;
-        quotes[quoteCounter].pkpAddress = quoteRequests[quoteRequestId].from;
+        quotes[quoteCounter].pkpAddress = swapRequests[swapRequestId].from;
         quotes[quoteCounter].providerRefundAddress = providerRefundAddress;
-        quotes[quoteCounter].quoteExpiry = block.timestamp + quoteRequests[quoteRequestId].quoteDeadlineSeconds;
+        quotes[quoteCounter].quoteExpiry = block.timestamp + swapRequests[swapRequestId].quoteDeadlineSeconds;
         quotes[quoteCounter].createdAt = block.timestamp;
         quotes[quoteCounter].feesTotal = 0;
     
@@ -83,14 +83,14 @@ contract QuoteStorage {
         return quoteCounter;
     }
 
-    event NewQuoteRequest(
-        uint256 quoteRequestId
+    event NewSwapRequest(
+        uint256 swapRequestId
     );
 
 
 
 
-    function getQuoteRequest(uint256 quoteRequestId) external view returns (QuoteRequest memory) {
-        return quoteRequests[quoteRequestId];
+    function getSwapRequest(uint256 swapRequestId) external view returns (SwapRequest memory) {
+        return swapRequests[swapRequestId];
     }
 }

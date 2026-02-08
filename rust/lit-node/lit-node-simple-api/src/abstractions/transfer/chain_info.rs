@@ -1,6 +1,6 @@
+use lit_node_core::SigningScheme;
 use rocket::http::Status;
 use serde::{Deserialize, Serialize};
-use lit_node_core::SigningScheme;
 /// EVM chain RPC and wallet info.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 
@@ -102,7 +102,7 @@ impl Chain {
             "bnbsmartchain" => Ok(Self::BnbSmartChain),
             "arbitrumone" => Ok(Self::ArbitrumOne),
             "base" => Ok(Self::Base),
-            "avalanchecchain"  => Ok(Self::AvalancheCChain),
+            "avalanchecchain" => Ok(Self::AvalancheCChain),
             "polygonpos" => Ok(Self::PolygonPos),
             "optimism" => Ok(Self::Optimism),
             "blast" => Ok(Self::Blast),
@@ -1093,7 +1093,7 @@ impl Chain {
             Chain::XLayer,
             Chain::Yellowstone,
             Chain::Tron,
-            Chain::Solana,  
+            Chain::Solana,
             Chain::Sui,
             Chain::Bitcoin,
             Chain::Aptos,
@@ -1116,14 +1116,14 @@ impl Chain {
     }
 
     /// All supported EVM chains in the same order as the original data.
-    pub fn all_evm_chains() ->  Vec<Chain> {
-       let mut all = Vec::new();
-       for chain in Chain::all_chains() {
-        if chain.info().is_evm {
-            all.push(chain.clone());
+    pub fn all_evm_chains() -> Vec<Chain> {
+        let mut all = Vec::new();
+        for chain in Chain::all_chains() {
+            if chain.info().is_evm {
+                all.push(chain.clone());
+            }
         }
-       }
-       all
+        all
     }
     pub fn all_non_evm_chains() -> Vec<Chain> {
         let mut all = Vec::new();

@@ -12,7 +12,7 @@ pub struct HandshakeResponse {
     pub responses: Vec<String>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)] 
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MintPkpResponse {
     pub pkp_public_key: String,
 }

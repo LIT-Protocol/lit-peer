@@ -4,7 +4,8 @@ use crate::core::v1::models::request::{
     SignWithPKPRequest,
 };
 use crate::core::v1::models::response::{
-    CombineSignatureSharesResponse, DecryptResponse, EncryptResponse, GetApiKeyResponse, HandshakeResponse, LitActionResponse, LitActionResponses, MintPkpResponse, SignWithPkpResponse
+    CombineSignatureSharesResponse, DecryptResponse, EncryptResponse, GetApiKeyResponse,
+    HandshakeResponse, LitActionResponse, LitActionResponses, MintPkpResponse, SignWithPkpResponse,
 };
 use base64_light::base64_decode;
 use ethers::signers::{LocalWallet, Signer};
@@ -16,9 +17,7 @@ use lit_node_core::{
     JsonReturnValueTest, LitResource, SigningScheme,
 };
 use lit_node_testnet::common::lit_actions::generate_session_sigs_and_execute_lit_action;
-use lit_node_testnet::common::pkp::{
-    generate_session_sigs_and_send_signing_requests, 
-};
+use lit_node_testnet::common::pkp::generate_session_sigs_and_send_signing_requests;
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::{
     get_identity_pubkeys_from_node_set, get_network_pubkey, handshake_nodes,
@@ -104,7 +103,7 @@ pub async fn sign_with_pkp(
 ) -> Result<Json<SignWithPkpResponse>, Status> {
     let node_set = validator_collection.random_threshold_nodeset().await;
     let node_set_with_keys = get_identity_pubkeys_from_node_set(&node_set).await;
-    
+
     let to_sign = match sign_request.message.starts_with("0x") {
         true => hex_to_bytes(&sign_request.message[2..]).unwrap(),
         false => sign_request.message.as_bytes().to_vec(),
@@ -201,16 +200,15 @@ pub async fn lit_action(
         return Err(Status::InternalServerError);
     }
     let execute_resp = execute_resp.unwrap();
-    let responses = execute_resp.iter().map(|response| {
-        LitActionResponse {
+    let responses = execute_resp
+        .iter()
+        .map(|response| LitActionResponse {
             signatures: vec![],
             response: response.data.clone().unwrap().response.clone(),
             logs: response.data.clone().unwrap().logs.clone(),
-        }
-    }).collect::<Vec<_>>();
-    Ok(Json(LitActionResponses {
-        responses,
-    }))
+        })
+        .collect::<Vec<_>>();
+    Ok(Json(LitActionResponses { responses }))
 }
 
 pub async fn encrypt(
@@ -245,7 +243,7 @@ pub async fn encrypt(
     info!("ciphertext: {:?}", ciphertext);
 
     let ciphertext = data_encoding::BASE64.encode(&serde_bare::to_vec(&ciphertext).unwrap());
-    
+
     Ok(Json(EncryptResponse {
         ciphertext,
         data_to_encrypt_hash,
@@ -347,10 +345,10 @@ pub async fn combine_signature_shares(
     combine_signature_shares_request: Json<CombineSignatureSharesRequest>,
 ) -> Result<Json<CombineSignatureSharesResponse>, Status> {
     let shares = combine_signature_shares_request.shares.clone();
-    
+
     let signed_output = lit_node_testnet::common::pkp::decode_endpoint_responses(shares);
 
-    let signature = signed_output.signature.clone().replace("\"","");
+    let signature = signed_output.signature.clone().replace("\"", "");
     info!("signed_output: {:?}", signed_output);
 
     let r = &signature[0..64];
@@ -371,7 +369,10 @@ pub async fn combine_signature_shares(
     let address = keccak256(&address);
     let address = H160::from_slice(&address[12..]);
     info!("address: {:?}", address);
-    info!("Verification results: {:?}", signature.verify(message, address));
+    info!(
+        "Verification results: {:?}",
+        signature.verify(message, address)
+    );
 
     Ok(Json(CombineSignatureSharesResponse {
         signature: signed_output.signature.clone(),
@@ -382,4 +383,3 @@ pub async fn combine_signature_shares(
         recovery_id,
     }))
 }
-

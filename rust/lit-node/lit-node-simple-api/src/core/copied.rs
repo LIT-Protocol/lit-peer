@@ -1,6 +1,9 @@
 use lit_core::utils::binary::bytes_to_hex;
-use lit_node_core::{AccessControlConditionItem, EVMContractConditionItem, SolRpcCondition, SolRpcConditionItem, SolRpcConditionItemV0, SolRpcConditionV2Options, UnifiedAccessControlConditionItem};
-use lit_rust_crypto::k256::sha2::{Sha256, Digest};
+use lit_node_core::{
+    AccessControlConditionItem, EVMContractConditionItem, SolRpcCondition, SolRpcConditionItem,
+    SolRpcConditionItemV0, SolRpcConditionV2Options, UnifiedAccessControlConditionItem,
+};
+use lit_rust_crypto::k256::sha2::{Digest, Sha256};
 use serde::{Deserialize, Serialize};
 
 use anyhow::Result;
@@ -13,8 +16,6 @@ pub struct RequestConditions {
     pub sol_rpc_conditions: Option<Vec<SolRpcConditionItem>>,
     pub unified_access_control_conditions: Option<Vec<UnifiedAccessControlConditionItem>>,
 }
-
-
 
 pub fn hash_access_control_conditions(req: RequestConditions) -> Result<String> {
     // hash the access control condition and thing to decrypt
@@ -30,8 +31,7 @@ pub fn hash_access_control_conditions(req: RequestConditions) -> Result<String> 
         );
         hasher.update(stringified_access_control_conditions.as_bytes());
     } else if let Some(evm_contract_conditions) = &req.evm_contract_conditions {
-        let stringified_access_control_conditions =
-            serde_json::to_string(evm_contract_conditions)?;
+        let stringified_access_control_conditions = serde_json::to_string(evm_contract_conditions)?;
         trace!(
             "stringified_access_control_conditions: {:?}",
             stringified_access_control_conditions
@@ -60,8 +60,7 @@ pub fn hash_access_control_conditions(req: RequestConditions) -> Result<String> 
         } else {
             // need to massage into v1 condition array
             let v1_conditions = convert_sol_rpc_conditions_to_v1(sol_rpc_conditions);
-            let stringified_access_control_conditions =
-                serde_json::to_string(&v1_conditions)?;
+            let stringified_access_control_conditions = serde_json::to_string(&v1_conditions)?;
             debug!(
                 "stringified_access_control_conditions: {:?}",
                 stringified_access_control_conditions
@@ -88,7 +87,6 @@ pub fn hash_access_control_conditions(req: RequestConditions) -> Result<String> 
     Ok(hashed_access_control_conditions)
 }
 
-
 pub fn convert_sol_rpc_conditions_to_v1(
     sol_rpc_conditions: &Vec<SolRpcConditionItem>,
 ) -> Vec<SolRpcConditionItemV0> {
@@ -111,7 +109,6 @@ pub fn convert_sol_rpc_conditions_to_v1(
     }
     v1_conditions
 }
-
 
 pub fn sol_rpc_condition_v2_to_v1(condition: &SolRpcConditionV2Options) -> SolRpcCondition {
     SolRpcCondition {

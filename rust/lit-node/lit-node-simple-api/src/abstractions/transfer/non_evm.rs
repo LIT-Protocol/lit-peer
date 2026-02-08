@@ -4,11 +4,14 @@ use super::chain_info::Chain;
 use super::models::{GetBalanceResponse, TransferRequest, TransferResponse};
 use lit_node_testnet::testnet::Testnet;
 use lit_node_testnet::validator::ValidatorCollection;
-use rocket::serde::json::Json;
 use rocket::http::Status;
+use rocket::serde::json::Json;
 
-
-pub async fn get_api_key_balance(_testnet: &Testnet, _api_key: &str, chain: Chain) -> Result<Json<GetBalanceResponse>, Status> {
+pub async fn get_api_key_balance(
+    _testnet: &Testnet,
+    _api_key: &str,
+    chain: Chain,
+) -> Result<Json<GetBalanceResponse>, Status> {
     let _ = (_testnet, _api_key, chain);
 
     Ok(Json(GetBalanceResponse {
@@ -19,8 +22,10 @@ pub async fn get_api_key_balance(_testnet: &Testnet, _api_key: &str, chain: Chai
     }))
 }
 
-pub async fn get_pkp_balance( pkp_public_key: &str, chain: Chain) -> Result<Json<GetBalanceResponse>, Status> {
-
+pub async fn get_pkp_balance(
+    pkp_public_key: &str,
+    chain: Chain,
+) -> Result<Json<GetBalanceResponse>, Status> {
     Ok(Json(GetBalanceResponse {
         address: pkp_public_key.to_string(),
         balance: String::new(),
@@ -29,7 +34,10 @@ pub async fn get_pkp_balance( pkp_public_key: &str, chain: Chain) -> Result<Json
     }))
 }
 
-pub async fn get_address_balance(address: &str, chain: Chain) -> Result<Json<GetBalanceResponse>, Status> {
+pub async fn get_address_balance(
+    address: &str,
+    chain: Chain,
+) -> Result<Json<GetBalanceResponse>, Status> {
     Ok(Json(GetBalanceResponse {
         address: address.to_string(),
         balance: String::new(),
@@ -38,9 +46,12 @@ pub async fn get_address_balance(address: &str, chain: Chain) -> Result<Json<Get
     }))
 }
 
-pub async fn send(_testnet: &Arc<Testnet>, _validator_collection: &Arc<ValidatorCollection>, request: &Json<TransferRequest>, _chain: Chain) -> Result<Json<TransferResponse>, Status> {
-
-
+pub async fn send(
+    _testnet: &Arc<Testnet>,
+    _validator_collection: &Arc<ValidatorCollection>,
+    request: &Json<TransferRequest>,
+    _chain: Chain,
+) -> Result<Json<TransferResponse>, Status> {
     let _ = request;
     Ok(Json(TransferResponse {
         txn_id: String::new(),
