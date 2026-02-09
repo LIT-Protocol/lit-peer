@@ -130,9 +130,17 @@ async fn send(
     validator_collection: &State<Arc<ValidatorCollection>>,
     request: Json<TransferRequest>,
 ) -> Result<Json<TransferResponse>, Status> {
-    info!("request: {:?}", request);
     let validator_collection = validator_collection.inner();
     let testnet = testnet.inner();
+    internal_send(testnet, validator_collection, &request).await
+}
+
+pub async fn internal_send(
+    testnet: &Arc<Testnet>,
+    validator_collection: &Arc<ValidatorCollection>,
+    request: &Json<TransferRequest>,
+) -> Result<Json<TransferResponse>, Status> {
+    info!("request: {:?}", request);
 
     let chain = match Chain::try_from_str(request.chain.as_str()) {
         Ok(chain) => chain,

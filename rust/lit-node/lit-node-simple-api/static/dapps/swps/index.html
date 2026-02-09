@@ -105,23 +105,24 @@
             <input type="text" id="transfer-destination" class="input" placeholder="0x... or address" required>
           </div>
           <div class="form-group">
-            <label for="transfer-amount">Amount (wei/smallest unit)</label>
-            <input type="text" id="transfer-amount" class="input" placeholder="e.g. 1000000000000000000" value="0" required>
+            <label for="transfer-amount">Amount (ETH)</label>
+            <input type="text" id="transfer-amount" class="input" placeholder="e.g. 1.5" value="" required>
           </div>
           <button type="submit" id="btn-transfer" class="btn btn-primary btn-block">Send</button>
         </form>
       </div>
     </section>
 
-    <!-- Page 3: Swap (NEAR Intents style) -->
+    <!-- Page 3: Swap (swap request via js_swaps_sdk) -->
     <section id="page-swap" class="page">
       <h1 class="page-title">Swap</h1>
-      <p class="page-desc">Swap between two tokens. Intent-based flow (connect to swap API when available).</p>
+      <p class="page-desc">Request a swap between two tokens. Load an account on Overview first.</p>
       <div id="swap-status" class="status" style="display: none;"></div>
       <div class="swap-box">
         <div class="swap-row">
           <div class="swap-input-wrap">
-            <input type="text" id="swap-amount-from" class="input" placeholder="0.0" value="">
+            <label for="swap-amount-from" class="sr-only">From amount (ether)</label>
+            <input type="text" id="swap-amount-from" class="input" placeholder="0.0" value="" title="Amount in ether">
           </div>
           <select id="swap-token-from" class="swap-token">
             <option value="">Loading tokens…</option>
@@ -130,17 +131,21 @@
         <button type="button" id="swap-flip" class="swap-flip" aria-label="Flip tokens">⇅</button>
         <div class="swap-row">
           <div class="swap-input-wrap">
-            <input type="text" id="swap-amount-to" class="input" placeholder="0.0" value="" readonly>
+            <label for="swap-amount-to" class="sr-only">To amount (ether)</label>
+            <input type="text" id="swap-amount-to" class="input" placeholder="Expected amount (or 0)" value="0" title="Amount in ether">
           </div>
           <select id="swap-token-to" class="swap-token">
             <option value="">Loading tokens…</option>
           </select>
         </div>
+        <div class="form-group">
+          <label for="swap-slippage">Slippage</label>
+          <input type="text" id="swap-slippage" class="input" placeholder="e.g. 1" value="1">
+        </div>
         <div class="swap-btn-wrap">
-          <button type="button" id="btn-swap" class="btn btn-primary btn-block">Swap</button>
+          <button type="button" id="btn-swap" class="btn btn-primary btn-block">Request swap</button>
         </div>
       </div>
-      <p class="page-desc" style="margin-top: 1rem; font-size: 0.8rem;">Swap execution requires an intent/swap API integration. Use Transfer for direct sends.</p>
     </section>
 
     <!-- Page 4: History -->

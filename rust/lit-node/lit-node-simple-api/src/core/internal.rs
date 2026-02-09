@@ -10,7 +10,7 @@ use crate::core::v1::models::response::{
 use base64_light::base64_decode;
 use ethers::signers::{LocalWallet, Signer};
 use ethers::types::{H160, H256, U256};
-use ethers::utils::keccak256;
+use ethers::utils::{format_ether, keccak256};
 use lit_core::utils::binary::{bytes_to_hex, hex_to_bytes};
 use lit_node_core::{
     AccessControlConditionItem, AccessControlConditionResource, JsonAccessControlCondition,
@@ -69,9 +69,8 @@ pub async fn get_ledger_balance(
 ) -> Result<Json<String>, Status> {
     let end_user = EndUser::from_secret_key(testnet, &hex_to_bytes(&api_key).unwrap());
     let balance = end_user.get_wallet_ledger_balance("inquiry").await;
-    let mut balance_bytes = [0u8; 32];
-    balance.to_big_endian(&mut balance_bytes);
-    let balance = U256::from_big_endian(&balance_bytes);
+
+    let balance = format_ether(balance).parse::<f64>().unwrap();
     Ok(Json(balance.to_string()))
 }
 
@@ -118,7 +117,7 @@ pub async fn sign_with_pkp(
         .await
         .as_u64();
     let signing_scheme = SigningScheme::EcdsaK256Sha256;
-    let key_set_id = validator_collection
+    let key_set_id =     validator_collection
         .actions()
         .get_keyset_id_for_pkp(&pubkey)
         .await

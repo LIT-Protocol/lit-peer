@@ -29,6 +29,7 @@ impl Pkp {
         let mint_cost = pkpnft.mint_cost().call().await?;
         info!("Mint cost: {:}", mint_cost);
 
+
         let mint_tx = pkpnft
             .mint_next(key_type, key_set_id.to_string())
             .value(mint_cost);

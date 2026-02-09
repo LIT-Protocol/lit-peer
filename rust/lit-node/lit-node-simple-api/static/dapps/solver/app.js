@@ -1,14 +1,27 @@
 /**
- * Solver dapp – uses js_swaps_sdk for open swap requests, open quotes, and fill quote.
- * Stylistic reference: SWPS app. 4 pages: Account, Swap requests, Quotes, Fulfill.
+ * Solver dapp – Web3 app using MetaMask to sign fulfill (newQuote) transactions.
+ * Uses js_swaps_sdk for reading open swap requests and quotes. 3 pages: Swap requests, Quotes, Fulfill.
  */
 
-const STORAGE_KEY = 'solver_account';
+const NEW_QUOTE_ABI = [
+  {
+    inputs: [
+      { internalType: 'uint256', name: 'swapRequestId', type: 'uint256' },
+      { internalType: 'address', name: 'providerRefundAddress', type: 'address' },
+    ],
+    name: 'newQuote',
+    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+];
 
 let swapsClient = null;
 let state = {
   baseUrl: 'http://localhost:8000',
-  solverAddress: null,
+  provider: null,
+  signer: null,
+  walletAddress: null,
 };
 
 function getBaseUrl() {
@@ -36,13 +49,23 @@ function formatAddress(str) {
   if (!str || typeof str !== 'string') return '–';
   const s = String(str).trim();
   if (s.length <= 16) return s;
-  return `${s.slice(0, 8)}...${s.slice(-8)}`;
+  return `${s.slice(0, 6)}...${s.slice(-4)}`;
+}
+
+/** Format swap origin/destination amount for display. Amounts are in ether (no conversion). */
+function formatSwapAmount(val) {
+  if (val == null || val === '') return '–';
+  const n = Number(val);
+  if (!Number.isFinite(n) || n < 0) return '–';
+  if (n === 0) return '0';
+  if (n < 1e-6 && n > 0) return n.toFixed(10).replace(/\.?0+$/, '') || '0';
+  return n.toFixed(6).replace(/\.?0+$/, '') || '0';
 }
 
 // --- Routing ---
 function getPageFromHash() {
-  const hash = (window.location.hash || '#account').slice(1);
-  return hash === '' ? 'account' : hash;
+  const hash = (window.location.hash || '#swap-requests').slice(1);
+  return hash === '' ? 'swap-requests' : hash;
 }
 
 function setPage(pageId) {
@@ -55,6 +78,7 @@ function setPage(pageId) {
   window.location.hash = pageId;
   if (pageId === 'swap-requests') loadSwapRequests();
   if (pageId === 'quotes') loadQuotes();
+  if (pageId === 'fulfill') loadFulfillContractAddress();
 }
 
 function initRouting() {
@@ -71,86 +95,65 @@ function initRouting() {
   });
 }
 
-// --- Account ---
-function showAccountStatus(msg, type = 'info') {
-  const el = document.getElementById('account-status');
-  if (!el) return;
-  el.textContent = msg;
-  el.className = `status ${type}`;
-  el.style.display = 'block';
-}
-
-function showAccountLoaded() {
-  const actions = document.getElementById('account-actions');
-  const loaded = document.getElementById('account-loaded');
-  const display = document.getElementById('account-address-display');
-  if (actions) actions.style.display = 'none';
-  if (loaded) loaded.style.display = 'block';
-  if (display) display.textContent = formatAddress(state.solverAddress);
-  updateLogoutVisibility();
-  const fulfillRefund = document.getElementById('fulfill-provider-refund');
-  if (fulfillRefund) fulfillRefund.placeholder = 'Uses solver address from Account if empty';
-}
-
-function clearAccountUI() {
-  const actions = document.getElementById('account-actions');
-  const loaded = document.getElementById('account-loaded');
-  const input = document.getElementById('account-wallet');
-  if (actions) actions.style.display = 'block';
-  if (loaded) loaded.style.display = 'none';
-  if (input) input.value = '';
-  updateLogoutVisibility();
-  const fulfillRefund = document.getElementById('fulfill-provider-refund');
-  if (fulfillRefund) fulfillRefund.placeholder = '0x...';
-}
-
-function saveAccountToStorage() {
-  if (state.solverAddress) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ solverAddress: state.solverAddress }));
-  } else {
-    localStorage.removeItem(STORAGE_KEY);
+// --- MetaMask ---
+function getEthers() {
+  if (typeof window.ethers === 'undefined') {
+    throw new Error('ethers not loaded. Ensure the ethers script is loaded.');
   }
+  return window.ethers;
 }
 
-function loadAccountFromStorage() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const data = JSON.parse(raw);
-    if (data.solverAddress) {
-      state.solverAddress = data.solverAddress;
-      showAccountLoaded();
+function updateWalletUI() {
+  const addrEl = document.getElementById('wallet-address');
+  const connectBtn = document.getElementById('btn-connect-wallet');
+  const disconnectBtn = document.getElementById('btn-disconnect-wallet');
+  const fulfillRefund = document.getElementById('fulfill-provider-refund');
+  if (state.walletAddress) {
+    if (addrEl) {
+      addrEl.textContent = formatAddress(state.walletAddress);
+      addrEl.style.display = 'inline';
     }
-  } catch (_) {}
-}
-
-function saveAccount() {
-  const input = document.getElementById('account-wallet');
-  const addr = input?.value?.trim();
-  if (!addr) {
-    showAccountStatus('Enter a wallet address.', 'error');
-    return;
+    if (connectBtn) connectBtn.style.display = 'none';
+    if (disconnectBtn) disconnectBtn.style.display = 'inline-flex';
+    if (fulfillRefund) fulfillRefund.placeholder = 'Leave empty to use your connected wallet';
+  } else {
+    if (addrEl) addrEl.style.display = 'none';
+    if (connectBtn) connectBtn.style.display = 'inline-flex';
+    if (disconnectBtn) disconnectBtn.style.display = 'none';
+    if (fulfillRefund) fulfillRefund.placeholder = '0x... (defaults to your wallet)';
   }
-  state.solverAddress = addr;
-  showAccountLoaded();
-  showAccountStatus('Address saved. Use it as provider refund when fulfilling.', 'success');
-  saveAccountToStorage();
 }
 
-function clearAccount() {
-  state.solverAddress = null;
-  clearAccountUI();
-  saveAccountToStorage();
-  showAccountStatus('Cleared. Enter a new address to continue.', 'info');
+async function connectWallet() {
+  const btn = document.getElementById('btn-connect-wallet');
+  if (btn) btn.disabled = true;
+  try {
+    const ethers = getEthers();
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const accounts = await provider.send('eth_requestAccounts', []);
+    if (!accounts || accounts.length === 0) {
+      showFulfillStatus('No accounts returned from MetaMask.', 'error');
+      return;
+    }
+    const signer = await provider.getSigner();
+    const address = await signer.getAddress();
+    state.provider = provider;
+    state.signer = signer;
+    state.walletAddress = address;
+    updateWalletUI();
+  } catch (err) {
+    console.error('MetaMask connect error:', err);
+    showFulfillStatus(err.message || String(err), 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
-function updateLogoutVisibility() {
-  const btn = document.getElementById('btn-logout');
-  if (btn) btn.style.display = state.solverAddress ? 'inline-flex' : 'none';
-}
-
-function logout() {
-  clearAccount();
+function disconnectWallet() {
+  state.provider = null;
+  state.signer = null;
+  state.walletAddress = null;
+  updateWalletUI();
 }
 
 // --- Swap requests list ---
@@ -162,30 +165,32 @@ function showSwapRequestsStatus(msg, type = 'info') {
   el.style.display = msg ? 'block' : 'none';
 }
 
-function renderSwapRequest(id, sr) {
-  const li = document.createElement('li');
-  li.className = 'list-card';
+function renderSwapRequestRow(id, sr) {
+  const tr = document.createElement('tr');
+  tr.className = 'swap-requests-row';
   const from = sr.from || '–';
-  const origin = `${sr.origin_amount ?? '–'} ${sr.origin_symbol ?? ''} on ${sr.origin_chain ?? ''}`;
-  const dest = `${sr.destination_amount ?? '–'} ${sr.destination_symbol ?? ''} on ${sr.destination_chain ?? ''}`;
-  li.innerHTML = `
-    <div class="list-card-title">Swap request #${id}</div>
-    <div class="list-card-row"><span class="key">From</span><span class="val">${formatAddress(from)}</span></div>
-    <div class="list-card-row"><span class="key">Origin</span><span class="val">${origin}</span></div>
-    <div class="list-card-row"><span class="key">Destination</span><span class="val">${dest}</span></div>
-    <div class="list-card-row"><span class="key">Slippage</span><span class="val">${sr.slippage ?? '–'}</span></div>
-    <button type="button" class="btn btn-secondary btn-block btn-fulfill-sr" data-id="${id}" style="margin-top: 0.5rem;">Fulfill this</button>
+  const origin = `${formatSwapAmount(sr.origin_amount)} ${sr.origin_symbol ?? ''} on ${sr.origin_chain ?? ''}`;
+  const dest = `${formatSwapAmount(sr.destination_amount)} ${sr.destination_symbol ?? ''} on ${sr.destination_chain ?? ''}`;
+  tr.innerHTML = `
+    <td class="swap-requests-num">${id}</td>
+    <td class="swap-requests-from mono">${formatAddress(from)}</td>
+    <td class="swap-requests-origin">${origin}</td>
+    <td class="swap-requests-dest">${dest}</td>
+    <td class="swap-requests-slippage">${sr.slippage ?? '–'}</td>
+    <td class="swap-requests-action"><button type="button" class="btn btn-secondary btn-fulfill-sr" data-id="${id}">Fulfill</button></td>
   `;
-  return li;
+  return tr;
 }
 
 async function loadSwapRequests() {
-  const listEl = document.getElementById('swap-requests-list');
+  const tableWrap = document.getElementById('swap-requests-table-wrap');
+  const tbody = document.getElementById('swap-requests-tbody');
   const emptyEl = document.getElementById('swap-requests-empty');
-  if (!listEl || !emptyEl) return;
-  listEl.innerHTML = '';
+  if (!tbody || !emptyEl) return;
+  tbody.innerHTML = '';
   emptyEl.textContent = 'Loading…';
   emptyEl.style.display = 'block';
+  if (tableWrap) tableWrap.style.display = 'none';
   showSwapRequestsStatus('');
   try {
     const client = await getSwapsClient();
@@ -197,11 +202,12 @@ async function loadSwapRequests() {
       return;
     }
     emptyEl.style.display = 'none';
+    if (tableWrap) tableWrap.style.display = 'block';
     list.forEach((sr, i) => {
       const id = i + 1;
-      listEl.appendChild(renderSwapRequest(id, sr));
+      tbody.appendChild(renderSwapRequestRow(id, sr));
     });
-    listEl.querySelectorAll('.btn-fulfill-sr').forEach((btn) => {
+    tbody.querySelectorAll('.btn-fulfill-sr').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-id');
         document.getElementById('fulfill-swap-request-id').value = id;
@@ -211,6 +217,7 @@ async function loadSwapRequests() {
   } catch (err) {
     emptyEl.textContent = '';
     emptyEl.style.display = 'none';
+    if (tableWrap) tableWrap.style.display = 'none';
     showSwapRequestsStatus(err.message || String(err), 'error');
   }
 }
@@ -224,28 +231,45 @@ function showQuotesStatus(msg, type = 'info') {
   el.style.display = msg ? 'block' : 'none';
 }
 
-function renderQuote(idx, q) {
-  const li = document.createElement('li');
-  li.className = 'list-card';
+function renderQuoteRow(idx, q) {
+  const tr = document.createElement('tr');
+  tr.className = 'quotes-table-row';
   const expiry = q.quote_expiry ? new Date(q.quote_expiry * 1000).toISOString() : '–';
-  li.innerHTML = `
-    <div class="list-card-title">Quote #${idx}</div>
-    <div class="list-card-row"><span class="key">PKP</span><span class="val">${formatAddress(q.pkp_address)}</span></div>
-    <div class="list-card-row"><span class="key">Swap request ID</span><span class="val">${q.swap_request_id ?? '–'}</span></div>
-    <div class="list-card-row"><span class="key">Provider refund</span><span class="val">${formatAddress(q.provider_refund_address)}</span></div>
-    <div class="list-card-row"><span class="key">Quote expiry</span><span class="val">${expiry}</span></div>
-    <div class="list-card-row"><span class="key">Fees total</span><span class="val">${q.fees_total ?? '0'}</span></div>
+  const sr = q.swap_request_data;
+  const pkpAddress = sr?.pkp_address ?? '';
+  const origin =
+    sr
+      ? `${formatSwapAmount(sr.origin_amount)} ${sr.origin_symbol ?? ''} on ${sr.origin_chain ?? ''}`.trim() || '–'
+      : '–';
+  const destination =
+    sr
+      ? `${formatSwapAmount(sr.destination_amount)} ${sr.destination_symbol ?? ''} on ${sr.destination_chain ?? ''}`.trim() || '–'
+      : '–';
+  const pkpCell = pkpAddress
+    ? `<div class="quotes-table-pkp-cell-inner"><span class="quotes-table-pkp mono">${formatAddress(pkpAddress)}</span><button type="button" class="btn btn-copy btn-copy-pkp" data-pkp-address="${pkpAddress}" title="Copy PKP address">Copy</button></div>`
+    : '–';
+  tr.innerHTML = `
+    <td class="quotes-table-num">${idx}</td>
+    <td class="quotes-table-from mono">${formatAddress(sr?.from)}</td>
+    <td class="quotes-table-pkp-cell">${pkpCell}</td>
+    <td class="quotes-table-origin">${origin}</td>
+    <td class="quotes-table-dest">${destination}</td>
+    <td class="quotes-table-refund mono">${formatAddress(q.provider_refund_address)}</td>
+    <td class="quotes-table-expiry">${expiry}</td>
+    <td class="quotes-table-action"><button type="button" class="btn btn-secondary btn-process-swap">Process swap</button></td>
   `;
-  return li;
+  return tr;
 }
 
 async function loadQuotes() {
-  const listEl = document.getElementById('quotes-list');
+  const tableWrap = document.getElementById('quotes-table-wrap');
+  const tbody = document.getElementById('quotes-tbody');
   const emptyEl = document.getElementById('quotes-empty');
-  if (!listEl || !emptyEl) return;
-  listEl.innerHTML = '';
+  if (!tbody || !emptyEl) return;
+  tbody.innerHTML = '';
   emptyEl.textContent = 'Loading…';
   emptyEl.style.display = 'block';
+  if (tableWrap) tableWrap.style.display = 'none';
   showQuotesStatus('');
   try {
     const client = await getSwapsClient();
@@ -257,17 +281,22 @@ async function loadQuotes() {
       return;
     }
     emptyEl.style.display = 'none';
+    if (tableWrap) tableWrap.style.display = 'block';
     list.forEach((q, i) => {
-      listEl.appendChild(renderQuote(i + 1, q));
+      tbody.appendChild(renderQuoteRow(i + 1, q));
+    });
+    tbody.querySelectorAll('.btn-process-swap').forEach((btn) => {
+      btn.addEventListener('click', () => setPage('attempt-swap'));
     });
   } catch (err) {
     emptyEl.textContent = '';
     emptyEl.style.display = 'none';
+    if (tableWrap) tableWrap.style.display = 'none';
     showQuotesStatus(err.message || String(err), 'error');
   }
 }
 
-// --- Fulfill (fill quote) ---
+// --- Fulfill (MetaMask signs newQuote) ---
 function showFulfillStatus(msg, type = 'info') {
   const el = document.getElementById('fulfill-status');
   if (!el) return;
@@ -276,64 +305,204 @@ function showFulfillStatus(msg, type = 'info') {
   el.style.display = msg ? 'block' : 'none';
 }
 
+/** Load quote storage contract address from API and pre-fill the fulfill form. */
+async function loadFulfillContractAddress() {
+  const input = document.getElementById('fulfill-contract-address');
+  if (!input) return;
+  try {
+    const client = await getSwapsClient();
+    const address = await client.getContractAddress();
+    if (address && typeof address === 'string') {
+      input.value = address.trim();
+      input.readOnly = true;
+      input.title = 'Fetched from get_contract_address';
+      showFulfillStatus('');
+    } else {
+      input.readOnly = false;
+      showFulfillStatus('Could not load contract address. Enter it manually.', 'error');
+    }
+  } catch (err) {
+    input.value = '';
+    input.readOnly = false;
+    input.title = '';
+    showFulfillStatus(`Contract address: ${err.message}. Enter it manually.`, 'error');
+  }
+}
+
 async function submitFulfill(e) {
   e.preventDefault();
-  const swapRequestId = document.getElementById('fulfill-swap-request-id')?.value?.trim();
-  const quoteDeadline = parseInt(document.getElementById('fulfill-quote-deadline')?.value || '60', 10);
+  const contractAddress = document.getElementById('fulfill-contract-address')?.value?.trim();
+  const swapRequestIdStr = document.getElementById('fulfill-swap-request-id')?.value?.trim();
   let providerRefund = document.getElementById('fulfill-provider-refund')?.value?.trim();
-  const message = document.getElementById('fulfill-message')?.value?.trim() || undefined;
-  if (!swapRequestId) {
+
+  if (!contractAddress) {
+    showFulfillStatus('Contract address is missing. Open the Fulfill page again to load it from the API, or enter it manually.', 'error');
+    return;
+  }
+  if (!swapRequestIdStr) {
     showFulfillStatus('Enter a swap request ID.', 'error');
     return;
   }
-  if (!providerRefund && state.solverAddress) providerRefund = state.solverAddress;
-  if (!providerRefund) {
-    showFulfillStatus('Enter provider refund address or sign in on Account with your solver address.', 'error');
+
+  if (!state.signer) {
+    showFulfillStatus('Connect Wallet first (click Connect Wallet in the header).', 'error');
     return;
   }
+
+  if (!providerRefund) {
+    providerRefund = state.walletAddress;
+  }
+  if (!providerRefund || !providerRefund.startsWith('0x')) {
+    showFulfillStatus('Provide a valid provider refund address (0x...) or use your connected wallet.', 'error');
+    return;
+  }
+
   const btn = document.getElementById('btn-fulfill');
   btn.disabled = true;
-  showFulfillStatus('Creating quote…', 'info');
+  showFulfillStatus('Confirm the transaction in MetaMask…', 'info');
+
   try {
-    const client = await getSwapsClient();
-    const result = await client.fillQuote({
-      swapRequestId,
-      quoteDeadlineSeconds: quoteDeadline,
-      providerRefundAddress: providerRefund,
-      message,
-    });
-    showFulfillStatus(
-      `Quote created. Quote ID: ${result.quote_id || 'N/A'}. Tx: ${result.transaction_hash || 'N/A'}`,
-      'success'
-    );
+    const ethers = getEthers();
+    const contract = new ethers.Contract(contractAddress, NEW_QUOTE_ABI, state.signer);
+    const swapRequestId = BigInt(swapRequestIdStr);
+    const tx = await contract.newQuote(swapRequestId, providerRefund);
+    showFulfillStatus('Transaction sent. Waiting for confirmation…', 'info');
+    const receipt = await tx.wait();
+    const txHash = receipt?.hash || tx?.hash || 'N/A';
+    showFulfillStatus(`Quote created. Transaction: ${txHash}`, 'success');
     loadQuotes();
   } catch (err) {
+    console.error('Fulfill error:', err);
     showFulfillStatus(err.message || String(err), 'error');
   } finally {
     btn.disabled = false;
   }
 }
 
+// --- Attempt swap (calls attempt_swap_request) ---
+function showAttemptSwapStatus(msg, type = 'info') {
+  const el = document.getElementById('attempt-swap-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = `status ${type}`;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+/** Format wei as ETH for display on Process Swap quote balances. */
+function formatWeiToEth(weiStr) {
+  if (!weiStr || weiStr === '0') return '0 ETH';
+  try {
+    const w = BigInt(weiStr);
+    const eth = Number(w) / 1e18;
+    if (eth === 0 && w !== 0n) {
+      const small = (Number(w) / 1e18).toFixed(8).replace(/\.?0+$/, '') || '0';
+      return `${small} ETH`;
+    }
+    const s = eth.toFixed(6).replace(/\.?0+$/, '') || '0';
+    return `${s} ETH`;
+  } catch {
+    return `${weiStr} wei`;
+  }
+}
+
+async function fetchQuoteBalances() {
+  const quoteIdInput = document.getElementById('attempt-swap-quote-id');
+  const quoteId = quoteIdInput?.value?.trim();
+  const balancesEl = document.getElementById('attempt-swap-balances');
+  if (!quoteId) {
+    showAttemptSwapStatus('Enter a quote ID to get balances.', 'error');
+    if (balancesEl) balancesEl.style.display = 'none';
+    return;
+  }
+
+  showAttemptSwapStatus('Fetching quote balances…', 'info');
+  if (balancesEl) balancesEl.style.display = 'none';
+
+  try {
+    const client = await getSwapsClient();
+    const data = await client.getQuoteBalances(quoteId);
+    showAttemptSwapStatus('');
+    if (balancesEl) {
+      const srcSufficient = data.source_balance_sufficient === true;
+      const dstSufficient = data.destination_balance_sufficient === true;
+      const srcIcon = srcSufficient ? '<span class="balance-sufficient" title="Balance sufficient">✓</span>' : '<span class="balance-insufficient" title="Insufficient balance">✗</span>';
+      const dstIcon = dstSufficient ? '<span class="balance-sufficient" title="Balance sufficient">✓</span>' : '<span class="balance-insufficient" title="Insufficient balance">✗</span>';
+      balancesEl.innerHTML = `
+        <div class="card-title" style="margin-top: 0.5rem;">Quote balances (PKP address)</div>
+        <div class="quote-balances-row"><span class="key">PKP address</span><span class="val mono">${formatAddress(data.pkp_address)}</span></div>
+        <div class="quote-balances-row"><span class="key">Source (${data.source_chain})</span><span class="val quote-balance-val">${formatWeiToEth(data.source_balance_wei)} ${srcIcon}</span></div>
+        <div class="quote-balances-row"><span class="key">Destination (${data.destination_chain})</span><span class="val quote-balance-val">${formatWeiToEth(data.destination_balance_wei)} ${dstIcon}</span></div>
+      `;
+      balancesEl.style.display = 'block';
+    }
+  } catch (err) {
+    showAttemptSwapStatus(err.message || String(err), 'error');
+    if (balancesEl) balancesEl.style.display = 'none';
+  }
+}
+
+async function submitAttemptSwap(e) {
+  e.preventDefault();
+  const quoteIdInput = document.getElementById('attempt-swap-quote-id');
+  const quoteId = quoteIdInput?.value?.trim();
+  if (!quoteId) {
+    showAttemptSwapStatus('Enter a quote ID.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btn-attempt-swap');
+  if (btn) btn.disabled = true;
+  showAttemptSwapStatus('Calling attempt_swap_request…', 'info');
+
+  try {
+    const client = await getSwapsClient();
+    await client.attemptSwapRequest(quoteId);
+    showAttemptSwapStatus('Swap attempt completed successfully.', 'success');
+  } catch (err) {
+    showAttemptSwapStatus(err.message || String(err), 'error');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
 // --- Init ---
 function init() {
   initRouting();
-  loadAccountFromStorage();
 
   document.getElementById('baseUrl')?.addEventListener('change', () => {
     initClients();
   });
 
-  document.getElementById('btn-logout')?.addEventListener('click', logout);
-  document.getElementById('btn-save-account')?.addEventListener('click', saveAccount);
-  document.getElementById('btn-clear-account')?.addEventListener('click', clearAccount);
-  document.getElementById('btn-copy-account')?.addEventListener('click', () => {
-    if (state.solverAddress) navigator.clipboard.writeText(state.solverAddress);
-  });
+  document.getElementById('btn-connect-wallet')?.addEventListener('click', connectWallet);
+  document.getElementById('btn-disconnect-wallet')?.addEventListener('click', disconnectWallet);
 
   document.getElementById('btn-refresh-swap-requests')?.addEventListener('click', loadSwapRequests);
   document.getElementById('btn-refresh-quotes')?.addEventListener('click', loadQuotes);
 
   document.getElementById('fulfill-form')?.addEventListener('submit', submitFulfill);
+  document.getElementById('attempt-swap-form')?.addEventListener('submit', submitAttemptSwap);
+  document.getElementById('btn-get-quote-balances')?.addEventListener('click', fetchQuoteBalances);
+
+  document.getElementById('quotes-tbody')?.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.btn-copy-pkp');
+    if (!btn) return;
+    const addr = btn.getAttribute('data-pkp-address');
+    if (!addr) return;
+    try {
+      await navigator.clipboard.writeText(addr);
+      const label = btn.textContent;
+      btn.textContent = 'Copied!';
+      btn.disabled = true;
+      setTimeout(() => {
+        btn.textContent = label;
+        btn.disabled = false;
+      }, 1500);
+    } catch (err) {
+      console.error('Copy failed:', err);
+    }
+  });
+
+  updateWalletUI();
 }
 
 init();

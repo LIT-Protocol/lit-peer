@@ -17,6 +17,10 @@ fn main() {
     if !Path::new(output_folder).exists() {
         create_dir_all(output_folder).expect("Could not create output folder.");
     }
+    process_folder(input_folder, output_folder);
+}
+
+fn process_folder(input_folder: &str, output_folder: &str) {
     // process lit contracts
     let result = read_dir(input_folder);
 
@@ -26,7 +30,9 @@ fn main() {
 
     let files = result.unwrap();
     for file in files.flatten() {
+        println!("Processing file: {:?}", file.path());
         if file.file_type().unwrap().is_dir() {
+            process_folder(file.path().to_str().unwrap(), output_folder);
             continue;
         }
         let file_path = file.path().canonicalize().unwrap();

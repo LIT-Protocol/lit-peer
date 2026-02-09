@@ -16,7 +16,7 @@ pub async fn get_api_key_balance(
 
     Ok(Json(GetBalanceResponse {
         address: String::new(),
-        balance: String::new(),
+        balance: 0.0,
         chain: Chain::Ethereum,
         symbol: String::new(),
     }))
@@ -28,7 +28,7 @@ pub async fn get_pkp_balance(
 ) -> Result<Json<GetBalanceResponse>, Status> {
     Ok(Json(GetBalanceResponse {
         address: pkp_public_key.to_string(),
-        balance: String::new(),
+        balance: 0.0,
         chain: chain.clone(),
         symbol: String::new(),
     }))
@@ -40,7 +40,7 @@ pub async fn get_address_balance(
 ) -> Result<Json<GetBalanceResponse>, Status> {
     Ok(Json(GetBalanceResponse {
         address: address.to_string(),
-        balance: String::new(),
+        balance: 0.0,
         chain: chain.clone(),
         symbol: String::new(),
     }))
@@ -58,7 +58,7 @@ pub async fn send(
         success: false,
         chain: Chain::Ethereum,
         origin_symbol: String::new(),
-        origin_amount: String::new(),
+        origin_amount: 0.0,
         gas: String::new(),
         timestamp: String::new(),
         destination_address: String::new(),

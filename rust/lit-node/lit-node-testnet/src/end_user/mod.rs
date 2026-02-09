@@ -6,8 +6,10 @@ use ethers::signers::{LocalWallet, Signer, Wallet};
 use ethers::types::{H160, I256, TransactionRequest, U256};
 use k256::ecdsa::SigningKey;
 use lit_blockchain::contracts::ledger::{Ledger, LedgerErrors};
+use lit_blockchain::contracts::pkpnft;
 use lit_blockchain::contracts::price_feed::{PriceFeed, PriceFeedErrors};
 use lit_blockchain::util::decode_revert;
+use lit_core::utils::binary::bytes_to_hex;
 use lit_node_core::AuthMethod;
 use tracing::{error, info, trace};
 
@@ -87,7 +89,15 @@ impl EndUser {
         &self.pkps[0]
     }
 
+    pub async fn lookup_pkp_by_token_id(&self, token_id: U256) -> Result<String, anyhow::Error> {
+        let pubkey = self.actions.contracts().pkpnft.get_pubkey(token_id).call().await?;
+        Ok(bytes_to_hex(&pubkey))
+    }
+
     pub fn pkp_by_token_id(&self, token_id: U256) -> &Pkp {
+
+
+
         self.pkps
             .iter()
             .find(|pkp| pkp.token_id == token_id)

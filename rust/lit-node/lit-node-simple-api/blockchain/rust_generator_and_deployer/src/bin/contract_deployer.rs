@@ -11,6 +11,7 @@ use ethers::utils::hex::FromHex;
 use std::env;
 use std::fs;
 use std::path::Path;
+use std::path::PathBuf;
 
 const ANVIL_RPC: &str = "http://127.0.0.1:8545";
 const ANVIL_CHAIN_ID: u64 = 31337;
@@ -51,7 +52,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             std::process::exit(1);
         }
     };
+
     let abis_folder = args[2].trim_end_matches('/').to_string();
+    println!("Deploying contracts from folder {} on chain {} with RPC URL {}", args[2], abis_folder, rpc_url);
 
     deploy_contracts(rpc_url, chain_id,  &abis_folder).await.expect("Failed to deploy contracts");
     Ok(())
@@ -69,17 +72,33 @@ async fn deploy_contracts(
         .with_chain_id(chain_id);
     let client = SignerMiddleware::new(provider, wallet);
     let client = std::sync::Arc::new(client);
+    let mut abis = Vec::new();
+    get_abis(abis_folder, &mut abis);
+    deploy_abis(abis, client).await.expect("Failed to deploy contracts");
+    Ok(())
+}
 
-    let dir = fs::read_dir(abis_folder)?;
+fn get_abis(
+    abis_folder: &str,
+    abis: &mut Vec<PathBuf>,
+)  {
+    let dir = fs::read_dir(abis_folder).expect(format!("Failed to read directory {:?}", abis_folder).as_str());
     for entry in dir.flatten() {
-        let path = entry.path();
-        if path.extension().map(|e| e == "json").unwrap_or(false) {
-            if let Err(e) = deploy_artifact(&path, client.clone()).await {
-                eprintln!("Failed to deploy {:?}: {}", path.file_name().unwrap(), e);
-            }
+        if entry.file_type().unwrap().is_dir() {
+            get_abis(entry.path().to_str().unwrap(), abis);
+            continue;
         }
-    }
+        abis.push(entry.path());
+    }    
+}
 
+async fn deploy_abis(
+    abis: Vec<PathBuf>,
+    client: std::sync::Arc<SignerMiddleware<Provider<Http>, LocalWallet>>,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    for abi in abis {
+        deploy_artifact(&abi, client.clone()).await.expect("Failed to deploy contract");
+    }
     Ok(())
 }
 
@@ -118,6 +137,7 @@ async fn deploy_artifact(
     let bytecode = Bytes::from_hex(bytecode_hex)?;
     let factory = ContractFactory::new(abi, bytecode, client);
     let deployer = factory.deploy(())?.legacy();
+    println!("Deploying {} with bytecode size {}.", name, bytecode_hex.len());
     let (contract, _receipt) = deployer.send_with_receipt().await?;
     println!("Deployed {} -> {:?}", name, contract.address());
     Ok(())

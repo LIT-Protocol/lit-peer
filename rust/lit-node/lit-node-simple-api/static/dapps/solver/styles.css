@@ -63,7 +63,15 @@ body {
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
+}
+
+.wallet-address {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .logo {
@@ -326,7 +334,161 @@ body {
   cursor: not-allowed;
 }
 
-/* List cards (swap requests / quotes) */
+/* Swap requests table */
+.swap-requests-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 0;
+}
+
+.swap-requests-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.swap-requests-table th,
+.swap-requests-table td {
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.swap-requests-table th {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.swap-requests-table tbody tr:hover {
+  background: var(--bg-card-hover);
+}
+
+.swap-requests-table .swap-requests-num {
+  width: 3rem;
+  color: var(--text-secondary);
+}
+
+.swap-requests-table .swap-requests-from {
+  min-width: 100px;
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+}
+
+.swap-requests-table .swap-requests-origin,
+.swap-requests-table .swap-requests-dest {
+  min-width: 140px;
+  color: var(--text-secondary);
+}
+
+.swap-requests-table .swap-requests-slippage {
+  width: 5rem;
+  color: var(--text-secondary);
+}
+
+.swap-requests-table .swap-requests-action {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.swap-requests-table .swap-requests-action .btn {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+/* Quotes table */
+.quotes-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 0;
+}
+
+.quotes-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.quotes-table th,
+.quotes-table td {
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.quotes-table th {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.quotes-table tbody tr:hover {
+  background: var(--bg-card-hover);
+}
+
+.quotes-table .quotes-table-num {
+  width: 3rem;
+  color: var(--text-secondary);
+}
+
+.quotes-table .quotes-table-from,
+.quotes-table .quotes-table-refund {
+  min-width: 100px;
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+}
+
+.quotes-table .quotes-table-pkp-cell {
+  min-width: 120px;
+}
+
+.quotes-table .quotes-table-pkp-cell-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.quotes-table .quotes-table-pkp-cell .quotes-table-pkp {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+}
+
+.quotes-table .quotes-table-pkp-cell .btn-copy-pkp {
+  flex-shrink: 0;
+}
+
+.quotes-table .quotes-table-origin,
+.quotes-table .quotes-table-dest {
+  min-width: 140px;
+  color: var(--text-secondary);
+}
+
+.quotes-table .quotes-table-expiry {
+  min-width: 180px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+.quotes-table .quotes-table-action {
+  width: 1%;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.quotes-table .quotes-table-action .btn {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+/* List cards (other uses) */
 .list-cards {
   list-style: none;
   padding: 0;
@@ -414,4 +576,56 @@ body {
 
 .fulfill-form .btn-block {
   margin-top: 0.5rem;
+}
+
+.quote-balances-result {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+}
+
+.quote-balances-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+  gap: 0.5rem;
+}
+
+.quote-balances-row:last-child {
+  border-bottom: none;
+}
+
+.quote-balances-row .key {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.quote-balances-row .val {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  word-break: break-all;
+  text-align: right;
+}
+
+.quote-balances-row .quote-balance-val {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.quote-balances-row .balance-sufficient {
+  color: var(--success);
+  font-weight: bold;
+}
+
+.quote-balances-row .balance-insufficient {
+  color: var(--error);
+  font-weight: bold;
 }

@@ -7,6 +7,7 @@ const HISTORY_KEY = 'swps_tx_history';
 
 let coreClient = null;
 let transferClient = null;
+let swapsClient = null;
 let state = {
   baseUrl: 'http://localhost:8000',
   apiKey: null,
@@ -29,12 +30,31 @@ function formatAddress(str) {
   return `${s.slice(0, 8)}...${s.slice(-8)}`;
 }
 
+/** Format a balance for display with at most 6 decimal places. */
+function formatBalanceMax6(val) {
+  if (val == null || val === '') return '–';
+  const s = String(val).trim();
+  if (!s) return '–';
+  try {
+    const n = Number(s);
+    if (!Number.isFinite(n)) return s;
+    if (n >= 1e12 && Number.isInteger(n)) {
+      const eth = n / 1e18;
+      return eth.toFixed(6).replace(/\.?0+$/, '') || '0';
+    }
+    return n.toFixed(6).replace(/\.?0+$/, '') || '0';
+  } catch {
+    return s;
+  }
+}
+
 function initClients() {
   const baseUrl = getBaseUrl();
   if (state.baseUrl !== baseUrl) {
     state.baseUrl = baseUrl;
     coreClient = null;
     transferClient = null;
+    swapsClient = null;
   }
 }
 
@@ -54,6 +74,15 @@ async function getTransferClient() {
     transferClient = createTransferClient(state.baseUrl);
   }
   return transferClient;
+}
+
+async function getSwapsClient() {
+  initClients();
+  if (!swapsClient) {
+    const { createSwapsClient } = await import('../../js_swaps_sdk.js');
+    swapsClient = createSwapsClient(state.baseUrl);
+  }
+  return swapsClient;
 }
 
 // --- Routing ---
@@ -104,31 +133,42 @@ async function loadChains() {
   }
 }
 
-/** Unique token symbols from state.chainList for swap dropdowns. */
-function getTokenListFromChains() {
-  const tokens = [...new Set((state.chainList || []).map((c) => c.token).filter(Boolean))];
-  return tokens.sort((a, b) => a.localeCompare(b));
+/** Options for swap dropdowns: { value: "symbol|chainKey", text: "Symbol - Chain display name" } */
+function getSwapTokenChainOptions() {
+  const chains = state.chainList || [];
+  return chains
+    .filter((c) => c.token)
+    .map((c) => ({
+      value: `${c.token}|${c.chain}`,
+      text: `${c.token} - ${c.display_name}`,
+    }));
 }
 
 function populateSwapTokenSelects() {
-  const tokens = getTokenListFromChains();
-  const options = tokens.length
-    ? tokens.map((token) => ({ value: token, text: token }))
-    : [{ value: '', text: 'No tokens loaded' }];
+  const options = getSwapTokenChainOptions();
+  const list = options.length ? options : [{ value: '', text: 'No tokens loaded' }];
   const fromSel = document.getElementById('swap-token-from');
   const toSel = document.getElementById('swap-token-to');
   [fromSel, toSel].forEach((sel) => {
     if (!sel) return;
     sel.innerHTML = '';
-    options.forEach((o) => {
+    list.forEach((o) => {
       const opt = document.createElement('option');
       opt.value = o.value;
       opt.textContent = o.text;
       sel.appendChild(opt);
     });
   });
-  if (fromSel && options[0]?.value) fromSel.value = options[0].value;
-  if (toSel && options.length > 1) toSel.value = options[1].value; else if (toSel && options[0]?.value) toSel.value = options[0].value;
+  if (fromSel && list[0]?.value) fromSel.value = list[0].value;
+  if (toSel && list.length > 1) toSel.value = list[1].value;
+  else if (toSel && list[0]?.value) toSel.value = list[0].value;
+}
+
+/** Parse "symbol|chainKey" value from swap token select into { symbol, chain }. */
+function parseSwapTokenValue(value) {
+  if (!value || !value.includes('|')) return { symbol: '', chain: '' };
+  const [symbol, chain] = value.split('|');
+  return { symbol: symbol?.trim() || '', chain: chain?.trim() || '' };
 }
 
 function populateChainSelect(selectId, chains) {
@@ -233,7 +273,7 @@ async function refreshBalances() {
         updateCopyButtonStates();
       }
       const li = document.createElement('li');
-      li.innerHTML = `<span class="balance-symbol">API Key balance (Litkey - Yellowstone)</span><span>${bal.balance}</span>`;
+      li.innerHTML = `<span class="balance-symbol">API Key balance (Litkey - Yellowstone)</span><span>${formatBalanceMax6(bal.balance)}</span>`;
       list.appendChild(li);
       const coreClient = await getCoreClient();
       let ledgerBalance = '–';
@@ -242,7 +282,7 @@ async function refreshBalances() {
         ledgerBalance = typeof ledger === 'string' ? ledger : String(ledger);
       } catch (_) {}
       const liLedger = document.createElement('li');
-      liLedger.innerHTML = `<span class="balance-symbol">Network Ledger Balance (Litkey)</span><span>${ledgerBalance}</span>`;
+      liLedger.innerHTML = `<span class="balance-symbol">Network Ledger Balance (Litkey)</span><span>${formatBalanceMax6(ledgerBalance)}</span>`;
       list.appendChild(liLedger);
     }
     if (state.pkpPublicKey) {
@@ -257,7 +297,7 @@ async function refreshBalances() {
       const symbol = selectedChain?.token ?? bal.symbol ?? chain;
       const displayName = selectedChain?.display_name ?? chain;
       const li = document.createElement('li');
-      li.innerHTML = `<span class="balance-symbol">PKP (${symbol} – ${displayName})</span><span>${bal.balance}</span>`;
+      li.innerHTML = `<span class="balance-symbol">PKP (${symbol} – ${displayName})</span><span>${formatBalanceMax6(bal.balance)}</span>`;
       list.appendChild(li);
     }
     wrap.innerHTML = '';
@@ -378,7 +418,12 @@ async function submitTransfer(e) {
     return;
   }
   const destination = document.getElementById('transfer-destination').value.trim();
-  const amount = document.getElementById('transfer-amount').value.trim();
+  const amountRaw = document.getElementById('transfer-amount').value.trim();
+  const amountNum = parseFloat(amountRaw);
+  if (!amountRaw || !Number.isFinite(amountNum) || amountNum <= 0) {
+    showTransferStatus('Enter a valid amount in ETH.', 'error');
+    return;
+  }
   const btn = document.getElementById('btn-transfer');
   btn.disabled = true;
   showTransferStatus('Sending…', 'info');
@@ -389,7 +434,7 @@ async function submitTransfer(e) {
       pkpPublicKey: state.pkpPublicKey,
       chain,
       destinationAddress: destination,
-      amount,
+      amount: amountNum,
     });
     showTransferStatus(
       result.success ? `Sent. Txn: ${result.txn_id || 'N/A'}` : `Transfer failed: ${result.txn_id || 'unknown'}`,
@@ -428,22 +473,77 @@ function swapFlip() {
   const tmp = from.value;
   from.value = to.value;
   to.value = tmp;
-  document.getElementById('swap-amount-from').value = document.getElementById('swap-amount-to').value || '';
-  document.getElementById('swap-amount-to').value = '';
+  const amtFrom = document.getElementById('swap-amount-from');
+  const amtTo = document.getElementById('swap-amount-to');
+  const tmpAmt = amtFrom.value;
+  amtFrom.value = amtTo.value || '';
+  amtTo.value = tmpAmt || '0';
 }
 
-function swapSubmit() {
-  const from = document.getElementById('swap-token-from').value;
-  const to = document.getElementById('swap-token-to').value;
-  const amount = document.getElementById('swap-amount-from').value;
-  if (!amount || Number(amount) <= 0) {
-    showSwapStatus('Enter an amount.', 'error');
+async function requestSwap() {
+  const originValue = document.getElementById('swap-token-from')?.value?.trim();
+  const destinationValue = document.getElementById('swap-token-to')?.value?.trim();
+  const originAmountRaw = document.getElementById('swap-amount-from')?.value?.trim();
+  const destinationAmountRaw = document.getElementById('swap-amount-to')?.value?.trim();
+  const slippageRaw = document.getElementById('swap-slippage')?.value?.trim();
+
+  const origin = parseSwapTokenValue(originValue);
+  const destination = parseSwapTokenValue(destinationValue);
+  const originSymbol = origin.symbol;
+  const originChain = origin.chain;
+  const destinationSymbol = destination.symbol;
+  const destinationChain = destination.chain;
+
+  if (!state.walletAddress && !state.pkpAddress) {
+    showSwapStatus('Load an account on Overview first (wallet/PKP address required).', 'error');
     return;
   }
-  showSwapStatus(
-    `Swap ${amount} ${from} → ${to} is intent-based. Connect to a swap API (e.g. NEAR Intents) to execute.`,
-    'info'
-  );
+  const from = state.walletAddress || state.pkpAddress;
+  if (!originSymbol || !originChain) {
+    showSwapStatus('Select origin token (Symbol - Chain).', 'error');
+    return;
+  }
+  if (!destinationSymbol || !destinationChain) {
+    showSwapStatus('Select destination token (Symbol - Chain).', 'error');
+    return;
+  }
+  const originAmountNum = parseFloat(originAmountRaw);
+  if (!originAmountRaw || !Number.isFinite(originAmountNum) || originAmountNum <= 0) {
+    showSwapStatus('Enter an origin amount (in ether).', 'error');
+    return;
+  }
+
+  const destinationAmountNum = parseFloat(destinationAmountRaw || '0') || 0;
+  const slippageNum = parseFloat(slippageRaw || '1') || 1;
+
+  const btn = document.getElementById('btn-swap');
+  btn.disabled = true;
+  showSwapStatus('Requesting swap…', 'info');
+  try {
+    const client = await getSwapsClient();
+    const result = await client.newQuoteRequest({
+      from,
+      originChain,
+      originSymbol,
+      originAmount: originAmountNum,
+      destinationChain,
+      destinationSymbol,
+      destinationAmount: destinationAmountNum,
+      slippage: slippageNum,
+      quoteDeadlineSeconds: 60,
+      originAddress: from,
+      refundAddress: from,
+      transactionDeadlineSeconds: 0,
+    });
+    showSwapStatus(
+      `Swap requested. ID: ${result.swap_request_id || 'N/A'}. Tx: ${result.transaction_hash || 'N/A'}`,
+      'success'
+    );
+  } catch (err) {
+    showSwapStatus(err.message || String(err), 'error');
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 // --- History ---
@@ -529,7 +629,7 @@ function init() {
   document.getElementById('transfer-form').addEventListener('submit', submitTransfer);
 
   document.getElementById('swap-flip').addEventListener('click', swapFlip);
-  document.getElementById('btn-swap').addEventListener('click', swapSubmit);
+  document.getElementById('btn-swap').addEventListener('click', requestSwap);
 
   document.getElementById('btn-load-history').addEventListener('click', loadHistory);
   document.getElementById('btn-history-use-wallet').addEventListener('click', () => {

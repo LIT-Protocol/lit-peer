@@ -6,7 +6,7 @@ use ethers::providers::{Http, Middleware, Provider};
 use ethers::signers::Signer;
 use ethers::types::{H160, U256};
 use ethers::types::{Signature, transaction::eip2718::TypedTransaction};
-use ethers::utils::{eip1559_default_estimator, keccak256};
+use ethers::utils::{eip1559_default_estimator, format_ether, keccak256, parse_ether};
 use lit_core::utils::binary::{bytes_to_hex, hex_to_bytes};
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::testnet::Testnet;
@@ -54,9 +54,11 @@ async fn get_balance(address: H160, chain: Chain) -> Result<Json<GetBalanceRespo
     let block = None;
     let balance = provider.get_balance(address, block).await.unwrap();
 
+    let balance = format_ether(balance).parse::<f64>().unwrap();
+
     Ok(Json(GetBalanceResponse {
         address: bytes_to_hex(&address.as_bytes()),
-        balance: balance.to_string(),
+        balance: balance,
         chain: chain.clone(),
         symbol: chain.info().token.to_string(),
     }))
@@ -108,10 +110,13 @@ pub async fn send(
         .expect("Invalid destination address");
     // 1. Structure the transaction
     // let tx = TransactionRequest::new()
+
+    let amount_in_wei = parse_ether(request.amount).unwrap();
+
     let mut tx = ethers::types::Eip1559TransactionRequest::new()
         .from(pkp_address)
         .to(to)
-        .value(U256::from_dec_str(request.amount.as_str()).unwrap())
+        .value(amount_in_wei)
         // .gas_price(gas_price)
         .gas(gas_price)
         .nonce(nonce)

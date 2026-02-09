@@ -8,8 +8,8 @@
 /**
  * @typedef {Object} GetBalanceResponse
  * @property {string} address - Wallet address
- * @property {string} balance - Balance as string
- * @property {string} chain - Chain key (lowercase, e.g. "ethereum", "solana")
+ * @property {number} balance - Balance in ether (native token)
+ * @property {string} chain - Chain key (e.g. "ethereum", "solana")
  * @property {string} symbol - Asset symbol
  */
 
@@ -19,7 +19,7 @@
  * @property {string} pkpPublicKey - PKP public key
  * @property {string} chain - Chain key (lowercase, e.g. "ethereum", "solana"); use ChainInfoItem.chain from get_chains
  * @property {string} destinationAddress - Destination address
- * @property {string} amount - Amount as string
+ * @property {number} amount - Amount in ether (native token)
  */
 
 /**
@@ -28,7 +28,7 @@
  * @property {boolean} success - Whether the transfer succeeded
  * @property {string} chain - Chain key (lowercase)
  * @property {string} origin_symbol - Symbol of the asset sent
- * @property {string} origin_amount - Amount sent
+ * @property {number} origin_amount - Amount sent in ether
  * @property {string} gas - Gas used/cost
  * @property {string} timestamp - Timestamp
  * @property {string} destination_address - Destination address
@@ -138,7 +138,7 @@ export class LitTransferApiClient {
       pkp_public_key: pkpPublicKey,
       chain,
       destination_address: destinationAddress,
-      amount,
+      amount: Number(amount),
     };
     const res = await fetch(`${this.baseUrl}/send`, {
       method: 'POST',

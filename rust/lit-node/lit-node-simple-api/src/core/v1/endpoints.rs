@@ -7,7 +7,6 @@ use crate::core::v1::models::response::{
     CombineSignatureSharesResponse, DecryptResponse, EncryptResponse, GetApiKeyResponse,
     HandshakeResponse, LitActionResponses, MintPkpResponse, SignWithPkpResponse,
 };
-use ethers::types::U256;
 use lit_node_testnet::testnet::Testnet;
 use lit_node_testnet::validator::ValidatorCollection;
 use rocket::serde::json::Json;

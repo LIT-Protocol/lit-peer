@@ -9,7 +9,7 @@ pub struct TransferRequest {
     pub pkp_public_key: String,
     pub chain: String,
     pub destination_address: String,
-    pub amount: String,
+    pub amount: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -18,7 +18,7 @@ pub struct TransferResponse {
     pub success: bool,
     pub chain: Chain,
     pub origin_symbol: String,
-    pub origin_amount: String,
+    pub origin_amount: f64,
     pub gas: String,
     pub timestamp: String,
     pub destination_address: String,
@@ -27,7 +27,7 @@ pub struct TransferResponse {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GetBalanceResponse {
     pub address: String,
-    pub balance: String,
+    pub balance: f64,
     pub chain: Chain,
     pub symbol: String,
 }

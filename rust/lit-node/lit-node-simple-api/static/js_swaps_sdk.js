@@ -2,13 +2,26 @@
  * Lit Node Simple API - JavaScript Swaps SDK
  *
  * Wrapper for swap intents API endpoints in src/abstractions/intents/swaps/endpoints.rs.
- * Mount the swaps routes at /swaps/v1/ (e.g. in main.rs: .mount("/swaps/v1/", abstractions::intents::swaps::endpoints::routes())).
+ * Mount the swaps routes at /swaps/v1/ (e.g. in main.rs: .mount("/swaps/v1/", ...)).
+ *
+ * Endpoints (from endpoints.rs):
+ *   GET  /get_contract_address - Quote storage contract address
+ *   GET  /token_list
+ *   POST /new_quote_request  (NewSwapRequest -> NewSwapResponse)
+ *   POST /fill_quote         (FillQuoteRequest -> FillQuoteResponse)
+ *   POST /accept_quote       (AcceptQuoteRequest -> AcceptQuoteResponse)
+ *   GET  /get_swap_status/<quote_id>
+ *   GET  /get_open_swap_requests  (contract: getRecentSwapRequests)
+ *   GET  /get_open_quotes        (contract: getRecentQuotes)
+ *   GET  /get_quote_balances/<quote_id> - Quote data + PKP balance on source and destination chains
+ *   GET  /attempt_swap_request/<quote_id> - Attempt to execute the swap for a quote
  */
 
 // --- Token list ---
 
 /**
  * @typedef {Object} TokenListItem
+ * Matches TokenListItem in models.rs.
  * @property {string} id - Unique identifier
  * @property {string} symbol - Token symbol
  * @property {string} blockchain - Blockchain identifier
@@ -23,10 +36,10 @@
 
 // --- New quote request ---
 
-/** Quote pricing type: fees from origin amount. */
-export const QUOTE_PRICING_ORIGIN = 'Origin';
-/** Quote pricing type: fees from destination amount. */
-export const QUOTE_PRICING_DESTINATION = 'Destination';
+/** Quote pricing type: fees from origin amount. Matches contract enum 0 (Origin). */
+export const QUOTE_PRICING_ORIGIN = 0;
+/** Quote pricing type: fees from destination amount. Matches contract enum 1 (Destination). */
+export const QUOTE_PRICING_DESTINATION = 1;
 
 /**
  * @typedef {Object} NewSwapRequestOptions
@@ -38,7 +51,7 @@ export const QUOTE_PRICING_DESTINATION = 'Destination';
  * @property {string} destinationChain - Destination chain key
  * @property {string|number|bigint} destinationAmount - Destination amount
  * @property {string|number|bigint} slippage - Acceptable slippage
- * @property {string} [pricingType='Origin'] - 'Origin' or 'Destination' (use QUOTE_PRICING_*)
+ * @property {number} [pricingType=0] - 0 = Origin, 1 = Destination (QUOTE_PRICING_ORIGIN / QUOTE_PRICING_DESTINATION)
  * @property {number} [quoteDeadlineSeconds=60] - How long to wait for a quote (0–60)
  * @property {string} originAddress - Origin address (hex)
  * @property {string} refundAddress - Refund address if tx fails (hex)
@@ -115,13 +128,15 @@ export const SWAP_STATE_OTHER = 'Other';
 
 /**
  * @typedef {Object} SwapRequestData
+ * Mirrors SwapRequestData in models.rs. Amounts are in ether (f64).
  * @property {string} from - Message sender (hex)
+ * @property {string} pkp_address - PKP address for this swap request (hex)
  * @property {string} origin_symbol
  * @property {string} origin_chain
- * @property {string|number} origin_amount
+ * @property {number} origin_amount - In ether (f64)
  * @property {string} destination_symbol
  * @property {string} destination_chain
- * @property {string|number} destination_amount
+ * @property {number} destination_amount - In ether (f64)
  * @property {string|number} slippage
  * @property {number} pricing_type - 0 = Origin, 1 = Destination
  * @property {string|number} quote_deadline_seconds
@@ -133,12 +148,13 @@ export const SWAP_STATE_OTHER = 'Other';
 
 /**
  * @typedef {Object} QuoteData
- * @property {string} pkp_address
+ * Matches QuoteData in models.rs (from get_recent_quotes + get_requests_by_ids).
  * @property {string|number} swap_request_id
  * @property {string} provider_refund_address
  * @property {number} quote_expiry - Unix timestamp
  * @property {number} created_at - Unix timestamp
  * @property {string|number} fees_total
+ * @property {SwapRequestData} swap_request_data - The swap request this quote fulfils
  */
 
 /**
@@ -149,6 +165,18 @@ export const SWAP_STATE_OTHER = 'Other';
 /**
  * @typedef {Object} GetOpenQuotesResponse
  * @property {QuoteData[]} quotes
+ */
+
+/**
+ * @typedef {Object} QuoteBalancesResponse
+ * Response from get_quote_balances: quote data and PKP balances on source/destination chains.
+ * @property {string} pkp_address - PKP address (hex)
+ * @property {string} source_chain - Origin chain key
+ * @property {string} destination_chain - Destination chain key
+ * @property {string} source_balance_wei - Balance in wei on source chain (native token)
+ * @property {string} destination_balance_wei - Balance in wei on destination chain (native token)
+ * @property {boolean} source_balance_sufficient - Whether PKP has enough balance on source chain for the swap
+ * @property {boolean} destination_balance_sufficient - Whether PKP has enough balance on destination chain for the swap
  */
 
 /**
@@ -185,7 +213,8 @@ export class LitSwapsApiClient {
    */
   async getTokenList() {
     const res = await fetch(`${this.baseUrl}/token_list`);
-    if (!res.ok) throw new Error(`token_list failed: ${res.status} ${res.statusText}`);
+    if (!res.ok)
+      throw new Error(`token_list failed: ${res.status} ${res.statusText}`);
     return res.json();
   }
 
@@ -200,16 +229,16 @@ export class LitSwapsApiClient {
       from: options.from,
       origin_chain: options.originChain,
       origin_symbol: options.originSymbol,
-      origin_amount: String(options.originAmount),
+      origin_amount: Number(options.originAmount),
       destination_symbol: options.destinationSymbol,
       destination_chain: options.destinationChain,
-      destination_amount: String(options.destinationAmount),
-      slippage: String(options.slippage),
-      type: options.pricingType ?? QUOTE_PRICING_ORIGIN,
-      quote_deadline_seconds: options.quoteDeadlineSeconds ?? 60,
+      destination_amount: Number(options.destinationAmount),
+      slippage: Number(options.slippage ?? 1),
+      pricing_type: Number(options.pricingType ?? QUOTE_PRICING_ORIGIN),
+      quote_deadline_seconds: Number(options.quoteDeadlineSeconds ?? 60),
       origin_address: options.originAddress,
       refund_address: options.refundAddress,
-      transaction_deadline_seconds: options.transactionDeadlineSeconds ?? 0,
+      transaction_deadline_seconds: Number(options.transactionDeadlineSeconds ?? 0),
       message: options.message ?? null,
     };
     const res = await fetch(`${this.baseUrl}/new_quote_request`, {
@@ -217,7 +246,10 @@ export class LitSwapsApiClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    if (!res.ok) throw new Error(`new_quote_request failed: ${res.status} ${res.statusText}`);
+    if (!res.ok)
+      throw new Error(
+        `new_quote_request failed: ${res.status} ${res.statusText}`
+      );
     return res.json();
   }
 
@@ -239,7 +271,8 @@ export class LitSwapsApiClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    if (!res.ok) throw new Error(`fill_quote failed: ${res.status} ${res.statusText}`);
+    if (!res.ok)
+      throw new Error(`fill_quote failed: ${res.status} ${res.statusText}`);
     return res.json();
   }
 
@@ -256,7 +289,22 @@ export class LitSwapsApiClient {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    if (!res.ok) throw new Error(`accept_quote failed: ${res.status} ${res.statusText}`);
+    if (!res.ok)
+      throw new Error(`accept_quote failed: ${res.status} ${res.statusText}`);
+    return res.json();
+  }
+
+  /**
+   * GET /swaps/v1/get_contract_address
+   * Returns the quote storage contract address (hex string).
+   * @returns {Promise<string>} Contract address
+   */
+  async getContractAddress() {
+    const res = await fetch(`${this.baseUrl}/get_contract_address`);
+    if (!res.ok)
+      throw new Error(
+        `get_contract_address failed: ${res.status} ${res.statusText}`
+      );
     return res.json();
   }
 
@@ -270,29 +318,73 @@ export class LitSwapsApiClient {
     const res = await fetch(
       `${this.baseUrl}/get_swap_status/${encodeURIComponent(quoteId)}`
     );
-    if (!res.ok) throw new Error(`get_swap_status failed: ${res.status} ${res.statusText}`);
+    if (!res.ok)
+      throw new Error(
+        `get_swap_status failed: ${res.status} ${res.statusText}`
+      );
     return res.json();
   }
 
   /**
    * GET /swaps/v1/get_open_swap_requests
-   * Returns open swap requests from the contract (SwapRequestData[]).
-   * @returns {Promise<GetOpenSwapRequestsResponse>} { swap_requests }
+   * Returns open swap requests from the contract via getRecentSwapRequests(count).
+   * @returns {Promise<GetOpenSwapRequestsResponse>} { swap_requests: SwapRequestData[] }
    */
   async getOpenSwapRequests() {
     const res = await fetch(`${this.baseUrl}/get_open_swap_requests`);
-    if (!res.ok) throw new Error(`get_open_swap_requests failed: ${res.status} ${res.statusText}`);
+    if (!res.ok)
+      throw new Error(
+        `get_open_swap_requests failed: ${res.status} ${res.statusText}`
+      );
     return res.json();
   }
 
   /**
    * GET /swaps/v1/get_open_quotes
-   * Returns open quotes from the contract (QuoteData[]).
-   * @returns {Promise<GetOpenQuotesResponse>} { quotes }
+   * Returns open quotes from the contract via getRecentQuotes(count).
+   * @returns {Promise<GetOpenQuotesResponse>} { quotes: QuoteData[] }
    */
   async getOpenQuotes() {
     const res = await fetch(`${this.baseUrl}/get_open_quotes`);
-    if (!res.ok) throw new Error(`get_open_quotes failed: ${res.status} ${res.statusText}`);
+    if (!res.ok)
+      throw new Error(
+        `get_open_quotes failed: ${res.status} ${res.statusText}`
+      );
+    return res.json();
+  }
+
+  /**
+   * GET /swaps/v1/get_quote_balances/<quote_id>
+   * Get quote data and PKP balance on source and destination chains.
+   * @param {string} quoteId - Quote id (decimal string, e.g. from fill_quote)
+   * @returns {Promise<QuoteBalancesResponse>} { pkp_address, source_chain, destination_chain, source_balance_wei, destination_balance_wei, source_balance_sufficient, destination_balance_sufficient }
+   */
+  async getQuoteBalances(quoteId) {
+    const res = await fetch(
+      `${this.baseUrl}/get_quote_balances/${encodeURIComponent(quoteId)}`
+    );
+    if (!res.ok)
+      throw new Error(
+        `get_quote_balances failed: ${res.status} ${res.statusText}`
+      );
+    return res.json();
+  }
+
+  /**
+   * GET /swaps/v1/attempt_swap_request/<quote_id>
+   * Attempt to execute the swap for the given quote (sends origin/destination transfers).
+   * @param {string} quoteId - Quote id from fill_quote
+   * @returns {Promise<string>} Response body (empty string on success)
+   * @throws {Error} On non-OK response (e.g. 402 Payment Required if insufficient balance)
+   */
+  async attemptSwapRequest(quoteId) {
+    const res = await fetch(
+      `${this.baseUrl}/attempt_swap_request/${encodeURIComponent(quoteId)}`
+    );
+    if (!res.ok)
+      throw new Error(
+        `attempt_swap_request failed: ${res.status} ${res.statusText}`
+      );
     return res.json();
   }
 }

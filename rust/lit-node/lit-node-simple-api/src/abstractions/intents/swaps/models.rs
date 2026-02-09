@@ -34,9 +34,9 @@ pub struct TokenListResponse {
 #[serde(rename_all = "PascalCase")]
 pub enum QuotePricingType {
     /// Destination amount stays the same; origin amount increases.
-    Origin,
+    Origin = 1,
     /// Origin sent stays the same; destination amount is reduced.
-    Destination,
+    Destination = 2,
 }
 
 /// Request for `/v1/GetQuote`.
@@ -46,17 +46,16 @@ pub struct NewSwapRequest {
     pub from: String,
     pub origin_chain: String,
     pub origin_symbol: String,
-    pub origin_amount: u128,
+    pub origin_amount: f32,
     pub destination_symbol: String,
     pub destination_chain: String,
-    pub destination_amount: u128,
+    pub destination_amount: f32,
     /// Acceptable pricing slippage.
-    pub slippage: u128,
+    pub slippage: f32,
     /// How the quote is priced (where fees are taken from).
-    #[serde(rename = "type")]
-    pub pricing_type: QuotePricingType,
+    pub pricing_type: u8,
     /// How long to wait for a quote (0–60 seconds).
-    pub quote_deadline_seconds: u8,
+    pub quote_deadline_seconds: u16,
     /// Origin address (e.g. for cross-reference with the transaction).
     pub origin_address: String,
     /// Where to refund if the transaction does not go through.
@@ -67,6 +66,7 @@ pub struct NewSwapRequest {
     pub message: Option<String>,
 }
 
+
 // ============== Contract-mirror types (quote.sol / QuoteStorage) ==============
 
 /// Swap request as stored on-chain; mirrors `QuoteStorage.SwapRequest` in quote.sol.
@@ -74,12 +74,16 @@ pub struct NewSwapRequest {
 pub struct SwapRequestData {
     /// Message sender (origin of the swap).
     pub from: String,
+    /// PKP address for this swap request.
+    pub pkp_address: String,
+    /// PKP token id (NFT token id) for this swap request.
+    // pub pkp_token_id: String,
     pub origin_symbol: String,
     pub origin_chain: String,
-    pub origin_amount: u128,
+    pub origin_amount: f64,
     pub destination_symbol: String,
     pub destination_chain: String,
-    pub destination_amount: u128,
+    pub destination_amount: f64,
     /// Acceptable pricing slippage.
     pub slippage: u128,
     /// 0 = Origin, 1 = Destination (matches QuotePricingType enum in contract).
@@ -97,8 +101,6 @@ pub struct SwapRequestData {
 /// The contract stores a mapping from quote id to this data; the linked swap request is referenced by id.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QuoteData {
-    /// PKP address for this quote (from the swap request’s `from` at creation).
-    pub pkp_address: String,
     /// Id of the swap request this quote fulfils.
     pub swap_request_id: u128,
     pub provider_refund_address: String,
@@ -107,6 +109,7 @@ pub struct QuoteData {
     /// Unix timestamp when the quote was created.
     pub created_at: u64,
     pub fees_total: u128,
+    pub swap_request_data: SwapRequestData,
 }
 
 /// Response for GET open swap requests.
@@ -119,6 +122,21 @@ pub struct GetOpenSwapRequestsResponse {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GetOpenQuotesResponse {
     pub quotes: Vec<QuoteData>,
+}
+
+/// Response for GET quote balances (PKP balance on source and destination chains).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct QuoteBalancesResponse {
+    pub pkp_address: String,
+    pub source_chain: String,
+    pub destination_chain: String,
+    /// Balance in wei (native token) as string.
+    pub source_balance_wei: String,
+    /// Balance in wei (native token) as string.
+    pub destination_balance_wei: String,
+
+    pub source_balance_sufficient: bool,
+    pub destination_balance_sufficient: bool,
 }
 
 /// A single fee component in a quote.
