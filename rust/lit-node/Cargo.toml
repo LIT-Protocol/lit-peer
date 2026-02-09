@@ -15,7 +15,6 @@ members = [
     "lit-node-common",
     "lit-node-core",
     "lit-node-testnet",
-    "lit-node-simple-api",
     "shiva",
     "lit-sdk",
     "openapi-gen"

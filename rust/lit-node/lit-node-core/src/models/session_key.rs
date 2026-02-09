@@ -21,10 +21,8 @@ where
     D: Deserializer<'de>,
 {
     let s: &str = Deserialize::deserialize(deserializer)?;
-    let result = match s.starts_with("0x") {
-        true => U256::from_str_radix(&s[2..], 16).map_err(D::Error::custom),
-        false => U256::from_str_radix(s, 10).map_err(D::Error::custom),
-    };
-
-    result
+    match s.starts_with("0x") {
+        true => Ok(U256::from_str_radix(&s[2..], 16).map_err(D::Error::custom)?),
+        false => Ok(U256::from_str_radix(s, 10).map_err(D::Error::custom)?),
+    }
 }

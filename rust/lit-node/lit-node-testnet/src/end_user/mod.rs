@@ -62,8 +62,9 @@ impl EndUser {
     }
 
     pub fn from_secret_key(testnet: &Testnet, secret_key: &[u8]) -> Self {
-        
-        let wallet = LocalWallet::from_bytes(secret_key).unwrap().with_chain_id(testnet.chain_id);
+        let wallet = LocalWallet::from_bytes(secret_key)
+            .unwrap()
+            .with_chain_id(testnet.chain_id);
         info!("Wallet address from secret key: {:?}", wallet.address());
         let provider = testnet.provider.clone();
         let datil_provider = testnet.datil_testnet.provider.clone();
@@ -90,14 +91,17 @@ impl EndUser {
     }
 
     pub async fn lookup_pkp_by_token_id(&self, token_id: U256) -> Result<String, anyhow::Error> {
-        let pubkey = self.actions.contracts().pkpnft.get_pubkey(token_id).call().await?;
+        let pubkey = self
+            .actions
+            .contracts()
+            .pkpnft
+            .get_pubkey(token_id)
+            .call()
+            .await?;
         Ok(bytes_to_hex(&pubkey))
     }
 
     pub fn pkp_by_token_id(&self, token_id: U256) -> &Pkp {
-
-
-
         self.pkps
             .iter()
             .find(|pkp| pkp.token_id == token_id)
@@ -380,8 +384,11 @@ impl EndUser {
         let log = &receipt.logs[0];
         trace!("log: {:?}", log);
 
-        let stable_balance =ledger_contract.stable_balance(user_address).await;
-        info!("Ledger balance for user {:?} after deposit: {:?}", user_address, stable_balance);
+        let stable_balance = ledger_contract.stable_balance(user_address).await;
+        info!(
+            "Ledger balance for user {:?} after deposit: {:?}",
+            user_address, stable_balance
+        );
     }
 
     pub async fn ledger_request_withdraw(&self, amount: I256, notes: &str) {

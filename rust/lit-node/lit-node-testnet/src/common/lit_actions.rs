@@ -1,8 +1,3 @@
-use anyhow::Result;
-use ethers::core::k256::ecdsa::SigningKey;
-use ethers::signers::Wallet;
-use ethers::types::U256;
-use lit_api_core::context::HEADER_KEY_X_PRIVACY_MODE;
 use crate::common::auth_sig::get_session_sigs_for_auth;
 use crate::end_user::EndUser;
 use crate::node_collection::{NodeIdentityKey, get_identity_pubkeys_from_node_set};
@@ -10,7 +5,13 @@ use crate::testnet::Testnet;
 #[cfg(feature = "lit-actions")]
 use crate::testnet::actions::Actions;
 use crate::validator::ValidatorCollection;
+use anyhow::Result;
+use ethers::core::k256::ecdsa::SigningKey;
+use ethers::signers::Wallet;
+use ethers::types::U256;
+use lit_api_core::context::HEADER_KEY_X_PRIVACY_MODE;
 
+use crate::common::session_sigs::SessionSigAndNodeSet;
 use lit_core::config::ENV_LIT_CONFIG_FILE;
 use lit_node_core::{
     AuthMethod, AuthSigItem, Invocation, LitAbility, LitResourceAbilityRequest,
@@ -18,12 +19,11 @@ use lit_node_core::{
     request::JsonExecutionRequest,
     response::{GenericResponse, JsonExecutionResponse},
 };
-use crate::common::session_sigs::SessionSigAndNodeSet;
 use lit_rust_crypto::{k256, p256, p384};
 use rand::Rng;
 use rand_core::OsRng;
 use std::collections::HashMap;
-use tracing::{error, info, debug};
+use tracing::{debug, error, info};
 
 pub const HELLO_WORLD_LIT_ACTION_CODE: &str = "const go = async () => {
   // this requests a signature share from the Lit Node
