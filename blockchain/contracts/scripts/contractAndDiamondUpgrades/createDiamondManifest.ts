@@ -122,7 +122,9 @@ async function run() {
         throw new Error(
           `Unable to find diamond group for new facet "${contractName}". ` +
             `It was not in ${inputs.previousDeployJson} and its name doesn't match any known group in DIAMOND_GROUP_TO_ADDRESS_KEY. ` +
-            `Known groups: ${Object.keys(DIAMOND_GROUP_TO_ADDRESS_KEY).join(', ')}`
+            `Known groups: ${Object.keys(DIAMOND_GROUP_TO_ADDRESS_KEY).join(
+              ', '
+            )}`
         );
       }
       console.log(
