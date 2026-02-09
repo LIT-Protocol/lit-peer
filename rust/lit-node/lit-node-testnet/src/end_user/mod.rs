@@ -6,7 +6,6 @@ use ethers::signers::{LocalWallet, Signer, Wallet};
 use ethers::types::{H160, I256, TransactionRequest, U256};
 use k256::ecdsa::SigningKey;
 use lit_blockchain::contracts::ledger::{Ledger, LedgerErrors};
-use lit_blockchain::contracts::pkpnft;
 use lit_blockchain::contracts::price_feed::{PriceFeed, PriceFeedErrors};
 use lit_blockchain::util::decode_revert;
 use lit_core::utils::binary::bytes_to_hex;
