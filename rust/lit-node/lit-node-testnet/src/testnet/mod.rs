@@ -197,17 +197,17 @@ impl TestnetBuilder {
 
     pub async fn build(self) -> Testnet {
         let chain = match self.selected_network {
-            #[cfg(not(feature = "lit-api-server"))]
+            #[cfg(not(feature = "lit-peer-api-server"))]
             TestNetName::Hardhat => {
                 Box::new(chain::hardhat::Hardhat::new(self.total_num_validators()))
                     as Box<dyn ChainTrait>
             }
-            #[cfg(not(feature = "lit-api-server"))]
+            #[cfg(not(feature = "lit-peer-api-server"))]
             TestNetName::Anvil => {
                 Box::new(chain::anvil::Anvil::new(self.total_num_validators(), false))
                     as Box<dyn ChainTrait>
             }
-            #[cfg(not(feature = "lit-api-server"))]
+            #[cfg(not(feature = "lit-peer-api-server"))]
             TestNetName::NoChain => {
                 Box::new(chain::no_chain::NoChain::new(self.total_num_validators()))
                     as Box<dyn ChainTrait>

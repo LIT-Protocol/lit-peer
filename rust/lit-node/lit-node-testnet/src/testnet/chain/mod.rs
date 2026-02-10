@@ -2,9 +2,9 @@ pub mod anvil;
 pub mod known_accounts;
 pub mod live_chain;
 
-#[cfg(not(feature = "lit-api-server"))]
+#[cfg(not(feature = "lit-peer-api-server"))]
 pub mod hardhat;
-#[cfg(not(feature = "lit-api-server"))]
+#[cfg(not(feature = "lit-peer-api-server"))]
 pub mod no_chain;
 
 use super::NodeAccount;

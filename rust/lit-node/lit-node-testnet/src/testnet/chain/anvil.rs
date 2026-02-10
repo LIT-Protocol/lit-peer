@@ -3,7 +3,7 @@ use super::ChainTrait;
 use crate::testnet::NodeAccount;
 use crate::testnet::cache_data_store::CacheDataStore;
 use crate::testnet::chain::known_accounts::first_anvil_account;
-#[cfg(not(feature = "lit-api-server"))]
+#[cfg(not(feature = "lit-peer-api-server"))]
 use crate::testnet::contracts_repo::compile_contracts;
 use command_group::{CommandGroup, GroupChild}; // node/anvil launches many processes to manage the testnet, so we need to use a group interface to manage them, as killing only the process we know about will leave zombies.
 use ethers::prelude::*;
@@ -58,7 +58,7 @@ impl ChainTrait for Anvil {
     }
 
     async fn start_chain(&self) -> Option<GroupChild> {
-        #[cfg(not(feature = "lit-api-server"))]
+        #[cfg(not(feature = "lit-peer-api-server"))]
         compile_contracts();
 
         let mut cache_data_store = CacheDataStore::from_file_or_new()
