@@ -27,18 +27,6 @@ pub const LITCONTRACTPATH: &str = "../../../blockchain/contracts";
 // Required environment variables for the deployment scripts
 const ENV_IPFS_API_KEY: &str = "IPFS_API_KEY";
 
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct AddAliasManifest {
-    pub deployed_node_contracts_path: String,
-    pub existing_staker_wallet_private_key: String,
-    pub node_config_admin_address: String,
-    pub node_config_ipfs_api_key: String,
-    pub alias_ip: String,
-    pub alias_port: usize,
-    pub node_custom_runtime_config_path: Option<String>,
-}
-
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WalletManifestItem {
@@ -169,97 +157,6 @@ pub fn node_configs_path() -> String {
 
 pub fn alias_node_configs_path() -> String {
     format!("{}/alias_node_configs", LITCONTRACTPATH)
-}
-
-pub fn request_to_leave(staker_wallet_private_key: &str, staking_contract_address: &str) {
-    // Full command: HARDHAT_NETWORK=<NETWORK> npx ts-node --files scripts/requestToLeave.ts --staker-wallet-private-key <PRIVATE_KEY> --staking-address <STAKING_CONTRACT_ADDRESS>
-    let args = [
-        "ts-node",
-        "--files",
-        "scripts/requestToLeave.ts",
-        "--staker-wallet-private-key",
-        staker_wallet_private_key,
-        "--staking-address",
-        staking_contract_address,
-    ];
-    info!(
-        "Running full command in {}: HARDHAT_NETWORK=localchain npx {}",
-        LITCONTRACTPATH,
-        args.join(" ")
-    );
-    let mut rv = Command::new("npx")
-        .args(args)
-        .env("HARDHAT_NETWORK", "localchain")
-        .current_dir(fs::canonicalize(LITCONTRACTPATH).unwrap())
-        // .stderr(Stdio::null()) // comment this out to see what's going on
-        // .stdout(Stdio::null()) // comment this out to see what's going on
-        .group_spawn()
-        .expect("Failed to launch request to leave script");
-    let exit_code = rv
-        .wait()
-        .expect("Failed to wait on request to leave script");
-    if !exit_code.success() {
-        panic!(
-            "Request to leave script failed with exit code {:?}",
-            exit_code
-        );
-    }
-}
-
-pub fn request_to_join<T>(
-    staker_wallet_private_key: T,
-    staking_contract_address: T,
-    validator_ip: T,
-    validator_port: T,
-    validator_node_address: T,
-    validator_comms_sender_pubkey: T,
-    validator_comms_receiver_pubkey: T,
-) where
-    T: AsRef<str>,
-{
-    // Full command: HARDHAT_NETWORK=<NETWORK> npx ts-node --files scripts/requestToJoin.ts --staker-wallet-private-key <PRIVATE_KEY> --staking-address <STAKING_CONTRACT_ADDRESS> --validator-ip <VALIDATOR_IP> --validator-port <VALIDATOR_PORT> --validator-node-address <VALIDATOR_NODE_ADDRESS> --validator-comms-sender-pubkey <VALIDATOR_COMMS_SENDER_PUBKEY> --validator-comms-receiver-pubkey <VALIDATOR_COMMS_RECEIVER_PUBKEY>
-    let args = [
-        "ts-node",
-        "--files",
-        "scripts/requestToJoin.ts",
-        "--staker-wallet-private-key",
-        staker_wallet_private_key.as_ref(),
-        "--staking-address",
-        staking_contract_address.as_ref(),
-        "--staking-balances-address",
-        staking_contract_address.as_ref(),
-        "--validator-ip",
-        validator_ip.as_ref(),
-        "--validator-port",
-        validator_port.as_ref(),
-        "--validator-node-address",
-        validator_node_address.as_ref(),
-        "--validator-comms-sender-pubkey",
-        validator_comms_sender_pubkey.as_ref(),
-        "--validator-comms-receiver-pubkey",
-        validator_comms_receiver_pubkey.as_ref(),
-    ];
-    info!(
-        "Running full command in {}: HARDHAT_NETWORK=localchain npx {}",
-        LITCONTRACTPATH,
-        args.join(" ")
-    );
-
-    let mut rv = Command::new("npx")
-        .args(args)
-        .env("HARDHAT_NETWORK", "localchain")
-        .current_dir(fs::canonicalize(LITCONTRACTPATH).unwrap())
-        // .stderr(Stdio::null()) // comment this out to see what's going on
-        // .stdout(Stdio::null()) // comment this out to see what's going on
-        .group_spawn()
-        .expect("Failed to launch request to join script");
-    let exit_code = rv.wait().expect("Failed to wait on request to join script");
-    if !exit_code.success() {
-        panic!(
-            "Request to join script failed with exit code {:?}",
-            exit_code
-        );
-    }
 }
 
 /// A wallet manifest is a JSON file that gets generated when the contract deployment tooling has
