@@ -10,9 +10,6 @@ trunk build --release --features="naga-dev" --public-url "https://lit-protocol.g
 echo "Building naga-proto"
 trunk build --release --features="naga-proto" --public-url "https://lit-protocol.github.io/monitor/naga-proto/" --dist="naga-proto"
 
-echo "Building naga-staging"
-trunk build --release --features="naga-staging" --public-url "https://lit-protocol.github.io/monitor/naga-staging/" --dist="naga-staging"
-
 echo "Building internalDev"
 trunk build --release --features="internalDev" --public-url "https://lit-protocol.github.io/monitor/internalDev/" --dist="internalDev"
 

@@ -181,7 +181,7 @@ pub fn Validators() -> impl IntoView {
 
 
             <div class="flex-1 outline outline-gray-400 rounded p-2 ml-2">
-                <div class="font-bold border-b border-gray-400 pb-2">Next Nodes</div>                                
+                <div class="font-bold border-b border-gray-400 pb-2">Unassigned Nodes</div>                                
                 {move || match floaters.get().as_deref() {
                     None => view! { <p>"Loading..."</p> }.into_any(),
                     Some(rows) => view! {

@@ -1,5 +1,6 @@
 use crate::utils::datetime::{format_duration, format_timelock};
 use crate::utils::{get_address, get_lit_config, table_classes::TailwindClassesPreset};
+use ethers::utils::format_ether;
 use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_struct_table::*;
@@ -136,7 +137,7 @@ pub async fn get_global_config() -> Vec<NetworkConfig> {
     let rows = vec![
         NetworkConfig {
             name: "token_reward_per_token_per_epoch".to_string(),
-            value: config.token_reward_per_token_per_epoch.to_string(),
+            value:  format_ether(config.token_reward_per_token_per_epoch).trim_end_matches('0').trim_end_matches('.').to_string(),
         },
         NetworkConfig {
             name: "minimum_validator_count".to_string(),
@@ -156,19 +157,19 @@ pub async fn get_global_config() -> Vec<NetworkConfig> {
         },
         NetworkConfig {
             name: "bmin".to_string(),
-            value: config.bmin.to_string(),
+            value: format_ether(config.bmin).trim_end_matches('0').trim_end_matches('.').to_string(),
         },
         NetworkConfig {
             name: "bmax".to_string(),
-            value: config.bmax.to_string(),
+            value: format_ether(config.bmax).trim_end_matches('0').trim_end_matches('.').to_string(),
         },
         NetworkConfig {
             name: "k".to_string(),
-            value: config.k.to_string(),
+            value: format_ether(config.k).trim_end_matches('0').trim_end_matches('.').to_string(),
         },
         NetworkConfig {
             name: "p".to_string(),
-            value: config.p.to_string(),
+            value: format_ether(config.p).trim_end_matches('0').trim_end_matches('.').to_string(),
         },
         NetworkConfig {
             name: "enable_stake_autolock".to_string(),
@@ -176,31 +177,31 @@ pub async fn get_global_config() -> Vec<NetworkConfig> {
         },
         NetworkConfig {
             name: "token_price".to_string(),
-            value: config.token_price.to_string(),
+            value: format_ether(config.token_price).trim_end_matches('0').trim_end_matches('.').to_string(),
         },
         NetworkConfig {
             name: "profit_multiplier".to_string(),
-            value: config.profit_multiplier.to_string(),
+            value: format_ether(config.profit_multiplier).trim_end_matches('0').trim_end_matches('.').to_string(),
         },
         NetworkConfig {
             name: "usd_cost_per_month".to_string(),
-            value: config.usd_cost_per_month.to_string(),
+            value: format_ether(config.usd_cost_per_month).trim_end_matches('0').trim_end_matches('.').to_string(),
         },
         NetworkConfig {
             name: "max_emission_rate".to_string(),
-            value: config.max_emission_rate.to_string(),
+            value: format_ether(config.max_emission_rate).trim_end_matches('0').trim_end_matches('.').to_string(),
         },
         NetworkConfig {
             name: "min_stake_amount".to_string(),
-            value: config.min_stake_amount.to_string(),
+            value: format_ether(config.min_stake_amount).trim_end_matches('0').trim_end_matches('.').to_string(),
         },
         NetworkConfig {
             name: "max_stake_amount".to_string(),
-            value: config.max_stake_amount.to_string(),
+            value: format_ether(config.max_stake_amount).trim_end_matches('0').trim_end_matches('.').to_string(),
         },
         NetworkConfig {
             name: "min_self_stake".to_string(),
-            value: config.min_self_stake.to_string(),
+            value: format_ether(config.min_self_stake).trim_end_matches('0').trim_end_matches('.').to_string(),
         },
         NetworkConfig {
             name: "min_self_stake_timelock".to_string(),

@@ -1,5 +1,6 @@
 use crate::utils::datetime::{format_duration, format_timestamp};
 use crate::utils::{get_address, get_lit_config, table_classes::TailwindClassesPreset};
+use ethers::utils::format_ether;
 use ethers_providers::{Http, Provider};
 use leptos::prelude::*;
 use leptos_meta::*;
@@ -246,13 +247,13 @@ pub async fn get_reward_details(
         },
         RewardDetails {
             name: "totalStakeWeight".to_string(),
-            current: epoch_rewards.total_stake_weight.to_string(),
-            next: next_epoch_rewards.total_stake_weight.to_string(),
+            current: format_ether(epoch_rewards.total_stake_weight).trim_end_matches('0').trim_end_matches('.').to_string(),
+            next: format_ether(next_epoch_rewards.total_stake_weight).trim_end_matches('0').trim_end_matches('.').to_string(),
         },
         RewardDetails {
             name: "totalStakeRewards".to_string(),
-            current: epoch_rewards.total_stake_rewards.to_string(),
-            next: next_epoch_rewards.total_stake_rewards.to_string(),
+            current: format_ether(epoch_rewards.total_stake_rewards).trim_end_matches('0').trim_end_matches('.').to_string(),
+            next: format_ether(next_epoch_rewards.total_stake_rewards).trim_end_matches('0').trim_end_matches('.').to_string(),
         },
         RewardDetails {
             name: "slope".to_string(),
@@ -266,22 +267,18 @@ pub async fn get_reward_details(
         },
         RewardDetails {
             name: "validatorSharePrice".to_string(),
-            current: epoch_rewards.validator_share_price.to_string(),
-            next: next_epoch_rewards.validator_share_price.to_string(),
+            current: format_ether(epoch_rewards.validator_share_price).trim_end_matches('0').trim_end_matches('.').to_string(),
+            next: format_ether(next_epoch_rewards.validator_share_price).trim_end_matches('0').trim_end_matches('.').to_string(),
         },
         RewardDetails {
             name: "stakeAmount".to_string(),
-            current: epoch_rewards.stake_amount.to_string(),
-            next: next_epoch_rewards.stake_amount.to_string(),
+            current: format_ether(epoch_rewards.stake_amount).trim_end_matches('0').trim_end_matches('.').to_string(),
+            next: format_ether(next_epoch_rewards.stake_amount).trim_end_matches('0').trim_end_matches('.').to_string(),
         },
         RewardDetails {
             name: "validatorSharePriceAtLastUpdate".to_string(),
-            current: epoch_rewards
-                .validator_share_price_at_last_update
-                .to_string(),
-            next: next_epoch_rewards
-                .validator_share_price_at_last_update
-                .to_string(),
+            current: format_ether(epoch_rewards.validator_share_price_at_last_update).trim_end_matches('0').trim_end_matches('.').to_string(),
+            next: format_ether(next_epoch_rewards.validator_share_price_at_last_update).trim_end_matches('0').trim_end_matches('.').to_string(),
         },
         RewardDetails {
             name: "initial".to_string(),
