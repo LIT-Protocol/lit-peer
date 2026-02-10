@@ -1,6 +1,10 @@
 pub mod anvil;
+pub mod known_accounts;
+pub mod live_chain;
+
+#[cfg(not(feature = "lit-api-server"))]
 pub mod hardhat;
-pub mod naga;
+#[cfg(not(feature = "lit-api-server"))]
 pub mod no_chain;
 
 use super::NodeAccount;

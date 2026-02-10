@@ -11,7 +11,7 @@ lit-actions = []
 proxy_chatter = []
 lit-actions-server = ["lit-actions"] # start internal lit_actions server for testing
 testing = [] # enables testing features
-
+lit-api-server = [] # disables certain functions not required for the api server
 
 
 [build-dependencies]

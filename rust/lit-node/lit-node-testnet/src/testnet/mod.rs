@@ -197,22 +197,29 @@ impl TestnetBuilder {
 
     pub async fn build(self) -> Testnet {
         let chain = match self.selected_network {
+            #[cfg(not(feature = "lit-api-server"))]
             TestNetName::Hardhat => {
                 Box::new(chain::hardhat::Hardhat::new(self.total_num_validators()))
                     as Box<dyn ChainTrait>
             }
+            #[cfg(not(feature = "lit-api-server"))]
             TestNetName::Anvil => {
                 Box::new(chain::anvil::Anvil::new(self.total_num_validators(), false))
                     as Box<dyn ChainTrait>
             }
+            #[cfg(not(feature = "lit-api-server"))]
             TestNetName::NoChain => {
                 Box::new(chain::no_chain::NoChain::new(self.total_num_validators()))
                     as Box<dyn ChainTrait>
             }
             TestNetName::Naga => {
-                Box::new(chain::naga::Naga::new(self.total_num_validators()).await)
+                Box::new(chain::live_chain::Naga::new(self.total_num_validators()).await)
                     as Box<dyn ChainTrait>
             }
+            _ => panic!(
+                "Selected network {:?} is not supported",
+                self.selected_network
+            ),
         };
 
         let net_process = chain.start_chain().await;
@@ -412,7 +419,7 @@ impl Testnet {
 
         let ca = match testnet.selected_network {
             TestNetName::Naga => {
-                let n = chain::naga::Naga::new(0).await;
+                let n = chain::live_chain::Naga::new(0).await;
                 Contracts::contract_addresses_from_resolver_address(
                     n.contract_resolver_address(),
                     deployer_signing_provider,
