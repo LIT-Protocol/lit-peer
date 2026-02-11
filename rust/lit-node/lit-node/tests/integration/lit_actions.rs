@@ -141,7 +141,7 @@ pub mod litactions {
         let file_with_path = &format!("./tests/lit_action_scripts/{file_name}.js");
 
         let actions = validator_collection.actions();
-        let node_set = validator_collection.random_threshold_nodeset().await;
+        let node_set = actions.random_threshold_nodeset().await;
         let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
 
         let realm_id = ethers::types::U256::from(1);
@@ -709,7 +709,8 @@ pub mod litactions {
         let ipfs_cid = "QmRwN9GKHvCn4Vk7biqtr6adjXMs7PzzYPCzNCRjPFiDjm";
 
         let (testnet, validator_collection, end_user) = TestSetupBuilder::default().build().await;
-        let node_set = validator_collection.random_threshold_nodeset().await;
+        let actions = testnet.actions();
+        let node_set = actions.random_threshold_nodeset().await;
         let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
         let realm_id = ethers::types::U256::from(1);
         let _epoch = validator_collection
@@ -841,7 +842,7 @@ pub mod litactions {
         let lit_action_code = std::fs::read_to_string(file_with_path).unwrap();
         let action_ipfs_id = lit_sdk::compute_ipfs_hash(&lit_action_code);
         let actions = validator_collection.actions();
-        let node_set = validator_collection.random_threshold_nodeset().await;
+        let node_set = actions.random_threshold_nodeset().await;
         let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
         let epoch = actions.get_current_epoch(U256::from(1)).await;
         let unified_access_control_conditions = Some(standard_acc(&lit_action_code, actions));

@@ -47,10 +47,10 @@ pub async fn sign_with_hd_key(
     signing_scheme: SigningScheme,
     stakers_to_include: &Vec<&Validator>,
 ) -> bool {
-    let actions = validator_collection.actions();
+    let actions = validator_collection.actions().clone();
     let wallet = end_user.wallet.clone();
 
-    let node_set = validator_collection
+    let node_set = actions
         .partially_random_threshold_nodeset(stakers_to_include)
         .await;
     let node_set_with_keys = get_identity_pubkeys_from_node_set(&node_set).await;

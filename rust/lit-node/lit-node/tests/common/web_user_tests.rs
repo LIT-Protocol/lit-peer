@@ -230,7 +230,8 @@ pub async fn test_encryption_decryption_session_sigs(
     })
     .unwrap();
 
-    let node_set = validator_collection
+    let actions = validator_collection.actions().clone();
+    let node_set = actions
         .partially_random_threshold_nodeset(validators_to_include)
         .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
@@ -487,7 +488,8 @@ pub async fn generate_session_sigs_execute_lit_action(
         .await
         .expect("Could not add permitted address to pkp");
 
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let actions = validator_collection.actions().clone();
+    let node_set = actions.random_threshold_nodeset().await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     // Get session sig for auth
     let session_sigs_and_node_set = get_session_sigs_and_node_set_for_pkp(

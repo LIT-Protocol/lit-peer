@@ -158,8 +158,8 @@ async fn test_encryption_decryption_eip1271(
             .expect("Unable to encrypt");
     info!("ciphertext: {:?}", ciphertext);
 
-    let node_set = &validator_collection.random_threshold_nodeset().await;
-    let node_set = get_identity_pubkeys_from_node_set(node_set).await;
+    let node_set = actions.random_threshold_nodeset().await;
+    let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     let realm_id = ethers::types::U256::from(1);
     let epoch = actions.get_current_epoch(realm_id).await.as_u64();
 

@@ -34,4 +34,8 @@ async fn test_web_user_with_auth_methods() {
         .new_pkp_and_add_auth_methods_contract_call_only(DEFAULT_KEY_SET_NAME, &auth_methods)
         .await;
     info!("PKP details: {:?}", pkp_details);
+    info!(
+        "Keeping validator collection in scope: {:?}",
+        validator_collection.inferred_threshold()
+    );
 }

@@ -98,7 +98,10 @@ pub async fn sign_using_child_lit_action(
     let (lit_action_code, ipfs_id, js_params, auth_methods) =
         lit_action_params(lit_action_code, pubkey, key_set_id.clone()).await?;
 
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = validator_collection
+        .actions()
+        .random_threshold_nodeset()
+        .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     let realm_id = U256::from(1);
     let epoch = actions.get_current_epoch(realm_id).await.as_u64();
@@ -138,7 +141,10 @@ pub async fn sign_from_file_system(
         .get_current_epoch(realm_id)
         .await
         .as_u64();
-    let node_set = &validator_collection.random_threshold_nodeset().await;
+    let node_set = &validator_collection
+        .actions()
+        .random_threshold_nodeset()
+        .await;
     let node_set = get_identity_pubkeys_from_node_set(node_set).await;
     // let node_set = &validator_collection.complete_node_set();
 

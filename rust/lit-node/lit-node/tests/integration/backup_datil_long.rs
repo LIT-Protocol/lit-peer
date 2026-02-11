@@ -647,12 +647,10 @@ async fn test_datil_encrypt_naga_decrypt(
         datil_bls_pubkey, ciphertext
     );
 
+    let actions = validator_collection.actions().clone();
     // Decrypt by specifying the datil keyset ID against the nodes
-    let epoch = validator_collection
-        .actions()
-        .get_current_epoch(U256::from(1))
-        .await;
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let epoch = actions.get_current_epoch(U256::from(1)).await;
+    let node_set = actions.random_threshold_nodeset().await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     let signer = end_user.signing_provider().clone();
     let session_sigs = get_session_sigs_for_auth(
@@ -702,6 +700,7 @@ async fn test_datil_keyset_pkp_signing(
     let non_owner_end_user = EndUser::new(testnet);
     non_owner_end_user.fund_wallet_default_amount().await;
     non_owner_end_user.deposit_to_wallet_ledger_default().await;
+    let actions = validator_collection.actions().clone();
 
     let datil_pkp_pubkey = end_user
         .new_pkp(DEFAULT_DATIL_KEY_SET_NAME)
@@ -736,9 +735,7 @@ async fn test_datil_keyset_pkp_signing(
     // let to_sign_as_sighash = tx.sighash();
     // let to_sign = to_sign_as_sighash.0.to_vec();
 
-    let node_set = validator_collection
-        .partially_random_threshold_nodeset(&vec![])
-        .await;
+    let node_set = actions.partially_random_threshold_nodeset(&vec![]).await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
 
     let epoch = validator_collection

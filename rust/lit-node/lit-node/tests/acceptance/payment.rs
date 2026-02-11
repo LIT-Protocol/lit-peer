@@ -297,7 +297,7 @@ async fn test_all_payment_methods_for_user() {
     );
 
     // 1.6. Charge for SignSessionKey
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = actions.random_threshold_nodeset().await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
 
     let auth_sig = generate_authsig_item(&self_pay_user.wallet).await.unwrap();
@@ -1532,7 +1532,7 @@ pub async fn do_setup_testnet_for_payments(
         .await;
 
     let actions = testnet.actions().clone();
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = actions.random_threshold_nodeset().await;
 
     (testnet, validator_collection, actions, node_set)
 }

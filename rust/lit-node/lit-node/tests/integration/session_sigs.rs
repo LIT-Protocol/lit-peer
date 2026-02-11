@@ -57,7 +57,10 @@ pub async fn init_test() -> (Testnet, ValidatorCollection, EndUser) {
 #[tokio::test]
 async fn sign_session_sig_with_lit_actions() {
     let (_testnet, validator_collection, end_user) = init_test().await;
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = validator_collection
+        .actions()
+        .random_threshold_nodeset()
+        .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
 
     let wallet = end_user.signing_provider().signer().clone();
@@ -160,7 +163,10 @@ async fn sign_session_sig_with_lit_actions_requires_payment() {
         .build()
         .await;
 
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = validator_collection
+        .actions()
+        .random_threshold_nodeset()
+        .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
 
     let wallet = end_user.signing_provider().signer().clone();
@@ -218,7 +224,10 @@ async fn sign_session_sig_with_lit_actions_requires_payment() {
 #[tokio::test]
 async fn only_permitted_lit_action_can_sign_session_sig() {
     let (_testnet, validator_collection, end_user) = init_test().await;
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = validator_collection
+        .actions()
+        .random_threshold_nodeset()
+        .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     let non_owner_wallet = LocalWallet::new(&mut OsRng);
     let auth_sig = generate_authsig_item(&non_owner_wallet).await.unwrap();
@@ -273,7 +282,10 @@ async fn sign_pkp_with_lit_action_session_sigs() {
     info!("Starting test: sign_pkp_with_lit_action_session_sigs");
 
     let (_testnet, validator_collection, end_user) = init_test().await;
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = validator_collection
+        .actions()
+        .random_threshold_nodeset()
+        .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     let (pubkey, _token_id, eth_address, _key_set_id) = end_user.first_pkp().info();
 
@@ -346,7 +358,10 @@ async fn sign_lit_actions_with_lit_action_session_sig() {
     info!("Starting test: sign_lit_actions_with_lit_action_session_sig");
 
     let (_testnet, validator_collection, end_user) = init_test().await;
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = validator_collection
+        .actions()
+        .random_threshold_nodeset()
+        .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     let (pubkey, _token_id, eth_address, key_set_id) = end_user.first_pkp().info();
 
@@ -436,7 +451,10 @@ async fn only_permitted_can_sign_with_lit_action_session_sig() {
     info!("Starting test: only_permitted_can_sign_with_lit_action_session_sig");
 
     let (_testnet, validator_collection, end_user) = init_test().await;
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = validator_collection
+        .actions()
+        .random_threshold_nodeset()
+        .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     let realm_id = U256::from(1);
     let epoch = validator_collection
@@ -550,7 +568,10 @@ async fn sign_lit_actions_with_custom_auth_resource_lit_action_session_sig() {
     info!("Starting test: sign_lit_actions_with_custom_auth_resource_lit_action_session_sig");
 
     let (_testnet, validator_collection, end_user) = init_test().await;
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = validator_collection
+        .actions()
+        .random_threshold_nodeset()
+        .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     let (pubkey, _token_id, eth_address, key_set_id) = end_user.first_pkp().info();
 
@@ -648,7 +669,10 @@ async fn sign_pkp_with_no_auth_method_lit_action_session_sig() {
     info!("Starting test: sign_pkp_with_no_auth_method_lit_action_session_sig");
 
     let (_testnet, validator_collection, end_user) = init_test().await;
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = validator_collection
+        .actions()
+        .random_threshold_nodeset()
+        .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     let (pubkey, _token_id, eth_address, _key_set_id) = end_user.first_pkp().info();
 
@@ -731,7 +755,10 @@ async fn sign_lit_actions_with_no_auth_method_lit_action_session_sig() {
     info!("Starting test: sign_lit_actions_with_no_auth_method_lit_action_session_sig");
 
     let (_testnet, validator_collection, end_user) = init_test().await;
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = validator_collection
+        .actions()
+        .random_threshold_nodeset()
+        .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     let (pubkey, _token_id, eth_address, key_set_id) = end_user.first_pkp().info();
 
@@ -823,7 +850,10 @@ async fn sign_pkp_with_eoa_session_sigs() {
     info!("Starting test: sign_pkp_with_eoa_session_sigs");
 
     let (_testnet, validator_collection, end_user) = init_test().await;
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = validator_collection
+        .actions()
+        .random_threshold_nodeset()
+        .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
 
     info!("Node Set: {:?}", node_set);
@@ -883,7 +913,10 @@ async fn execute_js_with_eoa_session_sigs() {
     info!("Starting test: execute_js_with_eoa_session_sigs");
 
     let (_testnet, validator_collection, end_user) = init_test().await;
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = validator_collection
+        .actions()
+        .random_threshold_nodeset()
+        .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     let wallet = end_user.wallet.clone();
 
@@ -937,7 +970,10 @@ async fn decrypt_with_lit_action_session_sig() {
     info!("Starting test: decrypt_with_lit_action_session_sig");
 
     let (_testnet, validator_collection, end_user) = init_test().await;
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = validator_collection
+        .actions()
+        .random_threshold_nodeset()
+        .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     let (pubkey, _token_id, eth_address, _key_set_id) = end_user.first_pkp().info();
 
@@ -1050,7 +1086,10 @@ async fn test_v1_endpoints_api_constraints() {
     info!("Starting test: test_v1_endpoints_api_constraints");
 
     let (_testnet, validator_collection, end_user) = init_test().await;
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = validator_collection
+        .actions()
+        .random_threshold_nodeset()
+        .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     let wallet = end_user.wallet.clone();
     let auth_sig = generate_authsig_item(&wallet).await.unwrap();
@@ -1192,7 +1231,10 @@ async fn sign_session_key_auth_method() {
     info!("Starting test: sign_session_key_auth_method");
 
     let (_testnet, validator_collection, end_user) = init_test().await;
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = validator_collection
+        .actions()
+        .random_threshold_nodeset()
+        .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
 
     let (pubkey, _token_id, eth_address, _key_set_id) = end_user.first_pkp().info();
@@ -1340,7 +1382,10 @@ pub async fn session_sig_only_mbg_pkp() {
     info!("Starting test: session_sig_only_mbg_pkp");
 
     let (testnet, validator_collection, end_user) = init_test().await;
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = validator_collection
+        .actions()
+        .random_threshold_nodeset()
+        .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     let realm_id = ethers::types::U256::from(1);
     let actions = validator_collection.actions();
@@ -1498,7 +1543,10 @@ async fn explicit_resource_permission_required_for_lit_action() {
     js_params.insert("sigName".to_string(), "sig1".into());
 
     // get local session sigs for non owner wallet
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = validator_collection
+        .actions()
+        .random_threshold_nodeset()
+        .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     let session_sigs = get_session_sigs_for_auth(
         &node_set,
