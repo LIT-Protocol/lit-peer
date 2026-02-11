@@ -1,8 +1,8 @@
-use ethers::core::k256::ecdsa::SigningKey;
 use ethers::middleware::SignerMiddleware;
 use ethers::prelude::*;
 use ethers::providers::Provider;
 use ethers::signers::Wallet;
+use ethers::{core::k256::ecdsa::SigningKey, utils::keccak256};
 use lit_blockchain_lite::contracts::{
     contract_resolver::ContractResolver, pkp_helper::pkp_helper::PKPHelper,
     pkp_permissions::PKPPermissions, pkpnft::PKPNFT, pubkey_router::PubkeyRouter, staking::Staking,
@@ -27,27 +27,36 @@ impl DatilContracts {
         contract_resolver_address: Address,
     ) -> Self {
         let env = 0;
+        let typ_default = keccak256(b"default");
         let contract_resolver =
             ContractResolver::new(contract_resolver_address, deployer_signing_provider.clone());
 
         let staking_address = contract_resolver
             .get_contract(
-                contract_resolver.staking_contract().call().await.unwrap(),
+                contract_resolver
+                    .staking_contract()
+                    .call()
+                    .await
+                    .unwrap_or(typ_default),
                 env,
             )
             .call()
             .await
-            .unwrap();
+            .unwrap_or(Address::zero());
         let staking = Staking::new(staking_address, deployer_signing_provider.clone());
 
         let pkpnft_address = contract_resolver
             .get_contract(
-                contract_resolver.pkp_nft_contract().call().await.unwrap(),
+                contract_resolver
+                    .pkp_nft_contract()
+                    .call()
+                    .await
+                    .unwrap_or(typ_default),
                 env,
             )
             .call()
             .await
-            .unwrap();
+            .unwrap_or(Address::zero());
         let pkpnft = PKPNFT::new(pkpnft_address, deployer_signing_provider.clone());
 
         let pubkey_router_address = contract_resolver
@@ -56,12 +65,12 @@ impl DatilContracts {
                     .pub_key_router_contract()
                     .call()
                     .await
-                    .unwrap(),
+                    .unwrap_or(typ_default),
                 env,
             )
             .call()
             .await
-            .unwrap();
+            .unwrap_or(Address::zero());
         let pubkey_router =
             PubkeyRouter::new(pubkey_router_address, deployer_signing_provider.clone());
 
@@ -71,12 +80,12 @@ impl DatilContracts {
                     .pkp_permissions_contract()
                     .call()
                     .await
-                    .unwrap(),
+                    .unwrap_or(typ_default),
                 env,
             )
             .call()
             .await
-            .unwrap();
+            .unwrap_or(Address::zero());
         let pkp_permissions =
             PKPPermissions::new(pkp_permissions_address, deployer_signing_provider.clone());
 
@@ -86,12 +95,12 @@ impl DatilContracts {
                     .pkp_helper_contract()
                     .call()
                     .await
-                    .unwrap(),
+                    .unwrap_or(typ_default),
                 env,
             )
             .call()
             .await
-            .unwrap();
+            .unwrap_or(Address::zero());
         let pkp_helper = PKPHelper::new(pkp_helper_address, deployer_signing_provider.clone());
 
         Self {
