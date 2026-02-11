@@ -236,6 +236,64 @@ impl TestSetupBuilder {
         self
     }
 
+    pub async fn build_for_api_server(mut self) -> Testnet {
+        if fs::exists("live_testnet.toml").unwrap_or(false) {
+            self = self.selected_network(TestNetName::Naga);
+        };
+
+        let signing_round_timeout_ms = if self.signing_round_timeout.is_some() {
+            self.signing_round_timeout
+        } else {
+            // if not in CI, set a default signing round timeout of 15000ms
+            Some("15000".to_string())
+        };
+
+        let custom_node_runtime_config = CustomNodeRuntimeConfig::builder()
+            .enable_payment(self.enable_payment)
+            .payment_interval_ms(self.payment_interval_ms)
+            .chain_polling_interval(self.chain_polling_interval)
+            .signing_round_timeout_ms(signing_round_timeout_ms)
+            .build();
+
+        let mut testnet = Testnet::builder()
+            .num_staked_and_joined_validators(self.num_staked_and_joined_validators)
+            .register_inactive_validators(self.register_inactive_validators)
+            .num_staked_only_validators(self.num_staked_only_validators)
+            .is_fault_test(self.is_fault_test)
+            .custom_node_runtime_config(custom_node_runtime_config)
+            .force_deploy(self.force_deploy)
+            .staker_account_setup_mapper(self.staker_account_setup_mapper)
+            .selected_testnet(self.selected_network.unwrap_or(TestNetName::Anvil))
+            .build()
+            .await;
+
+        let staking_contract_realm_config = StakingContractRealmConfig::builder()
+            .epoch_length(self.epoch_length)
+            .max_presign_count_u64(self.max_presign_count)
+            .min_presign_count_u64(self.min_presign_count)
+            .build();
+
+        info!(
+            "Staking contract realm config: {:?}",
+            staking_contract_realm_config
+        );
+
+        let _testnet_contracts =
+            Testnet::setup_contracts(&mut testnet, None, Some(staking_contract_realm_config))
+                .await
+                .expect("Failed to setup contracts");
+
+        if self.low_kick_tolerance {
+            testnet
+                .actions()
+                .update_all_complaint_configs(Some(30), Some(3), Some(1), Some(10))
+                .await
+                .expect("Failed to update complaint configs");
+        }
+
+        testnet
+    }
+
     pub async fn build(mut self) -> (Testnet, ValidatorCollection, EndUser) {
         let node_keys_path = Path::new("./node_keys");
         if node_keys_path.exists() {
