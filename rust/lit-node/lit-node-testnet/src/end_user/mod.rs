@@ -60,21 +60,20 @@ impl EndUser {
         }
     }
 
-    pub fn from_secret_key(testnet: &Testnet, secret_key: &[u8]) -> Self {
+    pub fn from_secret_key(testnet: &Testnet, secret_key: &[u8]) -> Result<Self, anyhow::Error> {
         let wallet = LocalWallet::from_bytes(secret_key)
-            .unwrap()
+            .map_err(|e| anyhow::anyhow!("Failed to create wallet from secret key: {:?}", e))?
             .with_chain_id(testnet.chain_id);
-        info!("Wallet address from secret key: {:?}", wallet.address());
         let provider = testnet.provider.clone();
         let datil_provider = testnet.datil_testnet.provider.clone();
-        Self {
+        Ok(Self {
             wallet: wallet,
             actions: testnet.actions().clone(),
             pkps: vec![],
             provider,
             datil_provider,
             datil_deployer_provider: testnet.datil_testnet.deployer_signing_provider.clone(),
-        }
+        })
     }
 
     pub fn actions(&self) -> &Actions {
