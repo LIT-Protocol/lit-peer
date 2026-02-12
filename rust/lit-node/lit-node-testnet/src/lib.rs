@@ -236,43 +236,36 @@ impl TestSetupBuilder {
         self
     }
 
+    // this function is reserved for API server, and removes many of the features that are not needed for the API server.
     pub async fn build_for_api_server(self) -> Testnet {
-        // get current directory
-        let current_dir = std::env::current_dir().unwrap();
-
-        println!("current_dir: {:?}", current_dir);
-        println!(
-            "live_testnet.toml exists: {:?}",
-            fs::exists("live_testnet.toml")
-        );
-
+        
         if !fs::exists("live_testnet.toml").unwrap_or(false) {
             panic!(
-                "live_testnet.toml not found in current directory: {:?}",
-                current_dir
+                "live_testnet.toml not found in current working directory: {:?}",
+                std::env::current_dir().unwrap()
             );
         }
 
-        let signing_round_timeout_ms = if self.signing_round_timeout.is_some() {
-            self.signing_round_timeout
-        } else {
-            // if not in CI, set a default signing round timeout of 15000ms
-            Some("15000".to_string())
-        };
+        // let signing_round_timeout_ms = if self.signing_round_timeout.is_some() {
+        //     self.signing_round_timeout
+        // } else {
+        //     // if not in CI, set a default signing round timeout of 15000ms
+        //     Some("15000".to_string())
+        // };
 
-        let custom_node_runtime_config = CustomNodeRuntimeConfig::builder()
-            .enable_payment(self.enable_payment)
-            .payment_interval_ms(self.payment_interval_ms)
-            .chain_polling_interval(self.chain_polling_interval)
-            .signing_round_timeout_ms(signing_round_timeout_ms)
-            .build();
+        // let custom_node_runtime_config = CustomNodeRuntimeConfig::builder()
+        //     .enable_payment(self.enable_payment)
+        //     .payment_interval_ms(self.payment_interval_ms)
+        //     .chain_polling_interval(self.chain_polling_interval)
+        //     .signing_round_timeout_ms(signing_round_timeout_ms)
+        //     .build();
 
-        let testnet = Testnet::builder()
+        let mut testnet = Testnet::builder()
             .num_staked_and_joined_validators(self.num_staked_and_joined_validators)
             .register_inactive_validators(self.register_inactive_validators)
             .num_staked_only_validators(self.num_staked_only_validators)
             .is_fault_test(self.is_fault_test)
-            .custom_node_runtime_config(custom_node_runtime_config)
+            // .custom_node_runtime_config(custom_node_runtime_config)
             .selected_testnet(TestNetName::Naga)
             .build()
             .await;
@@ -288,10 +281,10 @@ impl TestSetupBuilder {
         //     staking_contract_realm_config
         // );
 
-        // let _testnet_contracts =
-        //     Testnet::setup_contracts(&mut testnet, None, Some(staking_contract_realm_config))
-        //         .await
-        //         .expect("Failed to setup contracts");
+        let _testnet_contracts =
+            Testnet::setup_contracts(&mut testnet, None, None)
+                .await
+                .expect("Failed to setup contracts");
 
         // if self.low_kick_tolerance {
         //     testnet
