@@ -120,8 +120,12 @@ impl EndUser {
     pub async fn set_wallet_balance(&self, amount: &str) {
         let provider = self.actions.deployer_signing_provider();
         self.set_wallet_balance_internal(amount, provider).await;
-        let provider = self.datil_deployer_provider.clone();
-        self.set_wallet_balance_internal(amount, provider).await;
+
+        #[cfg(not(feature = "lit-peer-api-server"))]
+        {
+            let provider = self.datil_deployer_provider.clone();
+            self.set_wallet_balance_internal(amount, provider).await;
+        }
     }
 
     async fn set_wallet_balance_internal(
