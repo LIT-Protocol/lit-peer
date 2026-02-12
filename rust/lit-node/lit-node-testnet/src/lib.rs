@@ -240,14 +240,15 @@ impl TestSetupBuilder {
 
         // get current directory
         let current_dir = std::env::current_dir().unwrap();
+        
         println!("current_dir: {:?}", current_dir);
-        if !fs::exists("live_testnet.toml").unwrap_or(false) {
-            panic!("live_testnet.toml not found in current directory: {:?}", current_dir);
-        }
+        println!("live_testnet.toml exists: {:?}", fs::exists("live_testnet.toml"));
 
         if fs::exists("live_testnet.toml").unwrap_or(false) {
             self = self.selected_network(TestNetName::Naga);
-        };
+        }else {
+            panic!("live_testnet.toml not found in current directory: {:?}", current_dir);
+        }
 
         let signing_round_timeout_ms = if self.signing_round_timeout.is_some() {
             self.signing_round_timeout
