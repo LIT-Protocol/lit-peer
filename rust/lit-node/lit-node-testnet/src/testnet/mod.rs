@@ -233,10 +233,12 @@ impl TestnetBuilder {
         let provider_mut = Arc::make_mut(&mut provider);
         let provider = Arc::new(provider_mut.set_interval(Duration::from_millis(10)).clone());
         let mut is_from_cache = false;
+        let live_chain = self.selected_network == TestNetName::Naga;
         let datil_testnet = DatilTestnet::new(
             self.total_num_validators(),
             self.datil_testnet_state_cache_path,
             self.datil_testnet_contract_resolver_address,
+            live_chain,
         )
         .await;
         // deploy the contracts via script first, so that we can read them when the testnet configuration is loaded.

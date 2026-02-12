@@ -4,6 +4,7 @@ use crate::testnet::NodeAccount;
 use crate::testnet::cache_data_store::CacheDataStore;
 use crate::testnet::chain::ChainTrait;
 use crate::testnet::chain::anvil::Anvil;
+use crate::testnet::chain::no_chain::NoChain;
 use command_group::GroupChild;
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::middleware::SignerMiddleware;
@@ -50,8 +51,13 @@ impl DatilTestnet {
         total_num_validators: usize,
         state_cache_path: String,
         contract_resolver_address: Address,
+        live_chain: bool,
     ) -> Self {
-        let datil_chain = Box::new(Anvil::new(total_num_validators, true)) as Box<dyn ChainTrait>;
+        let datil_chain = match live_chain {
+            true => Box::new(NoChain::new(total_num_validators)) as Box<dyn ChainTrait>,
+            false => Box::new(Anvil::new(total_num_validators, true)) as Box<dyn ChainTrait>,
+        };
+
         let process = datil_chain.start_chain().await;
 
         let mut cache_data_store = CacheDataStore::from_file_or_new()

@@ -237,15 +237,20 @@ impl TestSetupBuilder {
     }
 
     pub async fn build_for_api_server(self) -> Testnet {
-
         // get current directory
         let current_dir = std::env::current_dir().unwrap();
-        
+
         println!("current_dir: {:?}", current_dir);
-        println!("live_testnet.toml exists: {:?}", fs::exists("live_testnet.toml"));
+        println!(
+            "live_testnet.toml exists: {:?}",
+            fs::exists("live_testnet.toml")
+        );
 
         if !fs::exists("live_testnet.toml").unwrap_or(false) {
-            panic!("live_testnet.toml not found in current directory: {:?}", current_dir);
+            panic!(
+                "live_testnet.toml not found in current directory: {:?}",
+                current_dir
+            );
         }
 
         let signing_round_timeout_ms = if self.signing_round_timeout.is_some() {

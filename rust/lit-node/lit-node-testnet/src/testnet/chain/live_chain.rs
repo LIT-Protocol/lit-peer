@@ -26,7 +26,7 @@ pub struct Naga {
 impl Naga {
     pub async fn new(num_nodes: usize) -> impl ChainTrait {
         let std_warning = "Please ensure the contents of this file are valid, or remove it entirely to run tests against a selected local network.";
-        println!(
+        info!(
             "Found live configuration file live_testnet.toml. Getting configuration values for testing..."
         );
         let toml_path = Path::new("live_testnet.toml");
