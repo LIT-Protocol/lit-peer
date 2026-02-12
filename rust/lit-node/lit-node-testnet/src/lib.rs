@@ -237,6 +237,14 @@ impl TestSetupBuilder {
     }
 
     pub async fn build_for_api_server(mut self) -> Testnet {
+
+        // get current directory
+        let current_dir = std::env::current_dir().unwrap();
+        println!("current_dir: {:?}", current_dir);
+        if !fs::exists("live_testnet.toml").unwrap_or(false) {
+            panic!("live_testnet.toml not found in current directory: {:?}", current_dir);
+        }
+
         if fs::exists("live_testnet.toml").unwrap_or(false) {
             self = self.selected_network(TestNetName::Naga);
         };
