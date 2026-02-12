@@ -4,7 +4,6 @@ pub mod live_chain;
 
 #[cfg(not(feature = "lit-peer-api-server"))]
 pub mod hardhat;
-#[cfg(not(feature = "lit-peer-api-server"))]
 pub mod no_chain;
 
 use super::NodeAccount;

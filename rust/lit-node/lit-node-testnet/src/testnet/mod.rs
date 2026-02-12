@@ -207,7 +207,6 @@ impl TestnetBuilder {
                 Box::new(chain::anvil::Anvil::new(self.total_num_validators(), false))
                     as Box<dyn ChainTrait>
             }
-            #[cfg(not(feature = "lit-peer-api-server"))]
             TestNetName::NoChain => {
                 Box::new(chain::no_chain::NoChain::new(self.total_num_validators()))
                     as Box<dyn ChainTrait>
