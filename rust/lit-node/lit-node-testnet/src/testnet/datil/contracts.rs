@@ -113,4 +113,17 @@ impl DatilContracts {
             contract_resolver,
         }
     }
+
+    pub async fn empty(
+        deployer_signing_provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>) -> Self {
+        Self {
+            deployer_provider: deployer_signing_provider.clone(),
+            staking: Staking::new(Address::zero(), deployer_signing_provider.clone()),
+            pkpnft: PKPNFT::new(Address::zero(), deployer_signing_provider.clone()),
+            pubkey_router: PubkeyRouter::new(Address::zero(), deployer_signing_provider.clone()),
+            pkp_permissions: PKPPermissions::new(Address::zero(), deployer_signing_provider.clone()),
+            pkp_helper: PKPHelper::new(Address::zero(), deployer_signing_provider.clone()),
+            contract_resolver: ContractResolver::new(Address::zero(), deployer_signing_provider.clone()),
+        }
+    }
 }

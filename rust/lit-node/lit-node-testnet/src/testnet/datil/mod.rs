@@ -51,13 +51,9 @@ impl DatilTestnet {
         total_num_validators: usize,
         state_cache_path: String,
         contract_resolver_address: Address,
-        live_chain: bool,
+        
     ) -> Self {
-        let datil_chain = match live_chain {
-            true => Box::new(NoChain::new(total_num_validators)) as Box<dyn ChainTrait>,
-            false => Box::new(Anvil::new(total_num_validators, true)) as Box<dyn ChainTrait>,
-        };
-
+        let datil_chain = Box::new(Anvil::new(total_num_validators, true)) as Box<dyn ChainTrait>;
         let process = datil_chain.start_chain().await;
 
         let mut cache_data_store = CacheDataStore::from_file_or_new()
@@ -94,6 +90,24 @@ impl DatilTestnet {
         let node_accounts =
             Self::load_node_accounts(datil_chain.chain_name(), datil_chain.chain_id()).await;
 
+        Self {
+            process,
+            datil_chain,
+            provider,
+            node_accounts,
+            deployer_signing_provider,
+            contracts,
+        }
+    }
+
+    pub async fn disabled_datil_chain(
+    ) -> Self {
+        let datil_chain = Box::new(NoChain::new(3)) as Box<dyn ChainTrait>;
+        let process = datil_chain.start_chain().await;
+        let provider = datil_chain.rpc_provider();
+        let node_accounts = Arc::new(Vec::new());
+        let deployer_signing_provider = datil_chain.deployer().signing_provider.clone();
+        let contracts = DatilContracts::empty(deployer_signing_provider.clone()).await;
         Self {
             process,
             datil_chain,

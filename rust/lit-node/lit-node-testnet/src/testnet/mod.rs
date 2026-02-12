@@ -233,13 +233,14 @@ impl TestnetBuilder {
         let provider = Arc::new(provider_mut.set_interval(Duration::from_millis(10)).clone());
         let mut is_from_cache = false;
         let live_chain = self.selected_network == TestNetName::Naga;
-        let datil_testnet = DatilTestnet::new(
-            self.total_num_validators(),
-            self.datil_testnet_state_cache_path,
-            self.datil_testnet_contract_resolver_address,
-            live_chain,
-        )
-        .await;
+        let datil_testnet = match live_chain {
+            true => DatilTestnet::disabled_datil_chain().await,
+            false => DatilTestnet::new(
+                self.total_num_validators(),
+                self.datil_testnet_state_cache_path,
+                self.datil_testnet_contract_resolver_address,
+            ).await,
+        };
         // deploy the contracts via script first, so that we can read them when the testnet configuration is loaded.
         if self.selected_network == TestNetName::Anvil
             || self.selected_network == TestNetName::Hardhat
