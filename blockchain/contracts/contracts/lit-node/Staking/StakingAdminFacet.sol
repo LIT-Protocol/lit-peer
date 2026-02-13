@@ -351,14 +351,14 @@ contract StakingAdminFacet is StakingCommon {
 
         rs.realm_configs[0] = LibStakingStorage.RealmConfig({
             maxConcurrentRequests: 1000,
-            maxPresignCount: 25,
-            minPresignCount: 10,
+            maxPresignCount: 0,
+            minPresignCount: 0,
             peerCheckingIntervalSecs: 7,
             maxPresignConcurrency: 2,
             rpcHealthcheckEnabled: true,
             minEpochForRewards: 3,
             permittedValidatorsOn: false,
-            defaultKeySet: ""
+            defaultKeySet: "naga-keyset1"
         });
         uint256 epochLengthSeconds = 1 seconds;
 
