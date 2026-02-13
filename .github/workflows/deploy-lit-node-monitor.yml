@@ -15,9 +15,8 @@ on:
         options: 
         - naga-dev
         - naga-test
-        - naga-staging
+        - naga-proto
         - naga-prod
-        - internalDev
         required: true
         default: 'naga-test'
         
