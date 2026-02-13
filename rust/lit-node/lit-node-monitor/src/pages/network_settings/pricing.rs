@@ -1,6 +1,6 @@
 use crate::utils::{get_address, get_lit_config, table_classes::TailwindClassesPreset};
-use ethers::{providers::Provider, utils::format_ether};
 use ethers::types::U256;
+use ethers::{providers::Provider, utils::format_ether};
 use ethers_providers::Http;
 use leptos::prelude::*;
 use leptos_meta::*;
@@ -105,7 +105,10 @@ pub async fn get_price_feed() -> (Vec<PricingConfig>, Vec<PricingConfig>) {
         }
         rows1.push(PricingConfig {
             name: product_id_desc[i].to_string(),
-            value: format_ether(*price).trim_end_matches('0').trim_end_matches('.').to_string(),
+            value: format_ether(*price)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
             evalue: format!("{:.2e}", price.as_u128()),
             notes: "".to_string(),
         });
@@ -146,7 +149,10 @@ pub async fn get_price_feed() -> (Vec<PricingConfig>, Vec<PricingConfig>) {
         }
         rows2.push(PricingConfig {
             name: la_price_desc[price.price_component as usize].to_string(),
-            value: format_ether(price.price).trim_end_matches('0').trim_end_matches('.').to_string(),
+            value: format_ether(price.price)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
             evalue: format!("{:.2e}", price.price.as_u128()),
             notes,
         });

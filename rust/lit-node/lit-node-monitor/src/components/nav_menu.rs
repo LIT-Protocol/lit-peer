@@ -4,7 +4,10 @@ use thaw::{NavCategory, NavCategoryItem, NavDrawer, NavItem, NavSubItem};
 use web_sys::window;
 
 #[component]
-pub fn NavMenu(page_name_signal: RwSignal<String>, open_menu_set: WriteSignal<bool>) -> impl IntoView {
+pub fn NavMenu(
+    page_name_signal: RwSignal<String>,
+    open_menu_set: WriteSignal<bool>,
+) -> impl IntoView {
     let url = window()
         .and_then(|win| win.location().pathname().ok())
         .unwrap_or_else(|| "home".to_string());
@@ -25,7 +28,7 @@ pub fn NavMenu(page_name_signal: RwSignal<String>, open_menu_set: WriteSignal<bo
             page_name_signal.set(page_name);
 
             let navigate = leptos_router::hooks::use_navigate();
-            navigate(nav_to.as_str(), Default::default()); 
+            navigate(nav_to.as_str(), Default::default());
 
             if crate::utils::responsive::is_mobile() {
                     open_menu_set.set(false);

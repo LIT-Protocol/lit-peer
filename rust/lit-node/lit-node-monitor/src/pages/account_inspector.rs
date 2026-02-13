@@ -10,7 +10,7 @@ use lit_blockchain_lite::contracts::ledger::Ledger;
 use lit_blockchain_lite::contracts::ledger::WithdrawRequest;
 use thaw::DatePicker;
 use thaw::TimePicker;
-use thaw::{Button, Checkbox, Input, Label, Pagination, Select, Card, CardHeader, CardPreview};
+use thaw::{Button, Card, CardHeader, CardPreview, Checkbox, Input, Label, Pagination, Select};
 
 use super::history::ChainHistoryRow;
 use super::history::fetch_chain_tx_rows;
@@ -77,126 +77,126 @@ pub fn AccountInspector() -> impl IntoView {
         .await
     });
 
-    let overview = LocalResource::new(move || async move {
-        get_overview(alt_address.clone().read_only()).await
-    });
+    let overview =
+        LocalResource::new(
+            move || async move { get_overview(alt_address.clone().read_only()).await },
+        );
 
     crate::utils::set_header("History");
 
     view! {
-           <Title text="Account Inspector"/>
-           <Card class="min-w-full">
-               <CardHeader>
-                   <div class="row">
-                       <div class="col">
-                           <b class="mb-0"> Wallet Account Inspector </b>
-                       </div>
-                       <div class="col text-end">
-                           <Label on:click={move |_| filter_open.set(true)}> {move || filter_text.get()} </Label>
-                       </div>
-                   </div>
-               </CardHeader>
+        <Title text="Account Inspector"/>
+        <Card class="min-w-full">
+            <CardHeader>
+                <div class="row">
+                    <div class="col">
+                        <b class="mb-0"> Wallet Account Inspector </b>
+                    </div>
+                    <div class="col text-end">
+                        <Label on:click={move |_| filter_open.set(true)}> {move || filter_text.get()} </Label>
+                    </div>
+                </div>
+            </CardHeader>
 
 
-               // thaw text input for address
-               <CardPreview class="p-3">
-                   <Input value=address_input_value input_size=45 />
-                   <Button on:click={move |_| alt_address.set(Some(address_input_value.get().to_string()))}> "Search" </Button>
-                   <br/><br/>
-                   {move || match overview.get().as_deref() {
-                       None => view! { <p>"Loading..."</p> }.into_any(),
-                       Some(balance) => view! { <p>"Balance for address: "    {balance.to_string()} </p> }.into_any()
-                   }}
-               </CardPreview>
-           </Card>
+            // thaw text input for address
+            <CardPreview class="p-3">
+                <Input value=address_input_value input_size=45 />
+                <Button on:click={move |_| alt_address.set(Some(address_input_value.get().to_string()))}> "Search" </Button>
+                <br/><br/>
+                {move || match overview.get().as_deref() {
+                    None => view! { <p>"Loading..."</p> }.into_any(),
+                    Some(balance) => view! { <p>"Balance for address: "    {balance.to_string()} </p> }.into_any()
+                }}
+            </CardPreview>
+        </Card>
 
-               <Card class="m-3 min-w-full">
-               <CardHeader>
-                   <div class="row">
-                       <div class="col">
-                           <b class="mb-0"> Ledger Transactions for address: {address_input_value.get()}</b>
-                       </div>                     
-                   </div>
-               </CardHeader>
+            <Card class="m-3 min-w-full">
+            <CardHeader>
+                <div class="row">
+                    <div class="col">
+                        <b class="mb-0"> Ledger Transactions for address: {address_input_value.get()}</b>
+                    </div>
+                </div>
+            </CardHeader>
 
-                <CardPreview class="p-3">
-                    {move || match data.get().as_deref() {
-                       None => view! { <p>"Loading..."</p> }.into_any(),
-                       Some(rows) => view! {
-                           <table class="table w-full">
-                               <TableContent
-                                selection=Selection::Single(selected_index)
-                                   on_selection_change={move |evt: SelectionChangeEvent<ChainHistoryRow>| {
-                                       log::info!("evt: {:?}", evt);
-                                       sel_row_write.write().replace(evt.row.get_untracked());
-                                       open_buttom.set(true);
-                                   }}
+             <CardPreview class="p-3">
+                 {move || match data.get().as_deref() {
+                    None => view! { <p>"Loading..."</p> }.into_any(),
+                    Some(rows) => view! {
+                        <table class="table w-full">
+                            <TableContent
+                             selection=Selection::Single(selected_index)
+                                on_selection_change={move |evt: SelectionChangeEvent<ChainHistoryRow>| {
+                                    log::info!("evt: {:?}", evt);
+                                    sel_row_write.write().replace(evt.row.get_untracked());
+                                    open_buttom.set(true);
+                                }}
 
-                                rows = rows.clone() scroll_container="html" />
-                           </table>
-                           }.into_any()
-                   }}
-                </CardPreview>
-                <div class="card-footer">
-                   <div class="row">
-                       <div class="col-6">
-                       <Pagination page page_count=pagination_pages />
-                       </div>
-                       <div class="col-5 text-end">
-                           <Checkbox checked=include_internal_transactions />
-                           "Include Internal Transactions  |  Page Size: "
+                             rows = rows.clone() scroll_container="html" />
+                        </table>
+                        }.into_any()
+                }}
+             </CardPreview>
+             <div class="card-footer">
+                <div class="row">
+                    <div class="col-6">
+                    <Pagination page page_count=pagination_pages />
+                    </div>
+                    <div class="col-5 text-end">
+                        <Checkbox checked=include_internal_transactions />
+                        "Include Internal Transactions  |  Page Size: "
 
-                       </div>
-                       <div class="col-1">
-                       <Select value=page_size  >
-                           <option value=10>10</option>
-                           <option value=20>20</option>
-                           <option value=30>30</option>
-                           <option value=50>50</option>
-                           <option value=100>100</option>
-                       </Select> </div>
-                   </div>
-               </div>
-               </Card>
-           <br />
+                    </div>
+                    <div class="col-1">
+                    <Select value=page_size  >
+                        <option value=10>10</option>
+                        <option value=20>20</option>
+                        <option value=30>30</option>
+                        <option value=50>50</option>
+                        <option value=100>100</option>
+                    </Select> </div>
+                </div>
+            </div>
+            </Card>
+        <br />
 
 
-       <RightDrawer open=filter_open title=filter_title >
-                   <div class="row">
-                       <div class="col-12">
-                           "Time Zone"
-                       </div>
-                       <div class="col-12">
-                           <Select value=time_zone  >
-                               {time_zones.iter().map(|tz| view! { <option value=tz.to_string()>{tz.to_string()}</option> }).collect::<Vec<_>>()}
-                           </Select>
-                       </div>
-                       <div class="col-12">
-                           <br />"From"
-                       </div>
-                       <div class="col-12">
-                           <DatePicker value=start_date  />
-                       </div>
-                       <div class="col-12">
-                           <TimePicker value=start_time  />
-                       </div>
-                       <div class="col-12">
-                           <br />"To"
-                       </div>
-                       <div class="col-12">
-                           <DatePicker value=end_date  />
-                       </div>
-                       <div class="col-12">
-                           <TimePicker value=end_time  />
-                       </div>
-                   </div>
+    <RightDrawer open=filter_open title=filter_title >
+                <div class="row">
+                    <div class="col-12">
+                        "Time Zone"
+                    </div>
+                    <div class="col-12">
+                        <Select value=time_zone  >
+                            {time_zones.iter().map(|tz| view! { <option value=tz.to_string()>{tz.to_string()}</option> }).collect::<Vec<_>>()}
+                        </Select>
+                    </div>
+                    <div class="col-12">
+                        <br />"From"
+                    </div>
+                    <div class="col-12">
+                        <DatePicker value=start_date  />
+                    </div>
+                    <div class="col-12">
+                        <TimePicker value=start_time  />
+                    </div>
+                    <div class="col-12">
+                        <br />"To"
+                    </div>
+                    <div class="col-12">
+                        <DatePicker value=end_date  />
+                    </div>
+                    <div class="col-12">
+                        <TimePicker value=end_time  />
+                    </div>
+                </div>
 
-               </RightDrawer>
-       }
+            </RightDrawer>
+    }
 }
 
 async fn get_overview(user_address: ReadSignal<Option<String>>) -> String {
-    
     if user_address.get().is_none() {
         return "".to_string();
     }
@@ -209,18 +209,24 @@ async fn get_overview(user_address: ReadSignal<Option<String>>) -> String {
     let cfg = &get_lit_config();
     let ledger = Ledger::node_monitor_load(cfg, address).unwrap();
 
-
     let user_address = hex::decode(user_address.replace("0x", "")).unwrap();
     let user_address = ethers::types::H160::from_slice(&user_address);
 
     let balance = ledger.balance(user_address).call().await.unwrap();
-    
-    let latest_withdraw_request : WithdrawRequest = ledger.latest_withdraw_request(user_address).call().await.unwrap();
-    let latest_withdraw_request_amount = latest_withdraw_request.amount;
 
+    let latest_withdraw_request: WithdrawRequest = ledger
+        .latest_withdraw_request(user_address)
+        .call()
+        .await
+        .unwrap();
+    let latest_withdraw_request_amount = latest_withdraw_request.amount;
 
     let stable_balance = ledger.stable_balance(user_address).call().await.unwrap();
 
-    format!("{}, Stable Balance: {}, Latest Withdraw Request Amount: {}", balance.to_string(), stable_balance.to_string(), latest_withdraw_request_amount.to_string())
-    
+    format!(
+        "{}, Stable Balance: {}, Latest Withdraw Request Amount: {}",
+        balance.to_string(),
+        stable_balance.to_string(),
+        latest_withdraw_request_amount.to_string()
+    )
 }

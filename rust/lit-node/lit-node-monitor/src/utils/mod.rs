@@ -2,10 +2,10 @@ pub mod context;
 pub mod contract_helper;
 pub mod datetime;
 pub mod polling;
+pub mod responsive;
 pub mod rpc_calls;
 pub mod sdk_models;
 pub mod table_classes;
-pub mod responsive;
 
 use crate::models::{GlobalState, NetworkConfig};
 use ethers::providers::{Http, Middleware, Provider};

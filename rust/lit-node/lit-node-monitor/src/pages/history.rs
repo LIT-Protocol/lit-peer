@@ -35,13 +35,17 @@ pub struct ChainHistoryRow {
     block_hash: String,
     #[table(skip)]
     time_stamp: String,
-    #[table(renderer = "TransactionRenderer", title = "Transaction", class="hide-lst-col")]
+    #[table(
+        renderer = "TransactionRenderer",
+        title = "Transaction",
+        class = "hide-lst-col"
+    )]
     transaction: String,
     #[table(renderer = "DescriptionRenderer")]
     description: String,
-    #[table(title = "Block", class="hide-lst-col")]
+    #[table(title = "Block", class = "hide-lst-col")]
     block_number: String,
-    #[table(renderer = "ToFromRenderer", title = "From/To", class="hide-lst-col")]
+    #[table(renderer = "ToFromRenderer", title = "From/To", class = "hide-lst-col")]
     to_from: String,
     #[table(skip)]
     from: String,
@@ -63,11 +67,9 @@ fn DescriptionRenderer(
     #[allow(unused_variables)] // onchange & index need to be part of the signature for now
     index: usize,
 ) -> impl IntoView {
-
-
     if is_mobile() {
-        let t  = transaction_renderer(row, true).into_any();
-        let d =  internal_description_renderer(row).into_any();
+        let t = transaction_renderer(row, true).into_any();
+        let d = internal_description_renderer(row).into_any();
         let f = to_from_renderer(row, true).into_any();
         view! {
             <td class=class>
@@ -75,21 +77,20 @@ fn DescriptionRenderer(
                 {d}<br/>
                 {f}
             </td>
-        }.into_any()
-    }
-    else {
+        }
+        .into_any()
+    } else {
         view! {
             <td class=class>
                 {internal_description_renderer(row)}
             </td>
-        }.into_any()
+        }
+        .into_any()
     }
-
-    
 }
 
 fn internal_description_renderer(row: RwSignal<ChainHistoryRow>) -> impl IntoView {
-  let description = row.get_untracked().decoded_input;
+    let description = row.get_untracked().decoded_input;
     let description = description
         .split("|")
         .map(|s| s.to_string())
@@ -126,9 +127,7 @@ fn internal_description_renderer(row: RwSignal<ChainHistoryRow>) -> impl IntoVie
             }
             }
     }
- 
 }
-
 
 #[component]
 fn TransactionRenderer(
@@ -149,8 +148,7 @@ fn TransactionRenderer(
 }
 
 fn transaction_renderer(row: RwSignal<ChainHistoryRow>, is_mobile: bool) -> impl IntoView {
-    
-    view! {        
+    view! {
         {simple_hex(row.get_untracked().transaction)}
         {if is_mobile { view! { " - " }.into_any() } else { view! { <br/> }.into_any() }}
         {row.get_untracked().time_stamp}
@@ -167,17 +165,14 @@ fn ToFromRenderer(
     #[allow(unused_variables)] //index needs to be part of the signature
     index: usize,
 ) -> impl IntoView {
-
-    view!{
+    view! {
         <td class=class>
             {to_from_renderer(row, false)}
         </td>
     }
-    
 }
 
 fn to_from_renderer(row: RwSignal<ChainHistoryRow>, is_mobile: bool) -> impl IntoView {
- 
     let to = row.get_untracked().to;
     let from = row.get_untracked().from;
 
@@ -197,7 +192,7 @@ fn to_from_renderer(row: RwSignal<ChainHistoryRow>, is_mobile: bool) -> impl Int
             {if is_mobile { view! { " - " }.into_any() } else { view! { <br/> }.into_any() }}
             {to}
     }
-}   
+}
 
 #[component]
 pub fn History() -> impl IntoView {
@@ -264,94 +259,94 @@ pub fn History() -> impl IntoView {
     crate::utils::set_header("History");
 
     view! {
-           <Title text="History"/>
-                   <div class="flex flex-wrap">
-                       <div class="flex-1">
-                           <b class="mb-0"> Network History </b>
-                       </div>
-                       <div class="flex-1 text-end">
-                           <Label on:click={move |_| filter_open.set(true)}> {move || filter_text.get()} </Label>
-                       </div>
-                   </div>
-                    {move || match data.get().as_deref() {
-                       None => view! { <p>"Loading..."</p> }.into_any(),
-                       Some(rows) => view! {
-                           <table class="table w-full">
-                               <TableContent
-                                selection=Selection::Single(selected_index)
-                                   on_selection_change={move |evt: SelectionChangeEvent<ChainHistoryRow>| {
-                                       log::info!("evt: {:?}", evt);
-                                       sel_row_write.write().replace(evt.row.get_untracked());
-                                       open_buttom.set(true);
-                                   }}
+        <Title text="History"/>
+                <div class="flex flex-wrap">
+                    <div class="flex-1">
+                        <b class="mb-0"> Network History </b>
+                    </div>
+                    <div class="flex-1 text-end">
+                        <Label on:click={move |_| filter_open.set(true)}> {move || filter_text.get()} </Label>
+                    </div>
+                </div>
+                 {move || match data.get().as_deref() {
+                    None => view! { <p>"Loading..."</p> }.into_any(),
+                    Some(rows) => view! {
+                        <table class="table w-full">
+                            <TableContent
+                             selection=Selection::Single(selected_index)
+                                on_selection_change={move |evt: SelectionChangeEvent<ChainHistoryRow>| {
+                                    log::info!("evt: {:?}", evt);
+                                    sel_row_write.write().replace(evt.row.get_untracked());
+                                    open_buttom.set(true);
+                                }}
 
-                                rows = rows.clone() scroll_container="html" />
-                           </table>
-                           }.into_any()
-                   }}
-                   <div class="flex flex-wrap">
-                       <div class="flex-1">
-                       <Pagination page page_count=pagination_pages />
-                       </div>
-                       <div class="flex-1 text-end">
-                           <Checkbox checked=include_internal_transactions />
-                           "Include Internal Transactions  |  Page Size: "
-                       </div>
-                       <div class="flex-1">
-                        <Select value=page_size  >
-                            <option value=10>10</option>
-                            <option value=20>20</option>
-                            <option value=30>30</option>
-                            <option value=50>50</option>
-                            <option value=100>100</option>
-                        </Select> 
-                       </div>
-                   </div>
-           <br />
+                             rows = rows.clone() scroll_container="html" />
+                        </table>
+                        }.into_any()
+                }}
+                <div class="flex flex-wrap">
+                    <div class="flex-1">
+                    <Pagination page page_count=pagination_pages />
+                    </div>
+                    <div class="flex-1 text-end">
+                        <Checkbox checked=include_internal_transactions />
+                        "Include Internal Transactions  |  Page Size: "
+                    </div>
+                    <div class="flex-1">
+                     <Select value=page_size  >
+                         <option value=10>10</option>
+                         <option value=20>20</option>
+                         <option value=30>30</option>
+                         <option value=50>50</option>
+                         <option value=100>100</option>
+                     </Select>
+                    </div>
+                </div>
+        <br />
 
-              { move || sel_row_read.get().map(|selected_row| {
-                   let block_number = selected_row.block_number.parse::<u64>().unwrap();
-                   let block_time = selected_row.time_stamp.clone();
-                   let title = format!("Network at Block {}", block_number);
-                   pop_up_title.set(title);
-                   view! {
-                       <BottomModal open=open_buttom title=pop_up_title.clone() >
-                               <NetWorkStatusAtBlock realm_id=1 block_number block_time />
-                       </BottomModal>
-                   }
-               }) }
-       <RightDrawer open=filter_open title=filter_title >
-                   <div class="row">
-                       <div class="col-12">
-                           "Time Zone"
-                       </div>
-                       <div class="col-12">
-                           <Select value=time_zone  >
-                               {time_zones.iter().map(|tz| view! { <option value=tz.to_string()>{tz.to_string()}</option> }).collect::<Vec<_>>()}
-                           </Select>
-                       </div>
-                       <div class="col-12">
-                           <br />"From"
-                       </div>
-                       <div class="col-12">
-                           <DatePicker value=start_date  />
-                       </div>
-                       <div class="col-12">
-                           <TimePicker value=start_time  />
-                       </div>
-                       <div class="col-12">
-                           <br />"To"
-                       </div>
-                       <div class="col-12">
-                           <DatePicker value=end_date  />
-                       </div>
-                       <div class="col-12">
-                           <TimePicker value=end_time  />
-                       </div>
-                   </div>
+           { move || sel_row_read.get().map(|selected_row| {
+                let block_number = selected_row.block_number.parse::<u64>().unwrap();
+                let block_time = selected_row.time_stamp.clone();
+                let title = format!("Network at Block {}", block_number);
+                pop_up_title.set(title);
+                view! {
+                    <BottomModal open=open_buttom title=pop_up_title.clone() >
+                            <NetWorkStatusAtBlock realm_id=1 block_number block_time />
+                    </BottomModal>
+                }
+            }) }
+    <RightDrawer open=filter_open title=filter_title >
+                <div class="row">
+                    <div class="col-12">
+                        "Time Zone"
+                    </div>
+                    <div class="col-12">
+                        <Select value=time_zone  >
+                            {time_zones.iter().map(|tz| view! { <option value=tz.to_string()>{tz.to_string()}</option> }).collect::<Vec<_>>()}
+                        </Select>
+                    </div>
+                    <div class="col-12">
+                        <br />"From"
+                    </div>
+                    <div class="col-12">
+                        <DatePicker value=start_date  />
+                    </div>
+                    <div class="col-12">
+                        <TimePicker value=start_time  />
+                    </div>
+                    <div class="col-12">
+                        <br />"To"
+                    </div>
+                    <div class="col-12">
+                        <DatePicker value=end_date  />
+                    </div>
+                    <div class="col-12">
+                        <TimePicker value=end_time  />
+                    </div>
+                </div>
 
-               </RightDrawer>
-       }
+            </RightDrawer>
+    }
 }
 
 #[component]

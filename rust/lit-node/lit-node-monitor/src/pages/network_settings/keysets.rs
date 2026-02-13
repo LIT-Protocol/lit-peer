@@ -2,7 +2,7 @@ use crate::utils::{get_address, get_lit_config};
 use ethers::types::U256;
 use leptos::prelude::*;
 use leptos_meta::*;
-use lit_blockchain_lite::contracts::     staking::{KeySetConfig, Staking};
+use lit_blockchain_lite::contracts::staking::{KeySetConfig, Staking};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -79,7 +79,6 @@ pub fn Keysets() -> impl IntoView {
 }
 
 pub async fn get_key_set_configs() -> Vec<(String, KeySetMonitorConfig)> {
-
     let staking_contract_address = get_address(crate::contracts::STAKING_CONTRACT)
         .await
         .unwrap();
@@ -88,7 +87,7 @@ pub async fn get_key_set_configs() -> Vec<(String, KeySetMonitorConfig)> {
 
     let staking = Staking::node_monitor_load(cfg, staking_contract_address).unwrap();
 
-    let key_configs  = staking.key_sets().call().await;
+    let key_configs = staking.key_sets().call().await;
     let key_configs: Vec<KeySetConfig> = match key_configs {
         Ok(key_configs) => key_configs,
         Err(e) => {
@@ -100,7 +99,6 @@ pub async fn get_key_set_configs() -> Vec<(String, KeySetMonitorConfig)> {
     let mut key_set_monitor_configs: Vec<(String, KeySetMonitorConfig)> = vec![];
 
     for key_config in key_configs {
-
         let mut pos = 0;
         let mut root_keys_by_curve: Vec<(String, u32)> = vec![];
         for curve in key_config.curves {
@@ -111,15 +109,19 @@ pub async fn get_key_set_configs() -> Vec<(String, KeySetMonitorConfig)> {
         }
 
         let key_set_config = KeySetMonitorConfig {
-                identifier: key_config.identifier.to_string(),
-                description: key_config.description.to_string(),
-                minimum_threshold: key_config.minimum_threshold as usize,
-                monetary_value: key_config.monetary_value as usize,
-                complete_isolation: key_config.complete_isolation,
-                realms: key_config.realms.iter().map(|realm| realm.as_u32() ).collect(),
-                root_keys_by_curve: root_keys_by_curve,
-                recovery_party_members: vec![], //key_config.recovery_party_members.iter().map(|member| member.to_string()).collect(),
-            };
+            identifier: key_config.identifier.to_string(),
+            description: key_config.description.to_string(),
+            minimum_threshold: key_config.minimum_threshold as usize,
+            monetary_value: key_config.monetary_value as usize,
+            complete_isolation: key_config.complete_isolation,
+            realms: key_config
+                .realms
+                .iter()
+                .map(|realm| realm.as_u32())
+                .collect(),
+            root_keys_by_curve: root_keys_by_curve,
+            recovery_party_members: vec![], //key_config.recovery_party_members.iter().map(|member| member.to_string()).collect(),
+        };
 
         key_set_monitor_configs.push((key_config.identifier.to_string(), key_set_config));
     }

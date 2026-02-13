@@ -247,13 +247,25 @@ pub async fn get_reward_details(
         },
         RewardDetails {
             name: "totalStakeWeight".to_string(),
-            current: format_ether(epoch_rewards.total_stake_weight).trim_end_matches('0').trim_end_matches('.').to_string(),
-            next: format_ether(next_epoch_rewards.total_stake_weight).trim_end_matches('0').trim_end_matches('.').to_string(),
+            current: format_ether(epoch_rewards.total_stake_weight)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
+            next: format_ether(next_epoch_rewards.total_stake_weight)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         RewardDetails {
             name: "totalStakeRewards".to_string(),
-            current: format_ether(epoch_rewards.total_stake_rewards).trim_end_matches('0').trim_end_matches('.').to_string(),
-            next: format_ether(next_epoch_rewards.total_stake_rewards).trim_end_matches('0').trim_end_matches('.').to_string(),
+            current: format_ether(epoch_rewards.total_stake_rewards)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
+            next: format_ether(next_epoch_rewards.total_stake_rewards)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         RewardDetails {
             name: "slope".to_string(),
@@ -267,18 +279,36 @@ pub async fn get_reward_details(
         },
         RewardDetails {
             name: "validatorSharePrice".to_string(),
-            current: format_ether(epoch_rewards.validator_share_price).trim_end_matches('0').trim_end_matches('.').to_string(),
-            next: format_ether(next_epoch_rewards.validator_share_price).trim_end_matches('0').trim_end_matches('.').to_string(),
+            current: format_ether(epoch_rewards.validator_share_price)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
+            next: format_ether(next_epoch_rewards.validator_share_price)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         RewardDetails {
             name: "stakeAmount".to_string(),
-            current: format_ether(epoch_rewards.stake_amount).trim_end_matches('0').trim_end_matches('.').to_string(),
-            next: format_ether(next_epoch_rewards.stake_amount).trim_end_matches('0').trim_end_matches('.').to_string(),
+            current: format_ether(epoch_rewards.stake_amount)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
+            next: format_ether(next_epoch_rewards.stake_amount)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         RewardDetails {
             name: "validatorSharePriceAtLastUpdate".to_string(),
-            current: format_ether(epoch_rewards.validator_share_price_at_last_update).trim_end_matches('0').trim_end_matches('.').to_string(),
-            next: format_ether(next_epoch_rewards.validator_share_price_at_last_update).trim_end_matches('0').trim_end_matches('.').to_string(),
+            current: format_ether(epoch_rewards.validator_share_price_at_last_update)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
+            next: format_ether(next_epoch_rewards.validator_share_price_at_last_update)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         RewardDetails {
             name: "initial".to_string(),

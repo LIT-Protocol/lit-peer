@@ -41,9 +41,9 @@ pub struct Validator {
     pub status: String,
     #[table(title = "Guest IP")]
     pub socket_address: String,
-    #[table(renderer = "WalletAddressRenderer", class="hide-lst-col")]
+    #[table(renderer = "WalletAddressRenderer", class = "hide-lst-col")]
     pub wallet_address: String,
-    #[table(renderer = "WalletAddressRenderer", class="hide-lst-col")]
+    #[table(renderer = "WalletAddressRenderer", class = "hide-lst-col")]
     pub staker_address: String,
     #[table(renderer = "ValidatorStatusRenderer")]
     pub ver: String,
@@ -125,91 +125,91 @@ pub fn Validators() -> impl IntoView {
     let pop_up_title = RwSignal::new("".to_string());
 
     view! {
-        <Title text="Validators (by realm)"/>
-        {
-        move || match realms.get().as_deref() {
-            None => view! { 
-                    <div class="flex rounded outline outline-gray-400 p-3 ml-2 items-center">
-                        <div class="flex-1 font-bold">{ move || handshake_state.get() }</div>
-                    </div>
-            <br />
-                
-            
-            }.into_any(),
-            Some(realms) => {
-                let realms2 = realms.clone();
-                realms2.iter().map(|realm|  
-                    view! {
-                        <div class="flex rounded outline outline-gray-300 p-2 ml-2 items-center">
-                            <div class="flex-1 text-lg font-bold">Realm # {realm.id}</div>
-                            <div class="flex-1 text-right pr-2"><NetworkStatus realm_id=realm.id as u64 /></div>
+            <Title text="Validators (by realm)"/>
+            {
+            move || match realms.get().as_deref() {
+                None => view! {
+                        <div class="flex rounded outline outline-gray-400 p-3 ml-2 items-center">
+                            <div class="flex-1 font-bold">{ move || handshake_state.get() }</div>
                         </div>
-                        <div class="flex flex-wrap gap-2 mt-4">
-                            <div class="flex-1 outline outline-gray-300 rounded p-2 ml-2">
-                                <div class="font-bold border-b border-color: var(--color-green-400) pb-2">Current Nodes</div>                                
-                                <table class="table w-full">
-                                    <TableContent
-                                        selection=Selection::Single(selected_index_current)
-                                            on_selection_change={move |evt: SelectionChangeEvent<Validator>| {
-                                                log::info!("evt: {:?}", evt);
-                                                set_selected_row.write().replace(evt.row.get_untracked());
-                                                open_buttom.set(true);
-                                            }}
-                                        rows = realm.current_validators.clone() scroll_container="html" />
-                                </table>
+                <br />
+
+
+                }.into_any(),
+                Some(realms) => {
+                    let realms2 = realms.clone();
+                    realms2.iter().map(|realm|
+                        view! {
+                            <div class="flex rounded outline outline-gray-300 p-2 ml-2 items-center">
+                                <div class="flex-1 text-lg font-bold">Realm # {realm.id}</div>
+                                <div class="flex-1 text-right pr-2"><NetworkStatus realm_id=realm.id as u64 /></div>
                             </div>
-                            <div class="flex-1 outline outline-gray-400 rounded p-2 ml-2">
-                                <div class="font-bold border-b border-gray-400 pb-2">Next Nodes</div>                                
+                            <div class="flex flex-wrap gap-2 mt-4">
+                                <div class="flex-1 outline outline-gray-300 rounded p-2 ml-2">
+                                    <div class="font-bold border-b border-color: var(--color-green-400) pb-2">Current Nodes</div>
+                                    <table class="table w-full">
+                                        <TableContent
+                                            selection=Selection::Single(selected_index_current)
+                                                on_selection_change={move |evt: SelectionChangeEvent<Validator>| {
+                                                    log::info!("evt: {:?}", evt);
+                                                    set_selected_row.write().replace(evt.row.get_untracked());
+                                                    open_buttom.set(true);
+                                                }}
+                                            rows = realm.current_validators.clone() scroll_container="html" />
+                                    </table>
+                                </div>
+                                <div class="flex-1 outline outline-gray-400 rounded p-2 ml-2">
+                                    <div class="font-bold border-b border-gray-400 pb-2">Next Nodes</div>
 
-                                <table class="table w-full">
-                                            <TableContent
-                                                selection=Selection::Single(selected_index_next)
-                                                    on_selection_change={move |evt: SelectionChangeEvent<Validator>| {
-                                                        log::info!("evt: {:?}", evt);
-                                                        set_selected_row.write().replace(evt.row.get_untracked());
-                                                        open_buttom.set(true);
-                                                    }}
-                                                rows = realm.next_validators.clone() scroll_container="html" />
-                                        </table>                                    
+                                    <table class="table w-full">
+                                                <TableContent
+                                                    selection=Selection::Single(selected_index_next)
+                                                        on_selection_change={move |evt: SelectionChangeEvent<Validator>| {
+                                                            log::info!("evt: {:?}", evt);
+                                                            set_selected_row.write().replace(evt.row.get_untracked());
+                                                            open_buttom.set(true);
+                                                        }}
+                                                    rows = realm.next_validators.clone() scroll_container="html" />
+                                            </table>
+                                </div>
                             </div>
-                        </div>
-                        <br />
-                    }).collect_view().into_any()
-                }}
-            }
-
-
-
-            <div class="flex-1 outline outline-gray-400 rounded p-2 ml-2">
-                <div class="font-bold border-b border-gray-400 pb-2">Unassigned Nodes</div>                                
-                {move || match floaters.get().as_deref() {
-                    None => view! { <p>"Loading..."</p> }.into_any(),
-                    Some(rows) => view! {
-                        <table class="table w-full">
-                            <TableContent
-                                selection=Selection::Single(selected_index_available)
-                                    on_selection_change={move |evt: SelectionChangeEvent<Validator>| {
-                                        log::info!("evt: {:?}", evt);
-                                        set_selected_row.write().replace(evt.row.get_untracked());
-                                        open_buttom.set(true);
-                                    }}
-                                rows = rows.clone() scroll_container="html" />
-                        </table>
-                    }.into_any()
-                }}
-            </div>
-<br />
-          { move || get_selected_row.get().map(|selected_row| {
-                let title = format!("Validator Details {}", selected_row.host_name);
-                pop_up_title.set(title);
-                view! {
-                    <BottomModal open=open_buttom title=pop_up_title.clone() >
-                            <ValidatorDetails validator=selected_row />
-                    </BottomModal>
+                            <br />
+                        }).collect_view().into_any()
+                    }}
                 }
-            }) }
 
-    }
+
+
+                <div class="flex-1 outline outline-gray-400 rounded p-2 ml-2">
+                    <div class="font-bold border-b border-gray-400 pb-2">Unassigned Nodes</div>
+                    {move || match floaters.get().as_deref() {
+                        None => view! { <p>"Loading..."</p> }.into_any(),
+                        Some(rows) => view! {
+                            <table class="table w-full">
+                                <TableContent
+                                    selection=Selection::Single(selected_index_available)
+                                        on_selection_change={move |evt: SelectionChangeEvent<Validator>| {
+                                            log::info!("evt: {:?}", evt);
+                                            set_selected_row.write().replace(evt.row.get_untracked());
+                                            open_buttom.set(true);
+                                        }}
+                                    rows = rows.clone() scroll_container="html" />
+                            </table>
+                        }.into_any()
+                    }}
+                </div>
+    <br />
+              { move || get_selected_row.get().map(|selected_row| {
+                    let title = format!("Validator Details {}", selected_row.host_name);
+                    pop_up_title.set(title);
+                    view! {
+                        <BottomModal open=open_buttom title=pop_up_title.clone() >
+                                <ValidatorDetails validator=selected_row />
+                        </BottomModal>
+                    }
+                }) }
+
+        }
 }
 
 pub async fn get_validators_for_all_realms(ctx: &WebCallBackContext) -> Vec<Realm> {
@@ -347,10 +347,12 @@ pub async fn get_validators(
         let socket_address = format!("{}:{}", ip_address, v.port);
         let (guest_ip, socket_address) = match socket_address.contains("127.0.0.1") {
             true => (socket_address.clone(), format!(":{}", v.port)),
-            false => (socket_address.split(":").nth(0).unwrap().to_string(), ip_address.to_string()),
+            false => (
+                socket_address.split(":").nth(0).unwrap().to_string(),
+                ip_address.to_string(),
+            ),
         };
 
-        
         // log::info!("Guest IP: {:?} / {:?}", guest_ip, gs.staker_names.get());
         let info = gs
             .staker_names

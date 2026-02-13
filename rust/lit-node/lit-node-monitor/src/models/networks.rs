@@ -234,12 +234,32 @@ fn add_facet_details(
 
 async fn get_network_config(network_name: &str) -> Result<(NetworkConfig, Facets), String> {
     let (ansible_src_url, network_src_url, gcp_project) = match network_name {
-        "naga-test" => ("20-test-decentralized/20-naga_test.yml", "naga-test", "naga-test-feebcdc"),
+        "naga-test" => (
+            "20-test-decentralized/20-naga_test.yml",
+            "naga-test",
+            "naga-test-feebcdc",
+        ),
         "naga-prod" => ("10-prod/10-naga.yml", "naga-prod", "naga-prod-97fc60d"),
-        "naga-dev" => ("30-test-centralized/30-naga_dev.yml", "naga-dev", "naga-dev-4c8c2f8"    ),
-        "naga-staging" => ("15-staging/15-naga_staging.yml", "naga-staging", "naga-staging-cb97ce8"),
-        "naga-proto" => ("10-prod/10-naga_proto.yml", "naga-proto", "naga-proto-7481c40"),
-        "internalDev" => ("20-test-decentralized/20-internaldev.yml", "internal-dev", "quickstart-1572387045298"   ),
+        "naga-dev" => (
+            "30-test-centralized/30-naga_dev.yml",
+            "naga-dev",
+            "naga-dev-4c8c2f8",
+        ),
+        "naga-staging" => (
+            "15-staging/15-naga_staging.yml",
+            "naga-staging",
+            "naga-staging-cb97ce8",
+        ),
+        "naga-proto" => (
+            "10-prod/10-naga_proto.yml",
+            "naga-proto",
+            "naga-proto-7481c40",
+        ),
+        "internalDev" => (
+            "20-test-decentralized/20-internaldev.yml",
+            "internal-dev",
+            "quickstart-1572387045298",
+        ),
         _ => return Err("Network Not Found.".to_string()),
     };
 
@@ -252,10 +272,11 @@ async fn get_network_config(network_name: &str) -> Result<(NetworkConfig, Facets
 
     network_data.chain_api_url = format!(
         "{}{}",
-        chain_api_url.replace("yellowstone-rpc", "yellowstone-explorer").replace("lit-chain-rpc", "lit-chain-explorer"),
+        chain_api_url
+            .replace("yellowstone-rpc", "yellowstone-explorer")
+            .replace("lit-chain-rpc", "lit-chain-explorer"),
         "/api"
     );
-
 
     Ok((
         NetworkConfig {
@@ -460,7 +481,7 @@ pub async fn get_common_addresses(
         crate::contracts::staking::Staking::node_monitor_load(cfg, staking_contract_address)
             .unwrap();
 
-    let validators = crate::pages::validators::get_validators(&staking, true,  1).await;
+    let validators = crate::pages::validators::get_validators(&staking, true, 1).await;
 
     for validator in validators {
         common_addresses.insert(validator.wallet_address, validator.host_name);

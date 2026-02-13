@@ -50,7 +50,7 @@ pub fn Home() -> impl IntoView {
 
     view! {
         <Title text="Lit Node Explorer"/>
-         <Card class="min-w-full"> 
+         <Card class="min-w-full">
             <CardHeader>
                 <b class="card-title">Lit Network Selection</b>
             </CardHeader>

@@ -9,11 +9,7 @@ impl TableClassesProvider for TailwindClassesPreset {
     }
 
     fn thead_row(&self, template_classes: &str) -> String {
-        format!(
-            "{} {}",
-            "text-gray-700 ",
-            template_classes
-        )
+        format!("{} {}", "text-gray-700 ", template_classes)
     }
 
     fn thead_cell(&self, sort: ColumnSort, template_classes: &str) -> String {

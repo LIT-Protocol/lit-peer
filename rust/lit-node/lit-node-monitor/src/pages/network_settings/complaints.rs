@@ -24,15 +24,9 @@ pub struct ComplaintConfig {
     pub kick_penalty_demerits: u128,
 }
 
-
-
 #[component]
 pub fn Complaints() -> impl IntoView {
-    
-    let data = LocalResource::new( || async move { 
-         get_complaint_configs().await  });
-
-    
+    let data = LocalResource::new(|| async move { get_complaint_configs().await });
 
     crate::utils::set_header("Complaints");
     view! {

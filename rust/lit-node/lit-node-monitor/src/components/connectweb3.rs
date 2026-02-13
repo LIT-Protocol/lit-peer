@@ -16,7 +16,7 @@ pub fn ConnectWeb3() -> impl IntoView {
     view! {
         <div>
             { move || format!("{} : block # {} ",  gs.active_network().chain_name, gs.block.get()) }
-        
+
             <Button on:click=move |_| { ec2.connect(WalletType::Injected); }>
                 { move || if ec.is_connected() {
                     format!("{:?}", &ec.accounts().unwrap()[0])[..6].to_string() }

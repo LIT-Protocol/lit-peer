@@ -5,7 +5,6 @@ use crate::pages::validators::Validator;
 
 #[component]
 pub fn ValidatorDetails(validator: Validator) -> impl IntoView {
-
     // lit-chain-explorer.litprotocol.com
     // yellowstone-explorer.litprotocol.com
     view! {
