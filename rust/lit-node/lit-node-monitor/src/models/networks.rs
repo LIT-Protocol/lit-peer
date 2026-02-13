@@ -335,7 +335,6 @@ pub async fn get_staker_names() -> Result<HashMap<String, String>, String> {
     let _ = get_staker_names_from_url("01-nodes-internal/01-ovh.yml", &mut stakers).await;
     let _ = get_staker_names_from_url("01-nodes-internal/01-dedicated.yml", &mut stakers).await;
     let _ = get_staker_names_from_url("01-nodes-internal/01-leaseweb.yml", &mut stakers).await;
-    let _ = get_staker_names_from_url("01-nodes-internal/01-cherryserver.yml", &mut stakers).await;
 
     Ok(stakers)
 }
