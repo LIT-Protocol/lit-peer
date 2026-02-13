@@ -192,8 +192,43 @@ impl PeerState {
 
     #[instrument(level = "debug", skip_all)]
     pub async fn request_to_join(&self) -> Result<()> {
-        let Some(realm_id) = self.chain_data_config_manager.get_realm_id() else {
-            return Err(unexpected_err("No realm id set", None));
+        let realm_id = match self.chain_data_config_manager.get_realm_id() {
+            Some(realm_id) => realm_id,
+            None => {
+                trace!(
+                    "Failed to get realm id, but will try to join realm # 1, if staking amount is sufficient."
+                );
+
+                let check_staking_amounts = self
+                    .staking_contract
+                    .check_staking_amounts(self.staker_address)
+                    .call()
+                    .await;
+                match check_staking_amounts {
+                    Ok(true) => {
+                        trace!(
+                            "Staking amount is valid for a node to join a network.  Selecting realm # 1."
+                        );
+                    }
+                    Ok(false) => {
+                        return Err(unexpected_err(
+                            "Staking amount is not valid for this node to request to join."
+                                .to_string(),
+                            None,
+                        ));
+                    }
+                    Err(e) => {
+                        return Err(blockchain_err(
+                            e,
+                            Some(
+                                "Failed to check staking amount for this request to join."
+                                    .to_string(),
+                            ),
+                        ));
+                    }
+                }
+                U256::from(1)
+            }
         };
 
         let func = self

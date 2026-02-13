@@ -9461,6 +9461,7 @@ dependencies = [
  "lit-actions-ext",
  "lit-actions-grpc",
  "lit-actions-snapshot",
+ "lit-api-core",
  "lit-observability",
  "serde_json",
  "sys_traits",
@@ -9540,6 +9541,7 @@ dependencies = [
  "lit-core",
  "lit-core-derive",
  "lit-node-core",
+ "lit-observability",
  "moka 0.11.3",
  "once_cell",
  "serde",
@@ -9917,6 +9919,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -10195,7 +10198,7 @@ dependencies = [
 
 [[package]]
 name = "lit_node"
-version = "2.1.11"
+version = "2.1.13"
 dependencies = [
  "anyhow",
  "apalis",

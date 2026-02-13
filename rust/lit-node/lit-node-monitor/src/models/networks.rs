@@ -360,13 +360,12 @@ async fn get_network_data(network_src_url: &str) -> Result<ChainDetails, String>
 pub async fn get_staker_names() -> Result<HashMap<String, String>, String> {
     let mut stakers = HashMap::new();
 
-    let _ = staker_names_from("02-nodes-external/02-ovh.yml", &mut stakers).await;
-    let _ = staker_names_from("02-nodes-external/02-leaseweb.yml", &mut stakers).await;
+    let _ = get_staker_names_from_url("02-nodes-external/02-ovh.yml", &mut stakers).await;
+    let _ = get_staker_names_from_url("02-nodes-external/02-leaseweb.yml", &mut stakers).await;
+    let _ = get_staker_names_from_url("01-nodes-internal/01-ovh.yml", &mut stakers).await;
     let _ = staker_names_from("02-nodes-external/02-selfhosted.yml", &mut stakers).await;
-    let _ = staker_names_from("01-nodes-internal/01-ovh.yml", &mut stakers).await;
-    let _ = staker_names_from("01-nodes-internal/01-dedicated.yml", &mut stakers).await;
-    let _ = staker_names_from("01-nodes-internal/01-leaseweb.yml", &mut stakers).await;
-    let _ = staker_names_from("01-nodes-internal/01-cherryserver.yml", &mut stakers).await;
+    let _ = get_staker_names_from_url("01-nodes-internal/01-dedicated.yml", &mut stakers).await;
+    let _ = get_staker_names_from_url("01-nodes-internal/01-leaseweb.yml", &mut stakers).await;
 
     Ok(stakers)
 }
