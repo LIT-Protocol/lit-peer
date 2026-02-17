@@ -386,7 +386,7 @@ impl Client {
         }
     }
 
-    #[instrument(level = "debug", skip(self), err)]
+    #[instrument(level = "debug", skip(self, code), err)]
     async fn execute_js_inner(
         &mut self,
         code: Arc<String>,
