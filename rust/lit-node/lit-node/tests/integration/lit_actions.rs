@@ -386,7 +386,6 @@ pub mod litactions {
         // currently designed to handle just a single siganture.
         let mut shares = vec![];
         for resp in execute_resp {
-            info!("resp: {:?}", resp);
             assert!(resp.ok);
             let data = resp.data.as_ref().unwrap();
             info!("json_object: {:?}", data);

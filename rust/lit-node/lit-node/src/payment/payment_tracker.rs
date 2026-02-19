@@ -1,7 +1,6 @@
 use crate::payment::{batches::Batches, payed_endpoint::PayedEndpoint};
 use crate::version::{DataVersionReader, DataVersionWriter};
 use sdd::AtomicShared;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 #[derive(Default, Copy, Clone)]
@@ -88,43 +87,5 @@ impl PaymentTracker {
 
     pub fn update_node_capacity_config(&self, config: NodeCapacityConfig) {
         DataVersionWriter::store(&self.node_capacity_config, config);
-    }
-}
-
-/// A guard that automatically deregisters usage when dropped, even on panics or early returns.
-/// This ensures that payment tracking remains accurate even when exceptions occur.
-pub struct PaymentUsageGuard {
-    payment_tracker: Arc<PaymentTracker>,
-    endpoint: PayedEndpoint,
-    /// Whether the guard has already been manually deregistered (to avoid double deregistration)
-    deregistered: bool,
-}
-
-impl PaymentUsageGuard {
-    /// Creates a new guard and registers usage for the given endpoint.
-    pub fn new(payment_tracker: Arc<PaymentTracker>, endpoint: PayedEndpoint) -> Self {
-        payment_tracker.register_usage(&endpoint);
-        Self {
-            payment_tracker,
-            endpoint,
-            deregistered: false,
-        }
-    }
-
-    /// Manually deregister usage. This is optional - the guard will automatically
-    /// deregister when dropped, but you can call this explicitly if needed.
-    pub fn deregister(&mut self) {
-        if !self.deregistered {
-            self.payment_tracker.deregister_usage(&self.endpoint);
-            self.deregistered = true;
-        }
-    }
-}
-
-impl Drop for PaymentUsageGuard {
-    fn drop(&mut self) {
-        if !self.deregistered {
-            self.payment_tracker.deregister_usage(&self.endpoint);
-        }
     }
 }

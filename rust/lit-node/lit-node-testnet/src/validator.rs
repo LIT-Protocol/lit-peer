@@ -857,6 +857,7 @@ impl ValidatorCollection {
             .filter(|f| ports.contains(&f.node.port))
             .map(|v| v.socket_address())
             .collect();
+
         let nodes_for_epoch2 = nodes_for_epoch.clone();
 
         let threshold = self
