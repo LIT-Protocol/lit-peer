@@ -14,7 +14,7 @@ merge_rpc_config() {
     yq -s -y '.[0] * .[1]' "$base_cfg" "$overlay_cfg"
 }
 
-cargo build
+cargo build --release
 
 ./scripts/multi-stop.sh
 
@@ -39,7 +39,7 @@ fi
 echo "rpc-config.yaml file has $(yq -r '.chains | length' ./rpc-config.yaml) network definitions (post-update)"
 
 # Dump the binary to `lit-node/lit-node` so it's in the same folder as its config files
-cp ../target/debug/lit_node ./
+cp ../target/release/lit_node ./
 
 ./scripts/multi-start.sh
 
@@ -47,12 +47,12 @@ cp ../target/debug/lit_node ./
 # also build lit-actions
 cd ../../lit-actions
 
-cargo build
+cargo build --release
 
 sudo systemctl stop lit-actions@{0..2}
 
 sleep 2
 
-cp target/debug/lit_actions .
+cp target/release/lit_actions .
 
 sudo systemctl start lit-actions@{0..2}
