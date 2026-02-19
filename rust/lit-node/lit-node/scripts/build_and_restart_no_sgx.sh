@@ -47,7 +47,7 @@ cp ../target/debug/lit_node ./
 # also build lit-actions
 cd ../../lit-actions
 
-cargo build
+cargo build --release
 
 sudo systemctl stop lit-actions@{0..2}
 
