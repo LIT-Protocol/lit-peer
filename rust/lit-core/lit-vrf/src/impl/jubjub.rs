@@ -1,11 +1,10 @@
 use crate::*;
 use bulletproofs::JubJub;
-use elliptic_curve::{
-    Group,
-    group::{GroupEncoding, cofactor::CofactorGroup},
+use lit_rust_crypto::{
+    group::{Group, GroupEncoding, cofactor::CofactorGroup},
     hash2curve::ExpandMsgXmd,
+    jubjub::{ExtendedPoint, Scalar, SubgroupPoint},
 };
-use jubjub::{ExtendedPoint, Scalar, SubgroupPoint};
 use sha2::Digest;
 
 const JUBJUB_SUITE_STRING: u8 = 0x08;
@@ -101,7 +100,7 @@ impl VrfVerifier for JubJub {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use elliptic_curve::Field;
+    use lit_rust_crypto::ff::Field;
     use rand::SeedableRng;
 
     #[test]

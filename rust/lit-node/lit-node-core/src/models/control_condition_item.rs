@@ -7,6 +7,8 @@ pub type UnifiedAccessControlConditionItem = ControlConditionItem<UnifiedAccessC
 pub type EVMContractConditionItem = ControlConditionItem<EVMContractCondition>;
 pub type CosmosConditionItem = ControlConditionItem<CosmosCondition>;
 
+/// A control condition item - can be a condition, operator, or nested group.
+/// This is a recursive type that represents access control logic trees.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", untagged)]
 pub enum ControlConditionItem<T> {
@@ -15,6 +17,7 @@ pub enum ControlConditionItem<T> {
     Group(Vec<ControlConditionItem<T>>),
 }
 
+/// Unified access control condition supporting multiple condition types.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", untagged)]
 #[allow(clippy::enum_variant_names)]
@@ -26,6 +29,7 @@ pub enum UnifiedAccessControlCondition {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct SolRpcConditionV2Options {
     pub method: String,
@@ -38,6 +42,7 @@ pub struct SolRpcConditionV2Options {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct SolRpcConditionV2 {
     pub method: String,
@@ -59,6 +64,7 @@ pub struct SolRpcCondition {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct SolPdaInterface {
     pub offset: usize,
@@ -74,17 +80,21 @@ pub enum SolRpcConditionItemV0 {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct EVMContractCondition {
     pub contract_address: String,
     pub function_name: String,
     pub function_params: Vec<String>,
+    /// The ABI definition of the function to call
+    #[cfg_attr(feature = "openapi", schema(value_type = Object))]
     pub function_abi: ethabi::Function,
     pub chain: String,
     pub return_value_test: JsonReturnValueTestV2,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct JsonAccessControlCondition {
     pub contract_address: String,
@@ -96,12 +106,14 @@ pub struct JsonAccessControlCondition {
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct JsonAccessControlConditionOperator {
     pub operator: AccessControlBooleanOperator,
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub enum AccessControlBooleanOperator {
     And,
@@ -118,6 +130,7 @@ impl std::fmt::Display for AccessControlBooleanOperator {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct CosmosCondition {
     pub path: String,
@@ -236,6 +249,7 @@ pub struct CosmosBlockHeader {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct JsonReturnValueTest {
     pub comparator: String,
@@ -243,6 +257,7 @@ pub struct JsonReturnValueTest {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 #[serde(rename_all = "camelCase")]
 pub struct JsonReturnValueTestV2 {
     pub key: String,

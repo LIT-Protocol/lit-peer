@@ -16,14 +16,14 @@ jobs:
     name: Check Blockchain Contract ABI staleness
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           submodules: recursive
 
       - name: Install rust
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: '1.86' # keep in sync with rust/lit-node/rust-toolchain.toml
+          toolchain: '1.91' # keep in sync with rust/lit-node/rust-toolchain.toml
           components: rustfmt
 
       - name: Run Contract Updates

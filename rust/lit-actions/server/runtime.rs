@@ -20,6 +20,7 @@ use deno_runtime::{
 };
 use indoc::formatdoc;
 use lit_actions_grpc::proto::{ExecuteJsRequest, ExecuteJsResponse};
+use lit_api_core::context::HEADER_KEY_X_PRIVACY_MODE;
 use lit_observability::channels::TracedReceiver;
 use sys_traits::impls::RealSys;
 use tokio::sync::{mpsc, oneshot};
@@ -118,7 +119,15 @@ fn build_main_worker_and_inject_sdk(
     {
         let _span = info_span!("LitNamespace.js").entered();
 
-        debug!("Populating LitHeaders: {http_headers:?}");
+        if http_headers
+            .get(&HEADER_KEY_X_PRIVACY_MODE.to_ascii_lowercase())
+            .unwrap_or(&"false".to_string())
+            == "true"
+        {
+            debug!("Populating LitHeaders: **PRIVACY MODE**");
+        } else {
+            debug!("Populating LitHeaders: {http_headers:?}");
+        }
 
         // NB: globalThis.LitActions is already part of the V8 snapshot
         let mut code = formatdoc! {r#"
@@ -177,7 +186,15 @@ fn build_main_worker_and_inject_sdk(
     if let Some(params) = globals_to_inject {
         let _span = info_span!("Params.js").entered();
 
-        debug!("Injecting params as globals: {params:?}");
+        if http_headers
+            .get(&HEADER_KEY_X_PRIVACY_MODE.to_ascii_lowercase())
+            .unwrap_or(&"false".to_string())
+            == "true"
+        {
+            debug!("Injecting params as globals: **PRIVACY MODE**");
+        } else {
+            debug!("Injecting params as globals: {params:?}");
+        }
 
         let _ = params
             .as_object()

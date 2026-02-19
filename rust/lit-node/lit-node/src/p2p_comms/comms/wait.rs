@@ -103,10 +103,9 @@ pub async fn node_share_await(
                             match peers.peer_by_id(peer) {
                                 Ok(peer) => {
                                     let complaint = PeerComplaint {
-                                        complainer: complainer.socket_address.clone(),
+                                        complainer: complainer.clone(),
                                         issue: Issue::NonParticipation,
-                                        peer_node_staker_address: peer.staker_address,
-                                        peer_node_socket_address: peer.socket_address.clone(),
+                                        against_peer: peer.clone(),
                                     };
                                     if let Err(e) = params.tx_pr.send_async(complaint).await {
                                         debug!(
@@ -182,10 +181,10 @@ pub async fn node_share_await(
         // }
 
         // optionally exit early.
-        if let Some(exit_on_qty_recvd) = params.exit_on_qty_recvd {
-            if recvd_ans.len() >= exit_on_qty_recvd {
-                break 'waiting_loop;
-            };
+        if let Some(exit_on_qty_recvd) = params.exit_on_qty_recvd
+            && recvd_ans.len() >= exit_on_qty_recvd
+        {
+            break 'waiting_loop;
         };
     }
 

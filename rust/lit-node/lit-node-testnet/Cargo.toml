@@ -8,7 +8,6 @@ edition.workspace = true
 # this needs to happen at runtime, so is just a place holder for now.
 sign_test = ["lit-actions"] #enables unsafe endpoint allowing a test to use a PK directly .
 lit-actions = []
-proxy-chatter = []
 proxy_chatter = []
 lit-actions-server = ["lit-actions"] # start internal lit_actions server for testing
 testing = [] # enables testing features
@@ -42,7 +41,6 @@ regex = "1.7.1"
 # reqwest = { version = "0.11.14", default-features = false, features = ["json", "rustls-tls"] }
 # used to verify JWTs.  must match the version in the crate overrides at the bottom of this file
 sodalite = "0.4"
-serde.workspace = true
 serde_json.workspace = true
 tokio = { version = "1.23.0", features = ["rt-multi-thread"] }
 tracing = "0.1.40"
@@ -52,6 +50,7 @@ url = { version = "2", features = ["serde"] }
 lit-core = { path = "../../lit-core/lit-core", features = ["ipfs", "chrono"] }
 lit-logging = { path = "../../lit-core/lit-logging", features = ["service"] }
 lit-blockchain = { path = "../../lit-core/lit-blockchain" }
+lit-blockchain-lite = { git="https://github.com/LIT-Protocol/datil-lit-blockchain-lite.git" }
 lit-attestation = { path = "../../lit-core/lit-attestation", features = ["generate-via-service", "kdf"] }
 lit-node-common ={ path = "../lit-node-common" }
 lit-node-core = { path = "../lit-node-core" }
@@ -61,6 +60,9 @@ toxiproxy_rust = "*"
 uuid = { version = "1.4", features = ["v4"] }
 reqwest = { version = "0.11.14", default-features = false, features = ["json", "rustls-tls"] }
 
+# The explicit specifications below are necessary for fixing builds
+multiexp = "=0.4.0"
+serde = "=1.0.219"
+
 [dependencies.lit-observability]
 path = "../../lit-core/lit-observability"
-

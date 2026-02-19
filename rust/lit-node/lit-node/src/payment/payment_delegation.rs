@@ -128,8 +128,7 @@ pub async fn check_for_payment_delegation(
 
         if let Ok(Some(delegation)) =
             check_verified_siwe_for_a_payment_delegator(user_address, signed_message)
-        {
-            if let Ok((true, spending_limit)) = validate_delegation_requirements(
+            && let Ok((true, spending_limit)) = validate_delegation_requirements(
                 &delegation,
                 required_scope,
                 required_funds,
@@ -138,9 +137,8 @@ pub async fn check_for_payment_delegation(
                 ledger,
             )
             .await
-            {
-                return Ok(Some((delegation.delegator, spending_limit)));
-            }
+        {
+            return Ok(Some((delegation.delegator, spending_limit)));
         };
     }
 
@@ -445,8 +443,7 @@ fn construct_payment_delegation(
                 |x| matches!(x.as_str(), Some(s) if s.to_ascii_lowercase() == user_address_str),
             );
             let err_msg = format!(
-                "User {} is delegate: {} and delegate_to_arr: {:?}",
-                user_address_str, user_is_delegate, delegate_to_arr,
+                "User {user_address_str} is delegate: {user_is_delegate} and delegate_to_arr: {delegate_to_arr:?}",
             );
             debug!("{}", &err_msg);
             if !user_is_delegate {
@@ -501,14 +498,14 @@ fn construct_payment_delegation(
             None => {
                 return Err(siwe_conversion_error(
                     "",
-                    &format!("`{}` is not a valid payment delegation scope", s),
+                    &format!("`{s}` is not a valid payment delegation scope"),
                 ));
             }
             Some(s) => match s.parse() {
                 Err(e) => {
                     return Err(siwe_conversion_error(
                         "",
-                        &format!("`{}` is not a valid payment delegation scope", s),
+                        &format!("`{s}` is not a valid payment delegation scope"),
                     ));
                 }
                 Ok(s) => allowed_scopes.add_allowed_scope(&s),

@@ -145,7 +145,7 @@ contract PriceFeedFacet is ERC2771 {
         view
         returns (LibPriceFeedStorage.NodeCapacityConfig memory)
     {
-        return s().nodeCapacityConfig;
+        return s().nodeCapacityConfigs[0];
     }
 
     // get all the nodes and data needed to make a request.
@@ -240,7 +240,7 @@ contract PriceFeedFacet is ERC2771 {
     function setNodeCapacityConfig(
         LibPriceFeedStorage.NodeCapacityConfig memory config
     ) external onlyOwner {
-        s().nodeCapacityConfig = config;
+        s().nodeCapacityConfigs[0] = config;
     }
 
     function getLitActionPriceConfigs()

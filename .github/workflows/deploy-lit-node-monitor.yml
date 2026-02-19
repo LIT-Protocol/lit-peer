@@ -15,9 +15,8 @@ on:
         options: 
         - naga-dev
         - naga-test
-        - naga-staging
+        - naga-proto
         - naga-prod
-        - internalDev
         required: true
         default: 'naga-test'
         
@@ -45,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v5      
+        uses: actions/checkout@v6      
 
       # Install Rust Nightly Toolchain, with Clippy & Rustfmt
       - name: Install nightly Rust

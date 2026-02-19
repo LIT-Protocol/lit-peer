@@ -5,6 +5,7 @@
     ),
     publicKey,
     sigName: 'sig1',
+    keySetId,
   });
 
   const sig2 = await Lit.Actions.signAndCombineEcdsa({
@@ -13,6 +14,7 @@
     ),
     publicKey,
     sigName: 'sig2',
+    keySetId,
   });
 
   const sigs = {

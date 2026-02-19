@@ -1,13 +1,7 @@
 use super::super::PeerState;
 use crate::error::unexpected_err;
-use crate::{
-    error::{EC, Result, blockchain_err, blockchain_err_code},
-    utils::eth::EthereumAddress,
-};
-use ethers::{
-    providers::Middleware,
-    types::{U64, U256},
-};
+use crate::error::{EC, Result, blockchain_err, blockchain_err_code};
+use ethers::types::{U64, U256};
 use lit_blockchain::util::decode_revert;
 use std::time::Duration;
 use tracing::{Instrument, debug_span, instrument, trace};
@@ -198,43 +192,44 @@ impl PeerState {
 
     #[instrument(level = "debug", skip_all)]
     pub async fn request_to_join(&self) -> Result<()> {
-        let Some(realm_id) = self.chain_data_config_manager.get_realm_id() else {
-            return Err(unexpected_err("No realm id set", None));
+        let realm_id = match self.chain_data_config_manager.get_realm_id() {
+            Some(realm_id) => realm_id,
+            None => {
+                trace!(
+                    "Failed to get realm id, but will try to join realm # 1, if staking amount is sufficient."
+                );
+
+                let check_staking_amounts = self
+                    .staking_contract
+                    .check_staking_amounts(self.staker_address)
+                    .call()
+                    .await;
+                match check_staking_amounts {
+                    Ok(true) => {
+                        trace!(
+                            "Staking amount is valid for a node to join a network.  Selecting realm # 1."
+                        );
+                    }
+                    Ok(false) => {
+                        return Err(unexpected_err(
+                            "Staking amount is not valid for this node to request to join."
+                                .to_string(),
+                            None,
+                        ));
+                    }
+                    Err(e) => {
+                        return Err(blockchain_err(
+                            e,
+                            Some(
+                                "Failed to check staking amount for this request to join."
+                                    .to_string(),
+                            ),
+                        ));
+                    }
+                }
+                U256::from(1)
+            }
         };
-
-        let provider = self.staking_contract.client().provider().clone();
-        let wallet_address = self
-            .wallet_keys
-            .verifying_key()
-            .to_eth_address()
-            .map_err(|e| {
-                blockchain_err(
-                    e,
-                    Some(
-                        "Failed to convert verifying key to eth address during request to join."
-                            .to_string(),
-                    ),
-                )
-            })?;
-        let balance = provider
-            .get_balance(wallet_address, None)
-            .await
-            .map_err(|e| {
-                blockchain_err(
-                    e,
-                    Some(
-                        "Failed to get balance of attested node wallet during request to join."
-                            .to_string(),
-                    ),
-                )
-            })?;
-
-        if balance.is_zero() {
-            return Err(blockchain_err(
-                "Aborting request to join as attested node wallet balance is 0.",
-                None,
-            ));
-        }
 
         let func = self
             .staking_contract

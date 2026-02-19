@@ -36,7 +36,6 @@ use tokio::sync::mpsc;
 use tokio::task;
 
 use crate::tss::dkg::manager::DkgManager;
-use crate::version::DataVersionReader;
 use endpoint_channels::rounds_worker;
 use lit_blockchain::resolver::rpc::{ENDPOINT_MANAGER, RpcHealthcheckPoller};
 
@@ -129,14 +128,6 @@ pub fn launch(
                         _ = interval.tick() => {
                             // Continue below.
                         }
-                    }
-                    let rpc_healthcheck_enabled = DataVersionReader::read_field_unchecked(
-                        &chain_data_manager_clone2.generic_config,
-                        |generic_config| generic_config.rpc_healthcheck_enabled,
-                    );
-                    if !rpc_healthcheck_enabled
-                    {
-                        continue;
                     }
                     ENDPOINT_MANAGER.poll_rpcs_for_latency().await;
                 }

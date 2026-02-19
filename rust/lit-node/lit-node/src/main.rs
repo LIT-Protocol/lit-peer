@@ -55,6 +55,7 @@ use tracing::error;
 use tracing_subscriber::util::SubscriberInitExt;
 
 use crate::peers::grpc_client_pool::GrpcClientPool;
+use crate::utils::rocket::fairings::RequestContextCleanupFairing;
 use crate::utils::web::default_http_client;
 use rocket::Request;
 use rocket::serde::json::Value;
@@ -69,24 +70,7 @@ mod networking;
 mod p2p_comms;
 mod peers;
 mod siwe_db;
-mod utils {
-    pub mod attestation;
-    pub mod consensus;
-    pub mod contract;
-    pub mod cose_keys;
-    pub mod encoding;
-    pub mod eth;
-    pub mod future;
-    pub mod key_share_proof;
-    pub mod networking;
-    pub mod rocket;
-    pub mod serde_encrypt;
-    pub mod siwe;
-    pub mod tracing;
-    pub mod traits;
-    #[allow(dead_code)]
-    pub mod web;
-}
+mod utils;
 
 pub mod access_control;
 #[allow(dead_code)]
@@ -239,7 +223,13 @@ pub fn main() {
                 ps_tx.clone(),
                 peer_checker_tx.clone(),
             ))
-            .expect("failed to create PeerState"),
+            .unwrap_or_else(|e| {
+                error!(
+                    err = ?e,
+                    "Failed to create PeerState; aborting lit_node startup (supervisor may restart the process)"
+                );
+                panic!("failed to create PeerState: {:?}", e);
+            }),
     );
 
     let (tss_state, rx_round_manager, rx_batch_manager) = tss_state::TssState::init(
@@ -247,7 +237,13 @@ pub fn main() {
         Arc::new(cfg.clone()),
         chain_data_manager.clone(),
     )
-    .expect("Error initializing tss state");
+    .unwrap_or_else(|e| {
+        error!(
+            err = ?e,
+            "Error initializing TSS state; aborting lit_node startup (supervisor may restart the process)"
+        );
+        panic!("Error initializing tss state: {:?}", e);
+    });
 
     let delegation_usage_db = Arc::new(DelegatedUsageDB::default_with_chain_data_config_manager(
         chain_data_manager.clone(),
@@ -399,6 +395,7 @@ pub fn main() {
                 .mount("/", endpoints::versions::v1::routes())
                 // include the v2 routes
                 .mount("/", endpoints::versions::v2::routes())
+                .attach(RequestContextCleanupFairing)
                 .attach(cors)
                 .attach(AdHoc::on_response("Version Header", |_, resp| {
                     Box::pin(async move {
@@ -455,10 +452,10 @@ async fn init_observability(
 
     if !cfg.enable_observability_export()? {
         #[cfg(not(feature = "testing"))]
-        simple_logging_subscriber(cfg, Some(format!("{} -", port)))?.init();
+        simple_logging_subscriber(cfg, Some(format!("{port} -")))?.init();
 
         #[cfg(feature = "testing")]
-        simple_file_logging_subscriber(cfg, Some(format!("{} -", port)))?.init();
+        simple_file_logging_subscriber(cfg, Some(format!("{port} -",)))?.init();
 
         return Ok(ObservabilityProviders::default());
     }
@@ -518,15 +515,15 @@ impl ObservabilityProviders {
     }
 
     fn shutdown(self) {
-        if let Some(meter_provider) = self.meter_provider {
-            if let Err(e) = meter_provider.shutdown() {
-                error!("Failed to shutdown metrics provider: {:?}", e);
-            }
+        if let Some(meter_provider) = self.meter_provider
+            && let Err(e) = meter_provider.shutdown()
+        {
+            error!("Failed to shutdown metrics provider: {:?}", e);
         }
-        if let Some(logger_provider) = self.logger_provider {
-            if let Err(e) = logger_provider.shutdown() {
-                error!("Failed to shutdown logger provider: {:?}", e);
-            }
+        if let Some(logger_provider) = self.logger_provider
+            && let Err(e) = logger_provider.shutdown()
+        {
+            error!("Failed to shutdown logger provider: {:?}", e);
         }
     }
 }

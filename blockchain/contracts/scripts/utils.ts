@@ -428,13 +428,25 @@ export async function waitForProcessToExit(
 }
 
 export async function hardhatCompile() {
+  // Run shell command `npx hardhat clean` to clean the contracts.
+  // always clean first because otherwise we get stale artifacts.
+  const hardhatClean = spawn('npx hardhat clean', {
+    stdio: 'inherit',
+    shell: true,
+  });
+
+  let exitCode = await waitForProcessToExit(hardhatClean);
+  if (exitCode !== 0) {
+    throw new Error('Error cleaning contracts');
+  }
+
   // Run shell command `npx hardhat compile` to compile the contracts.
   const hardhatCompile = spawn('npx hardhat compile', {
     stdio: 'inherit',
     shell: true,
   });
 
-  const exitCode = await waitForProcessToExit(hardhatCompile);
+  exitCode = await waitForProcessToExit(hardhatCompile);
   if (exitCode !== 0) {
     throw new Error('Error compiling contracts');
   }

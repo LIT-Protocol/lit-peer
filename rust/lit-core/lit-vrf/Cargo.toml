@@ -6,25 +6,17 @@ edition.workspace = true
 [features]
 
 [dependencies]
-elliptic-curve.workspace = true
 elliptic-curve-tools.workspace = true
-bulletproofs = { git = "https://github.com/LIT-Protocol/bulletproofs.git", features = ["ed25519", "ristretto25519", "jubjub", "decaf377"], rev = "ddf11c2f593e71f24c9a3d64c56f62d82f2b5099" }
+bulletproofs = { workspace = true, features = ["ed25519", "ristretto25519", "jubjub", "decaf377"] }
+lit-rust-crypto = { workspace = true, features = ["default"] }
 serde.workspace = true
 thiserror.workspace = true
 
 # optional dependencies
-curve25519-dalek.workspace = true
-decaf377.workspace = true
-jubjub.workspace = true
-k256.workspace = true
-p256.workspace = true
-p384.workspace = true
-ed448-goldilocks-plus.workspace = true
 rfc6979 = { version = "0.4" }
 sha2.workspace = true
 sha3.workspace = true
 blake2 = "0.10"
-vsss-rs.workspace = true
 
 [dev-dependencies]
 rand.workspace = true

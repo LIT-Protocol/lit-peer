@@ -47,7 +47,7 @@ pub(crate) async fn create_oneshot_actions(
                     network_name: None,
                     no_pinning: prov_args.no_pinning,
                     push_only: true,
-                    github_repo: "LIT-Protocol/lit-assets".to_string(),
+                    github_repo: "LIT-Protocol/lit-peer".to_string(),
                     data_branch: "releases-info".to_string(),
                 };
 

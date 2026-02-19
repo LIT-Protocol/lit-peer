@@ -4,7 +4,10 @@ use crate::endpoints::{admin, pkp, web_client};
 use crate::functions::ActionStore;
 use crate::models;
 use crate::payment::delegated_usage::DelegatedUsageDB;
-use crate::payment::{payed_endpoint::PayedEndpoint, payment_tracker::PaymentTracker};
+use crate::payment::{
+    payed_endpoint::PayedEndpoint,
+    payment_tracker::{PaymentTracker, PaymentUsageGuard},
+};
 use crate::peers::grpc_client_pool::GrpcClientPool;
 use crate::tss::common::{restore::restore_state::RestoreState, tss_state::TssState};
 use crate::utils::rocket::guards::RequestHeaders;
@@ -62,7 +65,10 @@ pub(crate) async fn sign_session_key(
     tracing: Tracing,
     request_headers: RequestHeaders<'_>,
 ) -> status::Custom<Value> {
-    payment_tracker.register_usage(&PayedEndpoint::SignSessionKey);
+    let _usage_guard = PaymentUsageGuard::new(
+        payment_tracker.inner().clone(),
+        PayedEndpoint::SignSessionKey,
+    );
 
     let (json_sign_session_key_request, client_session) =
         match client_state.json_decrypt_to_session(&json_sign_session_key_request) {
@@ -80,7 +86,7 @@ pub(crate) async fn sign_session_key(
         };
     let client_session = Arc::new(client_session);
 
-    let call_result = with_timeout(
+    with_timeout(
         &cfg.load_full(),
         None,
         Some(client_session.clone()),
@@ -104,11 +110,7 @@ pub(crate) async fn sign_session_key(
             .await
         },
     )
-    .await;
-
-    payment_tracker.deregister_usage(&PayedEndpoint::SignSessionKey);
-
-    call_result
+    .await
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -147,7 +149,10 @@ pub(crate) async fn encryption_sign(
     //     Err(e) => return e.handle(),
     // };
 
-    payment_tracker.register_usage(&PayedEndpoint::EncryptionSign);
+    let _usage_guard = PaymentUsageGuard::new(
+        payment_tracker.inner().clone(),
+        PayedEndpoint::EncryptionSign,
+    );
 
     let (encryption_sign_request, client_session) =
         match client_state.json_decrypt_to_session(&encryption_sign_request) {
@@ -160,7 +165,7 @@ pub(crate) async fn encryption_sign(
         };
     let client_session = Arc::new(client_session);
 
-    let call_result = with_timeout(
+    with_timeout(
         &cfg.load_full(),
         None,
         Some(client_session.clone()),
@@ -182,11 +187,7 @@ pub(crate) async fn encryption_sign(
             .await
         },
     )
-    .await;
-
-    payment_tracker.deregister_usage(&PayedEndpoint::EncryptionSign);
-
-    call_result
+    .await
 }
 
 #[cfg(feature = "lit-actions")]
@@ -210,7 +211,8 @@ pub(crate) async fn execute_function(
     request_headers: RequestHeaders<'_>,
     action_store: &State<ActionStore>,
 ) -> status::Custom<Value> {
-    payment_tracker.register_usage(&PayedEndpoint::LitAction);
+    let _usage_guard =
+        PaymentUsageGuard::new(payment_tracker.inner().clone(), PayedEndpoint::LitAction);
 
     let (json_execution_request, client_session) =
         match client_state.json_decrypt_to_session(&json_execution_request) {
@@ -230,7 +232,7 @@ pub(crate) async fn execute_function(
 
     let actions_config = tss_state.chain_data_config_manager.get_actions_config();
 
-    let call_result = with_timeout(
+    with_timeout(
         &cfg.load_full(),
         Some(actions_config.timeout_ms),
         Some(client_session.clone()),
@@ -257,22 +259,19 @@ pub(crate) async fn execute_function(
             .await
         },
     )
-    .await;
-
-    payment_tracker.deregister_usage(&PayedEndpoint::LitAction);
-
-    call_result
+    .await
 }
 
 #[cfg(feature = "lit-actions")]
 #[post("/web/job_status/v2", format = "json", data = "<job_status_request>")]
-#[instrument(level = "debug", name = "POST /web/job_status/v2", skip_all, ret)]
+#[instrument(level = "debug", name = "POST /web/job_status/v2", skip_all, fields(correlation_id = tracing.correlation_id()), ret)]
 pub(crate) async fn get_job_status(
     job_status_request: Json<EncryptedPayload<models::JsonJobStatusRequest>>,
     action_store: &State<ActionStore>,
     tss_state: &State<Arc<TssState>>,
     cfg: &State<ReloadableLitConfig>,
     client_state: &State<Arc<ClientState>>,
+    tracing: Tracing,
 ) -> status::Custom<Value> {
     let (job_status_request, client_session) =
         match client_state.json_decrypt_to_session(&job_status_request) {
@@ -329,7 +328,8 @@ pub(crate) async fn pkp_sign(
     tracing: Tracing,
     http_client: &State<reqwest::Client>,
 ) -> status::Custom<Value> {
-    payment_tracker.register_usage(&PayedEndpoint::PkpSign);
+    let _usage_guard =
+        PaymentUsageGuard::new(payment_tracker.inner().clone(), PayedEndpoint::PkpSign);
 
     let (json_pkp_signing_request, client_session) =
         match client_state.json_decrypt_to_session(&json_pkp_signing_request) {
@@ -342,7 +342,7 @@ pub(crate) async fn pkp_sign(
         };
     let client_session = Arc::new(client_session);
 
-    let call_result = with_timeout(
+    with_timeout(
         &cfg.load_full(),
         None,
         Some(client_session.clone()),
@@ -365,11 +365,7 @@ pub(crate) async fn pkp_sign(
             .await
         },
     )
-    .await;
-
-    payment_tracker.deregister_usage(&PayedEndpoint::PkpSign);
-
-    call_result
+    .await
 }
 
 #[post("/web/admin/get_blinders/v2", format = "json", data = "<auth>")]

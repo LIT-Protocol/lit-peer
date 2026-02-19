@@ -1,7 +1,6 @@
 use std::str::FromStr;
 
-use crate::config::LitObservabilityConfig;
-use event_format::CustomEventFormatter;
+use crate::{config::LitObservabilityConfig, logging::privacy_filter::PrivacyModeLayer};
 use lit_core::{config::LitConfig, error::Result};
 use opentelemetry_otlp::TonicExporterBuilder;
 use opentelemetry_sdk::{Resource, runtime};
@@ -10,7 +9,15 @@ use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt};
 
 use crate::error::unexpected_err;
 
+mod context_layer;
 mod event_format;
+pub mod privacy_filter;
+// Re-export context layer components for use by lit-node
+pub use context_layer::{
+    ContextAwareOtelLogLayer, RequestContext, clear_task_request_context, get_request_context,
+    set_request_context,
+};
+pub use event_format::CustomEventFormatter;
 
 /// Initialize a simple `tracing` subscriber that logs to stdout.
 pub fn simple_logging_subscriber(
@@ -22,7 +29,7 @@ pub fn simple_logging_subscriber(
         .map_err(|e| unexpected_err(e.to_string(), Some("Could not create filter".to_string())))?;
     println!("Using level filter: {}", level_filter);
 
-    let custom_formatter = CustomEventFormatter::default()
+    let custom_formatter = event_format::CustomEventFormatter::default()
         .with_target(true)
         .with_source_location(true)
         .with_event_scope(false)
@@ -30,6 +37,7 @@ pub fn simple_logging_subscriber(
 
     Ok(tracing_subscriber::registry()
         .with(level_filter)
+        .with(PrivacyModeLayer)
         .with(fmt::layer().event_format(custom_formatter)))
 }
 
@@ -50,7 +58,7 @@ pub fn simple_file_logging_subscriber(
         cfg.get_string("node.staker_address")?.to_lowercase(),
     );
 
-    let custom_formatter = CustomEventFormatter::default()
+    let custom_formatter = event_format::CustomEventFormatter::default()
         .with_target(true)
         .with_source_location(true)
         .with_event_scope(false)
@@ -58,6 +66,7 @@ pub fn simple_file_logging_subscriber(
 
     return Ok(tracing_subscriber::registry()
         .with(level_filter)
+        .with(PrivacyModeLayer)
         .with(fmt::layer().event_format(custom_formatter.clone()))
         .with(fmt::layer().event_format(custom_formatter).with_writer(file_appender)));
 }

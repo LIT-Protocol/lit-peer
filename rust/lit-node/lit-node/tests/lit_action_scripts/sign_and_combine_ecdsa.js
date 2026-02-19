@@ -7,6 +7,7 @@
     toSign,
     publicKey,
     sigName,
+    keySetId,
   });
 
   Lit.Actions.setResponse({ response: JSON.stringify(signature) });

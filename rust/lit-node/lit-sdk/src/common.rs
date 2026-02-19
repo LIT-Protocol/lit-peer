@@ -37,9 +37,19 @@ impl FromStr for UrlPrefix {
             "http" => Ok(Self::Http),
             "https" => Ok(Self::Https),
             _ => Err(SdkError::Parse(format!(
-                "invalid url prefix '{}'. Expected 'http' or 'https'",
-                s
+                "invalid url prefix '{s}'. Expected 'http' or 'https'"
             ))),
+        }
+    }
+}
+
+impl UrlPrefix {
+    /// Get the url prefix from a socket address
+    pub fn from_socket_address(socket_address: &str) -> Self {
+        if socket_address.contains("127.0.0.1") || socket_address.contains("localhost") {
+            Self::Http
+        } else {
+            Self::Https
         }
     }
 }
