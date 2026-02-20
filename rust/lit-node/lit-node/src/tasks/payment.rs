@@ -154,7 +154,20 @@ pub async fn usage_processor(
                             .as_u64(),
                         global_max_capacity: config.global_max_capacity.as_u64(),
                     };
-                    payment_tracker_for_capacity.update_node_capacity_config(node_capacity_config);
+                    if node_capacity_config.global_max_capacity > 0
+                        && node_capacity_config.pkp_sign_max_concurrency > 0
+                        && node_capacity_config.enc_sign_max_concurrency > 0
+                        && node_capacity_config.lit_action_max_concurrency > 0
+                        && node_capacity_config.sign_session_key_max_concurrency > 0
+                    {
+                        payment_tracker_for_capacity
+                            .update_node_capacity_config(node_capacity_config);
+                    } else {
+                        warn!(
+                            "Invalid node capacity config ( will not update payment tracker ): {:?}",
+                            node_capacity_config
+                        );
+                    }
                 }
                 Err(e) => {
                     error!("Failed to get node capacity config: {:?}", e);

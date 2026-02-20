@@ -4,7 +4,7 @@ use sdd::AtomicShared;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-#[derive(Default, Copy, Clone)]
+#[derive(Default, Copy, Clone, Debug)]
 pub struct NodeCapacityConfig {
     pub pkp_sign_max_concurrency: u64,
     pub enc_sign_max_concurrency: u64,
