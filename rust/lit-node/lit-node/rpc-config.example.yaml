@@ -17,8 +17,6 @@ chains:
     - url: https://api.avax.network/ext/bc/C/rpc
   base:
     - url: https://mainnet.base.org
-  baseGoerli:
-    - url: https://goerli.base.org
   baseSepolia:
     - url: https://sepolia.base.org
   blast:
@@ -29,27 +27,16 @@ chains:
     - url: https://bsc-dataseed.binance.org
   celo:
     - url: https://forno.celo.org
-  cheqdMainnet:
-    - url: https://api.cheqd.net
-  cheqdTestnet:
-    - url: https://api.cheqd.network
   chronicleTestnet:
     - url: https://chain-rpc.litprotocol.com/http
-  cosmos:
-    - url: https://lcd-cosmoshub.keplr.app
-      kind: 'COSMOS'
   cronos:
-    - url: https://evm-cronos.org
+    - url: https://cronos.drpc.org
   eluvio:
-    - url: https://host-76-74-28-226.contentfabric.io/eth
+    - url: https://host-76-74-29-2.contentfabric.io/eth
   ethereum:
     - url: https://ethereum-rpc.publicnode.com
   etna:
     - url: https://etna-testnet.rpc.caldera.xyz/http
-  evmos:
-    - url: https://eth.bd.evmos.org:8545
-  evmosTestnet:
-    - url: https://eth.bd.evmos.dev:8545
   fantom:
     - url: https://rpcapi.fantom.network
   filecoin:
@@ -58,20 +45,12 @@ chains:
     - url: https://api.calibration.node.glif.io/rpc/v1
   fuji:
     - url: https://api.avax-test.network/ext/bc/C/rpc
-  goerli:
-    - url: https://ethereum-goerli-rpc.publicnode.com
-  hyperspace:
-    - url: https://api.hyperspace.node.glif.io/rpc/v1
   hardhat:
     - url: http://127.0.0.1:8545
   harmony:
     - url: https://rpc.s0.t.hmny.io
-  juno:
-    - url: https://rest.cosmos.directory/juno
   kyve:
-    - url: https://api.korellia.kyve.network
-  lineaGoerli:
-    - url: https://rpc.goerli.linea.build
+    - url: https://rpc.korellia.kyve.network
   lineaSepolia:
     - url: https://rpc.sepolia.linea.build
   lit:
@@ -87,7 +66,7 @@ chains:
   localchainArbitrum:
     - url: http://127.0.0.1:8547
   lukso:
-    - url: https://rpc.lukso.gateway.fm
+    - url: https://rpc.mainnet.lukso.network
   luksoTestnet:
     - url: https://rpc.testnet.lukso.network
   moonbaseAlpha:
@@ -100,8 +79,6 @@ chains:
     - url: https://matic-mumbai.chainstacklabs.com/
   optimism:
     - url: https://mainnet.optimism.io/
-  optimismGoerli:
-    - url: https://optimism-goerli.publicnode.com/
   polygon:
     - url: https://polygon-rpc.com
   sepolia:
@@ -118,33 +95,23 @@ chains:
   chiado:
     - url: https://rpc.chiadochain.net
   xdc:
-    - url: https://rpc.xinfin.network
+    - url: https://rpc.xdc.org
   zkSync:
     - url: https://mainnet.era.zksync.io
   zksyncTestnet:
-    - url: https://testnet.era.zksync.dev
+    - url: https://rpc.ankr.com/zksync_era_sepolia
   zkEvm:
     - url: https://zkevm-rpc.com
   zora:
     - url: https://rpc.zora.energy/
-  zoraGoerli:
-    - url: https://testnet.rpc.zora.energy
+  zoraSepolia:
+    - url: https://sepolia.rpc.zora.energy
   mantleTestnet:
-    - url: https://rpc.testnet.mantle.xyz/
+    - url: https://rpc.sepolia.mantle.xyz
   mantle:
     - url: https://rpc.mantle.xyz/
-  klaytn:
-    - url: https://klaytn.blockpi.network/v1/rpc/public
-  publicGoodsNetwork:
-    - url: https://rpc.publicgoods.network
-  waevEclipseTestnet:
-    - url: https://api.evm.waev.eclipsenetwork.xyz
-      kind: 'COSMOS'
-  waevEclipseDevnet:
-    - url: https://api.evm.waev.dev.eclipsenetwork.xyz
-      kind: 'COSMOS'
-  verifyTestnet:
-    - url: https://rpc.verify-testnet.gelato.digital
+  kaia:
+    - url: https://rpc.ankr.com/kaia
   vesuvius:
     - url: https://vesuvius-rpc.litprotocol.com
   yellowstone:
@@ -165,16 +132,10 @@ chains:
     - url: https://mainnet.skalenodes.com/v1/parallel-stormy-spica
   skaleTitanTestnet:
     - url: https://testnet.skalenodes.com/v1/aware-fake-trim-testnet
-  fhenixHelium:
-    - url: https://api.helium.fhenix.zone
-  fhenixNitrogen:
-    - url: https://api.nitrogen.fhenix.zone/
   hederaTestnet:
     - url: https://testnet.hashio.io/api
-  bitTorrentTestnet:
-    - url: https://test-rpc.bittorrentchain.io
   storyOdyssey:
-    - url: https://rpc.odyssey.storyrpc.io
+    - url: https://evm-rpc.story.testnet.dteam.tech
   campTestnet:
     - url: https://rpc.basecamp.t.raas.gelato.cloud
   campMainnet:
@@ -196,7 +157,7 @@ chains:
   rootstockTestnet:
     - url: https://public-node.testnet.rsk.co
   merlin:
-    - url: https://endpoints.omniatech.io/v1/merlin/mainnet/public
+    - url: https://merlin.blockpi.network/v1/rpc/public
   merlinTestnet:
     - url: https://testnet-rpc.merlinchain.io/
   bsquared:
@@ -211,8 +172,6 @@ chains:
     - url: https://testnet-rpc.bitlayer.org
   bob:
     - url: https://rpc.gobob.xyz
-  '5ire':
-    - url: https://rpc.5ire.network
   hederaMainnet:
     - url: https://mainnet.hashio.io/api
   load:
@@ -227,8 +186,6 @@ chains:
     - url: https://rpc.soniclabs.com
   sonicBlazeTestnet:
     - url: https://rpc.blaze.soniclabs.com
-  holeskyTestnet:
-    - url: https://rpc.holesky.ethpandaops.io
   flowEvmTestnet:
     - url: https://testnet.evm.nodes.onflow.org
   flowEvmMainnet:
