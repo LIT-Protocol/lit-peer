@@ -1,16 +1,12 @@
 extern crate dotenv;
 
 pub mod assertions;
-pub mod auth_sig;
 pub mod ecdsa;
 pub mod faults;
 pub mod interpolation;
-pub mod lit_actions;
 pub mod networking;
 pub mod peers;
-pub mod pkp;
 pub mod recovery_party;
-pub mod session_sigs;
 pub mod version;
 pub mod web_user_tests;
 

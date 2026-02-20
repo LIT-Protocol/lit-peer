@@ -197,10 +197,12 @@ impl TestnetBuilder {
 
     pub async fn build(self) -> Testnet {
         let chain = match self.selected_network {
+            #[cfg(not(feature = "lit-peer-api-server"))]
             TestNetName::Hardhat => {
                 Box::new(chain::hardhat::Hardhat::new(self.total_num_validators()))
                     as Box<dyn ChainTrait>
             }
+            #[cfg(not(feature = "lit-peer-api-server"))]
             TestNetName::Anvil => {
                 Box::new(chain::anvil::Anvil::new(self.total_num_validators(), false))
                     as Box<dyn ChainTrait>
@@ -210,9 +212,13 @@ impl TestnetBuilder {
                     as Box<dyn ChainTrait>
             }
             TestNetName::Naga => {
-                Box::new(chain::naga::Naga::new(self.total_num_validators()).await)
+                Box::new(chain::live_chain::Naga::new(self.total_num_validators()).await)
                     as Box<dyn ChainTrait>
             }
+            _ => panic!(
+                "Selected network {:?} is not supported",
+                self.selected_network
+            ),
         };
 
         let net_process = chain.start_chain().await;
@@ -226,12 +232,15 @@ impl TestnetBuilder {
         let provider_mut = Arc::make_mut(&mut provider);
         let provider = Arc::new(provider_mut.set_interval(Duration::from_millis(10)).clone());
         let mut is_from_cache = false;
-        let datil_testnet = DatilTestnet::new(
-            self.total_num_validators(),
-            self.datil_testnet_state_cache_path,
-            self.datil_testnet_contract_resolver_address,
-        )
-        .await;
+        let live_chain = self.selected_network == TestNetName::Naga;
+        let datil_testnet = match live_chain {
+            true => DatilTestnet::disabled_datil_chain().await,
+            false => DatilTestnet::new(
+                self.total_num_validators(),
+                self.datil_testnet_state_cache_path,
+                self.datil_testnet_contract_resolver_address,
+            ).await,
+        };
         // deploy the contracts via script first, so that we can read them when the testnet configuration is loaded.
         if self.selected_network == TestNetName::Anvil
             || self.selected_network == TestNetName::Hardhat
@@ -412,7 +421,7 @@ impl Testnet {
 
         let ca = match testnet.selected_network {
             TestNetName::Naga => {
-                let n = chain::naga::Naga::new(0).await;
+                let n = chain::live_chain::Naga::new(0).await;
                 Contracts::contract_addresses_from_resolver_address(
                     n.contract_resolver_address(),
                     deployer_signing_provider,

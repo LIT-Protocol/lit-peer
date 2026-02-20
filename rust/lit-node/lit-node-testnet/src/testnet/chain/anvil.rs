@@ -2,17 +2,12 @@
 use super::ChainTrait;
 use crate::testnet::NodeAccount;
 use crate::testnet::cache_data_store::CacheDataStore;
+use crate::testnet::chain::known_accounts::first_anvil_account;
+#[cfg(not(feature = "lit-peer-api-server"))]
 use crate::testnet::contracts_repo::compile_contracts;
 use command_group::{CommandGroup, GroupChild}; // node/anvil launches many processes to manage the testnet, so we need to use a group interface to manage them, as killing only the process we know about will leave zombies.
-use ethers::core::k256::SecretKey;
-use ethers::core::k256::ecdsa::SigningKey;
 use ethers::prelude::*;
-use lit_blockchain::resolver::rpc::{ENDPOINT_MANAGER, RpcHealthcheckPoller};
-use lit_core::utils::binary::hex_to_bytes;
-use lit_node_common::coms_keys::ComsKeys;
-
 use std::process::{Command, Stdio};
-use std::sync::Arc;
 use std::time::Duration;
 use tokio::net::{TcpStream, ToSocketAddrs};
 use tracing::{debug, info};
@@ -63,6 +58,7 @@ impl ChainTrait for Anvil {
     }
 
     async fn start_chain(&self) -> Option<GroupChild> {
+        #[cfg(not(feature = "lit-peer-api-server"))]
         compile_contracts();
 
         let mut cache_data_store = CacheDataStore::from_file_or_new()
@@ -176,36 +172,5 @@ async fn has_anvil_started<A: ToSocketAddrs + ?Sized>(host: &A, waitfor: Duratio
     match tokio::time::timeout(waitfor, waitfor_anvil_to_start(host)).await {
         Err(..) => false,
         Ok(..) => true,
-    }
-}
-
-pub fn first_anvil_account_private_key() -> Vec<u8> {
-    hex_to_bytes("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80").unwrap()
-}
-
-pub fn first_anvil_account(chain_id: u64, chain_name: &str) -> NodeAccount {
-    let secret = first_anvil_account_private_key();
-
-    let sk =
-        SigningKey::from(SecretKey::from_bytes(k256::FieldBytes::from_slice(&secret)).unwrap());
-    let private_key = H256::from_slice(&sk.to_bytes());
-
-    let wallet = LocalWallet::from(sk).with_chain_id(chain_id);
-    let address = wallet.address();
-    let provider = ENDPOINT_MANAGER.get_provider(chain_name).unwrap();
-
-    let signing_provider = Arc::new(SignerMiddleware::new(provider, wallet));
-
-    let coms_keys = ComsKeys::new();
-
-    let staker_address = address;
-
-    NodeAccount {
-        node_address: Address::zero(),
-        signing_provider,
-        node_address_private_key: H256::zero(),
-        staker_address_private_key: private_key,
-        staker_address,
-        coms_keys,
     }
 }

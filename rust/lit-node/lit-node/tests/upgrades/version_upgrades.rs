@@ -72,7 +72,11 @@ async fn test_version_upgrade_against_old_version(
     let actions = testnet.actions();
     let vc = validator_collection.clone();
 
-    let complete_node_set = validator_collection.active_node_set().await.unwrap();
+    let complete_node_set = validator_collection
+        .actions()
+        .active_node_set()
+        .await
+        .unwrap();
     let initial_node_versions = get_node_versions(&complete_node_set).await;
     let network_checker = NetworkIntegrityChecker::new(&end_user, &actions).await;
 
@@ -119,7 +123,7 @@ async fn test_version_upgrade_against_old_version(
             .expect("Failed to request to leave");
 
         // advance and validate
-        advance_and_validate_step(&actions, &network_checker, &vc, &upgrade_step_data, 1).await;
+        advance_and_validate_step(&actions, &network_checker, &upgrade_step_data, 1).await;
 
         validator.stop_node().expect("Failed to stop node");
 
@@ -140,7 +144,7 @@ async fn test_version_upgrade_against_old_version(
             .expect("Failed to request to join");
 
         // test that we can advance and validate the step
-        advance_and_validate_step(&actions, &network_checker, &vc, &upgrade_step_data, 0).await;
+        advance_and_validate_step(&actions, &network_checker, &upgrade_step_data, 0).await;
     }
 
     network_checker.check(&vc, &vec![]).await;
@@ -151,7 +155,6 @@ async fn test_version_upgrade_against_old_version(
 async fn advance_and_validate_step(
     actions: &Actions,
     _network_checker: &NetworkIntegrityChecker,
-    validator_collection: &ValidatorCollection,
     data: &UpgradeStepData,
     nodes_removed: usize,
 ) {
@@ -169,7 +172,7 @@ async fn advance_and_validate_step(
 
     // network_checker.check(validator_collection, &vec![]).await;
 
-    let active_node_set = validator_collection.active_node_set().await.unwrap();
+    let active_node_set = actions.active_node_set().await.unwrap();
     if nodes_removed == 0 {
         let mut node_versions = get_node_versions(&active_node_set).await;
         // Assert node versions.

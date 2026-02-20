@@ -1,11 +1,13 @@
 use crate::common::ecdsa::{sign_with_hd_key, simple_single_sign_with_hd_key};
-use crate::common::pkp::{generate_session_sigs_and_send_signing_requests, sign_with_pkp_request};
 use ethers::signers::LocalWallet;
 use ethers::signers::Signer;
 use ethers::types::Address;
 use ethers::types::{H160, TransactionRequest, U256};
 use ethers::{providers::Middleware, signers::to_eip155_v};
 use lit_blockchain::contracts::pkpnft::PKPNFT;
+use lit_node_testnet::common::pkp::{
+    generate_session_sigs_and_send_signing_requests, sign_with_pkp_request,
+};
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::{DEFAULT_DATIL_KEY_SET_NAME, DEFAULT_KEY_SET_NAME, TestSetupBuilder};
 
@@ -87,6 +89,7 @@ pub async fn test_pkp_hd_sign_and_submit_eth_txn() {
     let key_set_id = end_user.first_pkp().key_set_id.clone();
 
     let dest_wallet = LocalWallet::new(&mut OsRng).with_chain_id(testnet.chain_id);
+    let actions = testnet.actions();
 
     // get pkp address from chain
     let pkp_address_from_chain = validator_collection
@@ -137,7 +140,7 @@ pub async fn test_pkp_hd_sign_and_submit_eth_txn() {
 
     // 21000000000010
     let realm_id = U256::from(1);
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = actions.random_threshold_nodeset().await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     let epoch = validator_collection
         .actions()
@@ -629,7 +632,8 @@ pub async fn eoa_session_sig_with_mgb_pkp_signing() {
         .await
         .expect("Failed while waiting for burn PKP confirmation");
 
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let actions = testnet.actions();
+    let node_set = actions.random_threshold_nodeset().await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     let realm_id = ethers::types::U256::from(1);
     let epoch = validator_collection

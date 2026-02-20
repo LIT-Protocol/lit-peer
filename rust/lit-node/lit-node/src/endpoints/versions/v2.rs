@@ -4,10 +4,7 @@ use crate::endpoints::{admin, pkp, web_client};
 use crate::functions::ActionStore;
 use crate::models;
 use crate::payment::delegated_usage::DelegatedUsageDB;
-use crate::payment::{
-    payed_endpoint::PayedEndpoint,
-    payment_tracker::{PaymentTracker, PaymentUsageGuard},
-};
+use crate::payment::payment_tracker::{PaymentTracker, PaymentUsageGuard};
 use crate::peers::grpc_client_pool::GrpcClientPool;
 use crate::tss::common::{restore::restore_state::RestoreState, tss_state::TssState};
 use crate::utils::rocket::guards::RequestHeaders;
@@ -16,6 +13,7 @@ use lit_api_core::context::{Tracer, Tracing};
 use lit_api_core::error::ApiError;
 use lit_core::config::ReloadableLitConfig;
 use lit_node_common::client_state::ClientState;
+use lit_node_core::PayedEndpoint;
 use lit_node_core::request::EncryptionSignRequest;
 use lit_node_core::response::GenericResponse;
 use lit_node_core::{EndpointVersion, request};

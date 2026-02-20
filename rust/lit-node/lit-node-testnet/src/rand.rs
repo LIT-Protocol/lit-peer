@@ -1,6 +1,10 @@
 // This file is largely copied inspired by rand::rngs::adapter::ThreadRng
 
-use std::{cell::UnsafeCell, rc::Rc};
+use std::{
+    cell::UnsafeCell,
+    rc::Rc,
+    sync::{Arc, Mutex},
+};
 
 use rand::{Rng, rngs::StdRng};
 use rand_core::{RngCore, SeedableRng};
@@ -24,10 +28,15 @@ pub struct ThreadRng {
     rng: Rc<UnsafeCell<StdRng>>,
 }
 
-pub fn thread_rng() -> ThreadRng {
+pub fn get_thread_rng() -> ThreadRng {
     ThreadRng {
         rng: THREAD_RNG_KEY.with(|rng| rng.clone()),
     }
+}
+
+pub fn shared_rng() -> Arc<Mutex<ThreadRng>> {
+    let shared_rng = Arc::new(Mutex::new(get_thread_rng()));
+    shared_rng
 }
 
 impl RngCore for ThreadRng {

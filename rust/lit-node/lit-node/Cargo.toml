@@ -108,8 +108,8 @@ serde_json.workspace = true
 serde_bare = "0.5"
 sha2 = "0.10"
 sha3 = "0.10"
-siwe = "0.5.0"
-siwe-recap = { git = "https://github.com/spruceid/siwe-recap" }
+siwe.workspace = true
+siwe-recap.workspace = true
 sodalite = "0.4"
 solana-client = "1.9.19"
 solana-program = "1.9.19"
@@ -125,7 +125,7 @@ tonic = { version = "0.12", features = [
     "tls-roots",
     "tls-webpki-roots",
 ] }
-tracing = "0.1.40"
+tracing.workspace = true
 tracing-opentelemetry = { version = "0.25" }
 tracing-subscriber = { version = "0.3" }
 ucan-capabilities-object = "0.1"

@@ -1,5 +1,5 @@
-use crate::common::pkp::generate_data_to_send;
-use crate::common::pkp::sign_message_with_pkp_custom_headers;
+use lit_node_testnet::common::pkp::generate_data_to_send;
+use lit_node_testnet::common::pkp::sign_message_with_pkp_custom_headers;
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::{
     get_identity_pubkeys_from_node_set, hit_ports_with_json_body_join_all,
@@ -47,10 +47,10 @@ pub async fn sign_with_hd_key(
     signing_scheme: SigningScheme,
     stakers_to_include: &Vec<&Validator>,
 ) -> bool {
-    let actions = validator_collection.actions();
+    let actions = validator_collection.actions().clone();
     let wallet = end_user.wallet.clone();
 
-    let node_set = validator_collection
+    let node_set = actions
         .partially_random_threshold_nodeset(stakers_to_include)
         .await;
     let node_set_with_keys = get_identity_pubkeys_from_node_set(&node_set).await;

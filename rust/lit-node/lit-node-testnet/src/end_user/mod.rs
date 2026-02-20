@@ -8,6 +8,7 @@ use k256::ecdsa::SigningKey;
 use lit_blockchain::contracts::ledger::{Ledger, LedgerErrors};
 use lit_blockchain::contracts::price_feed::{PriceFeed, PriceFeedErrors};
 use lit_blockchain::util::decode_revert;
+use lit_core::utils::binary::bytes_to_hex;
 use lit_node_core::AuthMethod;
 use tracing::{error, info, trace};
 
@@ -17,8 +18,8 @@ use rand_core::OsRng;
 use std::sync::Arc;
 use std::time::Duration;
 const RETRY_WAIT_TIME_MS: u64 = 200;
-const INITIAL_FUNDING_AMOUNT: &str = "100000000000000000000";
-// const INITIAL_FUNDING_AMOUNT: &str = "2000000000000000000";
+// pub const INITIAL_FUNDING_AMOUNT: &str = "100000000000000000000";
+pub const INITIAL_FUNDING_AMOUNT: &str = "2000000000000000000";
 
 #[derive(Clone, Debug)]
 pub struct EndUser {
@@ -59,6 +60,22 @@ impl EndUser {
         }
     }
 
+    pub fn from_secret_key(testnet: &Testnet, secret_key: &[u8]) -> Result<Self, anyhow::Error> {
+        let wallet = LocalWallet::from_bytes(secret_key)
+            .map_err(|e| anyhow::anyhow!("Failed to create wallet from secret key: {:?}", e))?
+            .with_chain_id(testnet.chain_id);
+        let provider = testnet.provider.clone();
+        let datil_provider = testnet.datil_testnet.provider.clone();
+        Ok(Self {
+            wallet: wallet,
+            actions: testnet.actions().clone(),
+            pkps: vec![],
+            provider,
+            datil_provider,
+            datil_deployer_provider: testnet.datil_testnet.deployer_signing_provider.clone(),
+        })
+    }
+
     pub fn actions(&self) -> &Actions {
         &self.actions
     }
@@ -69,6 +86,17 @@ impl EndUser {
         }
 
         &self.pkps[0]
+    }
+
+    pub async fn lookup_pkp_by_token_id(&self, token_id: U256) -> Result<String, anyhow::Error> {
+        let pubkey = self
+            .actions
+            .contracts()
+            .pkpnft
+            .get_pubkey(token_id)
+            .call()
+            .await?;
+        Ok(bytes_to_hex(&pubkey))
     }
 
     pub fn pkp_by_token_id(&self, token_id: U256) -> &Pkp {
@@ -92,8 +120,12 @@ impl EndUser {
     pub async fn set_wallet_balance(&self, amount: &str) {
         let provider = self.actions.deployer_signing_provider();
         self.set_wallet_balance_internal(amount, provider).await;
-        let provider = self.datil_deployer_provider.clone();
-        self.set_wallet_balance_internal(amount, provider).await;
+
+        #[cfg(not(feature = "lit-peer-api-server"))]
+        {
+            let provider = self.datil_deployer_provider.clone();
+            self.set_wallet_balance_internal(amount, provider).await;
+        }
     }
 
     async fn set_wallet_balance_internal(
@@ -126,11 +158,11 @@ impl EndUser {
 
         info!("Transaction receipt: {:?}", receipt);
         info!(
-            "Wallet balance: {:?}",
+            "End User Wallet balance: {:?}",
             provider.get_balance(self.wallet.address(), None).await
         );
         info!(
-            "Deployer provider balance: {:?}",
+            "Deployer provider remaining balance: {:?}",
             provider.get_balance(provider.address(), None).await
         );
     }
@@ -353,6 +385,12 @@ impl EndUser {
 
         let log = &receipt.logs[0];
         trace!("log: {:?}", log);
+
+        let stable_balance = ledger_contract.stable_balance(user_address).await;
+        info!(
+            "Ledger balance for user {:?} after deposit: {:?}",
+            user_address, stable_balance
+        );
     }
 
     pub async fn ledger_request_withdraw(&self, amount: I256, notes: &str) {

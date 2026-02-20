@@ -1,17 +1,19 @@
-use crate::common::auth_sig::{get_session_sigs_and_node_set_for_pkp, get_session_sigs_for_auth};
-use crate::common::lit_actions::HELLO_WORLD_LIT_ACTION_CODE;
-use crate::common::lit_actions::execute_lit_action_session_sigs;
-use crate::common::lit_actions::{assert_signed_action, lit_action_params};
+use lit_node_testnet::common::auth_sig::{
+    get_session_sigs_and_node_set_for_pkp, get_session_sigs_for_auth,
+};
+use lit_node_testnet::common::lit_actions::HELLO_WORLD_LIT_ACTION_CODE;
+use lit_node_testnet::common::lit_actions::execute_lit_action_session_sigs;
+use lit_node_testnet::common::lit_actions::{assert_signed_action, lit_action_params};
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::{NodeIdentityKey, get_identity_pubkeys_from_node_set};
 use lit_node_testnet::node_collection::{get_network_pubkey, get_network_pubkey_from_node_set};
 use lit_node_testnet::validator::{Validator, ValidatorCollection};
 use std::collections::HashMap;
 
-use crate::common::auth_sig::generate_authsig;
 use anyhow::Result;
 use ethers::signers::LocalWallet;
 use ethers::types::U256;
+use lit_node_testnet::common::auth_sig::generate_authsig;
 use rand::Rng;
 use rand_core::OsRng;
 use sha2::{Digest, Sha256};
@@ -31,7 +33,7 @@ use lit_rust_crypto::blsful::{Bls12381G2Impl, PublicKey, TimeCryptCiphertext};
 use lit_node::models::RequestConditions;
 use lit_node::utils::web::hash_access_control_conditions;
 
-use super::session_sigs::SessionSigAndNodeSet;
+use lit_node_testnet::common::session_sigs::SessionSigAndNodeSet;
 use tracing::{debug, info};
 
 #[derive(Debug, Clone)]
@@ -228,7 +230,8 @@ pub async fn test_encryption_decryption_session_sigs(
     })
     .unwrap();
 
-    let node_set = validator_collection
+    let actions = validator_collection.actions().clone();
+    let node_set = actions
         .partially_random_threshold_nodeset(validators_to_include)
         .await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
@@ -485,7 +488,8 @@ pub async fn generate_session_sigs_execute_lit_action(
         .await
         .expect("Could not add permitted address to pkp");
 
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let actions = validator_collection.actions().clone();
+    let node_set = actions.random_threshold_nodeset().await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     // Get session sig for auth
     let session_sigs_and_node_set = get_session_sigs_and_node_set_for_pkp(

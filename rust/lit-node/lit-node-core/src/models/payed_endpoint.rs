@@ -1,7 +1,7 @@
 use ethers::types::U256;
 use std::str::FromStr;
 
-use crate::error::{EC, Error, Result, parser_err_code};
+use crate::error::{Error, Result};
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum PayedEndpoint {
@@ -19,11 +19,7 @@ impl FromStr for PayedEndpoint {
             "lit_action" => Ok(PayedEndpoint::LitAction),
             "pkp_sign" => Ok(PayedEndpoint::PkpSign),
             "sign_session_key" => Ok(PayedEndpoint::SignSessionKey),
-            _ => Err(parser_err_code(
-                "",
-                EC::NodeSerializationError,
-                Some(format!("`{s}` is not a valid PayedEndpoint")),
-            )),
+            _ => Err(Error::Parse(format!("`{s}` is not a valid PayedEndpoint"))),
         }
     }
 }

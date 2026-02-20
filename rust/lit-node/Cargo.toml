@@ -49,9 +49,12 @@ scc = "3"
 sdd = "4"
 sha2 = "0.10.9"
 sha3 = "0.10.8"
+siwe = "0.5.0"
+siwe-recap = { git = "https://github.com/spruceid/siwe-recap" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 soteria-rs = { version = "0.3.1", features = ["serde", "elements"] }
+tracing = "0.1.40"
 url = { version = "2", features = ["serde"] }
 utoipa = { version = "5", features = ["chrono"] }
 zeroize = { version = "1.8", features = ["derive"] }

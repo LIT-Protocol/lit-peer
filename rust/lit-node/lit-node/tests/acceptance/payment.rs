@@ -1,23 +1,26 @@
-use crate::common::auth_sig::{
-    generate_authsig_item, get_auth_sig_for_session_sig_from_nodes,
-    get_auth_sig_with_payment_resources,
-};
-use crate::common::auth_sig::{get_session_sigs_and_node_set_for_pkp, get_session_sigs_for_auth};
-use crate::common::lit_actions::{INFINITE_LOOP_LIT_ACTION_CODE, INVALID_LIT_ACTION_CODE};
-use crate::common::session_sigs::VALID_SESSION_SIG_LIT_ACTION_CODE;
 use crate::common::web_user_tests::{
     assert_decrypted, generate_session_sigs_execute_lit_action, prepare_test_encryption_parameters,
     retrieve_decryption_key_session_sigs,
 };
 use ethers::signers::Signer;
 use ethers::types::{I256, U256};
-use lit_node::payment::payed_endpoint::PayedEndpoint;
-use lit_node::utils::encoding;
-use lit_node::utils::encoding::bytes_to_hex;
+use lit_core::utils::binary::bytes_to_hex;
+use lit_node_core::PayedEndpoint;
 use lit_node_core::{
     LitAbility, LitResourceAbilityRequest, LitResourceAbilityRequestResource, LitResourcePrefix,
     NodeSet,
 };
+use lit_node_testnet::common::auth_sig::{
+    generate_authsig_item, get_auth_sig_for_session_sig_from_nodes,
+    get_auth_sig_with_payment_resources,
+};
+use lit_node_testnet::common::auth_sig::{
+    get_session_sigs_and_node_set_for_pkp, get_session_sigs_for_auth,
+};
+use lit_node_testnet::common::lit_actions::{
+    INFINITE_LOOP_LIT_ACTION_CODE, INVALID_LIT_ACTION_CODE,
+};
+use lit_node_testnet::common::session_sigs::VALID_SESSION_SIG_LIT_ACTION_CODE;
 use lit_node_testnet::node_collection::{get_identity_pubkeys_from_node_set, get_network_pubkey};
 use lit_node_testnet::testnet::actions::Actions;
 use lit_node_testnet::{DEFAULT_KEY_SET_NAME, TestSetupBuilder};
@@ -294,7 +297,7 @@ async fn test_all_payment_methods_for_user() {
     );
 
     // 1.6. Charge for SignSessionKey
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = actions.random_threshold_nodeset().await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
 
     let auth_sig = generate_authsig_item(&self_pay_user.wallet).await.unwrap();
@@ -303,7 +306,7 @@ async fn test_all_payment_methods_for_user() {
 
     let signing_key = ed25519_dalek::SigningKey::generate(&mut OsRng);
     let verifying_key = signing_key.verifying_key();
-    let session_pub_key = encoding::bytes_to_hex(verifying_key.to_bytes());
+    let session_pub_key = bytes_to_hex(verifying_key.to_bytes());
 
     info!("Starting test: only_sign_session_sig_with_lit_actions");
 
@@ -1529,7 +1532,7 @@ pub async fn do_setup_testnet_for_payments(
         .await;
 
     let actions = testnet.actions().clone();
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let node_set = actions.random_threshold_nodeset().await;
 
     (testnet, validator_collection, actions, node_set)
 }

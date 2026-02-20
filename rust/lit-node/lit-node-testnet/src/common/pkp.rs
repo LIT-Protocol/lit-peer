@@ -1,4 +1,6 @@
 use crate::common::auth_sig::{generate_authsig_item, get_session_sigs_for_auth};
+use crate::end_user::EndUser;
+use crate::node_collection::NodeIdentityKey;
 use anyhow::Result;
 use ecdsa::{RecoveryId, Signature};
 use ethers::core::k256::ecdsa::SigningKey;
@@ -11,14 +13,12 @@ use lit_node_core::{
     request::JsonPKPSigningRequest,
     response::{GenericResponse, JsonPKPSigningResponse},
 };
-use lit_node_testnet::end_user::EndUser;
-use lit_node_testnet::node_collection::NodeIdentityKey;
 use lit_rust_crypto::k256;
 use lit_sdk::signature::combine_and_verify_signature_shares;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{debug, info};
+use tracing::{debug, info, trace};
 
 // copied from lit_ecdsa_wasm_combine
 #[derive(Clone, Serialize, Deserialize, Debug)]

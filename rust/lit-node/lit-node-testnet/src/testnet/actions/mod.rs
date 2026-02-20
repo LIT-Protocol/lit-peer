@@ -19,9 +19,11 @@ pub mod config;
 pub mod epochs;
 pub mod keysets;
 pub mod network_state;
+pub mod node_set;
 pub mod payment_delegation;
 pub mod realms;
 pub mod validators;
+
 #[derive(Clone, Debug)]
 pub struct Actions {
     contracts: Contracts,

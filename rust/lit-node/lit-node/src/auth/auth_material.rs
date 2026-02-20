@@ -756,8 +756,8 @@ mod tests {
 
 #[cfg(test)]
 mod multiple_auth_sigs_tests {
-    use crate::models::auth::SessionKeySignedMessageV2;
     use ethers::types::U256;
+    use lit_node_core::SessionKeySignedMessageV2;
     use lit_node_core::{
         AuthMaterialType, JsonAuthSig, LitAbility, LitResourceAbilityRequest,
         LitResourceAbilityRequestResource, LitResourcePrefix, MultipleAuthSigs,

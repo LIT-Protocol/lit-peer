@@ -1,3 +1,4 @@
+use crate::node_collection::NodeIdentityKey;
 use anyhow::Result;
 use ethers::utils::keccak256;
 use lit_node_core::SigningScheme;
@@ -5,9 +6,6 @@ use lit_node_core::request::JsonPKPSigningRequest;
 use lit_node_core::response::GenericResponse;
 use lit_node_core::response::JsonPKPSigningResponse;
 use lit_node_core::{AuthMethod, AuthSigItem, JsonAuthSig, NodeSet};
-use lit_node_testnet::end_user::EndUser;
-use lit_node_testnet::node_collection::NodeIdentityKey;
-use lit_node_testnet::{TestSetupBuilder, testnet::Testnet, validator::ValidatorCollection};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -122,14 +120,6 @@ pub struct JsonSignSessionKeyResponseShare {
     pub bigr: String,
     pub public_key: String,
     pub sig_name: String,
-}
-
-pub async fn init_test() -> (Testnet, ValidatorCollection, EndUser) {
-    crate::common::setup_logging();
-    let (testnet, validator_collection, end_user) = TestSetupBuilder::default().build().await;
-
-    end_user.deposit_to_first_pkp_ledger_default().await;
-    (testnet, validator_collection, end_user)
 }
 
 pub async fn get_pkp_sign(

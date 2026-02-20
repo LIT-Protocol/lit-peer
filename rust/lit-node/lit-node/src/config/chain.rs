@@ -21,13 +21,13 @@ use crate::error::{
 };
 use crate::models::{KeySetConfig, PeerValidator};
 use crate::payment::dynamic::{LitActionPriceConfig, NodePriceMeasurement};
-use crate::payment::payed_endpoint::PayedEndpoint;
 use crate::peers::peer_reviewer::MAX_COMPLAINT_REASON_VALUE;
 use crate::tasks::peer_checker::PeerCheckerMessage;
 use crate::tasks::utils::generate_hash;
 use crate::utils::networking::get_web_addr_from_chain_info;
 use crate::version::{DataVersionReader, DataVersionWriter};
 use lit_node_common::config::{CFG_KEY_CHAIN_POLLING_INTERVAL_MS_DEFAULT, LitNodeConfig};
+use lit_node_core::PayedEndpoint;
 use lit_node_core::{CurveType, LitActionPriceComponent};
 
 #[derive(PartialEq, Debug)]

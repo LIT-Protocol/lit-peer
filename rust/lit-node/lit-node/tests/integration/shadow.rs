@@ -1,8 +1,4 @@
-use crate::common::auth_sig::get_session_sigs_for_auth;
 use crate::common::ecdsa::simple_single_sign_with_hd_key;
-use crate::common::pkp::{
-    decode_endpoint_responses, generate_session_sigs_and_send_signing_requests,
-};
 use crate::common::web_user_tests::{
     assert_decrypted, prepare_test_encryption_parameters,
     retrieve_decryption_key_session_sigs_with_version,
@@ -13,6 +9,10 @@ use lit_node::utils::web::hash_access_control_conditions;
 use lit_node_core::{
     AccessControlConditionResource, LitAbility, LitResource, LitResourceAbilityRequest,
     LitResourceAbilityRequestResource, SigningScheme, response::JsonPKPSigningResponse,
+};
+use lit_node_testnet::common::auth_sig::get_session_sigs_for_auth;
+use lit_node_testnet::common::pkp::{
+    decode_endpoint_responses, generate_session_sigs_and_send_signing_requests,
 };
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::{get_identity_pubkeys_from_node_set, get_network_pubkey};
@@ -191,12 +191,12 @@ async fn shadow_splicing_sign_encrypt() {
         ability: LitAbility::AccessControlConditionDecryption.to_string(),
     };
 
-    let realm1_nodes = validator_collection
+    let realm1_nodes = actions
         .random_threshold_nodeset_with_realm_id(realm1_id.as_u64(), &vec![])
         .await;
     let realm1_node_set = get_identity_pubkeys_from_node_set(&realm1_nodes).await;
 
-    let realm2_nodes = validator_collection
+    let realm2_nodes = actions
         .random_threshold_nodeset_with_realm_id(realm2_id.as_u64(), &vec![])
         .await;
     let realm2_node_set = get_identity_pubkeys_from_node_set(&realm2_nodes).await;
@@ -350,12 +350,9 @@ async fn signature_from_realm(
     scheme: SigningScheme,
 ) -> Vec<JsonPKPSigningResponse> {
     let signer = end_user.signing_provider();
-    let epoch = validator_collection
-        .actions()
-        .get_current_epoch(realm_id)
-        .await
-        .as_u64();
-    let realm_nodes = validator_collection
+    let actions = validator_collection.actions().clone();
+    let epoch = actions.get_current_epoch(realm_id).await.as_u64();
+    let realm_nodes = actions
         .random_threshold_nodeset_with_realm_id(realm_id.as_u64(), &vec![])
         .await;
     // Verify that the new realm produces a valid signature just like the original realm

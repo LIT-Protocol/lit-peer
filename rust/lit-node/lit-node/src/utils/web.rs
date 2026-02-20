@@ -6,7 +6,6 @@ use crate::error::{unexpected_err_code, validation_err};
 use crate::models;
 use crate::models::AuthContext;
 use crate::models::RequestConditions;
-use crate::models::auth::SessionKeySignedMessageV2;
 use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::tss_state::TssState;
 use crate::utils::encoding;
@@ -23,6 +22,7 @@ use lit_core::error::Unexpected;
 use lit_core::utils::binary::bytes_to_hex;
 use lit_node_common::config::{CFG_KEY_WEB_CLIENT_TIMEOUT_SEC_DEFAULT, LitNodeConfig};
 use lit_node_core::CurveType;
+use lit_node_core::SessionKeySignedMessageV2;
 use lit_node_core::{
     AccessControlConditionItem, AuthMethod, EVMContractConditionItem, EndpointVersion, JsonAuthSig,
     SolRpcCondition, SolRpcConditionItem, SolRpcConditionItemV0, SolRpcConditionV2Options,

@@ -4,6 +4,7 @@ use crate::testnet::NodeAccount;
 use crate::testnet::cache_data_store::CacheDataStore;
 use crate::testnet::chain::ChainTrait;
 use crate::testnet::chain::anvil::Anvil;
+use crate::testnet::chain::no_chain::NoChain;
 use command_group::GroupChild;
 use ethers::core::k256::ecdsa::SigningKey;
 use ethers::middleware::SignerMiddleware;
@@ -50,6 +51,7 @@ impl DatilTestnet {
         total_num_validators: usize,
         state_cache_path: String,
         contract_resolver_address: Address,
+        
     ) -> Self {
         let datil_chain = Box::new(Anvil::new(total_num_validators, true)) as Box<dyn ChainTrait>;
         let process = datil_chain.start_chain().await;
@@ -98,6 +100,24 @@ impl DatilTestnet {
         }
     }
 
+    pub async fn disabled_datil_chain(
+    ) -> Self {
+        let datil_chain = Box::new(NoChain::new(3)) as Box<dyn ChainTrait>;
+        let process = datil_chain.start_chain().await;
+        let provider = datil_chain.rpc_provider();
+        let node_accounts = Arc::new(Vec::new());
+        let deployer_signing_provider = datil_chain.deployer().signing_provider.clone();
+        let contracts = DatilContracts::empty(deployer_signing_provider.clone()).await;
+        Self {
+            process,
+            datil_chain,
+            provider,
+            node_accounts,
+            deployer_signing_provider,
+            contracts,
+        }
+    }
+
     pub fn shutdown(&mut self) {
         match self.process.as_mut() {
             Some(process) => {
@@ -121,6 +141,11 @@ impl DatilTestnet {
             .unwrap();
 
         let cached_node_accounts_path = "tests/test_data/datil_cache/datil-node-accounts.json";
+
+        if !Path::new(cached_node_accounts_path).exists() {
+            return Arc::new(Vec::new());
+        }
+
         let cached_node_accounts = std::fs::read_to_string(cached_node_accounts_path).unwrap();
         let cached_node_accounts: Vec<DatilNodeAccount> =
             serde_json::from_str(&cached_node_accounts).unwrap();

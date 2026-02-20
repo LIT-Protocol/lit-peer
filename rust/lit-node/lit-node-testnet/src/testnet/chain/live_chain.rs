@@ -1,5 +1,5 @@
 use crate::testnet::NodeAccount;
-use crate::testnet::chain::anvil::first_anvil_account;
+use crate::testnet::chain::known_accounts::first_anvil_account;
 
 use super::super::ChainTrait;
 use command_group::GroupChild;

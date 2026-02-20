@@ -1,12 +1,4 @@
 pub mod litactions {
-    use crate::common::auth_sig::{
-        generate_authsig, get_session_sigs_and_node_set_for_pkp, get_session_sigs_for_auth,
-    };
-    use crate::common::lit_actions::{
-        execute_lit_action_session_sigs, generate_pkp_check_is_permitted_pkp_action,
-        generate_session_sigs_and_execute_lit_action,
-    };
-    use crate::common::pkp::{SignedDatak256, recombine_shares_using_wasm};
     use crate::common::setup_logging;
     use base64_light::base64_encode_bytes;
     use lit_core::utils::binary::bytes_to_hex;
@@ -20,6 +12,14 @@ pub mod litactions {
         UnifiedAccessControlConditionItem, constants::CHAIN_LOCALCHAIN,
     };
     use lit_node_testnet::DEFAULT_DATIL_KEY_SET_NAME;
+    use lit_node_testnet::common::auth_sig::{
+        generate_authsig, get_session_sigs_and_node_set_for_pkp, get_session_sigs_for_auth,
+    };
+    use lit_node_testnet::common::lit_actions::{
+        execute_lit_action_session_sigs, generate_pkp_check_is_permitted_pkp_action,
+        generate_session_sigs_and_execute_lit_action,
+    };
+    use lit_node_testnet::common::pkp::{SignedDatak256, recombine_shares_using_wasm};
     use lit_node_testnet::end_user::EndUser;
     use lit_node_testnet::testnet::Testnet;
     use lit_node_testnet::validator::ValidatorCollection;
@@ -141,7 +141,7 @@ pub mod litactions {
         let file_with_path = &format!("./tests/lit_action_scripts/{file_name}.js");
 
         let actions = validator_collection.actions();
-        let node_set = validator_collection.random_threshold_nodeset().await;
+        let node_set = actions.random_threshold_nodeset().await;
         let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
 
         let realm_id = ethers::types::U256::from(1);
@@ -709,7 +709,8 @@ pub mod litactions {
         let ipfs_cid = "QmRwN9GKHvCn4Vk7biqtr6adjXMs7PzzYPCzNCRjPFiDjm";
 
         let (testnet, validator_collection, end_user) = TestSetupBuilder::default().build().await;
-        let node_set = validator_collection.random_threshold_nodeset().await;
+        let actions = testnet.actions();
+        let node_set = actions.random_threshold_nodeset().await;
         let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
         let realm_id = ethers::types::U256::from(1);
         let _epoch = validator_collection
@@ -841,7 +842,7 @@ pub mod litactions {
         let lit_action_code = std::fs::read_to_string(file_with_path).unwrap();
         let action_ipfs_id = lit_sdk::compute_ipfs_hash(&lit_action_code);
         let actions = validator_collection.actions();
-        let node_set = validator_collection.random_threshold_nodeset().await;
+        let node_set = actions.random_threshold_nodeset().await;
         let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
         let epoch = actions.get_current_epoch(U256::from(1)).await;
         let unified_access_control_conditions = Some(standard_acc(&lit_action_code, actions));

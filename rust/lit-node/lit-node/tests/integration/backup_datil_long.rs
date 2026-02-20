@@ -1,5 +1,3 @@
-use crate::common::auth_sig::get_session_sigs_for_auth;
-use crate::common::pkp::sign_with_pkp_request;
 use crate::common::recovery_party::SiweSignature;
 use crate::common::web_user_tests::{
     assert_decrypted, prepare_test_encryption_parameters,
@@ -16,6 +14,8 @@ use lit_node::auth::auth_material::JsonAuthSigExtended;
 use lit_node::endpoints::auth_sig::LITNODE_ADMIN_RES;
 use lit_node::peers::peer_state::models::NetworkState;
 use lit_node::tss::common::restore::NodeRecoveryStatus;
+use lit_node_testnet::common::auth_sig::get_session_sigs_for_auth;
+use lit_node_testnet::common::pkp::sign_with_pkp_request;
 
 use lit_node_core::{
     CurveType, JsonAuthSig, LitAbility, LitResourceAbilityRequest,
@@ -647,12 +647,10 @@ async fn test_datil_encrypt_naga_decrypt(
         datil_bls_pubkey, ciphertext
     );
 
+    let actions = validator_collection.actions().clone();
     // Decrypt by specifying the datil keyset ID against the nodes
-    let epoch = validator_collection
-        .actions()
-        .get_current_epoch(U256::from(1))
-        .await;
-    let node_set = validator_collection.random_threshold_nodeset().await;
+    let epoch = actions.get_current_epoch(U256::from(1)).await;
+    let node_set = actions.random_threshold_nodeset().await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
     let signer = end_user.signing_provider().clone();
     let session_sigs = get_session_sigs_for_auth(
@@ -702,6 +700,7 @@ async fn test_datil_keyset_pkp_signing(
     let non_owner_end_user = EndUser::new(testnet);
     non_owner_end_user.fund_wallet_default_amount().await;
     non_owner_end_user.deposit_to_wallet_ledger_default().await;
+    let actions = validator_collection.actions().clone();
 
     let datil_pkp_pubkey = end_user
         .new_pkp(DEFAULT_DATIL_KEY_SET_NAME)
@@ -736,9 +735,7 @@ async fn test_datil_keyset_pkp_signing(
     // let to_sign_as_sighash = tx.sighash();
     // let to_sign = to_sign_as_sighash.0.to_vec();
 
-    let node_set = validator_collection
-        .partially_random_threshold_nodeset(&vec![])
-        .await;
+    let node_set = actions.partially_random_threshold_nodeset(&vec![]).await;
     let node_set = get_identity_pubkeys_from_node_set(&node_set).await;
 
     let epoch = validator_collection

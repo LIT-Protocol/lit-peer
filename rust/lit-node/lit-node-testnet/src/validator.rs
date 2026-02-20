@@ -23,15 +23,12 @@ use lit_core::error::Unexpected;
 use lit_core::utils::binary::bytes_to_hex;
 use lit_core::utils::toml::SimpleToml;
 use lit_logging::config::ENV_LOGGING_TIMESTAMP;
-use lit_node_core::NodeSet;
 use lit_node_core::response::GenericResponse;
 use url::Url;
 // use lit_node::p2p_comms::web::chatter_server::chatter::chatter_service_client::ChatterServiceClient;
 use rand::Rng;
 use std::fs::File;
-use tracing::error;
-use tracing::trace;
-use tracing::{debug, info, warn};
+use tracing::{debug, error, info, trace, warn};
 
 use lit_node_core::response::SDKHandshakeResponseV0;
 
@@ -686,8 +683,9 @@ impl ValidatorCollection {
     }
 
     pub async fn stop_random_node(&mut self) -> Result<usize> {
-        let mut rng = crate::rand::thread_rng();
-        let random_node_idx_to_shutdown = rng.gen_range(0..self.size());
+        let locked_rng = crate::rand::shared_rng();
+        let mut locked_rng = locked_rng.lock().expect("Failed to lock rng");
+        let random_node_idx_to_shutdown = locked_rng.gen_range(0..self.size());
         info!("Stopping node at index: {}", random_node_idx_to_shutdown);
         self.validators[random_node_idx_to_shutdown]
             .node
@@ -806,127 +804,6 @@ impl ValidatorCollection {
             .enumerate()
             .filter(|(i, _)| random_validators_to_join.contains(i))
             .map(|(_, v)| v)
-            .collect::<Vec<_>>())
-    }
-
-    pub async fn random_threshold_nodeset(&self) -> Vec<NodeSet> {
-        self.random_threshold_nodeset_with_realm_id(1, &vec![])
-            .await
-    }
-
-    pub async fn partially_random_threshold_nodeset(
-        &self,
-        validators_to_include: &Vec<&Validator>,
-    ) -> Vec<NodeSet> {
-        self.random_threshold_nodeset_with_realm_id(1, validators_to_include)
-            .await
-    }
-
-    pub async fn random_threshold_nodeset_with_realm_id(
-        &self,
-        realm: u64,
-        validators_to_include: &Vec<&Validator>,
-    ) -> Vec<NodeSet> {
-        let mut rng = crate::rand::thread_rng();
-
-        let realm_id = U256::from(realm);
-
-        let kicked = self
-            .actions()
-            .contracts()
-            .staking
-            .get_kicked_validators(realm_id)
-            .call()
-            .await
-            .unwrap_or_else(|_e| vec![]);
-
-        let ports = self
-            .actions
-            .get_current_validator_structs(realm_id)
-            .await
-            .into_iter()
-            .filter(|f| !kicked.contains(&f.node_address))
-            .map(|v| v.port as usize)
-            .collect::<Vec<usize>>();
-
-        let mut nodes_for_epoch: Vec<String> = self
-            .get_active_validators_with_realm_id(realm)
-            .await
-            .unwrap()
-            .into_iter()
-            .filter(|f| ports.contains(&f.node.port))
-            .map(|v| v.socket_address())
-            .collect();
-        let nodes_for_epoch2 = nodes_for_epoch.clone();
-
-        let threshold = self
-            .actions
-            .contracts()
-            .staking
-            .current_validator_count_for_consensus(realm_id)
-            .await
-            .unwrap()
-            .as_usize();
-
-        let epoch = self.actions().get_current_epoch(realm_id).await.as_u64();
-        // this was using ports.len()
-        // let threshold = std::cmp::min(nodes_for_epoch.len(), self.threshold(ports.len()));
-
-        let mut node_set: Vec<NodeSet> = Vec::with_capacity(threshold);
-
-        // if we are including validators, we need to add the validators to the node set and reduce the number of remaining nodes to add
-        let validators_to_add = threshold - validators_to_include.len();
-
-        // add the specific validators to the node set - this is generally used for fault tests, and remove from the list to choose the remaining nodes
-        for validator in validators_to_include {
-            node_set.push(NodeSet {
-                socket_address: validator.socket_address(),
-                value: 1,
-            });
-
-            nodes_for_epoch.retain(|node| node != &validator.socket_address());
-        }
-
-        for _ in 0..validators_to_add {
-            let random_node = nodes_for_epoch.remove(rng.gen_range(0..nodes_for_epoch.len()));
-            let random_node_set = NodeSet {
-                socket_address: random_node,
-                value: 1,
-            };
-            node_set.push(random_node_set);
-        }
-
-        debug!(
-            "All nodes / online nodes (epoch {}): {} / {} and threshold: {}, and nodeset (l:{}): {:?}",
-            epoch,
-            self.validators.len(),
-            nodes_for_epoch2.len(),
-            threshold,
-            node_set.len(),
-            &node_set
-        );
-
-        node_set
-    }
-
-    pub fn complete_node_set(&self) -> Vec<NodeSet> {
-        self.validators
-            .iter()
-            .map(|v| NodeSet {
-                socket_address: v.public_address(),
-                value: 1,
-            })
-            .collect()
-    }
-    pub async fn active_node_set(&self) -> Result<Vec<NodeSet>> {
-        Ok(self
-            .get_active_validators()
-            .await?
-            .iter()
-            .map(|v| NodeSet {
-                socket_address: v.public_address(),
-                value: 1,
-            })
             .collect::<Vec<_>>())
     }
 }
@@ -1757,10 +1634,11 @@ fn choose_random_nums_in_range(random_nums: usize, min: usize, max: usize) -> Ve
         "Choosing {} random numbers in range {} to {}",
         random_nums, min, max
     );
-    let mut rng = crate::rand::thread_rng();
+    let locked_rng = crate::rand::shared_rng();
+    let mut locked_rng = locked_rng.lock().expect("Failed to lock rng");
     let mut random_nums_in_range = vec![];
     while random_nums_in_range.len() < random_nums {
-        let random_num = rng.gen_range(min..max);
+        let random_num = locked_rng.gen_range(min..max);
         if !random_nums_in_range.contains(&random_num) {
             random_nums_in_range.push(random_num);
         }
