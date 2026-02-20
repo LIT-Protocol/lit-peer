@@ -224,7 +224,6 @@ impl DatilTestnet {
                 &node_account.node_address_private_key.0,
             ))
             .unwrap();
-
             let node_wallet = LocalWallet::from(sk).with_chain_id(self.datil_chain.chain_id());
             let client = Arc::new(SignerMiddleware::new(self.provider.clone(), node_wallet));
 

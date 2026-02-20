@@ -2,6 +2,7 @@ use crate::models::GlobalState;
 use leptos::prelude::*;
 use leptos_meta::*;
 use thaw::*;
+use thaw::{Card, CardHeader, CardPreview};
 
 #[component]
 pub fn Home() -> impl IntoView {
@@ -49,11 +50,11 @@ pub fn Home() -> impl IntoView {
 
     view! {
         <Title text="Lit Node Explorer"/>
-         <div class="card" >
-            <div class="card-header">
+         <Card class="min-w-full">
+            <CardHeader>
                 <b class="card-title">Lit Network Selection</b>
-            </div>
-            <div class="card-body">
+            </CardHeader>
+            <CardPreview class="p-3">
 
                  <TabList selected_value = tab_value >
                 //     // { tabs() }
@@ -112,7 +113,7 @@ pub fn Home() -> impl IntoView {
                     <Input input_size=45 value=chain_name_value />
                 </Space>
 
-            </div>
-        </div>
+            </CardPreview>
+        </Card>
     }
 }

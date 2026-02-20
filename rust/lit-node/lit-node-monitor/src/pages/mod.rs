@@ -1,3 +1,4 @@
+pub mod account_inspector;
 pub mod action_playground;
 pub mod admin;
 pub mod app_settings;
@@ -7,4 +8,5 @@ pub mod history;
 pub mod home;
 pub mod network_settings;
 pub mod staking;
+pub mod status_at_time;
 pub mod validators;

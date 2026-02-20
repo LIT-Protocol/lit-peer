@@ -25,6 +25,8 @@ use staking::Staking;
 use host_commands::HostCommands;
 // use key_deriver::KeyDeriver;
 use price_feed::PriceFeed;
+
+use ledger::Ledger;
 // use wlit::WLIT;
 
 // Internal Contracts:
@@ -114,7 +116,7 @@ pub const PKP_NFT_METADATA_CONTRACT: &str = "PKP_NFT_METADATA";
 pub const ALLOWLIST_CONTRACT: &str = "ALLOWLIST";
 pub const BACKUP_RECOVERY_CONTRACT: &str = "BACKUP_RECOVERY";
 pub const PAYMENT_DELEGATION_CONTRACT: &str = "PAYMENT_DELEGATION";
-
+pub const LEDGER_CONTRACT: &str = "LEDGER";
 pub const HOST_COMMANDS_CONTRACT: &str = "HOST_COMMANDS";
 pub const DOMAIN_WALLET_REGISTRY_CONTRACT: &str = "DOMAIN_WALLET_REGISTRY";
 pub const KEY_DERIVER_CONTRACT: &str = "HD_KEY_DERIVER";
@@ -151,6 +153,22 @@ impl HostCommands<Provider<Http>> {
         cfg: &NodeMonitorLitConfig, address: H160,
     ) -> Result<HostCommands<Provider<Http>>, Box<dyn Error>> {
         Ok(HostCommands::new(address, default_local_client_no_wallet(cfg)?))
+    }
+}
+
+impl Ledger<Provider<Http>> {
+    pub fn node_monitor_load(
+        cfg: &NodeMonitorLitConfig, address: H160,
+    ) -> Result<Ledger<Provider<Http>>, Box<dyn Error>> {
+        Ok(Ledger::new(address, default_local_client_no_wallet(cfg)?))
+    }
+}
+
+impl Ledger<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>> {
+    pub fn node_monitor_load_with_signer(
+        cfg: &NodeMonitorLitConfig, address: H160, wallet_key: Option<&str>,
+    ) -> Result<Ledger<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>>, Box<dyn Error>> {
+        Ok(Ledger::new(address, default_local_client(cfg, wallet_key)?))
     }
 }
 

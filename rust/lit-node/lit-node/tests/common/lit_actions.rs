@@ -96,6 +96,7 @@ pub async fn lit_action_params(
     Option<String>,
     Option<serde_json::Value>,
     Option<Vec<AuthMethod>>,
+    String,
 )> {
     let lit_action_code = data_encoding::BASE64.encode(lit_action_code.as_bytes());
 
@@ -109,6 +110,7 @@ pub async fn lit_action_params(
         None,
         Some(serde_json::Value::Object(js_params)),
         None,
+        key_set_id,
     ))
 }
 

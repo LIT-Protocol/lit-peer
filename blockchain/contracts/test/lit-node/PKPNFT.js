@@ -160,6 +160,7 @@ describe('PKPNFT', function () {
       pkpNftMetadataContract: pkpNftMetadata,
       hdKeyDeriverContract: keyDeriver,
       pubkeyRouterContract: router,
+      pubkeyRouterViewsContract: routerViews,
       stylusContractP256: supportsArbitrumStylus(hre.network.config)
         ? hre.network.config.stylusContractsForTests.p256
         : undefined,

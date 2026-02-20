@@ -486,7 +486,7 @@ async fn only_permitted_can_sign_with_lit_action_session_sig() {
     .await
     .expect("Could not get session sigs");
 
-    let (lit_action_code, ipfs_id, js_params, auth_methods) = lit_action_params(
+    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) = lit_action_params(
         VALID_PKP_SIGNING_LIT_ACTION_CODE.to_string(),
         pubkey.clone(),
         key_set_id.clone(),
@@ -603,7 +603,7 @@ async fn sign_lit_actions_with_custom_auth_resource_lit_action_session_sig() {
         .unwrap()
     );
 
-    let (lit_action_code, ipfs_id, js_params, auth_methods) = lit_action_params(
+    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) = lit_action_params(
         CUSTOM_AUTH_RESOURCE_VALID_PKP_SIGNING_LIT_ACTION_CODE.to_string(),
         pubkey,
         key_set_id.clone(),
@@ -778,7 +778,7 @@ async fn sign_lit_actions_with_no_auth_method_lit_action_session_sig() {
         .unwrap()
     );
 
-    let (lit_action_code, ipfs_id, js_params, auth_methods) = lit_action_params(
+    let (lit_action_code, ipfs_id, js_params, auth_methods, key_set_id) = lit_action_params(
         NO_AUTH_METHOD_PKP_SIGNING_LIT_ACTION_CODE.to_string(),
         pubkey,
         key_set_id.clone(),
@@ -1351,6 +1351,7 @@ pub async fn session_sig_only_mbg_pkp() {
     end_user.deposit_to_pkp_ledger(&mgb_pkp, fund_balance).await;
 
     let auth_pubkey = mgb_pkp.pubkey;
+    let key_set_id = mgb_pkp.key_set_id;
     let auth_eth_address = mgb_pkp.eth_address;
     let key_set_id = mgb_pkp.key_set_id;
 

@@ -2,6 +2,7 @@ pub mod context;
 pub mod contract_helper;
 pub mod datetime;
 pub mod polling;
+pub mod responsive;
 pub mod rpc_calls;
 pub mod sdk_models;
 pub mod table_classes;
@@ -114,6 +115,8 @@ pub fn base_path() -> &'static str {
     return "/monitor/naga-dev";
     #[cfg(feature = "naga-staging")]
     return "/monitor/naga-staging";
+    #[cfg(feature = "naga-proto")]
+    return "/monitor/naga-proto";
     #[cfg(feature = "internalDev")]
     return "/monitor/internalDev";
 

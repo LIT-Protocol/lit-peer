@@ -23,6 +23,8 @@ contract ContractResolver is AccessControl {
     bytes32 public constant LIT_TOKEN_CONTRACT = keccak256("LIT_TOKEN");
     bytes32 public constant PUB_KEY_ROUTER_CONTRACT =
         keccak256("PUB_KEY_ROUTER"); // 0xb1f79813bc7630a52ae948bc99781397e409d0dd3521953bf7d8d7a2db6147f7
+    bytes32 public constant PUB_KEY_ROUTER_VIEWS_CONTRACT =
+        keccak256("PUB_KEY_ROUTER_VIEWS"); // 0x4c3f3e2f3e5d3e6f0c8e4f6b7a1e8c9d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8091
     bytes32 public constant PKP_NFT_CONTRACT = keccak256("PKP_NFT"); // 0xb7b4fde9944d3c13e9a78835431c33a5084d90a7f0c73def76d7886315fe87b0
     bytes32 public constant RATE_LIMIT_NFT_CONTRACT =
         keccak256("RATE_LIMIT_NFT"); // 0xb931b2719aeb2a65a5035fa0a190bfdc4c8622ce8cbff7a3d1ab42531fb1a918

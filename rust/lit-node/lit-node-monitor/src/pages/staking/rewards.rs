@@ -1,5 +1,6 @@
 use crate::utils::datetime::{format_duration, format_timestamp};
-use crate::utils::{get_address, get_lit_config};
+use crate::utils::{get_address, get_lit_config, table_classes::TailwindClassesPreset};
+use ethers::utils::format_ether;
 use ethers_providers::{Http, Provider};
 use leptos::prelude::*;
 use leptos_meta::*;
@@ -7,11 +8,12 @@ use leptos_struct_table::*;
 use lit_blockchain_lite::contracts::staking::RewardEpoch;
 use lit_blockchain_lite::contracts::staking::Staking;
 use serde::{Deserialize, Serialize};
+use thaw::{Card, CardHeader, CardPreview};
 
 #[derive(TableRow, Clone, Serialize, Deserialize)]
 #[table(
     sortable,
-    classes_provider = "BootstrapClassesPreset",
+    classes_provider = "TailwindClassesPreset",
     impl_vec_data_provider
 )]
 pub struct EpochDetails {
@@ -22,7 +24,7 @@ pub struct EpochDetails {
 #[derive(TableRow, Clone, Serialize, Deserialize)]
 #[table(
     sortable,
-    classes_provider = "BootstrapClassesPreset",
+    classes_provider = "TailwindClassesPreset",
     impl_vec_data_provider
 )]
 pub struct RewardDetails {
@@ -49,43 +51,44 @@ pub fn Rewards() -> impl IntoView {
 
     view! {
         <Title text="Current Reward Details"/>
-        <div class="card" >
-            <div class="card-header">
+        <Card class="min-w-full">
+            <CardHeader>
                 <b class="card-title">Realm #1 Epoch Details</b>
-            </div>
-            <div class="card-body">
+            </CardHeader>
+            <CardPreview class="p-3">
 
                 {move || match data.get().as_deref() {
                     None => view! { <p>"Loading..."</p> }.into_any(),
                     Some(rows) => view! {
-                        <table class="table">
+                        <table class="table w-full">
                             <TableContent rows = rows.clone() scroll_container="html"  />
                         </table>
                         }.into_any()
                 }}
-            </div>
-        </div>
+            </CardPreview>
+        </Card>
         <br/>
-        {
-            move || match reward_data.get().as_deref() {
-                None => view! { <p>"Loading..."</p> }.into_any(),
-                Some(staker_rewards) => staker_rewards.iter().map(|staker| {
+        {move || match reward_data.get().as_deref() {
+            None => view! { <p>"Loading..."</p> }.into_any(),
+            Some(staker_rewards) => {
+                let staker_rewards = staker_rewards.to_vec();
+                staker_rewards.into_iter().map(|staker| {
                     view! {
-                        <div class="card" >
-                            <div class="card-header">
+                        <Card class="min-w-full">
+                            <CardHeader>
                                 <b class="card-title">Rewards for : {staker.staker_address.clone()}</b>
-                            </div>
-                            <div class="card-body">
-                                    <table class="table">
+                            </CardHeader>
+                            <CardPreview class="p-3">
+                                    <table class="table w-full">
                                         <TableContent rows = staker.reward_details.clone() scroll_container="html"  />
                                     </table>
-                            </div>
-                        </div>
+                            </CardPreview>
+                        </Card>
                         <br/>
                     }
                 }).collect_view().into_any()
             }
-        }
+        }}
     }
 }
 
@@ -244,13 +247,25 @@ pub async fn get_reward_details(
         },
         RewardDetails {
             name: "totalStakeWeight".to_string(),
-            current: epoch_rewards.total_stake_weight.to_string(),
-            next: next_epoch_rewards.total_stake_weight.to_string(),
+            current: format_ether(epoch_rewards.total_stake_weight)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
+            next: format_ether(next_epoch_rewards.total_stake_weight)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         RewardDetails {
             name: "totalStakeRewards".to_string(),
-            current: epoch_rewards.total_stake_rewards.to_string(),
-            next: next_epoch_rewards.total_stake_rewards.to_string(),
+            current: format_ether(epoch_rewards.total_stake_rewards)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
+            next: format_ether(next_epoch_rewards.total_stake_rewards)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         RewardDetails {
             name: "slope".to_string(),
@@ -264,21 +279,35 @@ pub async fn get_reward_details(
         },
         RewardDetails {
             name: "validatorSharePrice".to_string(),
-            current: epoch_rewards.validator_share_price.to_string(),
-            next: next_epoch_rewards.validator_share_price.to_string(),
+            current: format_ether(epoch_rewards.validator_share_price)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
+            next: format_ether(next_epoch_rewards.validator_share_price)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         RewardDetails {
             name: "stakeAmount".to_string(),
-            current: epoch_rewards.stake_amount.to_string(),
-            next: next_epoch_rewards.stake_amount.to_string(),
+            current: format_ether(epoch_rewards.stake_amount)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
+            next: format_ether(next_epoch_rewards.stake_amount)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         RewardDetails {
             name: "validatorSharePriceAtLastUpdate".to_string(),
-            current: epoch_rewards
-                .validator_share_price_at_last_update
+            current: format_ether(epoch_rewards.validator_share_price_at_last_update)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
                 .to_string(),
-            next: next_epoch_rewards
-                .validator_share_price_at_last_update
+            next: format_ether(next_epoch_rewards.validator_share_price_at_last_update)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
                 .to_string(),
         },
         RewardDetails {

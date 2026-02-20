@@ -6,6 +6,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use std::time::SystemTime;
 
+use crate::testnet::actions::NetworkState;
 use crate::testnet::contracts::ContractAddresses;
 
 use super::{NodeAccount, SimpleTomlValue};

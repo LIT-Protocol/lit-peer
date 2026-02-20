@@ -58,6 +58,15 @@ pub fn App() -> impl IntoView {
         )
     });
 
+    let open_menu = RwSignal::new(true);
+    let (_open_menu_get, open_menu_set) = open_menu.split();
+    let is_mobile = RwSignal::new(crate::utils::responsive::is_mobile());
+
+    let image_url = if crate::utils::responsive::is_localhost_build() {
+        "/images/lit-logo-black.svg"
+    } else {
+        "images/lit-logo-black.svg"
+    };
     // load the networks for this instance
     move || {
         match network_loading.get() {
@@ -67,10 +76,10 @@ pub fn App() -> impl IntoView {
             .into_any(),
             Some(_data) => {
                 view! {
-
+    <style>{move || if is_mobile.get() { ".hide-lst-col { display: none; }" } else { "" }}</style>
     <Ethereum>
     <Router base=base_path()>
-        <ConfigProvider theme>
+        <ConfigProvider theme class="w-screen p-2">
             <ToasterProvider>
                 {
                     let _listener = LocalResource::new(move || async move {
@@ -78,50 +87,68 @@ pub fn App() -> impl IntoView {
                         let _r = listener::listen_for_events(&ctx).await;
                     });
                 }
-                <div class="container-fluid min-vh-100 d-flex flex-column p-2">
-                        <div class="row align-items-center pb-2">
-                            <div class="col-2">
-                                <image class="d-inline" src="images/lit-logo-black.svg" height="36" />
-                                <h5 class="text-center align-center p-2 d-inline"> Network Explorer</h5>
-                            </div>
-                            <div class="col-5">
-                                { move || page_name_signal.get() }
-                            </div>
-                            <div class="col text-end align-text-top">
-                                <ConnectWeb3 />
+                    <div class="flex pb-2">
+                        <div class="w-80 flex items-center ">
+                            <Button class="!p-0 !min-w-0" appearance=ButtonAppearance::Transparent on_click=move |_| open_menu_set.set(!open_menu.get())>
+                                <img class="size-10" src=image_url />
+                            </Button>                            
+                            <div class="flex-1 px-3">
+                                <div class="text-lg font-bold">Network Explorer </div>
+                                <div class="text-sm"> { move || page_name_signal.get() }</div>
                             </div>
                         </div>
-
-
-                    <div class="row">
-                        <div class="col-2" style="min-width: 260px;">
-                            <NavMenu page_name_signal />
+                        <div class="flex-1 justify-items-end">
+                            <ConnectWeb3 />
                         </div>
-                        <div class="col">
-                            <main>
+                    </div>
+
+                    <div class="flex">
+    
+    { move || match is_mobile.get() {
+        true => view! { <OverlayDrawer open=open_menu >
+                            <DrawerBody class="!p-0">
+                                <div class="text-lg font-bold p-5">Network Explorer Menu</div>
+                                <NavMenu page_name_signal open_menu_set />
+                            </DrawerBody>
+                        </OverlayDrawer>
+                        }.into_any(),
+        false => view! {
+                         <InlineDrawer class="flex-none" open=open_menu>
+                            <DrawerBody class="!p-0">
+                                <NavMenu page_name_signal open_menu_set />
+                            </DrawerBody>
+                        </InlineDrawer>
+                        }.into_any(),
+    } }
+                            <main class="flex-1 gao-3">
                                 <Routes fallback=|| "Not found.">
-                                    <Route path=path!(".") view=pages::home::Home />
-                                    <Route path=path!("home") view=pages::home::Home />
-                                    <Route path=path!("history") view=pages::history::History />
-                                    <Route path=path!("contracts") view=pages::network_settings::contracts::Contracts />
+                                    <Route path=path!("/") view=pages::home::Home />
+                                    <Route path=path!("/home") view=pages::home::Home />
+                                    <Route path=path!("/history") view=pages::history::History />
+                                    <Route path=path!("/status_at_time") view=pages::status_at_time::StatusAtTime />
+                                    <Route path=path!("/account_inspector") view=pages::account_inspector::AccountInspector />
+                                    <Route path=path!("/contracts") view=pages::network_settings::contracts::Contracts />
                                     <Route path=path!("events") view=pages::events::Events />
-                                    <Route path=path!("action_playground") view=pages::action_playground::ActionPlayground />
-                                    <Route path=path!("epoch") view=pages::network_settings::epoch::Epoch />
-                                    <Route path=path!("network_configuration") view=pages::network_settings::network_configuration::NetworkConfiguration />
+                                    <Route path=path!("/action_playground") view=pages::action_playground::ActionPlayground />
+                                    <Route path=path!("/epoch") view=pages::network_settings::epoch::Epoch />
+                                    <Route path=path!("/network_configuration") view=pages::network_settings::network_configuration::NetworkConfiguration />
+                                    <Route path=path!("/complaints") view=pages::network_settings::complaints::Complaints />
                                     <Route path=path!("pkps") view=pages::network_settings::pkps::PKPs />
-                                    <Route path=path!("root_keys") view=pages::network_settings::root_keys::RootKeys />
-                                    <Route path=path!("validators") view=pages::validators::Validators />
-                                    <Route path=path!("staking") view=pages::staking::staking_details::StakingDetails />
-                                    <Route path=path!("wallets") view=pages::staking::wallets::Wallets />
-                                    <Route path=path!("rewards") view=pages::staking::rewards::Rewards />
-                                    <Route path=path!("admin") view=pages::admin::realms::Realms />
-                                    <Route path=path!("validator_admin") view=pages::admin::validator_admin::ValidatorAdmin />
-                                    <Route path=path!("chain_config") view=pages::app_settings::ChainConfig />
+                                    <Route path=path!("/keysets") view=pages::network_settings::keysets::Keysets />
+                                    <Route path=path!("/root_keys") view=pages::network_settings::root_keys::RootKeys />
+                                    <Route path=path!("/restore_info") view=pages::network_settings::restore_info::BackupRecovery />
+                                    <Route path=path!("/validators") view=pages::validators::Validators />
+                                    <Route path=path!("/staking") view=pages::staking::staking_details::StakingDetails />
+                                    <Route path=path!("/wallets") view=pages::staking::wallets::Wallets />
+                                    <Route path=path!("/rewards") view=pages::staking::rewards::Rewards />
+                                    <Route path=path!("/admin") view=pages::admin::realms::Realms />
+                                    <Route path=path!("/validator_admin") view=pages::admin::validator_admin::ValidatorAdmin />
+                                    
+                                    <Route path=path!("/chain_config") view=pages::app_settings::ChainConfig />
+                                    <Route path=path!("/pricing") view=pages::network_settings::pricing::Pricing />
                                 </Routes>
                             </main>
-                        </div>
-                    </div>
-                    </div>
+                            </div>
                 </ToasterProvider>
             </ConfigProvider>
         </Router>

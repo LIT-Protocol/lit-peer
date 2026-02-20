@@ -1,4 +1,8 @@
-use crate::utils::table_classes::BootstrapClassesPreset;
+use crate::components::bottom_modal::BottomModal;
+use crate::components::validator_details::ValidatorDetails;
+use crate::components::validator_handshake::ValidatorHandshake;
+use crate::utils::sdk_models::{JsonSDKHandshakeResponse, ResponseWrapper};
+use crate::utils::table_classes::TailwindClassesPreset;
 use crate::{
     components::network_status::NetworkStatus,
     models::GlobalState,
@@ -6,22 +10,30 @@ use crate::{
     utils::{
         context::{WebCallBackContext, get_web_callback_context},
         contract_helper::get_staking,
-        sdk_models::{JsonSDKHandshakeResponse, ResponseWrapper},
     },
 };
-use ethers::types::{H160, U256};
+use ethers::types::H160;
 use ethers_providers::{Http, Provider};
 use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_struct_table::*;
 use lit_blockchain_lite::contracts::staking::Staking;
-// use lit_sdk::models::response::JsonSDKHandshakeResponse;
 use serde::{Deserialize, Serialize};
 use std::net::Ipv4Addr;
-#[derive(TableRow, Clone, Serialize, Deserialize)]
+
+#[derive(Clone, Copy, Debug)]
+pub enum ValidatorType {
+    Current = 1,
+    Next = 2,
+    Available = 3,
+}
+
+#[derive(TableRow, Clone, Serialize, Deserialize, Debug)]
 #[table(impl_vec_data_provider)]
-#[table(classes_provider = "BootstrapClassesPreset")]
+#[table(classes_provider = "TailwindClassesPreset")]
 pub struct Validator {
+    #[table(skip)]
+    pub validator_type: u8,
     #[table(title = "#")]
     pub id: u32,
     #[table(title = "Host Name")]
@@ -29,13 +41,27 @@ pub struct Validator {
     pub status: String,
     #[table(title = "Guest IP")]
     pub socket_address: String,
-    #[table(renderer = "WalletAddressRenderer")]
+    #[table(renderer = "WalletAddressRenderer", class = "hide-lst-col")]
     pub wallet_address: String,
-    #[table(renderer = "WalletAddressRenderer")]
+    #[table(renderer = "WalletAddressRenderer", class = "hide-lst-col")]
     pub staker_address: String,
+    #[table(renderer = "ValidatorStatusRenderer")]
     pub ver: String,
     #[table(skip)]
-    pub hs_status: RwSignal<Option<JsonSDKHandshakeResponse>>,
+    pub operator_address: String,
+    #[table(skip)]
+    pub commit_hash: String,
+    #[table(skip)]
+    pub network_public_key: String,
+    #[table(skip)]
+    pub node_identity_key: String,
+    #[table(skip)]
+    pub epoch: u64,
+
+    #[table(skip)]
+    pub last_realm_id: u64,
+    #[table(skip)]
+    pub last_epoch: u64,
 }
 
 #[derive(Clone)]
@@ -61,13 +87,21 @@ fn WalletAddressRenderer(
     }
 }
 
-impl Validator {
-    pub fn status2(&self) -> String {
-        let status = self.hs_status.get_untracked();
-        match status {
-            Some(status) => status.node_version,
-            None => "?".to_string(),
-        }
+#[component]
+fn ValidatorStatusRenderer(
+    class: String,
+    #[allow(unused_variables)]
+    #[prop(into)]
+    value: Signal<String>,
+    #[allow(unused_variables)] // onchange & index need to be part of the signature for now
+    row: RwSignal<Validator>,
+    #[allow(unused_variables)] // onchange & index need to be part of the signature for now
+    index: usize,
+) -> impl IntoView {
+    view! {
+        <td class=class>
+            <ValidatorHandshake row />
+        </td>
     }
 }
 
@@ -77,90 +111,116 @@ pub fn Validators() -> impl IntoView {
     let handshake_state = RwSignal::new("Loading... Please wait...".to_string());
     let realms = LocalResource::new(move || {
         let ctx = get_web_callback_context();
-        async move { get_validators_for_all_realms(&ctx, handshake_state.clone()).await }
+        async move { get_validators_for_all_realms(&ctx).await }
     });
     let floaters = LocalResource::new(move || {
         let ctx = get_web_callback_context();
-        async move { get_floaters(&ctx, handshake_state.clone()).await }
+        async move { get_floaters(&ctx).await }
     });
+    let selected_index_current = RwSignal::new(None);
+    let selected_index_next = RwSignal::new(None);
+    let selected_index_available = RwSignal::new(None);
+    let (get_selected_row, set_selected_row) = signal(None::<Validator>);
+    let open_buttom = RwSignal::new(false);
+    let pop_up_title = RwSignal::new("".to_string());
 
     view! {
-        <Title text="Validators (by realm)"/>
-        {
-        move || match realms.get().as_deref() {
-            None => view! { <p>{ move || handshake_state.get() }</p> }.into_any(),
-            Some(realms) =>
-                realms.iter().map(|realm|
-                    view! {
-                        <div class="col-12"><h4>Realm: {realm.id}</h4></div>
-                        <div class="col-12"><NetworkStatus realm_id=realm.id as u64 /></div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="card" >
-                                    <div class="card-header">
-                                        <b class="card-title">Current Nodes</b>
-                                    </div>
-                                    <div class="card-body">
-                                        <table class="table">
-                                            <TableContent rows = realm.current_validators.clone() scroll_container="html"  />
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card" >
-                                    <div class="card-header">
-                                        <b class="card-title">Next Nodes</b>
-                                    </div>
-                                    <div class="card-body">
-                                        <table class="table">
-                                            <TableContent rows = realm.next_validators.clone() scroll_container="html"  />
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
+            <Title text="Validators (by realm)"/>
+            {
+            move || match realms.get().as_deref() {
+                None => view! {
+                        <div class="flex rounded outline outline-gray-400 p-3 ml-2 items-center">
+                            <div class="flex-1 font-bold">{ move || handshake_state.get() }</div>
                         </div>
-                        <br />
-                    }).collect_view().into_any()
+                <br />
+
+
+                }.into_any(),
+                Some(realms) => {
+                    let realms2 = realms.clone();
+                    realms2.iter().map(|realm|
+                        view! {
+                            <div class="flex rounded outline outline-gray-300 p-2 ml-2 items-center">
+                                <div class="flex-1 text-lg font-bold">Realm # {realm.id}</div>
+                                <div class="flex-1 text-right pr-2"><NetworkStatus realm_id=realm.id as u64 /></div>
+                            </div>
+                            <div class="flex flex-wrap gap-2 mt-4">
+                                <div class="flex-1 outline outline-gray-300 rounded p-2 ml-2">
+                                    <div class="font-bold border-b border-color: var(--color-green-400) pb-2">Current Nodes</div>
+                                    <table class="table w-full">
+                                        <TableContent
+                                            selection=Selection::Single(selected_index_current)
+                                                on_selection_change={move |evt: SelectionChangeEvent<Validator>| {
+                                                    log::info!("evt: {:?}", evt);
+                                                    set_selected_row.write().replace(evt.row.get_untracked());
+                                                    open_buttom.set(true);
+                                                }}
+                                            rows = realm.current_validators.clone() scroll_container="html" />
+                                    </table>
+                                </div>
+                                <div class="flex-1 outline outline-gray-400 rounded p-2 ml-2">
+                                    <div class="font-bold border-b border-gray-400 pb-2">Next Nodes</div>
+
+                                    <table class="table w-full">
+                                                <TableContent
+                                                    selection=Selection::Single(selected_index_next)
+                                                        on_selection_change={move |evt: SelectionChangeEvent<Validator>| {
+                                                            log::info!("evt: {:?}", evt);
+                                                            set_selected_row.write().replace(evt.row.get_untracked());
+                                                            open_buttom.set(true);
+                                                        }}
+                                                    rows = realm.next_validators.clone() scroll_container="html" />
+                                            </table>
+                                </div>
+                            </div>
+                            <br />
+                        }).collect_view().into_any()
+                    }}
                 }
-            }
 
 
 
-        <h4>Staked Inactive</h4>
-        <div class="card" >
-            <div class="card-body">
-            <h5 class="card-title">Nodes awaiting deployment</h5>
+                <div class="flex-1 outline outline-gray-400 rounded p-2 ml-2">
+                    <div class="font-bold border-b border-gray-400 pb-2">Unassigned Nodes</div>
+                    {move || match floaters.get().as_deref() {
+                        None => view! { <p>"Loading..."</p> }.into_any(),
+                        Some(rows) => view! {
+                            <table class="table w-full">
+                                <TableContent
+                                    selection=Selection::Single(selected_index_available)
+                                        on_selection_change={move |evt: SelectionChangeEvent<Validator>| {
+                                            log::info!("evt: {:?}", evt);
+                                            set_selected_row.write().replace(evt.row.get_untracked());
+                                            open_buttom.set(true);
+                                        }}
+                                    rows = rows.clone() scroll_container="html" />
+                            </table>
+                        }.into_any()
+                    }}
+                </div>
+    <br />
+              { move || get_selected_row.get().map(|selected_row| {
+                    let title = format!("Validator Details {}", selected_row.host_name);
+                    pop_up_title.set(title);
+                    view! {
+                        <BottomModal open=open_buttom title=pop_up_title.clone() >
+                                <ValidatorDetails validator=selected_row />
+                        </BottomModal>
+                    }
+                }) }
 
-            {move || match floaters.get().as_deref() {
-                None => view! { <p>"Loading..."</p> }.into_any(),
-                Some(rows) => view! {
-                    <table class="table">
-                        <TableContent rows = rows.clone() scroll_container="html"  />
-                    </table>
-                }.into_any()
-            }}
-
-            </div>
-        </div>
-        <br />
-
-
-    }
+        }
 }
 
-pub async fn get_validators_for_all_realms(
-    ctx: &WebCallBackContext,
-    handshake_state: RwSignal<String>,
-) -> Vec<Realm> {
+pub async fn get_validators_for_all_realms(ctx: &WebCallBackContext) -> Vec<Realm> {
     let staking = get_staking(ctx).await;
-    let num_realms = U256::from(1); //  staking.num_realms().call().await.unwrap();
+    let num_realms = staking.num_realms().call().await.unwrap();
     let num_realms = num_realms.as_u64() as u8;
 
     let mut realms = Vec::new();
     for i in 1..=num_realms {
-        let current_validators = get_validators(&staking, true, i, handshake_state, true).await;
-        let next_validators = get_validators(&staking, false, i, handshake_state, true).await;
+        let current_validators = get_validators(&staking, true, i).await;
+        let next_validators = get_validators(&staking, false, i).await;
         realms.push(Realm {
             id: i,
             current_validators,
@@ -171,20 +231,15 @@ pub async fn get_validators_for_all_realms(
     realms
 }
 
-pub async fn get_floaters(
-    ctx: &WebCallBackContext,
-    handshake_state: RwSignal<String>,
-) -> Vec<Validator> {
+pub async fn get_floaters(ctx: &WebCallBackContext) -> Vec<Validator> {
     let staking = get_staking(ctx).await;
-    get_validators(&staking, true, 0, handshake_state, true).await
+    get_validators(&staking, true, 0).await
 }
 
 pub async fn get_validators(
     staking: &Staking<Provider<Http>>,
     is_current: bool,
     realm_id: u8,
-    handshake_state: RwSignal<String>,
-    do_handshake_node: bool,
 ) -> Vec<Validator> {
     let gs = use_context::<GlobalState>().expect("Global State Failed to Load");
 
@@ -197,29 +252,40 @@ pub async fn get_validators(
         }
     };
 
-    let validators = match is_current {
+    let (validator_type, validators) = match is_current {
         true => match realm_id.as_u64() {
             0 => {
                 let reserve_addresses = staking.get_all_reserve_validators().call().await;
-                let reserve_addresses = reserve_addresses.unwrap();
-                staking
-                    .get_validators_structs(reserve_addresses)
-                    .call()
-                    .await
+                let reserve_addresses = match reserve_addresses {
+                    Ok(addresses) => addresses,
+                    Err(e) => {
+                        log::error!("Error getting reserve validators: {:?}", e);
+                        vec![]
+                    }
+                };
+                (
+                    ValidatorType::Available,
+                    staking
+                        .get_validators_structs(reserve_addresses)
+                        .call()
+                        .await,
+                )
             }
-            _ => {
+            _ => (
+                ValidatorType::Current,
                 staking
                     .get_validators_structs_in_current_epoch(realm_id)
                     .call()
-                    .await
-            }
+                    .await,
+            ),
         },
-        false => {
+        false => (
+            ValidatorType::Next,
             staking
                 .get_validators_structs_in_next_epoch(realm_id)
                 .call()
-                .await
-        }
+                .await,
+        ),
     };
 
     if validators.is_err() {
@@ -279,7 +345,15 @@ pub async fn get_validators(
         };
 
         let socket_address = format!("{}:{}", ip_address, v.port);
-        let guest_ip = socket_address.split(":").nth(0).unwrap().to_string();
+        let (guest_ip, socket_address) = match socket_address.contains("127.0.0.1") {
+            true => (socket_address.clone(), format!(":{}", v.port)),
+            false => (
+                socket_address.split(":").nth(0).unwrap().to_string(),
+                ip_address.to_string(),
+            ),
+        };
+
+        // log::info!("Guest IP: {:?} / {:?}", guest_ip, gs.staker_names.get());
         let info = gs
             .staker_names
             .get()
@@ -292,9 +366,9 @@ pub async fn get_validators(
             .find(|m| m.node_address == v.node_address)
             .unwrap()
             .staker_address;
-        let hs_status = RwSignal::new(None);
 
         rows.push(Validator {
+            validator_type: validator_type.clone() as u8,
             id: count,
             status: match kicked.contains(&v.node_address) {
                 true => "K".to_string(),
@@ -303,51 +377,23 @@ pub async fn get_validators(
             socket_address: socket_address.clone(),
             wallet_address: format!("0x{}", hex::encode(v.node_address.as_bytes())),
             staker_address: format!("0x{}", hex::encode(staker_address.as_bytes())),
+            operator_address: format!("0x{}", hex::encode(v.operator_address.as_bytes())),
             ver: "?".to_string(),
             host_name: info,
-            hs_status: hs_status.clone(),
+            commit_hash: "".to_string(),
+            network_public_key: "".to_string(),
+            node_identity_key: "".to_string(),
+            epoch: 0,
+            last_realm_id: v.last_realm_id.as_u64(),
+            last_epoch: v.last_active_epoch.as_u64(),
         });
-
-        // if do_handshake_node {
-
-        //         leptos::task::spawn_local(async move {
-
-        //         log::info!("inside task"    );
-        //         let handshake_result = handshake_node(socket_address).await;
-
-        //         hs_status.set(Some(handshake_result));
-        //         // log::info!("Handshake result: {:?}", handshake_result);
-        //     });
-        // }
-
-        // hs_signals.push(hs_status);
     }
+
     rows.sort_by(|a, b| a.staker_address.cmp(&b.staker_address));
-    // let do_handshake_node = false;
 
-    if do_handshake_node {
-        for row in &mut rows {
-            row.id = count;
-            count += 1;
-
-            log::info!("Handshaking node: {:?}", row.socket_address);
-            handshake_state.set(format!("Handshaking node {}...", row.host_name));
-            let socket_address = row.socket_address.clone();
-            let handshake_result = handshake_node(socket_address).await;
-
-            log::info!("Handshake result: {:?}", handshake_result);
-            row.ver = handshake_result.node_version;
-            if row.status.is_empty() && !handshake_result.network_public_key.is_empty() {
-                row.status = "Up".to_string();
-            }
-            // if shadow_ids.contains(&row.staker_address) {
-            //     row.status += " (S";
-            //     if non_shadow_ids.contains(&row.staker_address) {
-            //         row.status += " /NS";
-            //     }
-            //     row.status += ")";
-            // }
-        }
+    for row in &mut rows {
+        row.id = count;
+        count += 1;
     }
 
     rows

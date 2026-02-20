@@ -1,4 +1,4 @@
-use crate::models::GlobalState;
+use crate::{models::GlobalState, utils::responsive::is_mobile};
 use leptos::prelude::*;
 
 #[component]
@@ -7,14 +7,11 @@ pub fn NetworkStatus(realm_id: u64) -> impl IntoView {
     let index = gs.index_for_realm_id(realm_id);
     crate::utils::polling::poll_network(realm_id);
 
+    let status_text = if is_mobile() { "" } else { "Status: " };
+
     view! {
-        <div class="card" >
-            <div class="card-header">
-
-            { move || format!("Status: {} at epoch# {}",  gs.network_state.get()[index].network_state.get(), gs.network_state.get()[index].epoch.get() ) }
-
-            </div>
+        <div>
+            { move || format!("{} {} at epoch# {}", status_text,  gs.network_state.get()[index].network_state.get(), gs.network_state.get()[index].epoch.get() ) }
         </div>
-        <br />
     }
 }

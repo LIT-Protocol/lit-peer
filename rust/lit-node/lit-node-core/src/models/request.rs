@@ -127,6 +127,7 @@ impl std::fmt::Debug for JsonExecutionRequest {
             .field("epoch", &self.epoch)
             .field("node_set", &self.node_set)
             .field("invocation", &self.invocation)
+            .field("key_set_id", &self.key_set_id)
             .finish()
     }
 }

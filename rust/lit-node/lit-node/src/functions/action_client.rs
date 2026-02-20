@@ -21,6 +21,7 @@ use crate::tasks::utils::generate_hash;
 use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::hd_keys::get_derived_keyshare;
 use crate::tss::common::tss_state::TssState;
+use crate::tss::util::DEFAULT_KEY_SET_NAME;
 use crate::utils::encoding;
 use crate::utils::keysets::get_default_keyset_id;
 use crate::utils::tracing::inject_tracing_metadata;

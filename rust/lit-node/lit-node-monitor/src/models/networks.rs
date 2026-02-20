@@ -81,8 +81,14 @@ impl GlobalState {
         let staker_names = get_staker_names().await.unwrap();
         staker_names.iter().for_each(|(key, value)| {
             new_staker_names.write().insert(key.clone(), value.clone());
-            // log::info!("Staker details: {:?} / {:?}", key.clone(), value.clone());
         });
+
+        for i in 0..=20 {
+            new_staker_names
+                .write()
+                .insert(format!("127.0.0.1:{}", 7470 + i), format!("Local-{}", i));
+        }
+        // Self::populate_common_addresses(&Self::local_network(), new_common_addresses).await;
 
         #[cfg(any(feature = "naga-dev", feature = "naga-all"))]
         {
@@ -93,7 +99,7 @@ impl GlobalState {
                 write_status_signal,
             )
             .await;
-            active_network.set("datil-dev".to_string());
+            active_network.set("naga-dev".to_string());
         }
 
         #[cfg(any(feature = "naga-test", feature = "naga-all"))]
@@ -132,6 +138,18 @@ impl GlobalState {
             active_network.set("naga-prod".to_string());
         }
 
+        #[cfg(any(feature = "naga-proto", feature = "naga-all"))]
+        {
+            let _r = Self::refresh_single_network(
+                "naga-proto",
+                new_networks,
+                new_common_addresses,
+                write_status_signal,
+            )
+            .await;
+            active_network.set("naga-proto".to_string());
+        }
+
         #[cfg(any(feature = "internalDev", feature = "naga-all"))]
         {
             let _r = Self::refresh_single_network(
@@ -168,6 +186,14 @@ impl GlobalState {
             add_facet_details(pubkey_router, new_common_addresses);
         };
 
+        Self::populate_common_addresses(&network, new_common_addresses).await;
+        true
+    }
+
+    async fn populate_common_addresses(
+        network: &NetworkConfig,
+        new_common_addresses: WriteSignal<HashMap<String, String>>,
+    ) -> bool {
         let common_addresses = get_common_addresses(&network).await.unwrap();
         common_addresses.iter().for_each(|(key, value)| {
             new_common_addresses
@@ -190,6 +216,7 @@ impl GlobalState {
             chain_url: "http://127.0.0.1:8545".to_string(),
             chain_api_url: "http://127.0.0.1:8545".to_string(),
             chain_name: "http://127.0.0.1:8545".to_string(),
+            gcp_project: "quickstart-1572387045298".to_string(),
         }
     }
 }
@@ -206,12 +233,33 @@ fn add_facet_details(
 }
 
 async fn get_network_config(network_name: &str) -> Result<(NetworkConfig, Facets), String> {
-    let (ansible_src_url, network_src_url) = match network_name {
-        "naga-test" => ("20-test-decentralized/20-naga_test.yml", "naga-test"),
-        "naga-prod" => ("10-prod/10-naga.yml", "naga-prod"),
-        "naga-dev" => ("30-test-centralized/30-naga_dev.yml", "naga-dev"),
-        "naga-staging" => ("15-staging/15-naga_staging.yml", "naga-staging"),
-        "internalDev" => ("20-test-decentralized/20-internaldev.yml", "internal-dev"),
+    let (ansible_src_url, network_src_url, gcp_project) = match network_name {
+        "naga-test" => (
+            "20-test-decentralized/20-naga_test.yml",
+            "naga-test",
+            "naga-test-feebcdc",
+        ),
+        "naga-prod" => ("10-prod/10-naga.yml", "naga-prod", "naga-prod-97fc60d"),
+        "naga-dev" => (
+            "30-test-centralized/30-naga_dev.yml",
+            "naga-dev",
+            "naga-dev-4c8c2f8",
+        ),
+        "naga-staging" => (
+            "15-staging/15-naga_staging.yml",
+            "naga-staging",
+            "naga-staging-cb97ce8",
+        ),
+        "naga-proto" => (
+            "10-prod/10-naga_proto.yml",
+            "naga-proto",
+            "naga-proto-7481c40",
+        ),
+        "internalDev" => (
+            "20-test-decentralized/20-internaldev.yml",
+            "internal-dev",
+            "quickstart-1572387045298",
+        ),
         _ => return Err("Network Not Found.".to_string()),
     };
 
@@ -224,7 +272,9 @@ async fn get_network_config(network_name: &str) -> Result<(NetworkConfig, Facets
 
     network_data.chain_api_url = format!(
         "{}{}",
-        chain_api_url.replace("yellowstone-rpc", "yellowstone-explorer"),
+        chain_api_url
+            .replace("yellowstone-rpc", "yellowstone-explorer")
+            .replace("lit-chain-rpc", "lit-chain-explorer"),
         "/api"
     );
 
@@ -240,6 +290,7 @@ async fn get_network_config(network_name: &str) -> Result<(NetworkConfig, Facets
             chain_url: network_data.chain_url,
             chain_api_url: network_data.chain_api_url,
             chain_name: network_data.chain_name,
+            gcp_project: gcp_project.to_string(),
         },
         network_data.facets,
     ))
@@ -323,7 +374,7 @@ async fn get_network_data(network_src_url: &str) -> Result<ChainDetails, String>
     let mut results: ChainDetails = serde_json::from_str(&body.unwrap()).unwrap();
     results.rpc_api_type = RpcApiType::BlockScout;
 
-    log::info!("results: {:?}", results);
+    // log::info!("results: {:?}", results);
     Ok(results)
 }
 
@@ -333,13 +384,14 @@ pub async fn get_staker_names() -> Result<HashMap<String, String>, String> {
     let _ = get_staker_names_from_url("02-nodes-external/02-ovh.yml", &mut stakers).await;
     let _ = get_staker_names_from_url("02-nodes-external/02-leaseweb.yml", &mut stakers).await;
     let _ = get_staker_names_from_url("01-nodes-internal/01-ovh.yml", &mut stakers).await;
+    let _ = staker_names_from("02-nodes-external/02-selfhosted.yml", &mut stakers).await;
     let _ = get_staker_names_from_url("01-nodes-internal/01-dedicated.yml", &mut stakers).await;
     let _ = get_staker_names_from_url("01-nodes-internal/01-leaseweb.yml", &mut stakers).await;
 
     Ok(stakers)
 }
 
-pub async fn get_staker_names_from_url(
+pub async fn staker_names_from(
     src_url: &str,
     staker_names: &mut HashMap<String, String>,
 ) -> Result<bool, String> {
@@ -429,11 +481,7 @@ pub async fn get_common_addresses(
         crate::contracts::staking::Staking::node_monitor_load(cfg, staking_contract_address)
             .unwrap();
 
-    // let status_signal = RwSignal::new("Loading ... please wait.".to_string());
-    // let (_, status_signal) = status_signal.split();
-    let handshake_state = RwSignal::new("Loading... Please wait...".to_string());
-    let validators =
-        crate::pages::validators::get_validators(&staking, true, 1, handshake_state, false).await;
+    let validators = crate::pages::validators::get_validators(&staking, true, 1).await;
 
     for validator in validators {
         common_addresses.insert(validator.wallet_address, validator.host_name);

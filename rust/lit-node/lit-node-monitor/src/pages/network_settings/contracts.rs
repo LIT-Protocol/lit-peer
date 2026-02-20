@@ -1,13 +1,17 @@
-use crate::{contracts, utils::get_hex_encoded_address};
+use crate::{
+    contracts,
+    utils::{get_hex_encoded_address, table_classes::TailwindClassesPreset},
+};
 use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_struct_table::*;
 use serde::{Deserialize, Serialize};
+use thaw::{Card, CardHeader, CardPreview};
 
 #[derive(TableRow, Clone, Serialize, Deserialize)]
 #[table(
     sortable,
-    classes_provider = "BootstrapClassesPreset",
+    classes_provider = "TailwindClassesPreset",
     impl_vec_data_provider
 )]
 pub struct ContractAddress {
@@ -123,28 +127,40 @@ pub fn Contracts() -> impl IntoView {
                     .await
                     .unwrap(),
             },
+            ContractAddress {
+                name: contracts::PRICE_FEED_CONTRACT.to_string(),
+                address: get_hex_encoded_address(contracts::PRICE_FEED_CONTRACT)
+                    .await
+                    .unwrap(),
+            },
+            ContractAddress {
+                name: contracts::LEDGER_CONTRACT.to_string(),
+                address: get_hex_encoded_address(contracts::LEDGER_CONTRACT)
+                    .await
+                    .unwrap(),
+            },
         ];
         rows
     });
 
     view! {
         <Title text="Contracts"/>
-        <div class="card" >
-            <div class="card-header">
+        <Card class="min-w-full">
+            <CardHeader>
                 <b class="card-title">Network Contract Overview</b>
-            </div>
-            <div class="card-body">
+            </CardHeader>
+            <CardPreview class="p-3">
 
                 {move || match data.get().as_deref() {
                     None => view! { <p>"Loading..."</p> }.into_any(),
                     Some(rows) => view! {
-                        <table class="table">
+                        <table class="table w-full">
                             <TableContent rows = rows.clone() scroll_container="html"  />
                         </table>
                         }.into_any()
                 }}
-            </div>
-        </div>
+            </CardPreview>
+        </Card>
 
     }
 }

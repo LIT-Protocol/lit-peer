@@ -8,6 +8,7 @@ pub mod datil;
 pub mod listener;
 pub mod node_config;
 
+use crate::DatilTestnetType;
 use crate::testnet::contracts_repo::{
     contract_addresses_from_deployment, remote_deployment_and_config_creation,
 };
@@ -195,6 +196,20 @@ impl TestnetBuilder {
         }
     }
 
+    pub fn include_datil_testnet(self, include_datil_testnet: DatilTestnetType) -> Self {
+        Self {
+            include_datil_testnet,
+            datil_testnet_state_cache_path: Some(
+                "tests/test_data/datil_cache/datil-anvil-state.hex".to_string(),
+            ),
+            datil_testnet_contract_resolver_address: Some(Address::from_slice(
+                &hex::decode("5fbdb2315678afecb367f032d93f642f64180aa3")
+                    .expect("Failed to decode contract resolver address"),
+            )),
+            ..self
+        }
+    }
+
     pub async fn build(self) -> Testnet {
         let chain = match self.selected_network {
             TestNetName::Hardhat => {
@@ -225,6 +240,19 @@ impl TestnetBuilder {
 
         let provider_mut = Arc::make_mut(&mut provider);
         let provider = Arc::new(provider_mut.set_interval(Duration::from_millis(10)).clone());
+
+        let datil_testnet = if self.include_datil_testnet != DatilTestnetType::None {
+            let datil_testnet = DatilTestnet::new(
+                self.total_num_validators(),
+                self.datil_testnet_state_cache_path.unwrap(),
+                self.datil_testnet_contract_resolver_address.unwrap(),
+            )
+            .await;
+            Some(datil_testnet)
+        } else {
+            None
+        };
+
         let mut is_from_cache = false;
         let datil_testnet = DatilTestnet::new(
             self.total_num_validators(),

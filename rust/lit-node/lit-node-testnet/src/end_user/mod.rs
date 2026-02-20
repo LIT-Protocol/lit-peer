@@ -1,3 +1,4 @@
+mod datil_pkp;
 mod pkp;
 
 use ethers::middleware::SignerMiddleware;
@@ -11,6 +12,7 @@ use lit_blockchain::util::decode_revert;
 use lit_node_core::AuthMethod;
 use tracing::{error, info, trace};
 
+use crate::DEFAULT_KEY_SET_NAME;
 use crate::testnet::Testnet;
 use crate::testnet::actions::Actions;
 use rand_core::OsRng;

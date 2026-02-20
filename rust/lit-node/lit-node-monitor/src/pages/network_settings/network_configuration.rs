@@ -1,14 +1,16 @@
 use crate::utils::datetime::{format_duration, format_timelock};
-use crate::utils::{get_address, get_lit_config};
+use crate::utils::{get_address, get_lit_config, table_classes::TailwindClassesPreset};
+use ethers::utils::format_ether;
 use leptos::prelude::*;
 use leptos_meta::*;
 use leptos_struct_table::*;
 use lit_blockchain_lite::contracts::staking::Staking;
 use serde::{Deserialize, Serialize};
+use thaw::{Card, CardHeader, CardPreview};
 #[derive(TableRow, Clone, Serialize, Deserialize)]
 #[table(
     sortable,
-    classes_provider = "BootstrapClassesPreset",
+    classes_provider = "TailwindClassesPreset",
     impl_vec_data_provider
 )]
 pub struct NetworkConfig {
@@ -26,34 +28,35 @@ pub fn NetworkConfiguration() -> impl IntoView {
 
     view! {
         <Title text="Network Configuration"/>
-        <div class="card" >
-            <div class="card-header">
+        <Card class="min-w-full">
+            <CardHeader>
                 <b class="card-title">Global Network Configuration</b>
-            </div>
-            <div class="card-body">
+            </CardHeader>
+            <CardPreview class="p-3">
 
                 {move || match global_data.get().as_deref() {
                     None => view! { <p>"Loading..."</p> }.into_any(),
                     Some(rows) => view! {
-                        <table class="table">
+                        <table class="table w-full">
                             <TableContent rows = rows.clone() scroll_container="html"  />
                         </table>
                         }.into_any()
                 }}
-            </div>
-            <div class="card-body">
+            </CardPreview>
+            <CardPreview class="p-3">
                 <h5 class="card-title">Realm #1 Configuration</h5>
 
                 {move || match data.get().as_deref() {
                     None => view! { <p>"Loading..."</p> }.into_any(),
                     Some(rows) => view! {
-                        <table class="table">
+                        <table class="table w-full">
                             <TableContent rows = rows.clone() scroll_container="html"  />
                         </table>
                         }.into_any()
                 }}
-            </div>
-        </div>
+            </CardPreview>
+
+        </Card>
     }
 }
 
@@ -65,10 +68,10 @@ pub async fn get_realm_config(realm_id: ethers::types::U256) -> Vec<NetworkConfi
     let staking = Staking::node_monitor_load(cfg, address).unwrap();
     let config = staking.realm_config(realm_id).call().await;
 
-    let config = match config {
+    let config: lit_blockchain_lite::contracts::staking::RealmConfig = match config {
         Ok(config) => config,
         Err(e) => {
-            log::error!("Error getting config: {:?}", e);
+            log::error!("Error getting realm config: {:?}", e);
             return vec![];
         }
     };
@@ -100,13 +103,17 @@ pub async fn get_realm_config(realm_id: ethers::types::U256) -> Vec<NetworkConfi
             value: config.rpc_healthcheck_enabled.to_string(),
         },
         NetworkConfig {
+            name: "min_epoch_for_rewards".to_string(),
+            value: config.min_epoch_for_rewards.to_string(),
+        },
+        NetworkConfig {
             name: "permitted_validators_on".to_string(),
             value: config.permitted_validators_on.to_string(),
         },
-        // NetworkConfig {
-        //     name: "min_epoch_for_rewards".to_string(),
-        //     value: config.min_epoch_for_rewards.to_string(),
-        // },
+        NetworkConfig {
+            name: "default_key_set".to_string(),
+            value: config.default_key_set.to_string(),
+        },
     ];
     rows
 }
@@ -119,7 +126,7 @@ pub async fn get_global_config() -> Vec<NetworkConfig> {
     let staking = Staking::node_monitor_load(cfg, address).unwrap();
     let config = staking.global_config().call().await;
 
-    let config = match config {
+    let config: lit_blockchain_lite::contracts::staking::GlobalConfig = match config {
         Ok(config) => config,
         Err(e) => {
             log::error!("Error getting global config: {:?}", e);
@@ -127,41 +134,13 @@ pub async fn get_global_config() -> Vec<NetworkConfig> {
         }
     };
 
-    let key_types = staking.get_key_types().call().await.unwrap();
-
-    //     uint256 tokenRewardPerTokenPerEpoch;
-    // // the key type of the node.  // 1 = BLS, 2 = ECDSA.  Not doing this in an enum so we can add more keytypes in the future without redeploying.
-    // uint256[] keyTypes;
-    // // don't start the DKG or let nodes leave the validator set
-    // // if there are less than this many nodes
-    // uint256 minimumValidatorCount;
-    // /// thunderhead
-    // uint256 rewardEpochDuration;
-    // uint256 maxTimeLock;
-    // uint256 minTimeLock;
-    // uint256 bmin; // Minimum reward budget (in basis points, i.e., 0.1%)
-    // uint256 bmax; // Maximum reward budget (in basis points, i.e., 0.5%)
-    // uint256 k; // Kink parameter for rewards (e.g., 0.5)
-    // uint256 p; // Power parameter (e.g., 0.5)
-    // bool enableStakeAutolock; // if true, stake will be autolocked
-    // bool permittedStakersOn;
-    // uint256 tokenPrice;
-    // uint256 profitMultiplier;
-    // uint256 usdCostPerMonth;
-    // uint256 maxEmissionRate;
-    // uint256 minStakeAmount;
-    // uint256 maxStakeAmount;
-    // uint256 minSelfStake;
-    // uint256 minSelfStakeTimelock;
-
     let rows = vec![
         NetworkConfig {
-            name: "key_types".to_string(),
-            value: key_types
-                .iter()
-                .map(|x| x.to_string())
-                .collect::<Vec<String>>()
-                .join(", "),
+            name: "token_reward_per_token_per_epoch".to_string(),
+            value: format_ether(config.token_reward_per_token_per_epoch)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         NetworkConfig {
             name: "minimum_validator_count".to_string(),
@@ -181,19 +160,31 @@ pub async fn get_global_config() -> Vec<NetworkConfig> {
         },
         NetworkConfig {
             name: "bmin".to_string(),
-            value: config.bmin.to_string(),
+            value: format_ether(config.bmin)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         NetworkConfig {
             name: "bmax".to_string(),
-            value: config.bmax.to_string(),
+            value: format_ether(config.bmax)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         NetworkConfig {
             name: "k".to_string(),
-            value: config.k.to_string(),
+            value: format_ether(config.k)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         NetworkConfig {
             name: "p".to_string(),
-            value: config.p.to_string(),
+            value: format_ether(config.p)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         NetworkConfig {
             name: "enable_stake_autolock".to_string(),
@@ -201,39 +192,70 @@ pub async fn get_global_config() -> Vec<NetworkConfig> {
         },
         NetworkConfig {
             name: "token_price".to_string(),
-            value: config.token_price.to_string(),
+            value: format_ether(config.token_price)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         NetworkConfig {
             name: "profit_multiplier".to_string(),
-            value: config.profit_multiplier.to_string(),
+            value: format_ether(config.profit_multiplier)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         NetworkConfig {
             name: "usd_cost_per_month".to_string(),
-            value: config.usd_cost_per_month.to_string(),
+            value: format_ether(config.usd_cost_per_month)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         NetworkConfig {
             name: "max_emission_rate".to_string(),
-            value: config.max_emission_rate.to_string(),
+            value: format_ether(config.max_emission_rate)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         NetworkConfig {
             name: "min_stake_amount".to_string(),
-            value: config.min_stake_amount.to_string(),
+            value: format_ether(config.min_stake_amount)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         NetworkConfig {
             name: "max_stake_amount".to_string(),
-            value: config.max_stake_amount.to_string(),
+            value: format_ether(config.max_stake_amount)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         NetworkConfig {
             name: "min_self_stake".to_string(),
-            value: config.min_self_stake.to_string(),
+            value: format_ether(config.min_self_stake)
+                .trim_end_matches('0')
+                .trim_end_matches('.')
+                .to_string(),
         },
         NetworkConfig {
             name: "min_self_stake_timelock".to_string(),
             value: format_timelock(config.min_self_stake_timelock.as_u64()),
         },
         NetworkConfig {
-            name: "token_reward_per_token_per_epoch".to_string(),
-            value: config.token_reward_per_token_per_epoch.to_string(),
+            name: "min_validator_count_to_clamp_minimum_threshold".to_string(),
+            value: config
+                .min_validator_count_to_clamp_minimum_threshold
+                .to_string(),
+        },
+        NetworkConfig {
+            name: "min_threshold_to_clamp_at".to_string(),
+            value: config.min_threshold_to_clamp_at.to_string(),
+        },
+        NetworkConfig {
+            name: "vote_to_advance_time_out".to_string(),
+            value: config.vote_to_advance_time_out.to_string(),
         },
     ];
     rows

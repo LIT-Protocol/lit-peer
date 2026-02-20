@@ -136,6 +136,7 @@ describe('PKPHelper', function () {
       pkpPermissionsContract: pkpPermissions,
       hdKeyDeriverContract: keyDeriver,
       pubkeyRouterContract: router,
+      pubkeyRouterViewsContract: routerViews,
     });
 
     // Mint enough tokens for the deployer

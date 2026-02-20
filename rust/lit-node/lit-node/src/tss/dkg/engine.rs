@@ -320,7 +320,7 @@ impl DkgEngine {
             }
         }
 
-        let txn_prefix = format!("{}.{}_keyset1", root_dkg_id, self.dkg_type);
+        let txn_prefix = format!("{}.{}_keyset", root_dkg_id, self.dkg_type);
         trace!(
             "Node {} - Using DKG txn prefix: {}, realm_id: {}",
             self_peer.peer_id, txn_prefix, realm_id

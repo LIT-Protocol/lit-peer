@@ -164,6 +164,7 @@ describe('Staking', function () {
       stakingContract: stakingValidatorFacet,
       pkpContract: pkpNft,
       pubkeyRouterContract: routerContract,
+      pubkeyRouterViewsContract: routerViews,
     });
 
     await stakingKeySetsFacet.setKeySet({

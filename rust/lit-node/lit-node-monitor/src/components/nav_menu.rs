@@ -1,10 +1,19 @@
-use crate::models::GlobalState;
+use crate::{models::GlobalState, utils::base_path};
 use leptos::prelude::*;
 use thaw::{NavCategory, NavCategoryItem, NavDrawer, NavItem, NavSubItem};
+use web_sys::window;
 
 #[component]
-pub fn NavMenu(page_name_signal: RwSignal<String>) -> impl IntoView {
-    let nav_value = RwSignal::new("/home".to_string());
+pub fn NavMenu(
+    page_name_signal: RwSignal<String>,
+    open_menu_set: WriteSignal<bool>,
+) -> impl IntoView {
+    let url = window()
+        .and_then(|win| win.location().pathname().ok())
+        .unwrap_or_else(|| "home".to_string());
+    let url = url.replace(base_path(), "");
+
+    let nav_value = RwSignal::new(url);
     let (nav_value_get, _nav_value_set) = nav_value.split();
 
     let gs = use_context::<GlobalState>().expect("Global State Failed to Load");
@@ -19,7 +28,12 @@ pub fn NavMenu(page_name_signal: RwSignal<String>) -> impl IntoView {
             page_name_signal.set(page_name);
 
             let navigate = leptos_router::hooks::use_navigate();
-            navigate(nav_to.as_str(), Default::default()); }
+            navigate(nav_to.as_str(), Default::default());
+
+            if crate::utils::responsive::is_mobile() {
+                    open_menu_set.set(false);
+                }
+            }
         }
         <nav>
             <NavDrawer selected_value=nav_value>
@@ -32,6 +46,12 @@ pub fn NavMenu(page_name_signal: RwSignal<String>) -> impl IntoView {
                 <NavItem icon=icondata::AiLinkOutlined value="/history">
                     "History"
                 </NavItem>
+                // <NavItem icon=icondata::AiClockCircleOutlined value="/status_at_time">
+                //     "Status At Time"
+                // </NavItem>
+                // <NavItem icon=icondata::AiUserOutlined value="/account_inspector">
+                //     "Account Inspector"
+                // </NavItem>
                 <NavItem value="/pkps" icon=icondata::AiKeyOutlined>
                     "PKPs"
                 </NavItem>
@@ -51,11 +71,23 @@ pub fn NavMenu(page_name_signal: RwSignal<String>) -> impl IntoView {
                     <NavSubItem value="/network_configuration" icon=icondata::AiSettingOutlined>
                         "Network Configuration"
                     </NavSubItem>
+                    <NavSubItem value="/complaints" icon=icondata::AiAlertOutlined>
+                        "Complaints"
+                    </NavSubItem>
+                    <NavSubItem value="/pricing" icon=icondata::AiDollarOutlined>
+                        "Pricing"
+                    </NavSubItem>
                     <NavSubItem value="/epoch" icon=icondata::AiClockCircleOutlined>
                         "Epoch Details"
                     </NavSubItem>
+                    <NavSubItem value="/keysets" icon=icondata::AiKeyOutlined>
+                        "Key Sets"
+                    </NavSubItem>
                     <NavSubItem value="/root_keys" icon=icondata::AiCompassOutlined>
                         "Root Keys"
+                    </NavSubItem>
+                    <NavSubItem value="/restore_info" icon=icondata::AiGiftOutlined>
+                        "Backup Recovery"
                     </NavSubItem>
                 </NavCategory>
                 <NavCategory value="/staking_category">
@@ -94,11 +126,20 @@ pub fn NavMenu(page_name_signal: RwSignal<String>) -> impl IntoView {
 
         <nav>
             <NavDrawer>
-                <NavItem icon=icondata::AiCompassOutlined value="#" href="https://yellowstone-explorer.litprotocol.com/txs">
-                    "Yellowstone Explorer"
+                <NavItem icon=icondata::AiCompassOutlined value="#">
+                    <a style="text-decoration: none; color: #424242" target="_blank" href="https://lit-chain-explorer.litprotocol.com/txs">
+                        "Lit-Chain Explorer"
+                    </a>
                 </NavItem>
-                <NavItem icon=icondata::AiBarChartOutlined value="#" href=updtime_url>
-                    "Uptime Monitor"
+                <NavItem icon=icondata::AiCloudServerOutlined value="#"  >
+                    <a style="text-decoration: none; color: #424242" target="_blank" href=format!("https://console.cloud.google.com/logs/query;duration=PT5M?project={}", gs.active_network().gcp_project)  >
+                        "GCP Logs"
+                    </a>
+                </NavItem>
+                <NavItem icon=icondata::AiBarChartOutlined value="#" >
+                    <a style="text-decoration: none; color: #424242" target="_blank" href=updtime_url>
+                        "Uptime Monitor"
+                    </a>
                 </NavItem>
                 <NavItem icon=icondata::AiFullscreenExitOutlined value="#" href="/monitor">
                     "Exit Network"

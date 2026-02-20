@@ -26,7 +26,7 @@ use lit_blockchain::{
     contracts::pubkey_router::RootKey, resolver::contract::ContractResolver, util::decode_revert,
 };
 use lit_core::{config::LitConfig, error::Unexpected};
-use lit_node_core::JsonAuthSig;
+use lit_node_core::{CurveType, JsonAuthSig};
 use serde_json::{Value, json};
 use std::sync::Arc;
 use tracing::instrument;
