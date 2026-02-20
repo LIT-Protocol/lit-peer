@@ -12,27 +12,27 @@
     "outputTempFilePath": "./deployed-lit-node-contracts-temp.json",
     "copyNodeConfigsToRustProject": false,
     "ipAddresses": [
-      "158.69.34.226:443",
-      "158.69.34.228:443",
-      "167.114.17.203:443",
-      "167.114.17.204:443",
-      "167.114.17.205:443",
-      "199.115.117.115:443",
-      "108.62.0.105:443"
+      "173.234.27.235:443",
+      "173.208.0.163:443",
+      "173.208.0.161:443",
+      "64.131.95.76:443",
+      "23.105.38.175:443",
+      "84.32.130.114:443",
+      "173.208.0.35:443"
     ],
     "keyTypes": [1, 2],
     "existingContracts": {
-      "stylusContractP256Address": "0x8ea150155c63b3a2e34b61409fb65e19f1bd48e7",
+      "stylusContractP256Address": "0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF",
       "stylusContractK256Address": "0x28ca4b9b360ed4f918081c921b8a299fd491e96a"
     },
-    "initialEpochState": 0
+    "initialEpochState": 4
   },
   "deployCoreConfig": {
     "environment": "dev",
     "networkName": "yellowstone",
     "subnetOwnerAddress": "0xB77AEBbC262Bb809933D991A919A0e4A6A3b2f65",
     "subnetAdminPublicKey": "0x045f96e860435fccf287d9c2592fa129edfca7159c8dd2260cf2def38a9d5ee627ba73afef636467bc95fe551f10c862e910f18eafb751226d6901eab7d5b2794a",
-    "subnetProvAddress": "0x3324439C8b9181eF07D54030E32d2CD22FF0C6A7",
+    "subnetProvAddress": "0xdE225D564AbC3bf3Dce6f7472203FCd05c2d2da7",
     "outputTempFilePath": "./deployed-lit-core-contracts-temp.json"
   }
 }
