@@ -1017,6 +1017,8 @@ impl DkgEngine {
                     }
                 };
 
+
+                info!("Id : {} / Old share : {:?} / Old ids: {:?}", id, old_share, old_ids);
                 Ok(Box::new(
                     SecretParticipant::<G>::with_secret(id, &old_share, &parameters, &old_ids)
                         .map_err(|e| {

@@ -12,14 +12,14 @@ use ethers::types::{Address, TransactionRequest};
 use hex::FromHex;
 use lit_blockchain::contracts::pubkey_router::RootKey;
 use lit_core::config::CFG_ADMIN_OVERRIDE_NAME;
+use lit_core::utils::binary::bytes_to_hex;
 use lit_node::auth::auth_material::JsonAuthSigExtended;
 use lit_node::endpoints::auth_sig::LITNODE_ADMIN_RES;
 use lit_node::peers::peer_state::models::NetworkState;
 use lit_node::tss::common::restore::NodeRecoveryStatus;
 
 use lit_node_core::{
-    CurveType, JsonAuthSig, LitAbility, LitResourceAbilityRequest,
-    LitResourceAbilityRequestResource, SigningScheme,
+    CompressedHex, CurveType, JsonAuthSig, LitAbility, LitResourceAbilityRequest, LitResourceAbilityRequestResource, SigningScheme
 };
 use lit_node_testnet::end_user::EndUser;
 use lit_node_testnet::node_collection::get_identity_pubkeys_from_node_set;
@@ -30,13 +30,167 @@ use lit_node_testnet::{DEFAULT_DATIL_KEY_SET_NAME, DEFAULT_KEY_SET_NAME, TestSet
 use lit_rust_crypto::k256::ecdsa::{SigningKey, VerifyingKey};
 use reqwest::Client;
 use rocket::serde::Serialize;
+use serde::Deserialize;
 use sha3::{Keccak256, digest::Digest};
+use tokio::io::AsyncWriteExt;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use tokio::task::JoinSet;
 use tracing::info;
 
-const BACKUP_ENCRYPTED_KEYS: &str = "lit_backup_encrypted_keys.tar.gz";
+use lit_node::common::storage::read_from_disk;
+
+// const BACKUP_ENCRYPTED_KEYS: &str = "lit_backup_encrypted_keys.tar.gz";
+
+#[derive(Debug)]
+struct BackupFolderInfo {
+    folder_name: String,
+    epoch_file_info: Vec<EpochFileInfo>,
+    files: Vec<String>,
+    epoch_dkgs: Vec<EpochDkgCount>,
+}
+
+#[derive(Debug)]
+struct EpochFileInfo {
+    file_name: String,
+    epoch_dkg: String,
+}
+
+#[derive(Debug)]
+struct EpochDkgCount {
+    epoch_dkg: String,
+    count: usize,
+}
+
+#[tokio::test]
+async fn clean_tar_files() {
+    // assumption:  If an epoch dkg is found for one keyshare file in the folder, all  keyshare files in the folder will be represented.
+    let root_path_str = "./tests/test_data/datil_recovery_into_naga/backups/extracted/";
+    let root_path = async_std::path::PathBuf::from(root_path_str);
+    let pubkey_count = 11;
+    let most_recent_offset = 0;
+
+
+    let mut backup_file_infos = Vec::new();
+    let dirs = std::fs::read_dir(root_path).unwrap();
+    let mut all_epoch_dkgs = Vec::new();
+
+    for dir in dirs {
+        let dir = dir.unwrap();
+        println!("Processing directory: {:?}", dir.path());
+        if !dir.path().is_dir() {
+            continue;
+        }
+        let files = std::fs::read_dir(dir.path()).unwrap();
+        let mut epoch_dkg_files = Vec::new();
+        let mut all_files = Vec::new();
+        let mut epoch_dkgs = Vec::new();
+        for file in files {
+            let file = file.unwrap();
+            let file_name = file.file_name().to_str().unwrap().to_string();
+            all_files.push(file_name.clone());
+            if file.file_name().to_str().unwrap().starts_with("Backup") {
+                let contents = std::fs::read(file.path()).unwrap();
+                let contents = String::from_utf8_lossy(&contents).to_string();            
+
+          
+                let l =  contents.split("EPOCH_DKG_").nth(1).unwrap();
+                let epoch_dkg = l.split(".").nth(0).unwrap();
+                epoch_dkg_files.push(EpochFileInfo {
+                    epoch_dkg: epoch_dkg.to_string(),
+                    file_name: file_name.clone(),
+                });
+                if !epoch_dkgs.iter().any(|e: &EpochDkgCount| e.epoch_dkg == epoch_dkg.to_string()) {
+                    epoch_dkgs.push(EpochDkgCount {
+                        epoch_dkg: epoch_dkg.to_string(),
+                        count: 1,
+                    });
+                }
+                else {
+                    epoch_dkgs.iter_mut().find(|e| e.epoch_dkg == epoch_dkg.to_string()).unwrap().count += 1;
+                }
+                if !all_epoch_dkgs.contains(&epoch_dkg.to_string()) {
+                    all_epoch_dkgs.push(epoch_dkg.to_string());
+                }
+            }
+
+            if file_name.contains("k256_encryption_key") {
+                let path = async_std::path::PathBuf::from(dir.path().clone());
+                let k256_affine_point: lit_rust_crypto::k256::AffinePoint = read_from_disk(path, &file_name.clone()).await.unwrap();
+                println!("K256 encryption key: {:?}", k256_affine_point.to_compressed_hex());
+            }
+
+            if file_name.contains("bls_encryption_key") {
+                let path = async_std::path::PathBuf::from(dir.path().clone());
+                let bls_point: lit_rust_crypto::blsful::inner_types::G1Projective = read_from_disk(path, &file_name.clone()).await.unwrap();
+                println!("BLS encryption key: {:?}", bls_point.to_compressed_hex());
+            }
+            
+        }
+        backup_file_infos.push( BackupFolderInfo {
+            folder_name: dir.file_name().to_str().unwrap().to_string(),
+            epoch_file_info: epoch_dkg_files,
+            epoch_dkgs: epoch_dkgs,
+            files: all_files,
+        });
+
+    
+    }
+
+
+    println!("All epoch DKGs: {:?}", all_epoch_dkgs.sort());
+
+    let mut common_epoch_dkg = Vec::new();
+    // find an epoch dkg that is common to all of the backupfolderinfo data
+    for epoch_dkg in all_epoch_dkgs {
+
+        let count = backup_file_infos.iter().filter(|f| f.epoch_dkgs.iter().any(|e: &EpochDkgCount| e.epoch_dkg == epoch_dkg && e.count == pubkey_count)).count();
+        println!("Epoch dkg: {:?}, Count: {:?}", epoch_dkg, count);
+        if count == backup_file_infos.len() {
+            println!("100 % common epoch dkg: {:?}", epoch_dkg);            
+        }
+        common_epoch_dkg.push((epoch_dkg, count));
+    }
+
+    for backup_folder_info in &backup_file_infos {
+        println!("Backup folder: {:?}, files count: {:?}", backup_folder_info.folder_name, backup_folder_info.files.len());
+    }
+
+    common_epoch_dkg.sort_by(|a, b| b.1.cmp(&a.1));
+    println!("Common epoch DKGs: {:?}", common_epoch_dkg);
+    for epoch_dkg in &common_epoch_dkg {
+        println!("Epoch dkg: {:?}, Count: {:?}", epoch_dkg.0, epoch_dkg.1);
+    }    
+
+    let most_common_epoch_dkg = common_epoch_dkg[most_recent_offset].0.clone();
+    println!("Most common epoch dkg (offset: {:?}): {:?}", most_recent_offset   , most_common_epoch_dkg);
+
+    return;
+    // let most_common_epoch_dkg = "22290_232635".to_string();
+    // println!("Overriding most common epoch dkg: {:?}", most_common_epoch_dkg);
+    
+    // print the backup folder info for the most common epoch dkg
+    for backup_folder_info in backup_file_infos {
+        for epoch in backup_folder_info.epoch_file_info {
+            if epoch.epoch_dkg != most_common_epoch_dkg {
+                let filename = format!("{}/{}/{}", root_path_str, backup_folder_info.folder_name, epoch.file_name);
+                println!("Removed file: {:?}", filename);
+                std::fs::remove_file(filename).unwrap();
+                
+            }
+        }            
+        let dir_to_pack =  format!("{}{}", root_path_str, backup_folder_info.folder_name);
+        let output_file = format!("{}new/{}.gz", root_path_str, backup_folder_info.folder_name);
+        println!("Directory to pack: {:?}", dir_to_pack);
+        println!("Writing tar file: {:?}", output_file);
+        // this doesn't work for the lit-recovery tool
+        lit_core::utils::tar::write_tar_gz_file(dir_to_pack, output_file).unwrap();
+
+    }
+
+    // println!("{} files in backup folder. Backup Folder Info: {:?}", i, backup_file_infos);
+}
+
 
 // Notes:
 // This test is designed to test the recovery of a Datil backup into a Naga network.
@@ -47,7 +201,7 @@ const BACKUP_ENCRYPTED_KEYS: &str = "lit_backup_encrypted_keys.tar.gz";
 
 #[tokio::test]
 async fn recover_datil_into_naga_test() {
-    unsafe {
+    unsafe {    
         std::env::set_var(
             "IPFS_API_KEY",
             "NkOJGWDsFcLTn7gXH37bS85HIMJJ4-d-r2qVHJWBXOXyxJYtG7FbyXATZCEAyf2s",
@@ -58,21 +212,24 @@ async fn recover_datil_into_naga_test() {
         .spawn(move || {
             tokio::runtime::Runtime::new()
                 .unwrap()
-                .block_on(end_to_end_test(3, 3));
+                .block_on(end_to_end_test(4,4));
         })
         .unwrap()
         .join()
         .unwrap();
 }
 
-const BLINDERS_0_BLS: &str = "5dec372f39c2f083a98e47924e7db47fbb6e8fb9be4b0a6eb4c5841ec3415f2f";
-const BLINDERS_0_K256: &str = "8A3B338BF130B8C1B4D71C1692548A5F1F8E51A39520FA773D8028012BE25794";
-const BLINDERS_1_BLS: &str = "0ec33d19020bd39d4825f51137b49d6da4e4aa93778f17fc0541fe20aa8874d1";
-const BLINDERS_1_K256: &str = "36C0AC74655E4E4F1089701D8F7DEC5BA408D1921ABD5DF518847C5C7E57EEA4";
-const BLINDERS_2_BLS: &str = "5e7779db0cd406fc1a9fcd376d455a031771052f11d18068dfc4caa5deb82016";
-const BLINDERS_2_K256: &str = "578B3BD51C7DA42E7ADC4FFC70914B08B617C87B491EDBC6C8015FC9C3EF9887";
+// const BLINDERS_0_BLS: &str = "5dec372f39c2f083a98e47924e7db47fbb6e8fb9be4b0a6eb4c5841ec3415f2f";
+// const BLINDERS_0_K256: &str = "8A3B338BF130B8C1B4D71C1692548A5F1F8E51A39520FA773D8028012BE25794";
+// const BLINDERS_1_BLS: &str = "0ec33d19020bd39d4825f51137b49d6da4e4aa93778f17fc0541fe20aa8874d1";
+// const BLINDERS_1_K256: &str = "36C0AC74655E4E4F1089701D8F7DEC5BA408D1921ABD5DF518847C5C7E57EEA4";
+// const BLINDERS_2_BLS: &str = "5e7779db0cd406fc1a9fcd376d455a031771052f11d18068dfc4caa5deb82016";
+// const BLINDERS_2_K256: &str = "578B3BD51C7DA42E7ADC4FFC70914B08B617C87B491EDBC6C8015FC9C3EF9887";
 
 async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
+
+
+
     let realm_id = U256::from(1);
     let admin_signing_key = create_node_operator_admin_signing_key().await;
 
@@ -86,32 +243,9 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
         .build()
         .await;
 
+
     let backup_directory = create_recovery_directory();
     let actions = validator_collection.actions().clone();
-    actions.wait_for_epoch(realm_id, U256::from(2)).await;
-
-    let (realm_id, identifier, description) = (
-        U256::from(1),
-        DEFAULT_DATIL_KEY_SET_NAME.to_string(),
-        "Datil Key Set".to_string(),
-    );
-
-    let root_key_configs = vec![
-        RootKeyConfig {
-            curve_type: CurveType::BLS,
-            count: 1,
-        },
-        RootKeyConfig {
-            curve_type: CurveType::K256,
-            count: 10,
-        },
-    ];
-
-    actions
-        .add_keyset(realm_id, identifier, description, root_key_configs)
-        .await
-        .expect("Failed to add keyset `{keyset_id}`");
-
     actions.wait_for_epoch(realm_id, U256::from(2)).await;
 
     let (realm_id, identifier, description) = (
@@ -138,9 +272,12 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
     let tx = actions.contracts().pubkey_router.admin_set_root_keys(
         testnet.actions().contracts().staking.address(),
         keyset_id.clone(),
-        datil_root_keys(),
+        datil_root_keys_naga_test(),
     );
     tx.send().await.unwrap();
+
+
+    write_staker_address_to_url_map(&validator_collection).await;
 
     // stop old nodes but leave the test net up. Setting the network to restore state
     // should stop all the nodes
@@ -183,7 +320,9 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
         .build()
         .unwrap();
 
-    let downloaded_blinders = get_downloaded_blinders();
+    // let downloaded_blinders = get_downloaded_blinders();
+    let downloaded_blinders = get_downloaded_blinders_from_file(&validator_collection2).await;
+    info!("Downloaded blinders: {:?}", downloaded_blinders);
 
     // Blinders need to be in-place before the key backups are uploaded
     info!("Uploading blinders to nodes");
@@ -255,6 +394,70 @@ async fn end_to_end_test(number_of_nodes: usize, recovery_party_size: usize) {
     test_datil_keyset_pkp_signing(&testnet, &validator_collection, &mut end_user).await;
 }
 
+async fn write_staker_address_to_url_map(vc: &ValidatorCollection) {
+    let mut validators = vc.get_active_validators().await.unwrap();
+    let mut vc_iter = validators.iter_mut();
+
+    let root = "./tests/test_data/datil_recovery_into_naga/backups/";
+    let mut file = tokio::fs::File::create(format!("{root}staker_address_to_url_map_generated.csv")).await.unwrap();
+    for validator in vc_iter {        
+        file.write_all(format!("0x{},http://{}/web/recovery/set_dec_share\n", bytes_to_hex(&validator.account().staker_address.0),validator.socket_address()).as_bytes()).await.unwrap();
+    }
+
+    file.flush().await.unwrap();
+}
+
+
+fn datil_root_keys_naga_test() -> Vec<RootKey> {
+    vec![
+            RootKey {
+                key_type: U256::from(1),
+                pubkey: ethers::types::Bytes::from_hex("0x99becf3f854c2073b06e4bdb5653f72d0b37615eb12e8e64d58db25568cbff66de804b9af7f90be4c87884adab52c50b").unwrap(),
+            },
+            RootKey {
+                key_type: U256::from(2),
+                pubkey: ethers::types::Bytes::from_hex("0x034649c37a9d163e29f2b60e2e9d0bde90775434dff23437cf66cfe517e8029021").unwrap(),
+            },
+            RootKey {
+                key_type: U256::from(2),
+                pubkey: ethers::types::Bytes::from_hex("0x022a04a0ed4612896dbb254397f4a44e148d9841d9e284a98c6c6fbd1022e1b32a").unwrap(),
+            },
+            RootKey {
+                key_type: U256::from(2),
+                pubkey: ethers::types::Bytes::from_hex("0x03507c6f96e94cf28cbece7d1da3d39880f10dd8ebbfc8421944316817fee6cdc0").unwrap(),
+            },
+            RootKey {
+                key_type: U256::from(2),
+                pubkey: ethers::types::Bytes::from_hex("0x020cc424e75c97d56e763c334cc4d1d4c57dc917c43a50ce79caf36d4a29ada776").unwrap(),
+            },
+            RootKey {
+                key_type: U256::from(2),
+                pubkey: ethers::types::Bytes::from_hex("0x02c749b990bd2c8c7a9d043247f9e1f5ac3c840d6b61508142738141964698408a").unwrap(),
+            },
+            RootKey {
+                key_type: U256::from(2),
+                pubkey: ethers::types::Bytes::from_hex("0x03577450a0b30a4797b1961687a4fd391369b3ecc405d067bf3d673feb59a28aca").unwrap(),
+            },
+            RootKey {
+                key_type: U256::from(2),
+                pubkey: ethers::types::Bytes::from_hex("0x028e070c5fa3d16979d8fbe2d21974ccf9202f8a0e4228986c3bc73799663e5333").unwrap(),
+            },
+            RootKey {
+                key_type: U256::from(2),
+                pubkey: ethers::types::Bytes::from_hex("0x023181df0a0ab8711f4e92143100fdccbca2e38ea791f7dfdfcb08f852b0607cc6").unwrap(),
+            },
+            RootKey {
+                key_type: U256::from(2),
+                pubkey: ethers::types::Bytes::from_hex("0x02f0f51defb091324f555cc525fa739c3f3cdf41631815886d311d2a3a3122841e").unwrap(),
+            },
+            RootKey {
+                key_type: U256::from(2),
+                pubkey: ethers::types::Bytes::from_hex("0x030bfd797740aad82c27f231e890f37a7d026409fb5f1f0811d607e79f09b15023").unwrap(),
+            },
+        ]
+}
+
+
 fn datil_root_keys() -> Vec<RootKey> {
     vec![
             RootKey {
@@ -303,6 +506,8 @@ fn datil_root_keys() -> Vec<RootKey> {
             },
         ]
 }
+
+
 async fn upload_decryption_shares_to_nodes(recovery_party_size: usize) {
     use tokio::process::Command;
 
@@ -323,16 +528,23 @@ async fn upload_decryption_shares_to_nodes(recovery_party_size: usize) {
 
         let mut command = Command::new(recovery_binary);
 
+        println!("uploading decryption shares to node: {:?}", i + 1);
         command.env("SHARE_DB_PATH", &share_db_path)
         .arg("--password=a")
         .arg(keyringdb)
         .arg("recover")
         .arg("--bls12381g1-encryption-key")
-        .arg("b0aa1aeaf1f4fa72e59905a4d0723ce4b6f53a277f75b38c9ae87a31fa7d40825c22b83dd18e821a316303e69681ee66")
+        .arg("b325b3245dd49a18f6dcaab01fbed062003a227cd091f70dcba64c57ba7a03bd5f9ef1c20d8c620884d91e9fd166f84c")
+        //.arg("8840347fa8fe63d81963ab895393c3b70f1c448f6ce9890388a773cb4af737d055f635611b60f23249672786e6e8b7c5")
         .arg("--secp256k1-encryption-key")
-        .arg("02a220b4caab1baa5d0b24612743803f1b40980ad56b7904ed83da3e012eb366a2")
+        .arg("03ce18bed2f48432cc32e88b5c8828f9061fe967c479fc48f06d11c1273c99890c")
+        //.arg("032c5c79a32e7edffdbf9e9c91e41c429b73db13b8ea800a6e621a20bceb3d22b0")
         .arg("--directory")
         .arg("tests/test_data/datil_recovery_into_naga/backups");
+// b325b3245dd49a18f6dcaab01fbed062003a227cd091f70dcba64c57ba7a03bd5f9ef1c20d8c620884d91e9fd166f84c
+// 03ce18bed2f48432cc32e88b5c8828f9061fe967c479fc48f06d11c1273c99890c
+
+
 
         println!("command: {command:?}");
         let output = command.output().await.unwrap();
@@ -347,6 +559,9 @@ async fn upload_decryption_shares_to_nodes(recovery_party_size: usize) {
             );
             panic!("lit-recovery tool encountered an error.");
         }
+        if !output.stdout.is_empty() {
+            println!("stdout of lit-recovery tool: {}", String::from_utf8(output.stdout).unwrap());
+        }
     }
 }
 
@@ -358,25 +573,30 @@ async fn upload_key_backups_to_nodes(
     backup_directory: &PathBuf,
 ) {
     let validators = validator_collection.get_active_validators().await.unwrap();
+    let downloaded_shares_map = get_downloaded_shares_map(validator_collection).await;
+    info!("Downloaded shares map: {:?}", downloaded_shares_map);
     let mut join_set = JoinSet::new();
     // Download the backups and blinders
     for &validator in validators.iter() {
         let public_address = validator.public_address();
+        let local_backup_file = downloaded_shares_map.get(&public_address).unwrap().clone();
         let chain_id = testnet.chain_id;
         let client = client.clone();
         let admin_signing_key = admin_signing_key.clone();
-        let backup_directory = backup_directory.clone();
+        // let backup_directory = backup_directory.clone();
         join_set.spawn(async move {
             let url = format!("http://{}", public_address.clone());
             let auth_sig =
                 generate_admin_auth_sig(&admin_signing_key, chain_id, &url, &public_address);
             let json_body = serde_json::to_string(&auth_sig.auth_sig).unwrap();
 
-            let tar_file =
-                backup_directory.join(format!("{public_address}{BACKUP_ENCRYPTED_KEYS}"));
-            let file = tokio::fs::File::open(tar_file).await.unwrap();
+            // let tar_file =
+            //     backup_directory.join(format!("{public_address}{BACKUP_ENCRYPTED_KEYS}"));
+            let tar_file = local_backup_file.clone();
 
-            info!("Uploading backup for validator {}", public_address);
+            let file = tokio::fs::File::open(tar_file.clone()).await.unwrap();
+
+            info!("Uploading backup {} for validator {}", tar_file, public_address);
             let response = client
                 .post(format!("{url}/web/admin/set_key_backup"))
                 .header("Content-Type", "application/octet-stream")
@@ -403,36 +623,100 @@ async fn upload_key_backups_to_nodes(
             (public_address, success)
         });
     }
+    let mut success_count = 0;
     while let Some(node_info) = join_set.join_next().await {
         let (public_address, success) = node_info.unwrap();
         info!("Node {} received tar backup: {}", public_address, success);
-        assert!(success);
+        assert!(success,"Node {} did not receive tar backup", public_address);
+        if success {
+            success_count += 1;
+        }
     }
+    // assert_eq!(success_count, 3);
 }
 
-#[derive(Clone, Default, Serialize)]
+#[derive(Clone, Default, Serialize, Deserialize, Debug)]
 struct DatilBlinders {
     bls_blinder: String,
     k256_blinder: String,
 }
 
-fn get_downloaded_blinders() -> HashMap<String, DatilBlinders> {
-    let mut blinders0 = DatilBlinders::default();
-    blinders0.bls_blinder = BLINDERS_0_BLS.to_string();
-    blinders0.k256_blinder = BLINDERS_0_K256.to_string();
+// fn get_downloaded_blinders() -> HashMap<String, DatilBlinders> {
+//     let mut blinders0 = DatilBlinders::default();
+//     blinders0.bls_blinder = BLINDERS_0_BLS.to_string();
+//     blinders0.k256_blinder = BLINDERS_0_K256.to_string();
 
-    let mut blinders1 = DatilBlinders::default();
-    blinders1.bls_blinder = BLINDERS_1_BLS.to_string();
-    blinders1.k256_blinder = BLINDERS_1_K256.to_string();
+//     let mut blinders1 = DatilBlinders::default();
+//     blinders1.bls_blinder = BLINDERS_1_BLS.to_string();
+//     blinders1.k256_blinder = BLINDERS_1_K256.to_string();
 
-    let mut blinders2 = DatilBlinders::default();
-    blinders2.bls_blinder = BLINDERS_2_BLS.to_string();
-    blinders2.k256_blinder = BLINDERS_2_K256.to_string();
+//     let mut blinders2 = DatilBlinders::default();
+//     blinders2.bls_blinder = BLINDERS_2_BLS.to_string();
+//     blinders2.k256_blinder = BLINDERS_2_K256.to_string();
 
+//     let mut map = HashMap::new();
+//     map.insert(String::from("127.0.0.1:7470"), blinders0);
+//     map.insert(String::from("127.0.0.1:7471"), blinders1);
+//     map.insert(String::from("127.0.0.1:7472"), blinders2);
+//     map
+// }
+
+async fn get_downloaded_blinders_from_file(vc: &ValidatorCollection) -> HashMap<String, DatilBlinders> {
+    let root = "./tests/test_data/datil_recovery_into_naga/backups/";
     let mut map = HashMap::new();
-    map.insert(String::from("127.0.0.1:7470"), blinders0);
-    map.insert(String::from("127.0.0.1:7471"), blinders1);
-    map.insert(String::from("127.0.0.1:7472"), blinders2);
+    let validators = vc.get_active_validators().await.unwrap();
+
+
+    let mut files: Vec<String> = Vec::new();
+    for entry in std::fs::read_dir(root).unwrap() {
+        let file_name = entry.unwrap();
+        let file_name = file_name.path();
+        let file_name = file_name.file_name().unwrap().to_str().unwrap();
+        if file_name.ends_with("blinders.json") {
+            files.push(format!("{root}{file_name}"));
+        }
+    }
+    files.sort();
+
+    for i in 0..files.len() {
+        if i >= validators.len() {
+            break;
+        }
+
+        let contents = std::fs::read_to_string(files[i].clone()).unwrap();
+        let blinders = serde_json::from_str::<DatilBlinders>(&contents).unwrap();
+        let public_address = validators[i].public_address();
+        println!("Public address: {}, Blinder fle name: {}", public_address, files[i]);
+        map.insert( public_address, blinders );        
+        
+    }
+    map
+}
+
+async fn get_downloaded_shares_map(vc: &ValidatorCollection) -> HashMap<String, String> {
+   let root = "./tests/test_data/datil_recovery_into_naga/backups/";
+    let mut map = HashMap::new();
+
+    let mut validators = vc.get_active_validators().await.unwrap();
+
+    let mut files: Vec<String> = Vec::new();
+    for entry in std::fs::read_dir(root).unwrap() {
+        let file_name = entry.unwrap();
+        let file_name = file_name.path();
+        let file_name = file_name.file_name().unwrap().to_str().unwrap();
+        if file_name.ends_with("keys.tar.gz") {
+            files.push(format!("{root}{file_name}"));
+        }
+    }
+    files.sort();
+    
+    for i in 0..files.len() {
+        if i >= validators.len() {
+            break;
+        }
+        let public_address = validators[i].public_address();
+        map.insert( public_address, files[i].clone() );
+    }
     map
 }
 

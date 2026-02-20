@@ -168,6 +168,7 @@ pub(crate) async fn perform_epoch_change(
         let mut epoch_change_status = None;
 
         if !restore_key_sets.is_empty() {
+            info!("Processing epoch change for restored key sets: {:?}", restore_key_sets);
             epoch_change_status = match process_epoch_for_key_set(
                 dkg_manager,
                 fsm_worker_metadata.clone(),

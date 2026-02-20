@@ -4,8 +4,9 @@ use ethers::prelude::*;
 use ethers::providers::Provider;
 use ethers::signers::Wallet;
 use lit_blockchain_lite::contracts::{
-    contract_resolver::ContractResolver, pkp_helper::pkp_helper::PKPHelper,
-    pkp_permissions::PKPPermissions, pkpnft::PKPNFT, pubkey_router::PubkeyRouter, staking::Staking,
+    backup_recovery::BackupRecovery, contract_resolver::ContractResolver,
+    pkp_helper::pkp_helper::PKPHelper, pkp_permissions::PKPPermissions, pkpnft::PKPNFT,
+    pubkey_router::PubkeyRouter, staking::Staking,
 };
 use std::sync::Arc;
 
@@ -19,6 +20,7 @@ pub struct DatilContracts {
     pub pkp_helper: PKPHelper<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
     pub contract_resolver:
         ContractResolver<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
+    pub backup_recovery: BackupRecovery<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
 }
 
 impl DatilContracts {
@@ -94,6 +96,20 @@ impl DatilContracts {
             .unwrap();
         let pkp_helper = PKPHelper::new(pkp_helper_address, deployer_signing_provider.clone());
 
+        let backup_recovery_address = contract_resolver
+            .get_contract(
+                contract_resolver
+                    .backup_recovery_contract()
+                    .call()
+                    .await
+                    .unwrap(),
+                env,
+            )
+            .call()
+            .await
+            .unwrap();
+        let backup_recovery =
+            BackupRecovery::new(backup_recovery_address, deployer_signing_provider.clone());
         Self {
             deployer_provider: deployer_signing_provider.clone(),
             staking,
@@ -102,6 +118,7 @@ impl DatilContracts {
             pkp_permissions,
             pkp_helper,
             contract_resolver,
+            backup_recovery,
         }
     }
 }

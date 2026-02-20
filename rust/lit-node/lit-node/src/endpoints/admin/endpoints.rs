@@ -209,6 +209,7 @@ pub async fn admin_set_blinders(
         return unexpected_err("Blinders are invalid. One or more are zero", None).handle();
     }
 
+    info!("Setting blinders for node");
     restore_state.set_blinders(*blinders);
 
     status::Custom(Status::Ok, json!({ "success": true }))

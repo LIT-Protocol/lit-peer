@@ -449,7 +449,7 @@ pub async fn delete_key_share_commitments(
 /**************** RESTORATION DATA ****************/
 
 #[doc = "Reads encrypted keys from disk"]
-pub(crate) async fn read_recovery_data_from_disk<T>(
+pub  async fn read_recovery_data_from_disk<T>(
     path: &PathBuf,
     pubkey: &str,
     storage_type: StorageType,
