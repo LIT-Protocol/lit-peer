@@ -111,11 +111,6 @@ pub async fn node_fsm_worker(
                 }
             };
 
-        // if we're not able to proceed, based on some checks while getting the fsm state, just do another loop.
-        if !can_proceed {
-            continue;
-        }
-
         // If we're not part of the validators union - attempt to join, do some logging and restart our loop.
         if !peer_state.part_of_validators_union() {
             handle_not_part_of_validators_union(
@@ -124,9 +119,13 @@ pub async fn node_fsm_worker(
                 is_shadow,
                 epoch_number,
                 previous_included_epoch_number,
-                realm_id,
             )
             .await;
+            continue;
+        }
+
+        // if we're not able to proceed, based on some checks while getting the fsm state, just do another loop.
+        if !can_proceed {
             continue;
         }
 
@@ -565,7 +564,6 @@ pub async fn handle_not_part_of_validators_union(
     is_shadow: bool,
     epoch_number: U256,
     previous_included_epoch_number: U256,
-    realm_id: u64,
 ) {
     let current_state = { node_state.current_state() };
     trace!(
@@ -580,7 +578,14 @@ pub async fn handle_not_part_of_validators_union(
             );
             let _ = get_current_and_new_peer_addresses(is_shadow, peer_state.clone()).await;
             // requesting to auto rejoin if online but not part of the current validators
-            if peer_state.auto_join {
+            if peer_state.auto_join
+                && peer_state
+                    .peers_in_prior_epoch()
+                    .contains_address(&peer_state.addr)
+                && !peer_state
+                    .peers_in_next_epoch()
+                    .contains_address(&peer_state.addr)
+            {
                 match peer_state.request_to_join().await {
                     Ok(_) => info!("Auto requested to join the network"),
                     Err(e) => error!("Error in request_to_join: {}", e),
@@ -588,12 +593,8 @@ pub async fn handle_not_part_of_validators_union(
             }
         }
 
-        State::Active | State::PendingActive | State::Locked => {
-            if let Err(e) = peer_state.validators_in_active_state(realm_id).await {
-                error!("Error in handle_if_validators_in_active_state: {}", e);
-            }
-            node_state.next(Transition::Leave)
-        }
+        State::Active | State::PendingActive | State::Locked => node_state.next(Transition::Leave),
+
         State::Suspended => {
             if epoch_number > previous_included_epoch_number + 1 {
                 node_state.next(Transition::Rejoin)
