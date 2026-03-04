@@ -264,28 +264,9 @@ contract StakingFacet is StakingCommon, ERC2771 {
         uint256 quantisedUnfreezeEnd = ((stakeRecord.unfreezeStart +
             stakeRecord.timeLock) / 1 days) * 1 days;
 
-        if (params.requireDecayed) {
-            if (stakeRecord.frozen) {
-                revert CannotWithdrawFrozen();
-            }
-
-            if (
-                (block.timestamp < stakeRecord.unfreezeStart) ||
-                (block.timestamp - stakeRecord.unfreezeStart <
-                    stakeRecord.timeLock)
-            ) {
-                revert TimeLockNotMet();
-            }
-
-            /// NOTE: We do NOT use the latest reward epoch number of any particular realm's epoch because
-            /// the epoch may have advanced before this code block gets reached.
-            if (
-                stakeRecord.lastRewardEpochClaimed <
-                s().validators[params.stakerAddress].lastRewardEpoch
-            ) {
-                revert RewardsMustBeClaimed();
-            }
-        }
+        // SHUTDOWN MODE: Frozen, timelock, and reward claim checks removed
+        // to allow all stakers to withdraw immediately before L3 chain shutdown.
+        // Previously enforced: CannotWithdrawFrozen, TimeLockNotMet, RewardsMustBeClaimed
 
         uint256 actualSharePrice = (getRewardEpoch(
             params.stakerAddress,
@@ -1173,24 +1154,8 @@ contract StakingFacet is StakingCommon, ERC2771 {
         address operatorStakerAddress,
         uint256 stakeRecordId
     ) public nonReentrant {
-        // If this validator is on the pending rejoins watchlist and less than pendingRejoinTimeout has elapsed since
-        // the validator's most recent epoch ending time, then we prevent the validator or any of its delegating stakers
-        // from withdrawing their stake. This is because we must wait for the timeout to have elapsed to account for any
-        // necessary retroactive slashing that may occur.
-        if (s().isValidatorInPendingRejoin[operatorStakerAddress]) {
-            // Get the last reward epoch for this validator
-            LibStakingStorage.RewardEpoch
-                memory lastRewardEpoch = getRewardEpoch(
-                    operatorStakerAddress,
-                    s().validators[operatorStakerAddress].lastRewardEpoch
-                );
-            if (
-                lastRewardEpoch.epochEnd + s().pendingRejoinTimeout >
-                block.timestamp
-            ) {
-                revert TooSoonToWithdraw();
-            }
-        }
+        // SHUTDOWN MODE: Pending rejoin timeout check removed to allow all
+        // validators and their delegators to withdraw before L3 chain shutdown.
 
         address userStakerAddress = LibERC2771._msgSender();
         uint256 withdrawAmount = removeStakeRecord(
