@@ -109,7 +109,7 @@ jobs:
             echo EOF
           } >> "$GITHUB_ENV"
       - name: Add result as comment on PR
-        uses: mshick/add-pr-comment@v2
+        uses: mshick/add-pr-comment@v3
         if: always()
         with:
           message: '${{env.perf_result}}'
