@@ -29,7 +29,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.9.1
+        uses: webfactory/ssh-agent@v0.10.0
         with:
           ssh-private-key: ${{ secrets.DEV_SSH_KEY }}
 
