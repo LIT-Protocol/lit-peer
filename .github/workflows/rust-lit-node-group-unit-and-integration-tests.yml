@@ -129,7 +129,7 @@ jobs:
         with:
           credentials: https://glitch003:${{secrets.READ_ONLY_PAT}}@github.com/
       - name: Use Node.js
-        uses: WarpBuilds/setup-node@v4
+        uses: WarpBuilds/setup-node@v6
         with:
           node-version: 18.17.0
           cache: npm
@@ -184,7 +184,7 @@ jobs:
         with:
           credentials: https://glitch003:${{secrets.READ_ONLY_PAT}}@github.com/
       - name: Use Node.js
-        uses: WarpBuilds/setup-node@v4
+        uses: WarpBuilds/setup-node@v6
         with:
           node-version: 18.17.0
           cache: npm

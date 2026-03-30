@@ -73,7 +73,7 @@ jobs:
         with:
           submodules: recursive
       - name: Use Node.js
-        uses: WarpBuilds/setup-node@v4
+        uses: WarpBuilds/setup-node@v6
         with:
           node-version: 18.17.0
           cache: npm
