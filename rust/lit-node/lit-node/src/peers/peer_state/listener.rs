@@ -4,7 +4,6 @@ use crate::error::{EC, Result, unexpected_err_code};
 use crate::tasks::presign_manager::models::PresignMessage;
 use ethers::providers::StreamExt;
 use lit_blockchain::contracts::staking::StakingEvents;
-use rocket::serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::mpsc;
 
@@ -113,15 +112,6 @@ impl PeerState {
                                             }
                                         }
                                     }
-                                    StakingEvents::ConfigSetFilter(
-                                        global_config_set_event,
-                                    ) => {
-                                        debug!("Global Config event");
-                                        // update CDM state
-                                        if let Err(e) = self.chain_data_config_manager.set_all_config_from_chain().await {
-                                            error!("Failed to update chain data manager state: {:?}", e);
-                                        }
-                                    }
 
                                     StakingEvents::CountOfflinePhaseDataFilter(data_type) => {
                                         debug!("CountOfflinePhaseData event: {:?}", data_type);
@@ -145,12 +135,4 @@ impl PeerState {
         }
         Ok(())
     }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum PeerValidatorStatus {
-    Entering, // Not in current, but in locked next
-    Exiting,  // in current, but not in locked next
-    Survivor, // in both
-    Unknown,
 }

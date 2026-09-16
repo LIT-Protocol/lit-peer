@@ -4,7 +4,6 @@ use crate::error::{Result, unexpected_err};
 use ethers::middleware::SignerMiddleware;
 use ethers::providers::{Http, Provider};
 use ethers::signers::Wallet;
-use k256::ecdsa::SigningKey;
 use lit_blockchain::contracts::backup_recovery::BackupRecovery;
 use lit_blockchain::contracts::ledger::Ledger;
 use lit_blockchain::contracts::pkp_permissions::PKPPermissions;
@@ -14,6 +13,7 @@ use lit_blockchain::contracts::pubkey_router::PubkeyRouter;
 use lit_blockchain::resolver::contract::ContractResolver;
 use lit_blockchain::util::ether::middleware::EIP2771GasRelayerMiddleware;
 use lit_core::config::LitConfig;
+use lit_rust_crypto::k256::ecdsa::SigningKey;
 use std::sync::Arc;
 
 pub async fn get_pkp_permissions_contract(

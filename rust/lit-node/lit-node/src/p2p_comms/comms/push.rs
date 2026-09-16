@@ -133,10 +133,7 @@ pub fn format_node_share_key(
     dest_peer_id: &PeerId,
     round: &str,
 ) -> String {
-    format!(
-        "{}--{}-{}-{}",
-        operation_type_and_id, current_peer_id, dest_peer_id, round
-    )
+    format!("{operation_type_and_id}--{current_peer_id}-{dest_peer_id}-{round}")
 }
 
 /// An example `key` might be `EPOCH_DKG_1_2.BLS--1-2-1` or `TRP0.known_value_full_lit_9489d2c30aa7b--0-1-CS`

@@ -45,10 +45,8 @@ pub async fn get_payment_method(
 
     // The max_price is always used for the comparison as it allows for finer price tuning
     if endpoint_price > max_price {
-        let err_msg = format!(
-            "max_price: {} is less than the endpoint price:  {}",
-            max_price, endpoint_price
-        );
+        let err_msg =
+            format!("max_price: {max_price} is less than the endpoint price:  {endpoint_price}");
         warn!("{}", err_msg);
         return Err(generic_err_code(err_msg, EC::PaymentFailed, None).add_source_to_details());
     }
@@ -87,7 +85,7 @@ pub async fn check_payer_has_funds(
     payment_tracker: &Arc<PaymentTracker>,
 ) -> Result<I256> {
     let balance = ledger.stable_balance(*user_address).await.map_err(|e| {
-        let err_msg = format!("Cannot get the funds for user {}: {:?}", user_address, e);
+        let err_msg = format!("Cannot get the funds for user {user_address}: {e:?}");
         error!("{}", err_msg);
         unexpected_err(e, Some(err_msg))
     })?;
@@ -106,9 +104,8 @@ pub async fn check_payer_has_funds(
         }
         false => {
             let err_msg = format!(
-                "User {}'s balance {} minus their pending spending of {} is not enough \
-                to cover the minimum estimated price {}",
-                user_address, balance, pending_spending, required_balance
+                "User {user_address}'s balance {balance} minus their pending spending of {pending_spending} is not enough \
+                to cover the minimum estimated price {required_balance}"
             );
             warn!("{}", err_msg);
             Err(unexpected_err(err_msg, None))
@@ -247,10 +244,7 @@ async fn check_pkp_owner_has_funds(
         Err(e) => {
             return Err(unexpected_err(
                 e,
-                Some(format!(
-                    "Unable to get the token id of the PKP : {}",
-                    address
-                )),
+                Some(format!("Unable to get the token id of the PKP : {address}")),
             ));
         }
     };
@@ -262,8 +256,7 @@ async fn check_pkp_owner_has_funds(
             return Err(unexpected_err(
                 e,
                 Some(format!(
-                    "Unable to get the address of the PKP owner.  PKP: {}",
-                    address
+                    "Unable to get the address of the PKP owner.  PKP: {address}"
                 )),
             ));
         }
@@ -285,7 +278,7 @@ async fn fetch_current_price(
         .usage_percent_to_price(U256::from(usage), U256::from(u8::from(endpoint)))
         .await
         .map_err(|e| {
-            let err_msg = format!("Cannot get the price: {:?}", e);
+            let err_msg = format!("Cannot get the price: {e:?}");
             error!("{}", err_msg);
             unexpected_err(e, Some(err_msg))
         })
@@ -303,7 +296,7 @@ async fn fetch_required_balance(
         .usage_percent_to_price(U256::from(0), U256::from(u8::from(endpoint)))
         .await
         .map_err(|e| {
-            let err_msg = format!("Cannot get the price: {:?}", e);
+            let err_msg = format!("Cannot get the price: {e:?}");
             error!("{}", err_msg);
             unexpected_err(e, Some(err_msg))
         })?;
@@ -316,7 +309,7 @@ fn convert_price_to_i256(price_u256: U256) -> Result<I256> {
     I256::try_from(price_u256).map_err(|e| {
         // This should never happen in practice due to the upper bound
         // in the Price Feed contract.
-        let err_msg = format!("Cannot convert the price {} from U256 to I256", price_u256);
+        let err_msg = format!("Cannot convert the price {price_u256} from U256 to I256");
         error!("{}", err_msg);
         unexpected_err(e, Some(err_msg))
     })

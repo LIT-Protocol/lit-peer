@@ -1,4 +1,5 @@
-use super::OsMetric;
+use super::{InfoMetric, OsMetric};
+use lit_observability::opentelemetry::KeyValue;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -87,5 +88,16 @@ impl From<&LoginHistory> for BTreeMap<String, String> {
 }
 
 impl OsMetric for LoginHistory {
-    const NAME: &'static str = "os.login_history";
+    const NAME: &'static str = "os.login_history_info";
+}
+
+impl InfoMetric for LoginHistory {
+    fn info_labels(&self) -> Vec<KeyValue> {
+        vec![
+            KeyValue::new("user", self.user.clone()),
+            KeyValue::new("tty", self.tty.clone()),
+            KeyValue::new("src", self.src.clone()),
+            KeyValue::new("utmp_type_name", self.utmp_type_name.clone()),
+        ]
+    }
 }

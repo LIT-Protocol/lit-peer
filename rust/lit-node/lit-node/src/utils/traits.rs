@@ -1,5 +1,8 @@
-use elliptic_curve::Group;
 use lit_node_core::CurveType;
+use lit_rust_crypto::{
+    blsful::inner_types, decaf377, ed448_goldilocks, group::Group, jubjub, k256, p256, p384,
+    pallas, vsss_rs,
+};
 
 pub trait SignatureCurve {
     const CURVE_TYPE: CurveType;
@@ -67,7 +70,16 @@ impl SignatureCurve for bulletproofs::JubJub {
     type Point = jubjub::SubgroupPoint;
 
     fn signing_generator() -> Self::Point {
-        lit_frost::red_jubjub_generator()
+        lit_rust_crypto::red_jubjub_signing_generator()
+    }
+}
+
+impl SignatureCurve for pallas::Pallas {
+    const CURVE_TYPE: CurveType = CurveType::RedPallas;
+    type Point = pallas::Point;
+
+    fn signing_generator() -> Self::Point {
+        lit_rust_crypto::red_pallas_signing_generator()
     }
 }
 
@@ -80,11 +92,11 @@ impl SignatureCurve for bulletproofs::Decaf377 {
     }
 }
 
-impl SignatureCurve for blsful::inner_types::InnerBls12381G1 {
+impl SignatureCurve for inner_types::InnerBls12381G1 {
     const CURVE_TYPE: CurveType = CurveType::BLS12381G1;
-    type Point = blsful::inner_types::G1Projective;
+    type Point = inner_types::G1Projective;
 
     fn signing_generator() -> Self::Point {
-        blsful::inner_types::G1Projective::GENERATOR
+        inner_types::G1Projective::GENERATOR
     }
 }

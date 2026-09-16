@@ -1,4 +1,4 @@
-use elliptic_curve::{Field, Group, group::GroupEncoding};
+use lit_rust_crypto::elliptic_curve::{Field, Group, group::GroupEncoding};
 use serde::{Deserialize, Serialize};
 
 /// KeyShareCommitment is a struct that holds the commitment of a key share.
@@ -82,7 +82,7 @@ mod group {
             let mut elems = vec![G::default(); points.len()];
             for (i, point) in points.iter().enumerate() {
                 elems[i] = bytes_to_group::<G, D>(&hex::decode(point).map_err(|e| {
-                    serde::de::Error::custom(format!("Unable to decode hex: {:?}", e))
+                    serde::de::Error::custom(format!("Unable to decode hex: {e:?}"))
                 })?)?;
             }
             Ok(elems)
@@ -90,7 +90,7 @@ mod group {
             let bytes: Vec<u8> = Vec::deserialize(d)?;
             let repr = G::Repr::default();
             let len = repr.as_ref().len();
-            if bytes.len() % len != 0 {
+            if !bytes.len().is_multiple_of(len) {
                 return Err(serde::de::Error::custom(format!(
                     "Invalid group element length: expected multiple of {}, found {}",
                     len,

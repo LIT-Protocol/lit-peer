@@ -11,5 +11,6 @@ const go = async () => {
     ethers.utils.keccak256(utf8Encode.encode('Hello World'))
   );
   const sigShare = await LitActions.signEcdsa({ toSign, publicKey, sigName });
+  Lit.Actions.setResponse({ response: JSON.stringify(sigShare) });
 };
 go();

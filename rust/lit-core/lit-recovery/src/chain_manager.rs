@@ -5,7 +5,6 @@ use crate::{
     config::RecoveryConfig,
     error::{Error, RecoveryResult},
 };
-use bulletproofs::k256::{SecretKey, ecdsa::SigningKey};
 use ethers::{
     prelude::SignerMiddleware,
     providers::{Http, Provider},
@@ -17,6 +16,7 @@ use lit_blockchain::contracts::{
     contract_resolver::ContractResolver,
     staking::{AddressMapping, Staking, Validator},
 };
+use lit_rust_crypto::k256::{FieldBytes, SecretKey, ecdsa::SigningKey};
 
 use reqwest::Url;
 
@@ -47,7 +47,7 @@ impl ChainManager<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>> {
                 return Err(crate::Error::InvalidRequest(e.to_string()));
             }
         };
-        let bytes = bulletproofs::k256::FieldBytes::from_slice(private_key);
+        let bytes = FieldBytes::from_slice(private_key);
         let sk = match SecretKey::from_bytes(bytes) {
             Ok(key) => key,
             Err(e) => {
@@ -55,7 +55,7 @@ impl ChainManager<SignerMiddleware<Provider<Http>, Wallet<SigningKey>>> {
             }
         };
         let chain_id = cfg.get_chain_id_or_default();
-        let env = cfg.get_env_or_default();
+        let env = cfg.get_env_or_default() as u8;
 
         println!("using chain id: {}", chain_id);
         println!("using contract resolver address: {}", resolver_address.clone());
@@ -261,7 +261,7 @@ fn _build_rpc_client(cfg: &RecoveryConfig) -> Result<Provider<Http>, Error> {
     };
     let provider = Provider::new(Http::new_with_client(url, client));
 
-    Ok(provider as Provider<Http>)
+    Ok(provider)
 }
 
 #[derive(Debug)]

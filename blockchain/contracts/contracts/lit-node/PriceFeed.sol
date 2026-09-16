@@ -48,7 +48,7 @@ contract PriceFeed {
             s.baseNetworkPrices[i] = baseAmount;
             s.maxNetworkPrices[i] = baseAmount * 100;
         }
-        s.nodeCapacityConfig = LibPriceFeedStorage.NodeCapacityConfig({
+        s.nodeCapacityConfigs[0] = LibPriceFeedStorage.NodeCapacityConfig({
             pkpSignMaxConcurrency: 75,
             encSignMaxConcurrency: 300,
             litActionMaxConcurrency: 50,

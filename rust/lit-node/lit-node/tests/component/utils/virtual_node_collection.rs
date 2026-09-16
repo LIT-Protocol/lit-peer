@@ -88,7 +88,7 @@ impl VirtualNodeCollection {
             panic!("num_nodes must be greater than 0");
         }
         let testnet = lit_node_testnet::testnet::Testnet::builder()
-            .which_testnet(lit_node_testnet::testnet::WhichTestnet::NoChain)
+            .selected_testnet(lit_node_testnet::testnet::TestNetName::NoChain)
             .build()
             .await;
 
@@ -245,7 +245,7 @@ impl VirtualNodeCollection {
         let port = addr
             .clone()
             .split(':')
-            .last()
+            .next_back()
             .unwrap()
             .to_string()
             .parse()
@@ -426,7 +426,7 @@ async fn load_virtual_node_defaults(
     TracedReceiver<NodeTransmissionDetails>,
 ) {
     let cfg = load_cfg().expect("failed to load LitConfig");
-    let addr = format!("127.0.0.1:{}", port);
+    let addr = format!("127.0.0.1:{port}");
     let (peer_checker_tx, _pc_rx) = flume::bounded(10000);
 
     let chain_data_manager =

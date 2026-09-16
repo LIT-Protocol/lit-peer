@@ -2,6 +2,7 @@ use rocket::http::HeaderMap;
 use rocket::request::{FromRequest, Outcome, Request};
 use rocket::serde::json::Value;
 
+/// Rocket request guard that extracts HTTP headers from the incoming request.
 pub struct RequestHeaders<'r> {
     pub headers: HeaderMap<'r>,
 }

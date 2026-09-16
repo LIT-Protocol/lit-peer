@@ -2,6 +2,7 @@ use crate::peers::peer_reviewer::PeerComplaint;
 use crate::peers::peer_state::models::SimplePeer;
 use lit_node_core::PeerId;
 use lit_observability::channels::TracedSender;
+use lit_rust_crypto::k256;
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::{self, Debug, Formatter},

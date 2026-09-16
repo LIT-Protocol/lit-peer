@@ -37,7 +37,7 @@ impl InitRelease {
     pub fn sha512(&self) -> Output<Sha512> {
         let mut hasher = Sha512::new();
         hasher.update("release_id");
-        hasher.update(&(self.release_id.len() as u64).to_be_bytes());
+        hasher.update((self.release_id.len() as u64).to_be_bytes());
         hasher.update(self.release_id.as_bytes());
         hasher.finalize()
     }

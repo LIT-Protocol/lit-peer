@@ -12,7 +12,7 @@ pub fn get_crate_version() -> String {
     let current_crate_version = String::from_utf8(cmd.stdout)
         .unwrap()
         .split('@')
-        .last()
+        .next_back()
         .unwrap()
         .trim()
         .to_string();

@@ -2,8 +2,10 @@ use std::collections::HashMap;
 use std::fmt;
 use std::future::Future;
 
-use opentelemetry::propagation::{Extractor, Injector, TextMapPropagator};
-use opentelemetry_sdk::propagation::TraceContextPropagator;
+use lit_observability::PRIVACY_MODE_TAG;
+use lit_observability::logging::set_request_context;
+use lit_observability::metrics::counter;
+use opentelemetry::propagation::Injector;
 use rocket::Request;
 use rocket::request::{FromRequest, Outcome};
 use semver::Version;
@@ -11,91 +13,18 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use tokio::task::futures::TaskLocalFuture;
 use tokio::task_local;
-use tracing::{Span, info_span};
-use tracing_opentelemetry::OpenTelemetrySpanExt;
-use uuid::Uuid;
 
 use crate::error::{EC, Error, Result, conversion_err_code, validation_err_code};
+use crate::observability::http::HttpMetrics;
 
 pub const HEADER_KEY_X_CORRELATION_ID: &str = "X-Correlation-Id";
 pub const HEADER_KEY_X_REQUEST_ID: &str = "X-Request-Id";
 pub const HEADER_KEY_X_LIT_SDK_VERSION: &str = "X-Lit-SDK-Version";
-
+pub const HEADER_KEY_X_PRIVACY_MODE: &str = "X-Privacy-Mode";
 pub const TRACKING_LOG_KEY_LIT_SDK_VERSION: &str = "lit_sdk_version";
 
 task_local! {
     pub static TRACING: Box<dyn Tracer>;
-}
-
-/// The TracingSpan request guard creates a new tracing span for the request. If the request
-/// contains a parent span ID, it will be used as the parent of this new span. Otherwise, a new
-/// root span will be created.
-#[allow(dead_code)]
-#[derive(Clone, Debug)]
-pub struct TracingSpan {
-    span: Span,
-}
-
-impl TracingSpan {
-    pub fn new(span: Span) -> Self {
-        Self { span }
-    }
-
-    pub fn span(&self) -> &Span {
-        &self.span
-    }
-}
-
-#[rocket::async_trait]
-impl<'r> FromRequest<'r> for TracingSpan {
-    type Error = crate::error::Error;
-
-    async fn from_request(
-        req: &'r rocket::Request<'_>,
-    ) -> rocket::request::Outcome<Self, Self::Error> {
-        // Extract the propagated context
-        let propagator = TraceContextPropagator::new();
-        // Initialize some container to hold the header information.
-        let mut carrier = HashMap::new();
-        // Transfer header information from request to carrier.
-        for header in req.headers().iter() {
-            carrier.insert(header.name().to_string(), header.value().to_string());
-        }
-        // Extract the context from the carrier
-        let context = propagator.extract(&HeaderExtractor::from(&carrier));
-
-        // Initialize a new span with the propagated context as the parent
-        let req_method = req.method();
-        let req_path = req.uri().path();
-        let new_span = info_span!(
-            "handle_request",
-            method = req_method.as_str(),
-            path = req_path.to_string(),
-        );
-        new_span.set_parent(context);
-
-        Outcome::Success(TracingSpan { span: new_span })
-    }
-}
-
-pub struct HeaderExtractor<'a> {
-    headers: &'a HashMap<String, String>,
-}
-
-impl<'a> From<&'a HashMap<String, String>> for HeaderExtractor<'a> {
-    fn from(headers: &'a HashMap<String, String>) -> Self {
-        HeaderExtractor { headers }
-    }
-}
-
-impl<'a> Extractor for HeaderExtractor<'a> {
-    fn get(&self, key: &str) -> Option<&'a str> {
-        self.headers.get(key).map(|v| v.as_str())
-    }
-
-    fn keys(&self) -> Vec<&str> {
-        self.headers.keys().map(|v| v.as_str()).collect()
-    }
 }
 
 pub struct HeaderInjector<'a> {
@@ -167,10 +96,13 @@ impl<'r> FromRequest<'r> for Tracing {
     type Error = crate::error::Error;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        let correlation_id =
-            extract_correlation_id(req).unwrap_or_else(|| format!("LD-{}", Uuid::new_v4()));
+        let (request_id, correlation_id) = extract_request_and_correlation_ids(req);
 
-        let mut tracing = Self::new(correlation_id);
+        // Set request context for log injection; no fallback IDs.
+        set_request_context(request_id, correlation_id.clone());
+
+        // For the Tracing struct, use empty string if no correlation_id was provided.
+        let mut tracing = Self::new(correlation_id.unwrap_or_default());
         apply_req_tracing_fields(req, &mut tracing);
 
         Outcome::Success(tracing)
@@ -227,7 +159,16 @@ impl<'r> FromRequest<'r> for TracingRequired {
     type Error = crate::error::Error;
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
-        if let Some(correlation_id) = extract_correlation_id(req) {
+        let (request_id, correlation_id) = extract_request_and_correlation_ids(req);
+
+        // TracingRequired requires at least one header
+        if let Some(correlation_id) = correlation_id {
+            // Preserve distinct values when both headers are present
+            let request_id = request_id.unwrap_or_else(|| correlation_id.clone());
+
+            // Set request context (span extensions + OTel attributes) for consistency
+            set_request_context(Some(request_id), Some(correlation_id.clone()));
+
             let mut tracing = Self::new(correlation_id);
             apply_req_tracing_fields(req, &mut tracing);
 
@@ -257,12 +198,43 @@ where
     TRACING.scope(Box::new(tracing), f)
 }
 
-pub(crate) fn extract_correlation_id(req: &Request<'_>) -> Option<String> {
-    req.headers()
-        .get(HEADER_KEY_X_CORRELATION_ID)
-        .next()
-        .or_else(|| req.headers().get(HEADER_KEY_X_REQUEST_ID).next())
-        .map(|val| val.to_string())
+/// Extracts both request_id and correlation_id from headers, preserving distinct values.
+/// Returns (request_id, correlation_id) tuple.
+/// - request_id: X-Request-Id header, falls back to X-Correlation-Id
+/// - correlation_id: X-Correlation-Id header, falls back to X-Request-Id
+/// - privacy_mode: X-Privacy-Mode header, if present, will be added to the request_id and correlation_id
+pub(crate) fn extract_request_and_correlation_ids(
+    req: &Request<'_>,
+) -> (Option<String>, Option<String>) {
+    let x_request_id = req.headers().get(HEADER_KEY_X_REQUEST_ID).next().map(|v| v.to_string());
+    let x_correlation_id =
+        req.headers().get(HEADER_KEY_X_CORRELATION_ID).next().map(|v| v.to_string());
+
+    // privacy_mode: X-Privacy-Mode header, if present, will be added to the request_id and correlation_id
+    let x_privacy_mode = req.headers().get(HEADER_KEY_X_PRIVACY_MODE).next().map(|v| v.to_string());
+
+    // request_id: prefer X-Request-Id, fall back to X-Correlation-Id
+    let mut request_id = x_request_id.clone().or_else(|| x_correlation_id.clone());
+    // correlation_id: prefer X-Correlation-Id, fall back to X-Request-Id
+    let mut correlation_id = x_correlation_id.or(x_request_id);
+
+    if x_privacy_mode.is_some() {
+        counter::add_one(HttpMetrics::PrivacyModeRequest, &[]);
+
+        let privacy_suffix = format!("_{}", PRIVACY_MODE_TAG);
+        if let Some(ref id) = request_id {
+            if !id.ends_with(&privacy_suffix) {
+                request_id = Some(format!("{}_{}", id, PRIVACY_MODE_TAG));
+            }
+        }
+        if let Some(ref id) = correlation_id {
+            if !id.ends_with(&privacy_suffix) {
+                correlation_id = Some(format!("{}_{}", id, PRIVACY_MODE_TAG));
+            }
+        }
+    }
+
+    (request_id, correlation_id)
 }
 
 pub(crate) fn apply_req_tracing_fields(req: &Request<'_>, tracing: &mut (impl Tracer + 'static)) {

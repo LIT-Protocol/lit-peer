@@ -112,7 +112,7 @@ const config: HardhatUserConfig = {
       stylusContractsForTests: {
         p256:
           process.env.LIT_STYLUS_P256_CONTRACT_ADDRESS ||
-          '0x8ea150155c63b3a2e34b61409fb65e19f1bd48e7',
+          '0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF',
         k256:
           process.env.LIT_STYLUS_K256_CONTRACT_ADDRESS ||
           '0x28ca4b9b360ed4f918081c921b8a299fd491e96a',
@@ -129,7 +129,7 @@ const config: HardhatUserConfig = {
       stylusContractsForTests: {
         p256:
           process.env.LIT_STYLUS_P256_CONTRACT_ADDRESS ||
-          '0x8ea150155c63b3a2e34b61409fb65e19f1bd48e7',
+          '0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF',
         k256:
           process.env.LIT_STYLUS_K256_CONTRACT_ADDRESS ||
           '0x28ca4b9b360ed4f918081c921b8a299fd491e96a',
@@ -143,6 +143,15 @@ const config: HardhatUserConfig = {
         accounts: [process.env['LIT_ROLLUP_MAINNET_DEPLOYER_PRIVATE_KEY']],
       }),
       chainId: 175200,
+      // @ts-ignore
+      stylusContractsForTests: {
+        p256:
+          process.env.LIT_STYLUS_P256_CONTRACT_ADDRESS ||
+          '0xDEADBEEFDEADBEEFDEADBEEFDEADBEEFDEADBEEF', // obvious dummy address: the p256 precompile isn't used; we just need a placeholder.
+        k256:
+          process.env.LIT_STYLUS_K256_CONTRACT_ADDRESS ||
+          '0x029bedeacaf6821ce9a6bd7c8ac73350f24a014f',
+      },
       // @ts-ignore
       wlitAddress: '0x0996A48f8cc3c7c52Caf10d34c804eF5C9E7748B',
       trustedForwarderAddress: '0xa6A0Db95022e7859f1dff81D0Fedd5f9e38f042D',
@@ -337,6 +346,7 @@ const config: HardhatUserConfig = {
       include: [
         'OwnershipFacet',
         'PubkeyRouterFacet',
+        'PubkeyRouterViewsFacet',
         'DiamondCutFacet',
         'DiamondLoupeFacet',
       ],

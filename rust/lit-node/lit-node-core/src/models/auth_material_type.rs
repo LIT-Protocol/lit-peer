@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Deserialize, Serialize)]
+#[cfg_attr(feature = "openapi", derive(utoipa::ToSchema))]
 pub enum AuthMaterialType {
     #[default]
     /// This is an auth sig that was derived via a wallet.

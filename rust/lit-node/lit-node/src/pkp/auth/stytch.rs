@@ -107,7 +107,7 @@ pub async fn get_auth_key(token: &str, http_client: reqwest::Client) -> error::R
         } else {
             return Err(io_err(
                 e,
-                Some(format!("Failed to read from file {}", file_name)),
+                Some(format!("Failed to read from file {file_name}")),
             ));
         }
     }
@@ -173,9 +173,9 @@ pub async fn save_auth_key(
     trace!("Downloading stytch keys for project_id {}", project_id);
     let mut url = "".to_string();
     if environment == "test" {
-        url = format!("{}{}", VERIFICATION_API_ADDR_TEST, project_id);
+        url = format!("{VERIFICATION_API_ADDR_TEST}{project_id}");
     } else if environment == "live" {
-        url = format!("{}{}", VERIFICATION_API_ADDR_LIVE, project_id);
+        url = format!("{VERIFICATION_API_ADDR_LIVE}{project_id}");
     }
 
     let resp = http_client
@@ -217,14 +217,11 @@ pub async fn save_auth_key(
         )
     })?;
 
-    let file_name = format!("{}.json", project_id);
+    let file_name = format!("{project_id}.json");
 
     // write to the keys file
-    let mut file = File::create(format!(
-        "{}/{}",
-        AUTHORIZATION_KEYS_FILE_DIR_PATH, file_name
-    ))
-    .map_err(|e| unexpected_err(e, Some("Unable to create stytch keys file".into())))?;
+    let mut file = File::create(format!("{AUTHORIZATION_KEYS_FILE_DIR_PATH}/{file_name}"))
+        .map_err(|e| unexpected_err(e, Some("Unable to create stytch keys file".into())))?;
     file.write_all(
         serde_json::to_string(&top_level_map)
             .map_err(|e| conversion_err(e, Some("Unable to convert stytch keys to json".into())))?
@@ -301,7 +298,7 @@ pub async fn parse_and_verify_otp_jwt(
 
     if alg != JWT_RSA_ALG_VAL {
         return Err(validation_err(
-            format!("Invalid JWT algorithm. Only {} supported", JWT_RSA_ALG_VAL),
+            format!("Invalid JWT algorithm. Only {JWT_RSA_ALG_VAL} supported"),
             None,
         ));
     }
@@ -310,9 +307,9 @@ pub async fn parse_and_verify_otp_jwt(
         let now = Utc::now();
         let jwt_exp = payload
             .get(JWT_EXP)
-            .expect_or_err(format!("Can not find key {} in payload", JWT_EXP))?
+            .expect_or_err(format!("Can not find key {JWT_EXP} in payload"))?
             .as_i64()
-            .expect_or_err(format!("could not convert {} to numeric", JWT_EXP))?;
+            .expect_or_err(format!("could not convert {JWT_EXP} to numeric"))?;
         let jwt_exp = chrono::DateTime::from_timestamp(jwt_exp, 0)
             .expect_or_err("failed to create timestamp opt")
             .map_err(|e| unexpected_err(e, None))?;
@@ -413,9 +410,9 @@ pub async fn parse_and_verify_otp_jwt(
 
                 let jwt_exp = payload
                     .get(JWT_EXP)
-                    .expect_or_err(format!("Can not find key {} in payload", JWT_EXP))?
+                    .expect_or_err(format!("Can not find key {JWT_EXP} in payload"))?
                     .as_i64()
-                    .expect_or_err(format!("could not convert {} to numeric", JWT_EXP))?;
+                    .expect_or_err(format!("could not convert {JWT_EXP} to numeric"))?;
 
                 app_id = app_id.replace(['\"'], "");
                 match factor.clone() {
@@ -653,7 +650,7 @@ mod tests {
         let auth_keys = match get_auth_key(TEST_TOKEN, http_client).await {
             Ok(keys) => keys,
             Err(e) => {
-                panic!("error getting auth keys {:?}", e);
+                panic!("error getting auth keys {e:?}");
             }
         };
 
@@ -665,7 +662,7 @@ mod tests {
         let res = match parse_and_verify_otp_jwt(TEST_TOKEN, &auth_keys, verifier.factor).await {
             Ok(res) => res,
             Err(e) => {
-                panic!("error verifying token {:?}", e);
+                panic!("error verifying token {e:?}");
             }
         };
     }
@@ -687,7 +684,7 @@ mod tests {
         let auth_keys = match get_auth_key(TEST_TOKEN, http_client).await {
             Ok(keys) => keys,
             Err(e) => {
-                panic!("error getting auth keys {:?}", e);
+                panic!("error getting auth keys {e:?}");
             }
         };
 
@@ -699,7 +696,7 @@ mod tests {
         let res = match parse_and_verify_otp_jwt(TEST_TOKEN, &auth_keys, verifier.factor).await {
             Ok(res) => res,
             Err(e) => {
-                panic!("error verifying token {:?}", e);
+                panic!("error verifying token {e:?}");
             }
         };
     }
@@ -722,7 +719,7 @@ mod tests {
         let auth_keys = match get_auth_key(TEST_TOKEN, http_client).await {
             Ok(keys) => keys,
             Err(e) => {
-                panic!("error getting auth keys {:?}", e);
+                panic!("error getting auth keys {e:?}");
             }
         };
 
@@ -734,7 +731,7 @@ mod tests {
         let res = match parse_and_verify_otp_jwt(TEST_TOKEN, &auth_keys, verifier.factor).await {
             Ok(res) => res,
             Err(e) => {
-                panic!("error verifying token {:?}", e);
+                panic!("error verifying token {e:?}");
             }
         };
     }

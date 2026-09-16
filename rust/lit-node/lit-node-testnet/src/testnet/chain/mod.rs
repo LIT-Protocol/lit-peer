@@ -1,5 +1,6 @@
 pub mod anvil;
 pub mod hardhat;
+pub mod naga;
 pub mod no_chain;
 
 use super::NodeAccount;
@@ -12,9 +13,7 @@ use lit_blockchain::resolver::rpc::{ENDPOINT_MANAGER, RpcHealthcheckPoller};
 use lit_core::utils::binary::hex_to_bytes;
 use lit_core::utils::toml::SimpleToml;
 use lit_node_common::coms_keys::ComsKeys;
-
 use std::collections::HashMap;
-
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -25,7 +24,7 @@ pub trait ChainTrait: Send + Sync {
     // fn accounts(&self) -> Arc<Vec<NodeAccount>>;
     fn num_nodes(&self) -> usize;
 
-    async fn start_chain(&self) -> GroupChild;
+    async fn start_chain(&self) -> Option<GroupChild>;
 
     fn rpc_url(&self) -> String {
         let chain_id = self.chain_name();
@@ -39,6 +38,10 @@ pub trait ChainTrait: Send + Sync {
         ENDPOINT_MANAGER
             .get_provider(chain_id)
             .expect("invalid chain id")
+    }
+
+    fn contract_resolver_address(&self) -> Address {
+        Address::zero()
     }
 
     fn reuse_config_path(&self) -> Option<String> {

@@ -182,6 +182,9 @@ pub async fn resolve_key_shares_from_disk(
         bls12381g1_signing_share: shares
             .remove(&CurveType::BLS12381G1)
             .expect_or_err("BLS12381G1")?,
+        pallas_signing_share: shares
+            .remove(&CurveType::RedPallas)
+            .expect_or_err("RedPallas")?,
     })
 }
 

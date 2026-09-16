@@ -1,14 +1,13 @@
 use crate::error::{Result, parser_err};
 use crate::peers::peer_state::models::SimplePeerCollection;
 use crate::tss::common::key_persistence::KeyPersistence;
-use elliptic_curve::Group;
-use elliptic_curve::group::GroupEncoding;
-use lit_node_core::CompressedBytes;
-use lit_node_core::CurveType;
-use lit_node_core::PeerId;
+use lit_node_core::{CompressedBytes, CurveType, PeerId};
+use lit_rust_crypto::{
+    group::{Group, GroupEncoding},
+    vsss_rs::{DefaultShare, IdentifierPrimeField},
+};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-use vsss_rs::{DefaultShare, IdentifierPrimeField};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct KeyShare {

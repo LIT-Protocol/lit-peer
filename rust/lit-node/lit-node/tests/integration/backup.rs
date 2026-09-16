@@ -1,6 +1,4 @@
 use crate::common::peers::get_simple_peer_collection;
-use elliptic_curve::Group;
-use elliptic_curve::group::GroupEncoding;
 use ethers::abi::Address;
 use lit_core::utils::binary::bytes_to_hex;
 use lit_node::common::key_helper::KeyCache;
@@ -14,6 +12,11 @@ use lit_node::tss::common::storage::{
 use lit_node_core::ethers::prelude::U256;
 use lit_node_core::{CompressedBytes, CurveType};
 use lit_node_testnet::TestSetupBuilder;
+use lit_rust_crypto::{
+    blsful, decaf377, ed448_goldilocks,
+    group::{Group, GroupEncoding},
+    jubjub, k256, p256, p384, pallas, vsss_rs,
+};
 use tracing::info;
 
 /// Tests that decryption shares do not get deleted
@@ -167,6 +170,15 @@ async fn verify_restore_decryption_shares_not_deleted() {
             }
             CurveType::RedDecaf377 => {
                 check_for_restore_decryption_shares::<decaf377::Element>(
+                    curve_type,
+                    &pubkey,
+                    &peers,
+                    realm_id.as_u64(),
+                )
+                .await;
+            }
+            CurveType::RedPallas => {
+                check_for_restore_decryption_shares::<pallas::Point>(
                     curve_type,
                     &pubkey,
                     &peers,

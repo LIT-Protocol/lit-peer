@@ -1,14 +1,17 @@
 use super::deprecated_endpoint_error;
+use crate::endpoints::web_client;
 use crate::models;
 use crate::payment::delegated_usage::DelegatedUsageDB;
 use crate::payment::payment_tracker::PaymentTracker;
+use crate::siwe_db::rpc::EthBlockhashCache;
 use crate::tss::common::tss_state::TssState;
 use crate::utils::rocket::guards::RequestHeaders;
-use lit_api_core::context::{Tracer, Tracing};
+use crate::utils::web::with_timeout;
+use lit_api_core::context::{SdkVersion, Tracer, Tracing, TracingRequired};
 use lit_core::config::ReloadableLitConfig;
 use lit_node_common::client_state::ClientState;
 use lit_node_core::request;
-use lit_node_core::request::EncryptionSignRequest;
+use lit_node_core::request::{EncryptionSignRequest, SDKHandshakeRequest};
 use lit_sdk::EncryptedPayload;
 use moka::future::Cache;
 use rocket::response::status;
@@ -24,8 +27,38 @@ pub(crate) fn routes() -> Vec<Route> {
         encryption_sign,
         sign_session_key,
         pkp_sign,
-        execute_function
+        execute_function,
+        handshake
     ]
+}
+
+#[post("/web/handshake/v1", format = "json", data = "<handshake_request>")]
+#[instrument(name = "POST /web/handshake/v1", skip_all, fields(correlation_id = tracing_required.correlation_id()), ret)]
+#[allow(clippy::too_many_arguments)]
+pub(crate) async fn handshake(
+    session: &State<Arc<TssState>>,
+    remote_addr: SocketAddr,
+    handshake_request: Json<SDKHandshakeRequest>,
+    tracing_required: TracingRequired,
+    version: SdkVersion,
+    cfg: &State<ReloadableLitConfig>,
+    eth_blockhash_cache: &State<Arc<EthBlockhashCache>>,
+    client_state: &State<Arc<ClientState>>,
+) -> status::Custom<Value> {
+    with_timeout(&cfg.load_full(), None, None, async move {
+        web_client::handshake(
+            session,
+            remote_addr,
+            handshake_request,
+            tracing_required,
+            version,
+            cfg,
+            eth_blockhash_cache,
+            client_state,
+        )
+        .await
+    })
+    .await
 }
 
 #[allow(clippy::too_many_arguments)]

@@ -46,6 +46,7 @@ pub static VALID_LABEL_RE: Lazy<Regex> = Lazy::new(|| {
     Regex::new(r"^[a-zA-Z0-9:_-]+").expect("failed to construct regex for label validation")
 });
 
+#[allow(clippy::collapsible_if)]
 pub fn validate_host_name_part(part: &str, max_len: Option<usize>) -> Result<()> {
     if part.is_empty() {
         return Err(validation_err("invalid length for hostname part", None));
@@ -93,16 +94,16 @@ pub fn validate_host_name(
         if let Some(guest_type) = guest_type {
             if let Some(matched) = matches.get(1) {
                 if GuestType::Custom.eq(guest_type) {
-                    if let Some(guest_kind) = guest_kind {
-                        if !guest_kind.eq(matched.as_str()) {
-                            return Err(validation_err(
+                    if let Some(guest_kind) = guest_kind
+                        && !guest_kind.eq(matched.as_str())
+                    {
+                        return Err(validation_err(
                                 format!(
                                     "hostname '{host}' does not contain provided guest_kind '{guest_kind}'"
                                 ),
                                 None,
                             )
                                 .add_field("hostname", String(host.to_string())));
-                        }
                     }
                 } else if !guest_type.eq_str(matched.as_str()) {
                     return Err(validation_err(

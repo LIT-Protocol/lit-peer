@@ -10,7 +10,7 @@ contract ContractResolver is AccessControl {
 
     // the comments following each one of these are the keccak256 hashes of the string values
     // this is very useful if you have to manually set any of these, so that you
-    // don't have to calculate the hahes yourself.
+    // don't have to calculate the hashes yourself.
 
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN"); // 0xdf8b4c520ffe197c5343c6f5aec59570151ef9a492f2c624fd45ddde6135ec42
 

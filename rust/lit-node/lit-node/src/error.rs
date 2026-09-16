@@ -343,6 +343,9 @@ pub(crate) enum EC {
     /// The network root BLS key was not found
     #[code(kind = Unexpected, http_status = 500)]
     NodeBLSRootKeyNotFound,
+    /// The network root BLS key was not found
+    #[code(kind = Unexpected, http_status = 500)]
+    NodeNoKeysetIdFound,
     /// Concurrency limit reached
     #[code(kind = Unexpected, http_status = 429)]
     NodeConcurrencyOverload,

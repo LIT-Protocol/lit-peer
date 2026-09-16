@@ -76,7 +76,7 @@ pub async fn load_with_no_latency() {
     let start = std::time::Instant::now();
     for i in 0..messages_to_sign {
         info!("Starting sig #{}", i);
-        let message_to_sign = Some(format!("Test message #{}", i));
+        let message_to_sign = Some(format!("Test message #{i}"));
         let start_1 = std::time::Instant::now();
         let validation = sign_with_hd_key(
             &validator_collection,
@@ -215,7 +215,7 @@ pub async fn load_with_50ms_latency_single_link() {
     let start = std::time::Instant::now();
     for i in 0..messages_to_sign {
         info!("Starting sig #{}", i);
-        let message_to_sign = Some(format!("Test message #{}", i));
+        let message_to_sign = Some(format!("Test message #{i}"));
         let start_1 = std::time::Instant::now();
         let validation = sign_with_hd_key(
             &validator_collection,
@@ -357,7 +357,7 @@ pub async fn load_with_50ms_latency_all_links() {
     let start = std::time::Instant::now();
     for i in 0..messages_to_sign {
         info!("Starting sig #{}", i);
-        let message_to_sign = Some(format!("Test message #{}", i));
+        let message_to_sign = Some(format!("Test message #{i}"));
         let start_1 = std::time::Instant::now();
         let validation = sign_with_hd_key(
             &validator_collection,

@@ -2,7 +2,7 @@ use std::time::Duration;
 use std::{env, thread};
 
 use futures::future::LocalBoxFuture;
-use log::{as_error, error, info, warn};
+use log::{error, info, warn};
 
 use lit_os_core::error::Result;
 
@@ -75,7 +75,7 @@ pub(crate) async fn run_all(ctx: &mut InitContext) -> bool {
         Outcome::PowerOff => {
             // Poweroff if requested
             if let Err(e) = busybox_poweroff() {
-                error!(error = as_error!(e); "Failed to poweroff");
+                error!(error:err = e; "Failed to poweroff");
             };
         }
         Outcome::Halt | Outcome::Diagnose => {
@@ -96,7 +96,7 @@ async fn run(ctx: &mut InitContext, stage: &str, fun: StageHandler) -> Outcome {
     let res = fun(ctx).await;
     let outcome: Outcome;
     if let Err(e) = res {
-        error!(error = as_error!(e); "Stage '{}' failed", stage);
+        error!(error:err = e; "Stage '{}' failed", stage);
 
         outcome = Outcome::Break;
     } else {
@@ -121,7 +121,7 @@ fn securely_handle_failure(ctx: &mut InitContext) {
 
     info!("Tearing down system due to failure");
     if let Err(e) = deactivate_luks_volumes(ctx) {
-        error!(error = as_error!(e); "Failed to deactivate_luks_volumes, halting boot");
+        error!(error:err = e; "Failed to deactivate_luks_volumes, halting boot");
         thread::sleep(Duration::from_secs(u64::MAX));
     }
 }

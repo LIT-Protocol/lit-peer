@@ -1,17 +1,19 @@
 use super::{BeBytes, CompressedBytes, LeBytes};
-use hd_keys_curves_wasm::k256;
-use vsss_rs::elliptic_curve::{
-    PrimeField,
-    sec1::{EncodedPoint, FromEncodedPoint, ToEncodedPoint},
+use lit_rust_crypto::{
+    elliptic_curve::sec1::{EncodedPoint, FromEncodedPoint, ToEncodedPoint},
+    ff::PrimeField,
+    k256::{
+        AffinePoint, FieldBytes, NonZeroScalar, ProjectivePoint, Scalar, Secp256k1, ecdsa, schnorr,
+    },
 };
 
-impl CompressedBytes for k256::ProjectivePoint {
+impl CompressedBytes for ProjectivePoint {
     fn to_compressed(&self) -> Vec<u8> {
         self.to_encoded_point(true).to_bytes().to_vec()
     }
 
     fn from_compressed(bytes: &[u8]) -> Option<Self> {
-        let pt = EncodedPoint::<k256::Secp256k1>::from_bytes(bytes).ok()?;
+        let pt = EncodedPoint::<Secp256k1>::from_bytes(bytes).ok()?;
         Option::from(Self::from_encoded_point(&pt))
     }
     fn to_uncompressed(&self) -> Vec<u8> {
@@ -19,18 +21,18 @@ impl CompressedBytes for k256::ProjectivePoint {
     }
 
     fn from_uncompressed(bytes: &[u8]) -> Option<Self> {
-        let pt = EncodedPoint::<k256::Secp256k1>::from_bytes(bytes).ok()?;
+        let pt = EncodedPoint::<Secp256k1>::from_bytes(bytes).ok()?;
         Option::from(Self::from_encoded_point(&pt))
     }
 }
 
-impl CompressedBytes for k256::AffinePoint {
+impl CompressedBytes for AffinePoint {
     fn to_compressed(&self) -> Vec<u8> {
         self.to_encoded_point(true).to_bytes().to_vec()
     }
 
     fn from_compressed(bytes: &[u8]) -> Option<Self> {
-        let pt = EncodedPoint::<k256::Secp256k1>::from_bytes(bytes).ok()?;
+        let pt = EncodedPoint::<Secp256k1>::from_bytes(bytes).ok()?;
         Option::from(Self::from_encoded_point(&pt))
     }
     fn to_uncompressed(&self) -> Vec<u8> {
@@ -38,18 +40,18 @@ impl CompressedBytes for k256::AffinePoint {
     }
 
     fn from_uncompressed(bytes: &[u8]) -> Option<Self> {
-        let pt = EncodedPoint::<k256::Secp256k1>::from_bytes(bytes).ok()?;
+        let pt = EncodedPoint::<Secp256k1>::from_bytes(bytes).ok()?;
         Option::from(Self::from_encoded_point(&pt))
     }
 }
 
-impl CompressedBytes for k256::ecdsa::VerifyingKey {
+impl CompressedBytes for ecdsa::VerifyingKey {
     fn to_compressed(&self) -> Vec<u8> {
         self.to_encoded_point(true).to_bytes().to_vec()
     }
 
     fn from_compressed(bytes: &[u8]) -> Option<Self> {
-        let pt = EncodedPoint::<k256::Secp256k1>::from_bytes(bytes).ok()?;
+        let pt = EncodedPoint::<Secp256k1>::from_bytes(bytes).ok()?;
         Self::from_encoded_point(&pt).ok()
     }
     fn to_uncompressed(&self) -> Vec<u8> {
@@ -57,18 +59,18 @@ impl CompressedBytes for k256::ecdsa::VerifyingKey {
     }
 
     fn from_uncompressed(bytes: &[u8]) -> Option<Self> {
-        let pt = EncodedPoint::<k256::Secp256k1>::from_bytes(bytes).ok()?;
+        let pt = EncodedPoint::<Secp256k1>::from_bytes(bytes).ok()?;
         Self::from_encoded_point(&pt).ok()
     }
 }
 
-impl CompressedBytes for k256::schnorr::VerifyingKey {
+impl CompressedBytes for schnorr::VerifyingKey {
     fn to_compressed(&self) -> Vec<u8> {
         self.as_affine().to_encoded_point(true).to_bytes().to_vec()
     }
 
     fn from_compressed(bytes: &[u8]) -> Option<Self> {
-        let pt = EncodedPoint::<k256::Secp256k1>::from_bytes(bytes).ok()?;
+        let pt = EncodedPoint::<Secp256k1>::from_bytes(bytes).ok()?;
         Self::from_bytes(pt.compress().as_bytes()).ok()
     }
     fn to_uncompressed(&self) -> Vec<u8> {
@@ -76,66 +78,66 @@ impl CompressedBytes for k256::schnorr::VerifyingKey {
     }
 
     fn from_uncompressed(bytes: &[u8]) -> Option<Self> {
-        let pt = EncodedPoint::<k256::Secp256k1>::from_bytes(bytes).ok()?;
+        let pt = EncodedPoint::<Secp256k1>::from_bytes(bytes).ok()?;
         Self::from_bytes(pt.compress().as_bytes()).ok()
     }
 }
 
-impl BeBytes for k256::Scalar {
+impl BeBytes for Scalar {
     fn to_be_bytes(&self) -> Vec<u8> {
         self.to_bytes().to_vec()
     }
 
     fn from_be_bytes(bytes: &[u8]) -> Option<Self> {
-        let mut repr = k256::FieldBytes::default();
+        let mut repr = FieldBytes::default();
         repr.copy_from_slice(bytes);
         Option::from(Self::from_repr(repr))
     }
 }
 
-impl LeBytes for k256::Scalar {}
+impl LeBytes for Scalar {}
 
-impl CompressedBytes for k256::Scalar {
+impl CompressedBytes for Scalar {
     fn to_compressed(&self) -> Vec<u8> {
         self.to_bytes().to_vec()
     }
 
     fn from_compressed(bytes: &[u8]) -> Option<Self> {
-        let mut repr = k256::FieldBytes::default();
+        let mut repr = FieldBytes::default();
         repr.copy_from_slice(bytes);
         Option::from(Self::from_repr(repr))
     }
 }
 
-impl BeBytes for k256::NonZeroScalar {
+impl BeBytes for NonZeroScalar {
     fn to_be_bytes(&self) -> Vec<u8> {
         self.to_bytes().to_vec()
     }
 
     fn from_be_bytes(bytes: &[u8]) -> Option<Self> {
-        let mut repr = k256::FieldBytes::default();
+        let mut repr = FieldBytes::default();
         repr.copy_from_slice(bytes);
         Option::from(Self::from_repr(repr))
     }
 }
 
-impl LeBytes for k256::NonZeroScalar {}
+impl LeBytes for NonZeroScalar {}
 
-impl BeBytes for k256::ecdsa::SigningKey {
+impl BeBytes for ecdsa::SigningKey {
     fn to_be_bytes(&self) -> Vec<u8> {
         self.as_nonzero_scalar().to_be_bytes()
     }
 
     fn from_be_bytes(bytes: &[u8]) -> Option<Self> {
-        let mut repr = k256::FieldBytes::default();
+        let mut repr = FieldBytes::default();
         repr.copy_from_slice(bytes);
         Self::from_bytes(&repr).ok()
     }
 }
 
-impl LeBytes for k256::ecdsa::SigningKey {}
+impl LeBytes for ecdsa::SigningKey {}
 
-impl BeBytes for k256::schnorr::SigningKey {
+impl BeBytes for schnorr::SigningKey {
     fn to_be_bytes(&self) -> Vec<u8> {
         self.as_nonzero_scalar().to_be_bytes()
     }
@@ -145,4 +147,4 @@ impl BeBytes for k256::schnorr::SigningKey {
     }
 }
 
-impl LeBytes for k256::schnorr::SigningKey {}
+impl LeBytes for schnorr::SigningKey {}

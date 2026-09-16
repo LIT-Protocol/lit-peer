@@ -1,5 +1,5 @@
-use elliptic_curve::group::{Group, GroupEncoding};
 use lit_node_core::PeerId;
+use lit_rust_crypto::group::{Group, GroupEncoding};
 use serde::{Deserialize, Serialize};
 use std::fmt::{self, Display, Formatter};
 

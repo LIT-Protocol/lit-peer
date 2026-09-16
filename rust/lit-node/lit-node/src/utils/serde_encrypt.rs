@@ -18,7 +18,7 @@ async fn get_receiver_pubkey(peer_state: &PeerState, peer_addr: &str) -> Result<
         .get_peer_by_addr(peer_addr)
         .expect_or_err_code(
             EC::NodePeerNotFound,
-            format!("Could not find peer with addr {}", peer_addr),
+            format!("Could not find peer with addr {peer_addr}"),
         )?;
     let rpk: PublicKey = PublicKey::from(peer_item.receiver_public_key);
     Ok(rpk)

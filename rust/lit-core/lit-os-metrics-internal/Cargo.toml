@@ -9,6 +9,9 @@ osquery-rs = "0.1"
 serde.workspace = true
 serde_json.workspace = true
 
+[dependencies.lit-observability]
+path = "../../lit-core/lit-observability"
+
 [dependencies.lit-core]
 path = "../../lit-core/lit-core"
 

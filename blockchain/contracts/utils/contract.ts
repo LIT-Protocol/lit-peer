@@ -20,6 +20,7 @@ import {
   StakingAdminFacet,
   StakingFacet,
   Forwarder,
+  PubkeyRouterViewsFacet,
 } from '../typechain-types';
 import { LITToken } from '../typechain-types/contracts/lit-node/LITToken';
 import { ip2int } from './index.js';

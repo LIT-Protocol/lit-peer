@@ -23,7 +23,7 @@ pub struct WalletKeys {
 impl Display for WalletKeys {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         for b in &self.public_key {
-            write!(f, "{:02x}", b)?;
+            write!(f, "{b:02x}")?;
         }
         Ok(())
     }

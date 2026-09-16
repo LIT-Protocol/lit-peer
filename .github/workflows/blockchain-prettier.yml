@@ -16,7 +16,7 @@ jobs:
   prettier_check:
     runs-on: warp-ubuntu-latest-x64-2x # change to LargeRunner to run on github.  Change to self-hosted to run on our own runner.  Change to buildjet-8vcpu-ubuntu-2204 to run on buildjet with 8 cpus
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Use Node.js
         uses: WarpBuilds/setup-node@v4
         with:

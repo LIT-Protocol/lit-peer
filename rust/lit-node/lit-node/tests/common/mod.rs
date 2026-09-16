@@ -19,12 +19,8 @@ use lit_core::config::LitConfig;
 
 use std::sync::Arc;
 
-use ethers::types::U256;
-use lit_blockchain::contracts::staking::KeySetConfig;
 use lit_core::config::ENV_LIT_CONFIG_FILE;
-use lit_node::tss::util::DEFAULT_KEY_SET_NAME;
 use lit_node_common::config::load_cfg;
-use lit_node_core::CurveType;
 use lit_observability::logging::simple_logging_subscriber;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
@@ -67,23 +63,4 @@ pub fn load_config() -> (Arc<LitConfig>, Arc<ContractResolver>) {
     );
 
     (loaded_config, resolver)
-}
-
-pub fn get_default_keyset_configs() -> Vec<KeySetConfig> {
-    vec![default_keyset_config()]
-}
-pub fn default_keyset_config() -> KeySetConfig {
-    KeySetConfig {
-        identifier: DEFAULT_KEY_SET_NAME.to_string(),
-        description: String::new(),
-        minimum_threshold: 3,
-        monetary_value: 0,
-        complete_isolation: false,
-        realms: vec![U256::from(1)],
-        curves: CurveType::into_iter().map(|c| c.into()).collect(),
-        counts: std::iter::once(U256::from(1))
-            .chain(CurveType::into_iter().skip(1).map(|_| U256::from(2)))
-            .collect(),
-        recovery_party_members: Vec::new(),
-    }
 }

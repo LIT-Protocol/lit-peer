@@ -138,7 +138,7 @@ describe('BackupRecovery', function () {
       await contractResolver.getAddress(),
       Environment.DEV,
       {
-        additionalFacets: ['PubkeyRouterFacet'],
+        additionalFacets: ['PubkeyRouterFacet', 'PubkeyRouterViewsFacet'],
         verifyContracts: false,
         waitForDeployment: false,
       }
@@ -200,9 +200,9 @@ describe('BackupRecovery', function () {
         identifier: 'naga-keyset1',
         description: '',
         realms: [1],
-        curves: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-        counts: [1, 2, 2, 2, 2, 2, 2, 2, 2, 2],
-        recoveryPartyMembers: [],
+        curves: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        counts: [1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+        recoverySessionId: '0x',
       });
 
       await token.mint(deployer.address, totalTokens);
@@ -451,7 +451,11 @@ describe('BackupRecovery', function () {
       stakingAccounts[backupPartyCount].nodeAddress
     );
     await expect(
-      backupContract.registerRecoveryKeys([blsKey, ecdsaKey], sessionId)
+      backupContract.registerRecoveryKeys(
+        [blsKey, ecdsaKey],
+        sessionId,
+        'naga-keyset1'
+      )
     ).to.be.revertedWith(
       'BackupRecovery: not a member of the Recovery DKG peer group'
     );
@@ -464,7 +468,8 @@ describe('BackupRecovery', function () {
 
       const tx = await backupContract.registerRecoveryKeys(
         [blsKey, ecdsaKey],
-        sessionId
+        sessionId,
+        'naga-keyset1'
       );
       await tx.wait();
 
@@ -476,7 +481,11 @@ describe('BackupRecovery', function () {
       stakingAccounts[0].nodeAddress
     );
     await expect(
-      backupContract.registerRecoveryKeys([blsKey, ecdsaKey], sessionId)
+      backupContract.registerRecoveryKeys(
+        [blsKey, ecdsaKey],
+        sessionId,
+        'naga-keyset1'
+      )
     ).to.be.revertedWith(
       'BackupRecovery: validator has already voted for this recovery key'
     );
@@ -487,7 +496,8 @@ describe('BackupRecovery', function () {
     );
     tx = await backupContract.registerRecoveryKeys(
       [blsKey, ecdsaKey],
-      sessionId
+      sessionId,
+      'naga-keyset1'
     );
     await tx.wait();
     expect(await backupRecoveryContract.isRecoveryDkgCompleted()).to.be.true;
@@ -497,7 +507,11 @@ describe('BackupRecovery', function () {
       stakingAccounts[0].nodeAddress
     );
     await expect(
-      backupContract.registerRecoveryKeys([blsKey, ecdsaKey], sessionId)
+      backupContract.registerRecoveryKeys(
+        [blsKey, ecdsaKey],
+        sessionId,
+        'naga-keyset1'
+      )
     ).to.be.revertedWith(
       'BackupRecovery: recovery keys already set for this Recovery DKG'
     );

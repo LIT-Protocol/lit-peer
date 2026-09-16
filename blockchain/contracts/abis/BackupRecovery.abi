@@ -833,6 +833,11 @@
         "internalType": "bytes",
         "name": "sessionId",
         "type": "bytes"
+      },
+      {
+        "internalType": "string",
+        "name": "keySetId",
+        "type": "string"
       }
     ],
     "name": "registerRecoveryKeys",

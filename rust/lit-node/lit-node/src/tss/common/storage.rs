@@ -478,7 +478,7 @@ async fn delete_from_disk(path: PathBuf, key_cache: &KeyCache) -> Result<()> {
         unexpected_err_code(
             e,
             EC::NodeSystemFault,
-            Some(format!("Could not delete file: {:?}", path)),
+            Some(format!("Could not delete file: {path:?}")),
         )
     })?;
 
@@ -486,7 +486,7 @@ async fn delete_from_disk(path: PathBuf, key_cache: &KeyCache) -> Result<()> {
         .to_str()
         .expect("Could not convert path to string")
         .to_string();
-    key_cache.as_ref().remove(&key_path);
+    key_cache.as_ref().remove_sync(&key_path);
 
     Ok(())
 }
@@ -625,14 +625,14 @@ impl TryFrom<&str> for StorableFile {
                     .map(|name| (*storage_type, name))
             })
             .ok_or_else(|| {
-                unexpected_err(format!("{} is not a valid key file name", file_name), None)
+                unexpected_err(format!("{file_name} is not a valid key file name"), None)
             })?;
 
         let parts = file_name.split('-').collect::<Vec<&str>>();
 
         if parts.len() < 4 {
             return Err(unexpected_err(
-                format!("{} is not a valid file name", file_name),
+                format!("{file_name} is not a valid file name"),
                 None,
             ));
         }
@@ -648,8 +648,7 @@ impl TryFrom<&str> for StorableFile {
             _ => {
                 return Err(unexpected_err(
                     format!(
-                        "{} is not a valid key file name. Expected 'Key', 'Presign', 'KeyShareCommitment'",
-                        file_name
+                        "{file_name} is not a valid key file name. Expected 'Key', 'Presign', 'KeyShareCommitment'"
                     ),
                     None,
                 ));
@@ -730,7 +729,7 @@ impl StorableFile {
             io_err_code(
                 e,
                 EC::NodeSystemFault,
-                Some(format!("Could not read dir: {:?}", path)),
+                Some(format!("Could not read dir: {path:?}")),
             )
         })?;
 
@@ -739,19 +738,19 @@ impl StorableFile {
                 io_err_code(
                     e,
                     EC::NodeSystemFault,
-                    Some(format!("Could not determine file type: {:?}", entry)),
+                    Some(format!("Could not determine file type: {entry:?}")),
                 )
             })?;
 
-            if file_type.is_file() {
-                if let Some(file_name) = entry.file_name().to_str() {
-                    let storable_file: StorableFile = file_name.parse()?;
-                    if storable_file.realm_id == self.realm_id
-                        && storable_file.epoch < self.epoch
-                        && storable_file.epoch != RECOVERY_DKG_EPOCH
-                    {
-                        let _r = delete_from_disk(entry.path(), key_cache).await;
-                    }
+            if file_type.is_file()
+                && let Some(file_name) = entry.file_name().to_str()
+            {
+                let storable_file: StorableFile = file_name.parse()?;
+                if storable_file.realm_id == self.realm_id
+                    && storable_file.epoch < self.epoch
+                    && storable_file.epoch != RECOVERY_DKG_EPOCH
+                {
+                    let _r = delete_from_disk(entry.path(), key_cache).await;
                 }
             }
         }
@@ -771,9 +770,12 @@ mod test {
         delete_keyshares_older_than_epoch, read_key_share_commitments_from_disk,
         write_key_share_commitments_to_disk,
     };
-    use elliptic_curve::Group;
-    use lit_node_core::PeerId;
-    use lit_node_core::{CompressedHex, CurveType};
+    use lit_node_core::{CompressedHex, CurveType, PeerId};
+    use lit_rust_crypto::{
+        blsful::inner_types::{G1Projective, Scalar},
+        group::Group,
+        k256,
+    };
     use rand_core::SeedableRng;
     use semver::Version;
 
@@ -792,16 +794,15 @@ mod test {
     #[tokio::test]
     async fn delete_key_shares_older_than_epoch_test() {
         let peer_id = PeerId::from_u8(7);
-        let sk = blsful::inner_types::Scalar::from_bytes_wide(&[1u8; 64]);
-        let pk = blsful::inner_types::G1Projective::GENERATOR * sk;
+        let sk = Scalar::from_bytes_wide(&[1u8; 64]);
+        let pk = G1Projective::GENERATOR * sk;
         let pubkey = pk.to_compressed_hex();
 
         let stkr = k256::Scalar::from(137u64);
         let stkr_pub = k256::ProjectivePoint::GENERATOR * stkr;
         let staker_address = stkr_pub.to_compressed_hex();
 
-        let key_persistence =
-            KeyPersistence::<blsful::inner_types::G1Projective>::new(CurveType::BLS);
+        let key_persistence = KeyPersistence::<G1Projective>::new(CurveType::BLS);
         let key_cache = KeyCache::default();
         let peers = dummy_peers();
 
@@ -840,7 +841,7 @@ mod test {
             let r = key_persistence
                 .read_key(&pubkey, &peer_id, epoch, &staker_address, 1, &key_cache)
                 .await;
-            assert!(r.is_err(), "epoch {}", epoch);
+            assert!(r.is_err(), "epoch {epoch}");
         }
         for epoch in 4..=5 {
             let r = key_persistence
@@ -871,7 +872,7 @@ mod test {
         let peers = dummy_peers();
         for epoch in 1..=5 {
             let commitments = KeyShareCommitments {
-                dkg_id: format!("DKG_ID_{}", epoch),
+                dkg_id: format!("DKG_ID_{epoch}"),
                 commitments: (0..4)
                     .map(|i| k256::ProjectivePoint::random(&mut rng))
                     .collect(),
@@ -914,7 +915,7 @@ mod test {
                     &key_cache,
                 )
                 .await;
-            assert!(r.is_err(), "epoch {}", epoch);
+            assert!(r.is_err(), "epoch {epoch}");
         }
         for epoch in 4..=5 {
             let r =
@@ -931,7 +932,7 @@ mod test {
             assert!(r.is_ok());
             let commitments = r.unwrap();
             assert_eq!(commitments.commitments.len(), 4);
-            assert_eq!(commitments.dkg_id, format!("DKG_ID_{}", epoch));
+            assert_eq!(commitments.dkg_id, format!("DKG_ID_{epoch}"));
         }
     }
 

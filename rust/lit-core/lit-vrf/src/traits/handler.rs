@@ -1,4 +1,4 @@
-use elliptic_curve::{Group, group::GroupEncoding};
+use lit_rust_crypto::group::{Group, GroupEncoding};
 
 /// Root trait to eliminate duplication in the other traits
 pub trait Handler {

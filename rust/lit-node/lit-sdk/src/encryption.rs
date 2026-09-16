@@ -2,7 +2,7 @@
 
 use crate::{EncryptedMulticastRequest, EndpointRequest, Response, SdkError, SdkResult, UrlPrefix};
 use lit_node_core::{
-    blsful::{
+    lit_rust_crypto::blsful::{
         Bls12381G2Impl, PublicKey, Signature, SignatureSchemes, SignatureShare, TimeCryptCiphertext,
     },
     request::EncryptionSignRequest as InnerEncryptionSignRequest,
@@ -53,7 +53,7 @@ pub fn verify_and_decrypt_with_signatures_shares(
     ciphertext: &TimeCryptCiphertext<Bls12381G2Impl>,
     shares: &[SignatureShare<Bls12381G2Impl>],
 ) -> SdkResult<Vec<u8>> {
-    let signature = Signature::from_shares(shares)?;
+    let signature = Signature::from_shares(shares).map_err(SdkError::Bls)?;
     verify_and_decrypt(public_key, identity, ciphertext, &signature)
 }
 

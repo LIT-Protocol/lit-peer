@@ -1,5 +1,5 @@
-use blsful::Bls12381G2Impl;
 use ethers::types::Address;
+use lit_rust_crypto::blsful::{Bls12381G2Impl, PublicKey, Signature};
 use rocket::time::OffsetDateTime;
 use siwe::{Message, VerificationOpts};
 use tracing::debug;
@@ -122,10 +122,10 @@ impl CapabilityAuthSigValidator for SiweValidator {
         };
         let signed_data = siwe_hash_to_bls_session_hash(siwe_hash.into());
 
-        let signature: blsful::Signature<Bls12381G2Impl> = serde_json::from_str(&auth_sig.sig)
+        let signature: Signature<Bls12381G2Impl> = serde_json::from_str(&auth_sig.sig)
             .map_err(|err| parser_err_code(err, EC::NodeSIWESigConversionError, None))?;
 
-        let bls_root_key = blsful::PublicKey::<Bls12381G2Impl>::try_from(
+        let bls_root_key = PublicKey::<Bls12381G2Impl>::try_from(
             &hex::decode(bls_root_pubkey).expect("Failed to decode root key"),
         )
         .expect("Failed to convert bls public key from bytes");
@@ -211,7 +211,7 @@ impl SessionSigAuthSigValidator for SiweValidator {
         }
         // Validate that the session public key is signed in the SIWE message.
         let signed_uri = siwe_message.uri.to_string();
-        let correct_uri = format!("lit:session:{}", session_pubkey);
+        let correct_uri = format!("lit:session:{session_pubkey}");
         if signed_uri != correct_uri {
             return Err(validation_err_code(
                 "The session pubkey in the auth sig is not signed in the wallet-signed SIWE message",
@@ -257,10 +257,10 @@ impl SessionSigAuthSigValidator for SiweValidator {
         };
         let signed_data = siwe_hash_to_bls_session_hash(siwe_hash.into());
 
-        let signature: blsful::Signature<Bls12381G2Impl> = serde_json::from_str(&auth_sig.sig)
+        let signature: Signature<Bls12381G2Impl> = serde_json::from_str(&auth_sig.sig)
             .map_err(|err| parser_err_code(err, EC::NodeSIWESigConversionError, None))?;
 
-        let bls_root_key = blsful::PublicKey::<Bls12381G2Impl>::try_from(
+        let bls_root_key = PublicKey::<Bls12381G2Impl>::try_from(
             &hex::decode(bls_root_pubkey).expect("Failed to decode root key"),
         )
         .expect("Failed to convert bls public key from bytes");
@@ -281,10 +281,10 @@ impl SessionSigAuthSigValidator for SiweValidator {
 
         // Validate that the session public key is signed in the SIWE message.
         let signed_uri = siwe_message.uri.to_string();
-        let correct_uri = format!("lit:session:{}", session_pubkey);
+        let correct_uri = format!("lit:session:{session_pubkey}");
         if signed_uri != correct_uri {
             return Err(validation_err_code(
-                format!("The session pubkey in the auth sig is not signed in the wallet-signed SIWE message.  The correct URI should be {} but the signed URI was {}", correct_uri, signed_uri),
+                format!("The session pubkey in the auth sig is not signed in the wallet-signed SIWE message.  The correct URI should be {correct_uri} but the signed URI was {signed_uri}"),
                 EC::NodeSIWEMessageError,
                 None
             ).add_source_to_details());
@@ -390,12 +390,7 @@ mod tests {
             AccessControlConditionResource::new("blah".into()).decrypt_ability();
 
         let validate = validator
-            .validate_auth_sig(
-                &auth_sig,
-                "0xdeadbeef",
-                &requested_lit_resource_ability,
-                &"".to_string(),
-            )
+            .validate_auth_sig(&auth_sig, "0xdeadbeef", &requested_lit_resource_ability, "")
             .await;
         assert!(validate.is_err());
 
@@ -436,12 +431,7 @@ mod tests {
             AccessControlConditionResource::new("blah".into()).decrypt_ability();
 
         let validate = validator
-            .validate_auth_sig(
-                &auth_sig,
-                "0xdeadbeef",
-                &requested_lit_resource_ability,
-                &"".to_string(),
-            )
+            .validate_auth_sig(&auth_sig, "0xdeadbeef", &requested_lit_resource_ability, "")
             .await;
         assert!(validate.is_err());
 
@@ -477,12 +467,7 @@ mod tests {
             AccessControlConditionResource::new("blah".into()).decrypt_ability();
 
         let validate = validator
-            .validate_auth_sig(
-                &auth_sig,
-                "0xdeadbeef",
-                &requested_lit_resource_ability,
-                &"".to_string(),
-            )
+            .validate_auth_sig(&auth_sig, "0xdeadbeef", &requested_lit_resource_ability, "")
             .await;
         assert!(validate.is_err());
 
@@ -531,12 +516,7 @@ mod tests {
 
         let validator = SiweValidator::new();
         let validate = validator
-            .validate_auth_sig(
-                &auth_sig,
-                "0xdeadbeef",
-                &requested_lit_resource_ability,
-                &"".to_string(),
-            )
+            .validate_auth_sig(&auth_sig, "0xdeadbeef", &requested_lit_resource_ability, "")
             .await;
         assert!(validate.is_err());
         let err = validate.unwrap_err();
@@ -587,7 +567,7 @@ mod tests {
                 &auth_sig,
                 "e76233cdd5483d674020cee626bdecfee6cf9d02b2bffa31b75b91c0ec04a09f",
                 &requested_lit_resource_ability,
-                &"".to_string(),
+                "",
             )
             .await;
         assert!(validate.is_err());
@@ -640,7 +620,7 @@ mod tests {
                 &auth_sig,
                 "e76233cdd5483d674020cee626bdecfee6cf9d02b2bffa31b75b91c0ec04a09f",
                 &requested_lit_resource_ability,
-                &"".to_string(),
+                "",
             )
             .await;
         assert!(validate.is_err());
@@ -699,7 +679,7 @@ mod tests {
                 &auth_sig,
                 "e76233cdd5483d674020cee626bdecfee6cf9d02b2bffa31b75b91c0ec04a09f",
                 &requested_lit_resource_ability,
-                &"".to_string(),
+                "",
             )
             .await;
         assert!(validate.is_ok());

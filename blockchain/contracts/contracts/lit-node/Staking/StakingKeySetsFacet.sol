@@ -120,6 +120,7 @@ contract StakingKeySetsFacet {
             config.description = update.description;
             config.realms = update.realms;
             config.minimumThreshold = update.minimumThreshold;
+            config.recoverySessionId = update.recoverySessionId;
 
             emit KeySetConfigUpdated(update.identifier);
         } else {
@@ -141,8 +142,8 @@ contract StakingKeySetsFacet {
             gs.keySetsConfigs[keySetId].realms = update.realms;
             gs.keySetsConfigs[keySetId].curves = update.curves;
             gs.keySetsConfigs[keySetId].counts = update.counts;
-            gs.keySetsConfigs[keySetId].recoveryPartyMembers = update
-                .recoveryPartyMembers;
+            gs.keySetsConfigs[keySetId].recoverySessionId = update
+                .recoverySessionId;
             for (uint i = 0; i < update.curves.length; i++) {
                 require(update.counts[i] > 0, "key counts cannot be set to 0");
                 gs.keySetKeyCounts[keySetId][update.curves[i]] = update.counts[
@@ -188,7 +189,9 @@ contract StakingKeySetsFacet {
         for (uint i = 0; i < config.counts.length; i++) {
             delete gs.keySetKeyCounts[keySetId][config.curves[i]];
         }
-        // TODO: delete the root keys from the pub key router
+        // Delete the root keys from the pub key router
+        LibPubkeyRouterStorage.PubkeyRouterStorage storage ps = pubkeyRouter();
+        delete ps.rootKeys[address(this)][keySetId];
     }
 
     event KeySetConfigSet(bool exists, string identifier, bytes32 hashed);

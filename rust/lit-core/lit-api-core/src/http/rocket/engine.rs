@@ -13,7 +13,7 @@ use rocket::Error as RocketError;
 use rocket::async_main;
 use sd_notify::NotifyState;
 use tokio::runtime::Runtime;
-use tracing::warn;
+use tracing::{error, warn};
 
 use crate::Event;
 use crate::http::rocket::launcher::{Launcher, Shutdown};
@@ -161,7 +161,13 @@ fn spawn_launcher(
     let mut launcher_join_handles = launcher_join_handles.lock().unwrap();
 
     launcher_join_handles.push(thread::spawn(move || {
-        let _ = async_main(launcher.launch());
+        let res = async_main(launcher.launch());
+        if let Err(e) = res {
+            // A Rocket launch error (commonly port bind/listen failure) is a failure condition
+            // exit with log and nonzero exit code to distinguish from normal shutdown
+            error!(error = ?e, "rocket engine - launcher exited with error (fatal)");
+            panic!("rocket engine - launcher exited with error (fatal): {e:?}");
+        }
     }));
 
     Ok(())

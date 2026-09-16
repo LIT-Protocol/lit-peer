@@ -18,22 +18,21 @@ use crate::payment::dynamic::DynamicPayment;
 use crate::peers::{grpc_client_pool::GrpcClientPool, peer_state::models::SimplePeerCollection};
 use crate::pkp;
 use crate::tasks::utils::generate_hash;
+use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::hd_keys::get_derived_keyshare;
 use crate::tss::common::tss_state::TssState;
 use crate::utils::encoding;
+use crate::utils::keysets::get_default_keyset_id;
 use crate::utils::tracing::inject_tracing_metadata;
-use crate::utils::web::{get_bls_root_pubkey, hash_access_control_conditions};
+use crate::utils::web::{
+    get_bls_root_pubkey, get_default_bls_root_pubkey, hash_access_control_conditions,
+};
 use anyhow::{Context as _, Result, bail};
 use base64_light::base64_decode;
-use blsful::inner_types::GroupEncoding;
-use blsful::{Bls12381G2Impl, SignatureShare};
 use derive_builder::Builder;
 use ecdsa::SignatureSize;
-use elliptic_curve::generic_array::ArrayLength;
-use elliptic_curve::{CurveArithmetic, PrimeCurve};
 use ethers::utils::keccak256;
 use futures::{FutureExt as _, TryFutureExt};
-use hd_keys_curves::{HDDerivable, HDDeriver};
 use lit_actions_grpc::tokio_stream::StreamExt as _;
 use lit_actions_grpc::tonic::{
     Code, Extensions, Request, Status, metadata::MetadataMap, transport::Error as TransportError,
@@ -43,18 +42,26 @@ use lit_blockchain::resolver::rpc::{ENDPOINT_MANAGER, RpcHealthcheckPoller};
 use lit_core::config::LitConfig;
 use lit_core::error::Unexpected;
 use lit_core::utils::binary::bytes_to_hex;
+use lit_node_common::config::LitNodeConfig as _;
+use lit_node_core::{
+    AccessControlConditionResource, AuthSigItem, BeHex, CompressedBytes, EndpointVersion,
+    JsonAuthSig, LitActionPriceComponent, LitResource, NodeSet, PeerId, SignableOutput, SignedData,
+    SigningScheme, UnifiedAccessControlConditionItem,
+    hd_keys_curves_wasm::{HDDerivable, HDDeriver},
+    response,
+};
+use lit_rust_crypto::{
+    blsful::{self, Bls12381G2Impl, SignatureShare},
+    decaf377, ed448_goldilocks,
+    elliptic_curve::{CurveArithmetic, PrimeCurve, generic_array::ArrayLength},
+    group::GroupEncoding,
+    jubjub, k256, p256, p384, vsss_rs,
+};
+use lit_sdk::signature::{SignedDataOutput, combine_and_verify_signature_shares};
 use moka::future::Cache;
 use serde::{Deserialize, Serialize};
 use tokio::time::Duration;
 use tracing::{debug, instrument};
-
-use lit_node_common::config::LitNodeConfig as _;
-use lit_node_core::{
-    AccessControlConditionResource, AuthSigItem, BeHex, CompressedBytes, CurveType,
-    EndpointVersion, JsonAuthSig, LitActionPriceComponent, LitResource, NodeSet, PeerId,
-    SignableOutput, SignedData, SigningScheme, UnifiedAccessControlConditionItem, response,
-};
-use lit_sdk::signature::{SignedDataOutput, combine_and_verify_signature_shares};
 
 const DEFAULT_TIMEOUT_MS: u64 = 30_000; // 30s
 const DEFAULT_ASYNC_TIMEOUT_MS: u64 = 300_000; // 5m
@@ -93,7 +100,8 @@ pub struct Client {
     endpoint_version: EndpointVersion,
     #[builder(default, setter(into))]
     node_set: Vec<NodeSet>,
-
+    #[builder(default, setter(into))]
+    key_set_id: String,
     // Limits
     #[builder(default = "DEFAULT_TIMEOUT_MS")]
     timeout_ms: u64,
@@ -378,7 +386,7 @@ impl Client {
         }
     }
 
-    #[instrument(level = "debug", skip(self), err)]
+    #[instrument(level = "debug", skip(self, code), err)]
     async fn execute_js_inner(
         &mut self,
         code: Arc<String>,
@@ -522,8 +530,11 @@ impl Client {
             UnionResponse::PkpPermissionsGetPermitted(PkpPermissionsGetPermittedRequest {
                 method,
                 token_id,
+                key_set_id,
             }) => {
                 self.pay(LitActionPriceComponent::ContractCalls, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+
                 let resources =
                     pkp::utils::pkp_permissions_get_permitted(method, self.lit_config(), token_id)
                         .await?;
@@ -538,9 +549,12 @@ impl Client {
                     method,
                     user_id,
                     max_scope_id,
+                    key_set_id,
                 },
             ) => {
                 self.pay(LitActionPriceComponent::ContractCalls, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+
                 let scopes = pkp::utils::pkp_permissions_get_permitted_auth_method_scopes(
                     token_id,
                     self.lit_config(),
@@ -555,13 +569,23 @@ impl Client {
                 method,
                 token_id,
                 params,
+                key_set_id,
             }) => {
                 self.pay(LitActionPriceComponent::ContractCalls, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+                let cdm = self
+                    .tss_state_and_txn_prefix()?
+                    .0
+                    .chain_data_config_manager
+                    .clone();
+
                 let is_permitted = pkp::utils::pkp_permissions_is_permitted(
                     token_id,
                     self.lit_config(),
                     method,
                     serde_json::from_slice(&params)?,
+                    &key_set_id,
+                    &cdm,
                 )
                 .await?;
                 PkpPermissionsIsPermittedResponse { is_permitted }.into()
@@ -571,21 +595,34 @@ impl Client {
                     token_id,
                     method,
                     user_id,
+                    key_set_id,
                 },
             ) => {
                 self.pay(LitActionPriceComponent::ContractCalls, 1).await?;
-                use lit_blockchain::resolver::contract::ContractResolver;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+                let cdm = self
+                    .tss_state_and_txn_prefix()?
+                    .0
+                    .chain_data_config_manager
+                    .clone();
 
-                let cfg = self.lit_config();
-                let resolver = ContractResolver::try_from(cfg)?;
-                let contract = resolver.pkp_permissions_contract(cfg).await?;
                 let is_permitted = pkp::utils::pkp_permissions_is_permitted_auth_method(
-                    token_id, cfg, method, user_id,
+                    token_id,
+                    self.lit_config(),
+                    method,
+                    user_id,
+                    &key_set_id,
+                    &cdm,
                 )
                 .await?;
                 PkpPermissionsIsPermittedAuthMethodResponse { is_permitted }.into()
             }
-            UnionResponse::PubkeyToTokenId(PubkeyToTokenIdRequest { public_key }) => {
+            UnionResponse::PubkeyToTokenId(PubkeyToTokenIdRequest {
+                public_key,
+                key_set_id,
+            }) => {
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+
                 let bytes = encoding::hex_to_bytes(public_key)?;
                 let token_id = format!("0x{}", bytes_to_hex(keccak256(bytes).as_slice()));
                 PubkeyToTokenIdResponse { token_id }.into()
@@ -595,7 +632,10 @@ impl Client {
                 public_key,
                 sig_name,
                 eth_personal_sign,
+                key_set_id,
             }) => {
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+
                 self.pay(LitActionPriceComponent::Signatures, 1).await?;
 
                 let success = if eth_personal_sign {
@@ -615,6 +655,7 @@ impl Client {
                         self.epoch,
                         action_ipfs_id,
                         SigningScheme::EcdsaK256Sha256,
+                        &key_set_id,
                     )
                     .await
                 } else {
@@ -626,6 +667,7 @@ impl Client {
                         self.epoch,
                         action_ipfs_id,
                         SigningScheme::EcdsaK256Sha256,
+                        &key_set_id,
                     )
                     .await
                 }?;
@@ -636,8 +678,10 @@ impl Client {
                 public_key,
                 sig_name,
                 signing_scheme,
+                key_set_id,
             }) => {
                 self.pay(LitActionPriceComponent::Signatures, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
 
                 let scheme = signing_scheme
                     .parse::<SigningScheme>()
@@ -651,6 +695,7 @@ impl Client {
                         self.epoch,
                         action_ipfs_id,
                         scheme,
+                        &key_set_id,
                     )
                     .await?;
                 SignResponse { success }.into()
@@ -797,6 +842,10 @@ impl Client {
             UnionResponse::CallChild(CallChildRequest { ipfs_id, params }) => {
                 self.pay(LitActionPriceComponent::CallDepth, 1).await?;
 
+                info!(
+                    "Calling child action: {:?}, self keyset id: {:?}",
+                    ipfs_id, self.key_set_id
+                );
                 call_depth += 1;
                 if call_depth > self.max_call_depth {
                     bail!(
@@ -839,7 +888,7 @@ impl Client {
                 self.increment_broad_and_collect_counter()?;
 
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
-                let txn_prefix = format!("{}_{}", txn_prefix, name);
+                let txn_prefix = format!("{txn_prefix}_{name}");
 
                 let tss_state = Arc::new(tss_state);
                 let cm = CommsManager::new(&tss_state, 0, &txn_prefix, "0", &self.node_set).await?;
@@ -858,10 +907,12 @@ impl Client {
                 data_to_encrypt_hash,
                 auth_sig,
                 chain,
+                key_set_id,
             }) => {
                 self.increment_broad_and_collect_counter()?;
                 self.pay(LitActionPriceComponent::Broadcasts, 1).await?;
                 self.pay(LitActionPriceComponent::Decrypts, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
 
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
                 let json_auth_sig = self.parse_json_authsig_helper(auth_sig)?;
@@ -892,18 +943,20 @@ impl Client {
                 let cipher_state = match tss_state.get_cipher_state(SigningScheme::Bls12381) {
                     Ok(cipher_state) => cipher_state,
                     Err(e) => {
-                        bail!("Couldn't get BLS ciper state: {:?}", e);
+                        bail!("Couldn't get BLS ciper state: {e:?}");
                     }
                 };
 
                 // Sign the identity parameter using the blsful secret key share.
-                let (signature_share, share_id) =
-                    match cipher_state.sign(&identity_parameter, self.epoch).await {
-                        Ok(signature_share) => signature_share,
-                        Err(e) => {
-                            bail!("Couldn't sign the identity parameter: {:?}", e);
-                        }
-                    };
+                let (signature_share, share_id) = match cipher_state
+                    .sign(&identity_parameter, &key_set_id, self.epoch)
+                    .await
+                {
+                    Ok(signature_share) => signature_share,
+                    Err(e) => {
+                        bail!("Couldn't sign the identity parameter: {e:?}");
+                    }
+                };
 
                 let cm = CommsManager::new(&tss_state, 0, &txn_prefix, "0", &self.node_set).await?;
                 let mut shares = cm
@@ -912,13 +965,28 @@ impl Client {
                     )
                     .await?;
 
+                debug!(
+                    "Collected {} decryption shares with peer_ids: {:?}",
+                    shares.len(),
+                    shares
+                        .iter()
+                        .map(|(pid, _)| pid.to_string())
+                        .collect::<Vec<_>>()
+                );
+
                 shares.push((PeerId::ONE, signature_share)); // lazy - it's not zero, but we don't seem to care!
 
-                let network_pubkey = get_bls_root_pubkey(&tss_state).await?;
+                let network_pubkey = get_default_bls_root_pubkey(&tss_state)?;
                 let network_pubkey = blsful::PublicKey::try_from(&hex::decode(&network_pubkey)?)?;
 
                 let serialized_decryption_shares =
                     shares.iter().map(|(_, share)| *share).collect::<Vec<_>>();
+
+                debug!(
+                    "Extracted {} signature shares for decryption",
+                    serialized_decryption_shares.len()
+                );
+
                 let ciphertext = serde_bare::from_slice(&base64_decode(&ciphertext))?;
 
                 let decrypted = lit_sdk::encryption::verify_and_decrypt_with_signatures_shares(
@@ -931,7 +999,7 @@ impl Client {
                 let decrypted = match decrypted {
                     Ok(decrypted) => decrypted,
                     Err(e) => {
-                        bail!("Failed to decrypt and combine: {:?}", e);
+                        bail!("Failed to decrypt and combine: {e:?}");
                     }
                 };
 
@@ -950,12 +1018,14 @@ impl Client {
                 data_to_encrypt_hash,
                 auth_sig,
                 chain,
+                key_set_id,
             }) => {
                 trace!("Ciphertext: {:?}", &ciphertext);
 
                 self.increment_broad_and_collect_counter()?;
                 self.pay(LitActionPriceComponent::Broadcasts, 1).await?;
                 self.pay(LitActionPriceComponent::Decrypts, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
 
                 let json_auth_sig = self.parse_json_authsig_helper(auth_sig)?;
 
@@ -994,18 +1064,20 @@ impl Client {
                 let cipher_state = match tss_state.get_cipher_state(SigningScheme::Bls12381) {
                     Ok(cipher_state) => cipher_state,
                     Err(e) => {
-                        bail!("Couldn't get BLS ciper state: {:?}", e);
+                        bail!("Couldn't get BLS ciper state: {e:?}");
                     }
                 };
 
                 // Sign the identity parameter using the blsful secret key share.
-                let (signature_share, share_index) =
-                    match cipher_state.sign(&identity_parameter, self.epoch).await {
-                        Ok(signature_share) => signature_share,
-                        Err(e) => {
-                            bail!("Couldn't sign the identity parameter: {:?}", e);
-                        }
-                    };
+                let (signature_share, share_index) = match cipher_state
+                    .sign(&identity_parameter, &key_set_id, self.epoch)
+                    .await
+                {
+                    Ok(signature_share) => signature_share,
+                    Err(e) => {
+                        bail!("Couldn't sign the identity parameter: {e:?}");
+                    }
+                };
 
                 let cm = CommsManager::new(&tss_state, 0, &txn_prefix, "0", &self.node_set).await?;
                 let leader_peer = peers.peer_at_address(&leader_addr)?;
@@ -1036,9 +1108,9 @@ impl Client {
 
                         shares.push((PeerId::ONE, signature_share)); // lazy - it's not zero, but we don't seem to care!
 
-                        let network_pubkey = &get_bls_root_pubkey(&tss_state).await?;
+                        let network_pubkey = get_default_bls_root_pubkey(&tss_state)?;
                         let network_pubkey =
-                            blsful::PublicKey::try_from(&hex::decode(network_pubkey)?)?;
+                            blsful::PublicKey::try_from(&hex::decode(&network_pubkey)?)?;
 
                         let serialized_decryption_shares =
                             shares.iter().map(|(_, share)| *share).collect::<Vec<_>>();
@@ -1055,18 +1127,16 @@ impl Client {
                         let decrypted = match decrypted {
                             Ok(decrypted) => decrypted,
                             Err(e) => {
-                                bail!("Failed to decrypt and combine: {:?}", e);
+                                bail!("Failed to decrypt and combine: {e:?}");
                             }
                         };
 
-                        let result = match std::str::from_utf8(&decrypted) {
+                        match std::str::from_utf8(&decrypted) {
                             Ok(result) => result.to_string(),
                             Err(e) => {
                                 bail!("Failed to convert decrypted bytes to string.")
                             }
-                        };
-
-                        result
+                        }
                     }
                 };
 
@@ -1076,14 +1146,16 @@ impl Client {
                 to_sign,
                 public_key,
                 sig_name,
+                key_set_id,
             }) => {
                 // we both the signatures and the broadcasts for this operation.
                 self.pay(LitActionPriceComponent::Signatures, 1).await?;
                 self.pay(LitActionPriceComponent::Broadcasts, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
 
                 self.increment_broad_and_collect_counter()?;
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
-                let txn_prefix = format!("{}_combine_{}", txn_prefix, sig_name);
+                let txn_prefix = format!("{txn_prefix}_combine_{sig_name}");
                 let tss_state = Arc::new(tss_state);
 
                 let result = self
@@ -1095,6 +1167,7 @@ impl Client {
                         self.epoch,
                         action_ipfs_id,
                         SigningScheme::EcdsaK256Sha256,
+                        &key_set_id,
                     )
                     .await?;
 
@@ -1164,10 +1237,12 @@ impl Client {
                 public_key,
                 sig_name,
                 signing_scheme,
+                key_set_id,
             }) => {
                 // we both the signatures and the broadcasts for this operation.
                 self.pay(LitActionPriceComponent::Signatures, 1).await?;
                 self.pay(LitActionPriceComponent::Broadcasts, 1).await?;
+                let key_set_id = self.ensure_key_set_id(key_set_id);
 
                 let scheme = signing_scheme
                     .parse::<SigningScheme>()
@@ -1182,7 +1257,7 @@ impl Client {
                 }
                 self.increment_broad_and_collect_counter()?;
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
-                let txn_prefix = format!("{}_combine_{}", txn_prefix, signing_scheme);
+                let txn_prefix = format!("{txn_prefix}_combine_{signing_scheme}");
                 let tss_state = Arc::new(tss_state);
 
                 let result = self
@@ -1194,6 +1269,7 @@ impl Client {
                         self.epoch,
                         action_ipfs_id,
                         scheme,
+                        &key_set_id,
                     )
                     .await?;
 
@@ -1255,6 +1331,7 @@ impl Client {
                     | SigningScheme::SchnorrRistretto25519Sha512
                     | SigningScheme::SchnorrEd448Shake256
                     | SigningScheme::SchnorrRedJubjubBlake2b512
+                    | SigningScheme::SchnorrRedPallasBlake2b512
                     | SigningScheme::SchnorrRedDecaf377Blake2b512
                     | SigningScheme::SchnorrkelSubstrate => {
                         let frost_signature: lit_frost::Signature =
@@ -1291,7 +1368,7 @@ impl Client {
             }
             UnionResponse::GetRpcUrl(GetRpcUrlRequest { chain }) => {
                 let result = rpc_url(chain)
-                    .unwrap_or_else(|e| format!("Error getting RPC URL: {:?}", e).to_string());
+                    .unwrap_or_else(|e| format!("Error getting RPC URL: {e:?}").to_string());
                 GetRpcUrlResponse { result }.into()
             }
 
@@ -1301,7 +1378,7 @@ impl Client {
 
                 self.increment_broad_and_collect_counter()?;
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
-                let txn_prefix = format!("{}_{}", txn_prefix, name);
+                let txn_prefix = format!("{txn_prefix}_{name}");
                 let tss_state = Arc::new(tss_state);
 
                 trace!(
@@ -1327,7 +1404,7 @@ impl Client {
 
                 // note that the default leader function doesn't take a function parameter, thus we need to generate a hash from the transaction id only
                 let request_hash = generate_hash(txn_prefix.clone());
-                let txn_prefix = format!("{}_{}", txn_prefix, name);
+                let txn_prefix = format!("{txn_prefix}_{name}");
                 let (leader_addr, is_leader) = self.leader_helper(request_hash).await?;
 
                 let peers = tss_state.peer_state.peers();
@@ -1359,10 +1436,14 @@ impl Client {
             UnionResponse::EncryptBls(EncryptBlsRequest {
                 access_control_conditions,
                 to_encrypt,
+                key_set_id,
             }) => {
+                let key_set_id = self.ensure_key_set_id(key_set_id);
+
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
-                let network_pubkey = &get_bls_root_pubkey(&tss_state).await?;
-                let network_pubkey = blsful::PublicKey::try_from(&hex::decode(network_pubkey)?)?;
+                let tss_state = Arc::new(tss_state);
+                let network_pubkey = get_bls_root_pubkey(&tss_state, &key_set_id)?;
+                let network_pubkey = blsful::PublicKey::try_from(&hex::decode(&network_pubkey)?)?;
 
                 use sha2::{Digest, Sha256};
                 let mut hasher = Sha256::new();
@@ -1384,7 +1465,7 @@ impl Client {
                         data_encoding::BASE64.encode(&serde_bare::to_vec(&ciphertext)?)
                     }
                     Err(e) => {
-                        bail!("Failed to encrypt: {:?}", e);
+                        bail!("Failed to encrypt: {e:?}");
                     }
                 };
 
@@ -1431,7 +1512,7 @@ impl Client {
                     anyhow::Error::msg("No current action ipfs id is specified".to_string())
                 })?;
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
-                let txn_prefix = format!("{}_signasaction_{}", txn_prefix, scheme);
+                let txn_prefix = format!("{txn_prefix}_signasaction_{scheme}");
                 let tss_state = Arc::new(tss_state);
 
                 self.state.sign_count += 1;
@@ -1475,11 +1556,16 @@ impl Client {
                 }
 
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
-                let txn_prefix = format!("{}_signasaction_{}", txn_prefix, scheme);
+
+                let cdm = &tss_state.chain_data_config_manager;
+                let key_set_id = get_default_keyset_id(cdm)?;
+
+                let txn_prefix = format!("{txn_prefix}_signasaction_{scheme}");
                 let tss_state = Arc::new(tss_state);
                 let curve_type = scheme.curve_type();
-                let dkg_state = tss_state.get_dkg_state(curve_type)?;
-                let root_keys = dkg_state.root_keys().await;
+                let curve_state =
+                    CurveState::new(tss_state.peer_state.clone(), curve_type, &key_set_id);
+                let root_keys = curve_state.root_keys()?;
                 let pubkey = lit_sdk::signature::get_lit_action_public_key(
                     scheme,
                     &action_ipfs_cid,
@@ -1514,10 +1600,13 @@ impl Client {
                 let curve_type = scheme.curve_type();
 
                 let (tss_state, txn_prefix) = self.tss_state_and_txn_prefix()?;
-                let txn_prefix = format!("{}_signasaction_{}", txn_prefix, scheme);
+                let cdm = &tss_state.chain_data_config_manager;
+                let key_set_id = get_default_keyset_id(cdm)?;
+                let txn_prefix = format!("{txn_prefix}_signasaction_{scheme}");
                 let tss_state = Arc::new(tss_state);
-                let dkg_state = tss_state.get_dkg_state(curve_type)?;
-                let root_keys = dkg_state.root_keys().await;
+                let curve_state =
+                    CurveState::new(tss_state.peer_state.clone(), curve_type, &key_set_id);
+                let root_keys = curve_state.root_keys()?;
                 let pubkey = lit_sdk::signature::get_lit_action_public_key(
                     scheme,
                     &action_ipfs_cid,
@@ -1591,13 +1680,12 @@ impl Client {
         let hashed_access_control_conditions = match hash_res {
             Ok(hashed_access_control_conditions) => hashed_access_control_conditions,
             Err(e) => {
-                bail!("Couldn't hash access control conditions: {:?}", e);
+                bail!("Couldn't hash access control conditions: {e:?}");
             }
         };
 
         let identity_param = AccessControlConditionResource::new(format!(
-            "{}/{}",
-            hashed_access_control_conditions, data_to_encrypt_hash
+            "{hashed_access_control_conditions}/{data_to_encrypt_hash}"
         ))
         .get_resource_key()
         .into_bytes();
@@ -1615,6 +1703,7 @@ impl Client {
         epoch: Option<u64>,
         action_ipfs_id: Option<String>,
         signing_scheme: SigningScheme,
+        key_set_id: &str,
     ) -> Result<String> {
         self.state.sign_count += 1;
         if self.state.sign_count > self.max_sign_count {
@@ -1625,13 +1714,17 @@ impl Client {
         }
 
         debug!(
-            "sign_helper() called with to_sign: {:?}, pubkey: {}, sig_name: {}",
+            "sign_helper() called with to_sign: {:?}, pubkey: {pubkey}, sig_name: {sig_name}, key_set_id: {key_set_id}",
             bytes_to_hex(to_sign.clone()),
-            pubkey,
-            sig_name
         );
 
-        let bls_root_pubkey = self.get_bls_root_pubkey().await?;
+        let tss_state = self
+            .js_env
+            .tss_state
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("No TSS state found"))?;
+        let tss_state = Arc::new(tss_state.clone());
+        let bls_root_pubkey = get_default_bls_root_pubkey(&tss_state)?;
 
         // accept pubkey with and without 0x prefix
         let pubkey = pubkey.replace("0x", "");
@@ -1656,9 +1749,10 @@ impl Client {
             &bls_root_pubkey,
             &self.node_set,
             signing_scheme,
+            key_set_id,
         )
         .await
-        .map_err(|e| anyhow::anyhow!(format!("Failed to sign: {:?}", e)))?;
+        .map_err(|e| anyhow::anyhow!(format!("Failed to sign: {e:?}")))?;
 
         debug!("Lit Action signing with {} complete.", signing_scheme);
 
@@ -1741,28 +1835,26 @@ impl Client {
             self.http_cache()?,
         )
         .await
-        .map_err(|e| anyhow::anyhow!(format!("Error checking access control conditions: {:?}", e)))
+        .map_err(|e| anyhow::anyhow!(format!("Error checking access control conditions: {e:?}")))
+    }
+
+    fn ensure_key_set_id(&self, key_set_id: String) -> String {
+        if key_set_id.is_empty() {
+            self.key_set_id.clone()
+        } else {
+            key_set_id
+        }
     }
 
     async fn get_bls_root_pubkey(&self) -> Result<String> {
         let tss_state = match &self.js_env.tss_state {
-            Some(tss_state) => tss_state,
+            Some(tss_state) => Arc::new(tss_state.clone()),
             None => {
                 return Err(anyhow::anyhow!("No TSS state found"));
             }
         };
-
-        let dkg_state = match tss_state.get_dkg_state(CurveType::BLS) {
-            Ok(state) => state,
-            Err(e) => {
-                return Err(e.into());
-            }
-        };
-        let bls_root_pubkeys = dkg_state.root_keys().await;
-        match bls_root_pubkeys.first() {
-            Some(bls_root_key) => Ok(bls_root_key.clone()),
-            None => Err(anyhow::anyhow!("No BLS root key found")),
-        }
+        get_default_bls_root_pubkey(&tss_state)
+            .map_err(|e| anyhow::anyhow!(format!("Error getting BLS root pubkey: {e:?}")))
     }
 
     async fn leader_helper(&self, request_hash: u64) -> Result<(String, bool)> {
@@ -1782,6 +1874,7 @@ impl Client {
         Ok((leader.socket_address.clone(), is_leader))
     }
 
+    #[allow(clippy::too_many_arguments)]
     async fn sign_with_action(
         &mut self,
         to_sign: &[u8],
@@ -1798,22 +1891,29 @@ impl Client {
             signing_scheme
         );
 
+        let cdm = &tss_state.chain_data_config_manager;
+        let key_set_id = get_default_keyset_id(cdm)?;
+
         let curve_type = signing_scheme.curve_type();
         let mut sign_state = tss_state.get_signing_state(signing_scheme)?;
-        let dkg_state = tss_state.get_dkg_state(curve_type)?;
-        let key_id = keccak256(format!("lit_action_{}", action_ipfs_id));
-        let root_keys = dkg_state.root_keys().await;
+        let curve_state = CurveState::new(tss_state.peer_state.clone(), curve_type, &key_set_id);
+        let key_id = keccak256(format!("lit_action_{action_ipfs_id}"));
         let epoch = tss_state.get_keyshare_epoch().await;
         let pubkey = self
-            .get_action_pubkey(tss_state.clone(), action_ipfs_id, signing_scheme)
+            .get_action_pubkey(
+                tss_state.clone(),
+                action_ipfs_id,
+                &key_set_id,
+                signing_scheme,
+            )
             .await?;
         let my_result = sign_state
             .sign_with_pubkey(
                 to_sign,
                 pubkey,
-                Some(root_keys),
                 Some(key_id.to_vec()),
                 self.request_id().as_bytes().to_vec(),
+                &key_set_id,
                 Some(epoch),
                 &self.node_set,
             )
@@ -1872,6 +1972,7 @@ impl Client {
         &self,
         tss_state: Arc<TssState>,
         action_ipfs_id: &str,
+        key_set_id: &str,
         signing_scheme: SigningScheme,
     ) -> Result<Vec<u8>> {
         let pubkey = match signing_scheme {
@@ -1879,6 +1980,7 @@ impl Client {
                 &derive_ipfs_keys::<blsful::inner_types::G1Projective>(
                     tss_state,
                     action_ipfs_id,
+                    key_set_id,
                     signing_scheme,
                 )
                 .await?
@@ -1886,36 +1988,53 @@ impl Client {
             ),
             SigningScheme::EcdsaK256Sha256
             | SigningScheme::SchnorrK256Sha256
-            | SigningScheme::SchnorrK256Taproot => {
-                derive_ipfs_keys::<k256::ProjectivePoint>(tss_state, action_ipfs_id, signing_scheme)
-                    .await?
-                    .1
-                    .to_compressed()
-            }
-            SigningScheme::EcdsaP256Sha256 | SigningScheme::SchnorrP256Sha256 => {
-                derive_ipfs_keys::<p256::ProjectivePoint>(tss_state, action_ipfs_id, signing_scheme)
-                    .await?
-                    .1
-                    .to_compressed()
-            }
-            SigningScheme::EcdsaP384Sha384 | SigningScheme::SchnorrP384Sha384 => {
-                derive_ipfs_keys::<p384::ProjectivePoint>(tss_state, action_ipfs_id, signing_scheme)
-                    .await?
-                    .1
-                    .to_compressed()
-            }
-            SigningScheme::SchnorrEd25519Sha512 => derive_ipfs_keys::<
-                vsss_rs::curve25519::WrappedEdwards,
-            >(
-                tss_state, action_ipfs_id, signing_scheme
+            | SigningScheme::SchnorrK256Taproot => derive_ipfs_keys::<k256::ProjectivePoint>(
+                tss_state,
+                action_ipfs_id,
+                key_set_id,
+                signing_scheme,
             )
             .await?
             .1
             .to_compressed(),
+            SigningScheme::EcdsaP256Sha256 | SigningScheme::SchnorrP256Sha256 => {
+                derive_ipfs_keys::<p256::ProjectivePoint>(
+                    tss_state,
+                    action_ipfs_id,
+                    key_set_id,
+                    signing_scheme,
+                )
+                .await?
+                .1
+                .to_compressed()
+            }
+            SigningScheme::EcdsaP384Sha384 | SigningScheme::SchnorrP384Sha384 => {
+                derive_ipfs_keys::<p384::ProjectivePoint>(
+                    tss_state,
+                    action_ipfs_id,
+                    key_set_id,
+                    signing_scheme,
+                )
+                .await?
+                .1
+                .to_compressed()
+            }
+            SigningScheme::SchnorrEd25519Sha512 => {
+                derive_ipfs_keys::<vsss_rs::curve25519::WrappedEdwards>(
+                    tss_state,
+                    action_ipfs_id,
+                    key_set_id,
+                    signing_scheme,
+                )
+                .await?
+                .1
+                .to_compressed()
+            }
             SigningScheme::SchnorrRistretto25519Sha512 | SigningScheme::SchnorrkelSubstrate => {
                 derive_ipfs_keys::<vsss_rs::curve25519::WrappedRistretto>(
                     tss_state,
                     action_ipfs_id,
+                    key_set_id,
                     signing_scheme,
                 )
                 .await?
@@ -1926,28 +2045,34 @@ impl Client {
                 derive_ipfs_keys::<ed448_goldilocks::EdwardsPoint>(
                     tss_state,
                     action_ipfs_id,
+                    key_set_id,
                     signing_scheme,
                 )
                 .await?
                 .1
                 .to_compressed()
             }
-            SigningScheme::SchnorrRedDecaf377Blake2b512 => {
-                derive_ipfs_keys::<decaf377::Element>(tss_state, action_ipfs_id, signing_scheme)
-                    .await?
-                    .1
-                    .to_compressed()
-            }
-            SigningScheme::SchnorrRedJubjubBlake2b512 => {
-                derive_ipfs_keys::<jubjub::SubgroupPoint>(tss_state, action_ipfs_id, signing_scheme)
-                    .await?
-                    .1
-                    .to_compressed()
-            }
+            SigningScheme::SchnorrRedDecaf377Blake2b512 => derive_ipfs_keys::<decaf377::Element>(
+                tss_state,
+                action_ipfs_id,
+                key_set_id,
+                signing_scheme,
+            )
+            .await?
+            .1
+            .to_compressed(),
+            SigningScheme::SchnorrRedJubjubBlake2b512 => derive_ipfs_keys::<jubjub::SubgroupPoint>(
+                tss_state,
+                action_ipfs_id,
+                key_set_id,
+                signing_scheme,
+            )
+            .await?
+            .1
+            .to_compressed(),
             _ => {
                 return Err(anyhow::anyhow!(
-                    "Unsupported derive action pubkey signing scheme: {}",
-                    signing_scheme
+                    "Unsupported derive action pubkey signing scheme: {signing_scheme}"
                 ));
             }
         };
@@ -1968,13 +2093,12 @@ pub fn get_identity_param(
     let hashed_access_control_conditions = match hash_res {
         Ok(hashed_access_control_conditions) => hashed_access_control_conditions,
         Err(e) => {
-            bail!("Couldn't hash access control conditions: {:?}", e);
+            bail!("Couldn't hash access control conditions: {e:?}");
         }
     };
 
     let identity_param = AccessControlConditionResource::new(format!(
-        "{}/{}",
-        hashed_access_control_conditions, data_to_encrypt_hash
+        "{hashed_access_control_conditions}/{data_to_encrypt_hash}"
     ))
     .get_resource_key()
     .into_bytes();
@@ -1985,16 +2109,17 @@ pub fn get_identity_param(
 async fn derive_ipfs_keys<G>(
     tss_state: Arc<TssState>,
     action_ipfs_id: &str,
+    key_set_id: &str,
     signing_scheme: SigningScheme,
 ) -> Result<(G::Scalar, G)>
 where
     G: HDDerivable + GroupEncoding + Default + CompressedBytes,
     G::Scalar: HDDeriver + CompressedBytes,
 {
-    let key_id = keccak256(format!("lit_action_{}", action_ipfs_id));
+    let key_id = keccak256(format!("lit_action_{action_ipfs_id}"));
     let curve_type = signing_scheme.curve_type();
-    let dkg_state = tss_state.get_dkg_state(curve_type)?;
-    let root_keys = dkg_state.root_keys().await;
+    let curve_state = CurveState::new(tss_state.peer_state.clone(), curve_type, key_set_id);
+    let root_keys = curve_state.root_keys()?;
     let staker_address = &tss_state.peer_state.hex_staker_address();
     let peers = tss_state.peer_state.peers();
     let self_peer = peers.peer_at_address(&tss_state.addr)?;

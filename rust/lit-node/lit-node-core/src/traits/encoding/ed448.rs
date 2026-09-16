@@ -1,6 +1,9 @@
 use super::{BeBytes, CompressedBytes, LeBytes};
-use hd_keys_curves_wasm::ed448_goldilocks_plus::{EdwardsPoint, Scalar};
-use vsss_rs::elliptic_curve::{PrimeField, group::GroupEncoding};
+use lit_rust_crypto::{
+    ed448_goldilocks::{EdwardsPoint, Scalar},
+    ff::PrimeField,
+    group::GroupEncoding,
+};
 // NOTE: There is no difference between compressed and uncompressed points for
 // this curve
 

@@ -13,6 +13,7 @@ use ecdsa::{
 };
 use hd_keys_curves_wasm::{HDDerivable, HDDeriver};
 use lit_poly::DensePrimeField;
+use lit_rust_crypto::{k256, p256, p384};
 use rand::seq::SliceRandom;
 use rstest::*;
 use std::{collections::HashMap, ops::Add, time::Instant};

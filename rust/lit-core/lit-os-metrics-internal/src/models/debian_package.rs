@@ -1,4 +1,5 @@
-use super::OsMetric;
+use super::{InfoMetric, OsMetric};
+use lit_observability::opentelemetry::KeyValue;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -25,6 +26,25 @@ pub struct DebianPackage {
     /// The size of the package in bytes
     pub size: Option<usize>,
     pub version: String,
+}
+
+impl OsMetric for DebianPackage {
+    const NAME: &'static str = "os.installed_debian_packages_info";
+}
+
+impl InfoMetric for DebianPackage {
+    fn info_labels(&self) -> Vec<KeyValue> {
+        vec![
+            KeyValue::new("arch", self.arch.clone()),
+            KeyValue::new("name", self.name.clone()),
+            KeyValue::new("package_source", self.package_source.clone()),
+            KeyValue::new("priority", self.priority.clone()),
+            KeyValue::new("revision", self.revision.clone()),
+            KeyValue::new("section", self.section.clone()),
+            KeyValue::new("version", self.version.clone()),
+            KeyValue::new("size", self.size.map(|v| v.to_string()).unwrap_or_default()),
+        ]
+    }
 }
 
 impl TryFrom<&BTreeMap<String, String>> for DebianPackage {
@@ -73,8 +93,4 @@ impl From<&DebianPackage> for BTreeMap<String, String> {
         map.insert("version".to_string(), value.version.clone());
         map
     }
-}
-
-impl OsMetric for DebianPackage {
-    const NAME: &'static str = "os.installed_debian_packages";
 }

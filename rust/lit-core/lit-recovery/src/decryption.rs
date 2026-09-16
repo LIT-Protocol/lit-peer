@@ -1,3 +1,4 @@
+use crate::config::ChainEnvironment;
 use crate::io::writer;
 use crate::{
     LitRecovery, RecoveryConfig,
@@ -10,8 +11,8 @@ use crate::{
     shares::{COLUMN_ENCRYPTION_KEY, ShareData, ShareDatabase},
 };
 use bulletproofs::BulletproofCurveArithmetic;
-use bulletproofs::vsss_rs::{DefaultShare, IdentifierPrimeField};
 use ethers::types::H160;
+use lit_rust_crypto::vsss_rs::{DefaultShare, IdentifierPrimeField};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
@@ -366,7 +367,7 @@ fn get_protocol(cfg: &RecoveryConfig) -> &str {
 
     // compute the value based on `env`:
     match cfg.get_env_or_default() {
-        0 => "http",
+        ChainEnvironment::Develop => "http",
         _ => "https",
     }
 }

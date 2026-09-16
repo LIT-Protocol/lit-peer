@@ -55,7 +55,7 @@ where
 
     /// Send a value to the channel and inject tracing context into the metadata of the message.
     #[instrument(level = "debug", name = "traced_send_async", skip_all)]
-    pub fn send_async(&self, data: T) -> SendFut<ChannelMsg<T>> {
+    pub fn send_async(&self, data: T) -> SendFut<'_, ChannelMsg<T>> {
         // Inject tracing context into metadata.
         let mut metadata = HashMap::new();
         let cx = tracing::Span::current().context();
@@ -130,7 +130,9 @@ where
     ///   - recv span
     ///     - consumer span
     ///       - <work done in consumer>
-    pub async fn recv_async(&self) -> <RecvFut<(ChannelMsg<T>, tracing::Span)> as Future>::Output {
+    pub async fn recv_async(
+        &self,
+    ) -> <RecvFut<'_, (ChannelMsg<T>, tracing::Span)> as Future>::Output {
         let recv_span = debug_span!("traced_recv_async");
 
         let mut msg = self.inner.recv_async().instrument(recv_span.clone()).await?;

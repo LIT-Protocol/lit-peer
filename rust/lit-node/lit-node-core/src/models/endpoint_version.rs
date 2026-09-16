@@ -1,10 +1,14 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+/// API endpoint version identifier.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 pub enum EndpointVersion {
+    /// Original API version (no version prefix).
     #[default]
     Initial,
+    /// Version 1 of the API.
     V1,
+    /// Version 2 of the API.
     V2,
 }
 

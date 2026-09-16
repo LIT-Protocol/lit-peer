@@ -1,12 +1,10 @@
-use elliptic_curve::{
-    Group, PrimeField,
-    bigint::U384,
-    group::GroupEncoding,
+use lit_rust_crypto::{
+    elliptic_curve::{bigint::U384, ops::Reduce, point::AffineCoordinates},
+    ff::PrimeField,
+    group::{Group, GroupEncoding},
     hash2curve::{ExpandMsgXmd, GroupDigest},
-    ops::Reduce,
-    point::AffineCoordinates,
+    p384::{NistP384, ProjectivePoint, Scalar},
 };
-use p384::{NistP384, ProjectivePoint, Scalar};
 use rfc6979::consts::U48;
 
 use crate::*;
@@ -98,7 +96,7 @@ impl VrfVerifier for NistP384 {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use elliptic_curve::Field;
+    use lit_rust_crypto::ff::Field;
     use rand::SeedableRng;
 
     #[test]

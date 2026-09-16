@@ -76,10 +76,6 @@ contract StakingViewsFacet {
         return s().complaintReasonToConfig[reason];
     }
 
-    function getKeyTypes() external view returns (uint256[] memory) {
-        return s().globalConfig[0].keyTypes;
-    }
-
     function contractResolver() external view returns (address) {
         return address(s().contractResolver);
     }

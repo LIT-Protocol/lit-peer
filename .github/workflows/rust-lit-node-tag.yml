@@ -13,7 +13,7 @@ jobs:
     runs-on: LargeRunner
     steps:
       - name: "Check out the repo"
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: "Get tag"
         id: "get-tag"

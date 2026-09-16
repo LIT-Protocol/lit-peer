@@ -1,11 +1,6 @@
 use crate::component::{dkg::dkg, utils::virtual_node_collection::VirtualNodeCollection};
-use elliptic_curve::generic_array::ArrayLength;
-use elliptic_curve::group::{Curve, GroupEncoding};
-use elliptic_curve::{CurveArithmetic, FieldBytesSize, NonZeroScalar, PrimeCurve};
 use ethers::utils::keccak256;
 use futures::future::join_all;
-use hd_keys_curves::{HDDerivable, HDDeriver};
-use k256::ecdsa::hazmat::DigestPrimitive;
 use lit_fast_ecdsa::SignatureShare;
 use lit_node::peers::peer_state::models::SimplePeerCollection;
 use lit_node::tasks::presign_manager::models::{PreSignatureValue, Presign};
@@ -13,9 +8,18 @@ use lit_node::tss::common::dkg_type::DkgType;
 use lit_node::tss::common::tss_state::TssState;
 use lit_node::tss::ecdsa_damfast::DamFastState;
 use lit_node::utils::traits::SignatureCurve;
-use lit_node_core::CompressedBytes;
-use lit_node_core::PeerId;
-use lit_node_core::SigningScheme;
+use lit_node_core::{
+    CompressedBytes, PeerId, SigningScheme,
+    hd_keys_curves_wasm::{HDDerivable, HDDeriver},
+};
+use lit_rust_crypto::{
+    elliptic_curve::{
+        CurveArithmetic, FieldBytesSize, NonZeroScalar, PrimeCurve, generic_array::ArrayLength,
+    },
+    group::{Curve, GroupEncoding},
+    k256::{self, ecdsa::hazmat::DigestPrimitive},
+    p256, p384,
+};
 use serde::Serialize;
 use std::ops::Add;
 use std::sync::Arc;
@@ -147,7 +151,7 @@ pub async fn do_sign_with_pubkey<C>(
             .0
             .iter()
             .filter(|p| p.key_hash == presign_share.staker_hash)
-            .last()
+            .next_back()
         {
             Some(p) => p,
             None => continue,
@@ -173,7 +177,7 @@ pub async fn do_sign_with_pubkey<C>(
             let sig_share = damfast_state
                 .generate_signature_share_from_key_id::<C>(
                     &loop_message_bytes,
-                    Some(hd_root_keys),
+                    &hd_root_keys,
                     &presign_share.share.unwrap::<C>().clone(),
                     request_id,
                     &peers,

@@ -1,6 +1,5 @@
 use super::{BeBytes, CompressedBytes, LeBytes};
-use hd_keys_curves_wasm::decaf377;
-use vsss_rs::elliptic_curve::{PrimeField, group::GroupEncoding};
+use lit_rust_crypto::{decaf377, ff::PrimeField, group::GroupEncoding};
 
 // NOTE: There is no difference between compressed and uncompressed points for
 // this curve

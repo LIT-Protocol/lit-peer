@@ -6,8 +6,10 @@ use std::path::PathBuf;
 
 use crate::error::Result;
 
+#[allow(dead_code)]
 pub(crate) const OTEL_SERVICE_DEVICE: &str = "/dev/virtio-ports/com.litprotocol.logging.port0";
 
+#[allow(dead_code)]
 pub trait LitLoggingServiceConfig {
     fn try_new() -> Result<LitConfig>;
     fn must_new() -> LitConfig;

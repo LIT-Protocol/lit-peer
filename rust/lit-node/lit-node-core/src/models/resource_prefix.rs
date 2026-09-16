@@ -17,10 +17,10 @@ pub enum LitResourcePrefix {
 impl fmt::Display for LitResourcePrefix {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Self::ACC => write!(f, "{}", LIT_RESOURCE_PREFIX_ACC),
-            Self::PKP => write!(f, "{}", LIT_RESOURCE_PREFIX_PKP),
-            Self::LA => write!(f, "{}", LIT_RESOURCE_PREFIX_LA),
-            Self::PD => write!(f, "{}", LIT_RESOURCE_PREFIX_PD),
+            Self::ACC => write!(f, "{LIT_RESOURCE_PREFIX_ACC}"),
+            Self::PKP => write!(f, "{LIT_RESOURCE_PREFIX_PKP}"),
+            Self::LA => write!(f, "{LIT_RESOURCE_PREFIX_LA}"),
+            Self::PD => write!(f, "{LIT_RESOURCE_PREFIX_PD}"),
         }
     }
 }

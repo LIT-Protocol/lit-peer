@@ -1,15 +1,14 @@
 mod pkp;
-use pkp::Pkp;
 
 use ethers::middleware::SignerMiddleware;
-use ethers::providers::{Http, Middleware, Provider, ProviderError};
+use ethers::providers::{Http, Middleware, Provider};
 use ethers::signers::{LocalWallet, Signer, Wallet};
-use ethers::types::{H160, I256, U256};
+use ethers::types::{H160, I256, TransactionRequest, U256};
 use k256::ecdsa::SigningKey;
 use lit_blockchain::contracts::ledger::{Ledger, LedgerErrors};
 use lit_blockchain::contracts::price_feed::{PriceFeed, PriceFeedErrors};
 use lit_blockchain::util::decode_revert;
-use lit_core::utils::binary::bytes_to_hex;
+use lit_node_core::AuthMethod;
 use tracing::{error, info, trace};
 
 use crate::testnet::Testnet;
@@ -19,21 +18,44 @@ use std::sync::Arc;
 use std::time::Duration;
 const RETRY_WAIT_TIME_MS: u64 = 200;
 const INITIAL_FUNDING_AMOUNT: &str = "100000000000000000000";
+// const INITIAL_FUNDING_AMOUNT: &str = "2000000000000000000";
+
 #[derive(Clone, Debug)]
 pub struct EndUser {
     pub wallet: Wallet<SigningKey>,
     actions: Actions,
     pkps: Vec<Pkp>,
+    provider: Arc<Provider<Http>>,
+    datil_provider: Arc<Provider<Http>>,
+    datil_deployer_provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Pkp {
+    signing_provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>, // sign transactions for this PKP as the owner of the PKP
+    actions: Arc<Actions>, // handy reference to the various contracts
+    pub pubkey: String,
+    pub token_id: U256,
+    pub eth_address: H160,
+    pub key_set_id: String,
+    pub is_datil: bool,
 }
 
 impl EndUser {
     pub fn new(testnet: &Testnet) -> Self {
         let new_wallet = LocalWallet::new(&mut OsRng).with_chain_id(testnet.chain_id);
+
+        let provider = testnet.provider.clone();
+        let datil_provider = testnet.datil_testnet.provider.clone();
+
         info!("New wallet: {:?}", new_wallet.address());
         Self {
             wallet: new_wallet,
             actions: testnet.actions().clone(),
             pkps: vec![],
+            provider,
+            datil_provider,
+            datil_deployer_provider: testnet.datil_testnet.deployer_signing_provider.clone(),
         }
     }
 
@@ -68,21 +90,49 @@ impl EndUser {
     }
 
     pub async fn set_wallet_balance(&self, amount: &str) {
-        let provider = self.actions.deployer_provider();
+        let provider = self.actions.deployer_signing_provider();
+        self.set_wallet_balance_internal(amount, provider).await;
+        let provider = self.datil_deployer_provider.clone();
+        self.set_wallet_balance_internal(amount, provider).await;
+    }
 
-        let res: Result<(), ProviderError> = provider
-            .request(
-                "anvil_setBalance",
-                [
-                    format!("0x{}", bytes_to_hex(self.wallet.address())),
-                    amount.to_string(),
-                ],
-            )
-            .await;
+    async fn set_wallet_balance_internal(
+        &self,
+        amount: &str,
+        provider: Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>>,
+    ) {
+        info!(
+            "Deployer provider {:?} balance: {:?}",
+            provider.address(),
+            provider.get_balance(provider.address(), None).await
+        );
 
-        if let Err(e) = res {
-            panic!("Couldn't set balance: {:?}", e);
+        let tx = TransactionRequest::new()
+            .to(self.wallet.address())
+            .value(U256::from_dec_str(amount).expect("Failed to convert amount to U256"))
+            .from(provider.address());
+
+        let pending_tx = provider.send_transaction(tx, None).await;
+        if let Err(e) = pending_tx {
+            panic!(
+                "Couldn't set balance on wallet {:?} to {:?}:: {:?}",
+                self.wallet.address(),
+                amount,
+                e
+            );
         }
+        let pending_tx = pending_tx.unwrap().interval(Duration::from_millis(100));
+        let receipt = pending_tx.await.unwrap().expect("No receipt from txn");
+
+        info!("Transaction receipt: {:?}", receipt);
+        info!(
+            "Wallet balance: {:?}",
+            provider.get_balance(self.wallet.address(), None).await
+        );
+        info!(
+            "Deployer provider balance: {:?}",
+            provider.get_balance(provider.address(), None).await
+        );
     }
 
     pub async fn fetch_price_from_feed(&self, product_id: u64) -> Vec<U256> {
@@ -185,7 +235,16 @@ impl EndUser {
         &self,
     ) -> Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
         Arc::new(SignerMiddleware::new(
-            self.actions.deployer_provider().clone(),
+            self.provider.clone(),
+            self.wallet.clone(),
+        ))
+    }
+
+    pub fn datil_signing_provider(
+        &self,
+    ) -> Arc<SignerMiddleware<Arc<Provider<Http>>, Wallet<SigningKey>>> {
+        Arc::new(SignerMiddleware::new(
+            self.datil_provider.clone(),
             self.wallet.clone(),
         ))
     }
@@ -334,8 +393,26 @@ impl EndUser {
         user_stable_balance
     }
 
-    pub async fn new_pkp(&mut self) -> Result<(String, U256, H160), anyhow::Error> {
-        let pkp = Pkp::new(self).await?;
+    pub async fn new_pkp(
+        &mut self,
+        key_set_id: &str,
+    ) -> Result<(String, U256, H160, String), anyhow::Error> {
+        let pkp = Pkp::new(self, key_set_id).await?;
+        let pkp_info = (
+            pkp.pubkey.clone(),
+            pkp.token_id,
+            pkp.eth_address.clone(),
+            pkp.key_set_id.clone(),
+        );
+        self.pkps.push(pkp);
+        Ok(pkp_info)
+    }
+
+    pub async fn new_pkp_with_key_set_id(
+        &mut self,
+        key_set_id: &str,
+    ) -> Result<(String, U256, H160), anyhow::Error> {
+        let pkp = Pkp::new(self, key_set_id).await?;
         let pkp_info = (pkp.pubkey.clone(), pkp.token_id, pkp.eth_address.clone());
         self.pkps.push(pkp);
         Ok(pkp_info)
@@ -344,17 +421,32 @@ impl EndUser {
     pub async fn new_pkp_with_permitted_address(
         &mut self,
         addr: H160,
-    ) -> Result<(String, U256, H160), anyhow::Error> {
-        let (pubkey, token_id, eth_address) = self.new_pkp().await?;
+        key_set_id: &str,
+    ) -> Result<(String, U256, H160, String), anyhow::Error> {
+        let (pubkey, token_id, eth_address, key_set_id) = self.new_pkp(key_set_id).await?;
 
         let pkp = self.pkp_by_pubkey(pubkey.clone());
         pkp.add_permitted_address_to_pkp(addr, &[U256::from(1)])
             .await?;
 
-        Ok((pubkey, token_id, eth_address))
+        Ok((pubkey, token_id, eth_address, key_set_id))
     }
 
-    pub async fn mint_grant_and_burn_next_pkp(&self, ipfs_cid: &str) -> Result<Pkp, anyhow::Error> {
-        Pkp::mint_grant_and_burn_next_pkp(self, ipfs_cid).await
+    pub async fn new_pkp_and_add_auth_methods_contract_call_only(
+        &mut self,
+        key_set_id: &str,
+        _auth_methods: &[AuthMethod],
+    ) -> Result<(String, U256, H160, String), anyhow::Error> {
+        let pkp = Pkp::new_pkp_with_auth_methods(&self, key_set_id).await?;
+
+        Ok((pkp.pubkey, pkp.token_id, pkp.eth_address, pkp.key_set_id))
+    }
+
+    pub async fn mint_grant_and_burn_next_pkp(
+        &self,
+        ipfs_cid: &str,
+        key_set_id: &str,
+    ) -> Result<Pkp, anyhow::Error> {
+        Pkp::mint_grant_and_burn_next_pkp(self, ipfs_cid, key_set_id).await
     }
 }

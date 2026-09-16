@@ -135,6 +135,8 @@ library LibStakingStorage {
     struct PendingRejoin {
         address addr;
         uint256 timestamp;
+        // NOTE: DO NOT ADD ANYTHING TO THIS STRUCT SINCE IT IS NOT CONTAINED IN A MAPPING IN THE ROOT LEVEL STORAGE STRUCT
+        // AND MAY RESULT IN STORAGE POINTERS SHIFTING.
     }
 
     struct Epoch {
@@ -206,7 +208,7 @@ library LibStakingStorage {
         uint256[] curves;
         uint256[] counts;
         /// Set when the recovery DKG completes for the key set
-        address[] recoveryPartyMembers;
+        bytes recoverySessionId;
     }
 
     struct RealmConfig {
@@ -222,14 +224,15 @@ library LibStakingStorage {
         uint256 minEpochForRewards;
         /// @notice Whether the validator set allows for an allowlist of operators to join the validator set.
         bool permittedValidatorsOn;
+        /// The default key set identifier to use if the realm has more than one
+        /// This allows the realm to operate without asking this value from clients
+        /// for some operations like session keys and sign as action
+        string defaultKeySet;
     }
 
     struct GlobalConfig {
         uint256 tokenRewardPerTokenPerEpoch;
-        // the key type of the node.  // 1 = BLS, 2 = ECDSA.  Not doing this in an enum so we can add more keytypes in the future without redeploying.
-        uint256[] keyTypes;
-        // don't start the DKG or let nodes leave the validator set
-        // if there are less than this many nodes
+        uint256[] keyTypes_deprecated;
         uint256 minimumValidatorCount;
         /// @notice Keep this the same as the epoch length for now.
         uint256 rewardEpochDuration;
@@ -297,8 +300,8 @@ library LibStakingStorage {
         mapping(address => address) nodeAddressToStakerAddress;
         mapping(address => address) stakerAddressToNodeAddress;
         mapping(address => address) operatorAddressToStakerAddress;
-        // this mapping lets you go from the userStakerAddress to the stakerAddress.
-        mapping(address => address) userStakerAddressToStakerAddress;
+        // NOTE: Deprecated field, do not use. Remove when deploying prod for the next network after Naga.
+        mapping(address => address) DEPRECATED_userStakerAddressToStakerAddress;
         // Mapping of the complaint reason code to the config for that reason
         mapping(uint256 => ComplaintConfig) complaintReasonToConfig;
         // Thunderhead - Staking Vaults & rewards

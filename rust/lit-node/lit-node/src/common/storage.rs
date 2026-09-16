@@ -58,7 +58,7 @@ where
                     unexpected_err_code(
                         e,
                         EC::NodeSystemFault,
-                        Some(format!("Could not deserialize file: {:?}", path)),
+                        Some(format!("Could not deserialize file: {path:?}")),
                     )
                 })
             })
@@ -73,7 +73,7 @@ where
         unexpected_err_code(
             e,
             EC::NodeSystemFault,
-            Some(format!("Could not open file: {:?}", path)),
+            Some(format!("Could not open file: {path:?}")),
         )
     })?;
     let mut buffer = Vec::new();
@@ -81,7 +81,7 @@ where
         unexpected_err_code(
             e,
             EC::NodeSystemFault,
-            Some(format!("Could not read file: {:?}", path)),
+            Some(format!("Could not read file: {path:?}")),
         )
     })?;
     // Then, deserialize the buffer
@@ -89,7 +89,7 @@ where
         unexpected_err_code(
             e,
             EC::NodeSystemFault,
-            Some(format!("Could not deserialize file: {:?}", path)),
+            Some(format!("Could not deserialize file: {path:?}")),
         )
     })?;
 
@@ -126,7 +126,7 @@ where
         io_err_code(
             e,
             EC::NodeSystemFault,
-            Some(format!("Could not write key file: {:?}", path)),
+            Some(format!("Could not write key file: {path:?}")),
         )
     })?;
 
@@ -171,7 +171,7 @@ where
         io_err_code(
             e,
             EC::NodeSystemFault,
-            Some(format!("Could not write key data: {:?}", path)),
+            Some(format!("Could not write key data: {path:?}")),
         )
     })?;
     add_to_cache(path, key_cache, key_cache_type, buffer).await

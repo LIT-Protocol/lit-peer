@@ -360,7 +360,9 @@ async fn handshake_node(socket_address: String) -> JsonSDKHandshakeResponse {
         return JsonSDKHandshakeResponse::default();
     }
 
-    let json_body = r#"{"clientPublicKey":"blah","challenge":"0x1234123412341234123412341234123412341234123412341234123412341234"}"#.to_string();
+    let json_body =
+        r#"{"clientPublicKey":"blah","challenge":"0x123412341234123412341234123412341234"}"#
+            .to_string();
     let cmd = "/web/handshake";
     let request_id = &uuid::Uuid::new_v4().to_string();
     let client = reqwest::Client::new();

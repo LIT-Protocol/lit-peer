@@ -72,6 +72,7 @@ pub mod http {
 
     pub enum HttpMetrics {
         ServiceRequest,
+        PrivacyModeRequest,
         ServiceResponse,
     }
 
@@ -91,6 +92,7 @@ pub mod http {
         fn get_name(&self) -> &str {
             match self {
                 Self::ServiceRequest => "request",
+                Self::PrivacyModeRequest => "request.privacy_mode",
                 Self::ServiceResponse => "response",
             }
         }

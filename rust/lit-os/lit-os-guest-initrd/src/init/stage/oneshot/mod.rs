@@ -1,6 +1,6 @@
 use std::{env, fs};
 
-use log::{as_error, error, info};
+use log::{error, info};
 
 use lit_os_core::config::LitOsGuestConfig;
 use lit_os_core::error::{Result, config_err, io_err, validation_err};
@@ -64,7 +64,7 @@ pub(crate) async fn run(ctx: &mut InitContext) -> Result<Outcome> {
                 Ok(ActionOutcome::Continue) => continue,
                 Ok(ActionOutcome::Break) => break,
                 Err(e) => {
-                    error!(error = as_error!(e); "one shot action '{}' failed", action.action());
+                    error!(error:err = e; "one shot action '{}' failed", action.action());
                     unsafe {
                         env::remove_var(ENV_LOG_INIT_SUB_STAGE);
                     }

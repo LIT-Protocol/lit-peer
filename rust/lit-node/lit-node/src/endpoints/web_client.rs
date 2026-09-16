@@ -19,12 +19,14 @@ use crate::pkp;
 use crate::pkp::auth::serialize_auth_context_for_checking_against_contract_data;
 use crate::siwe_db::utils::make_timestamp_siwe_compatible;
 use crate::siwe_db::{db, rpc::EthBlockhashCache};
+use crate::tss::common::curve_state::CurveState;
 use crate::tss::common::tss_state::TssState;
 use crate::utils::attestation::create_attestation;
 use crate::utils::encoding;
+use crate::utils::keysets::get_default_keyset_id;
 use crate::utils::rocket::guards::RequestHeaders;
 use crate::utils::web::{
-    check_condition_count, get_auth_context, get_bls_root_pubkey, get_ipfs_file,
+    check_condition_count, get_auth_context, get_default_bls_root_pubkey, get_ipfs_file,
     hash_access_control_conditions,
 };
 use crate::utils::web::{get_auth_context_from_session_sigs, get_signed_message};
@@ -38,20 +40,24 @@ use lit_api_core::context::{SdkVersion, TracingRequired};
 use lit_api_core::error::ApiError;
 use lit_blockchain::resolver::rpc::{ENDPOINT_MANAGER, RpcHealthcheckPoller};
 use lit_core::config::{LitConfig, ReloadableLitConfig};
+use lit_core::utils::binary::bytes_to_hex;
 use lit_node_common::{client_state::ClientState, config::LitNodeConfig};
 use lit_node_core::CurveType;
 use lit_node_core::SigningScheme;
 use lit_node_core::request::{EncryptionSignRequest, JsonExecutionRequest};
-use lit_node_core::response::{EncryptionSignResponse, GenericResponse};
+use lit_node_core::response::{
+    EncryptionSignResponse, GenericResponse, KeySetHandshake, SDKHandshakeResponseV1,
+};
 use lit_node_core::{
     AccessControlConditionItem, AccessControlConditionResource, AuthSigItem,
     EVMContractConditionItem, EndpointVersion, LitActionResource, LitResource, LitResourceAbility,
     SolRpcConditionItem, UnifiedAccessControlConditionItem,
     constants::{CHAIN_ETHEREUM, LIT_RESOURCE_KEY_RAC, LIT_RESOURCE_PREFIX_RAC},
     request,
-    request::JsonSDKHandshakeRequest,
-    response::JsonSDKHandshakeResponse,
+    request::SDKHandshakeRequest,
+    response::SDKHandshakeResponseV0,
 };
+use log::warn;
 use moka::future::Cache;
 use rocket::State;
 use rocket::http::Status;
@@ -145,7 +151,8 @@ pub(crate) async fn encryption_sign(
 
     let before = std::time::Instant::now();
     // Validate auth sig item
-    let bls_root_pubkey = match get_bls_root_pubkey(session).await {
+    let key_set_id = encryption_sign_request.key_set_id.clone();
+    let bls_root_pubkey = match get_default_bls_root_pubkey(session) {
         Ok(bls_root_pubkey) => bls_root_pubkey,
         Err(e) => {
             return client_session.json_encrypt_err_custom_response("no bls root key", e.handle());
@@ -297,7 +304,10 @@ pub(crate) async fn encryption_sign(
 
     // Get the identity parameter to be signed.
     let identity_parameter = lit_acc_resource.get_resource_key().into_bytes();
-    trace!("identity_parameter: {:?}", identity_parameter);
+    trace!(
+        "identity_parameter: {:?}",
+        bytes_to_hex(&identity_parameter)
+    );
 
     let before = std::time::Instant::now();
     // Load the BLS secret key share as a blsful key for signing.
@@ -312,7 +322,9 @@ pub(crate) async fn encryption_sign(
 
     let before = std::time::Instant::now();
     // Sign the identity parameter using the blsful secret key share.
-    let (signature_share, share_peer_id) = match cipher_state.sign(&identity_parameter, epoch).await
+    let (signature_share, share_peer_id) = match cipher_state
+        .sign(&identity_parameter, &key_set_id, epoch)
+        .await
     {
         Ok(signature_share) => signature_share,
         Err(e) => {
@@ -332,6 +344,141 @@ pub(crate) async fn encryption_sign(
     })
 }
 
+#[instrument(name = "POST /web/handshake/v1", skip_all, fields(correlation_id = tracing_required.correlation_id()))]
+#[allow(clippy::too_many_arguments)]
+pub async fn handshake(
+    session: &State<Arc<TssState>>,
+    remote_addr: SocketAddr,
+    handshake_request: Json<SDKHandshakeRequest>,
+    tracing_required: TracingRequired,
+    version: SdkVersion,
+    cfg: &State<ReloadableLitConfig>,
+    eth_blockhash_cache: &State<Arc<EthBlockhashCache>>,
+    client_state: &Arc<ClientState>,
+) -> status::Custom<Value> {
+    let request_start = std::time::Instant::now();
+    let mut timing: BTreeMap<String, Duration> = BTreeMap::new();
+
+    debug!(
+        "
+        handshake, request: {:?}, client_state: {:?}",
+        handshake_request, client_state,
+    );
+
+    // Validate that the challenge exists in the request.
+    let challenge = match &handshake_request.challenge {
+        Some(challenge) => challenge,
+        None => return handshake_bad_request_response_v1(&version.to_string()),
+    };
+
+    let cfg = cfg.load_full();
+
+    let before = std::time::Instant::now();
+    // run the attestation
+    let attestation = create_attestation(
+        cfg,
+        challenge.as_str(),
+        Some(&[(
+            NODE_IDENTITY_KEY.to_string(),
+            client_state.get_current_identity_public_key().to_vec(),
+        )]),
+    )
+    .await
+    .map_err(|e| {
+        #[cfg(not(feature = "testing"))]
+        warn!("Error creating attestation: {e:?}");
+        unexpected_err(e, Some("error producing attestation".into()))
+    })
+    .ok();
+    let attestation = match serde_json::to_value(&attestation) {
+        Ok(attestation) => Some(attestation),
+        Err(e) => {
+            error!("unable to convert the attestation to a json object");
+            return handshake_bad_request_response_v1(&version.to_string());
+        }
+    };
+
+    timing.insert("create attestation".to_string(), before.elapsed());
+
+    let before = std::time::Instant::now();
+    let latest_blockhash = eth_blockhash_cache.blockhash.read().await.clone();
+    timing.insert("get latest blockhash".to_string(), before.elapsed());
+
+    let before = std::time::Instant::now();
+
+    let realm_id = session.peer_state.realm_id();
+    let epoch = session.peer_state.epoch();
+    let key_sets = DataVersionReader::read_field_unchecked(
+        &session.chain_data_config_manager.key_sets,
+        |key_sets| {
+            key_sets
+                .keys()
+                .map(|identifier| (identifier.clone(), KeySetHandshake { realm_id, epoch }))
+                .collect::<BTreeMap<_, _>>()
+        },
+    );
+
+    timing.insert("get key sets".to_string(), before.elapsed());
+
+    timing.insert("total".to_string(), request_start.elapsed());
+
+    trace!("POST /web/handshake/v1 timing: {:?}", timing);
+
+    status::Custom(
+        Status::Ok,
+        json!(GenericResponse::ok(SDKHandshakeResponseV1 {
+            client_sdk_version: version.to_string(),
+            attestation,
+            latest_blockhash,
+            node_version: crate::version::get_version().to_string(),
+            node_identity_key: client_state.get_current_identity_public_key_hex(),
+            git_commit_hash: "".to_string(),
+            key_sets,
+        })),
+    )
+}
+
+fn handshake_bad_request_response_v0(version: &str) -> status::Custom<Value> {
+    status::Custom(
+        Status::BadRequest,
+        json!(GenericResponse::err_and_data_json(
+            "".to_string(),
+            SDKHandshakeResponseV0 {
+                server_public_key: "ERR".to_string(),
+                subnet_public_key: "ERR".to_string(),
+                network_public_key: "ERR".to_string(),
+                network_public_key_set: "ERR".to_string(),
+                client_sdk_version: version.to_string(),
+                hd_root_pubkeys: vec![],
+                attestation: None,
+                latest_blockhash: "".to_string(),
+                node_version: crate::version::get_version().to_string(),
+                node_identity_key: "".to_string(),
+                epoch: 0,
+                git_commit_hash: crate::git_info::GIT_COMMIT_HASH.to_string(),
+            }
+        )),
+    )
+}
+
+fn handshake_bad_request_response_v1(version: &str) -> status::Custom<Value> {
+    status::Custom(
+        Status::BadRequest,
+        json!(GenericResponse::err_and_data_json(
+            "".to_string(),
+            SDKHandshakeResponseV1 {
+                client_sdk_version: version.to_string(),
+                attestation: None,
+                latest_blockhash: "".to_string(),
+                node_version: crate::version::get_version().to_string(),
+                node_identity_key: "".to_string(),
+                git_commit_hash: "".to_string(),
+                key_sets: Default::default(),
+            }
+        )),
+    )
+}
+
 /*
 curl --header "Content-Type: application/json" \
   --request POST \
@@ -341,10 +488,10 @@ curl --header "Content-Type: application/json" \
 
 #[instrument(level = "debug", name = "POST /web/handshake", skip_all, fields(correlation_id = tracing_required.correlation_id()))]
 #[allow(clippy::too_many_arguments)]
-pub async fn handshake(
+pub async fn handshake_v0(
     session: &State<Arc<TssState>>,
     remote_addr: SocketAddr,
-    json_handshake_request: Json<JsonSDKHandshakeRequest>,
+    json_handshake_request: Json<SDKHandshakeRequest>,
     tracing_required: TracingRequired,
     version: SdkVersion,
     cfg: &State<ReloadableLitConfig>,
@@ -360,54 +507,39 @@ pub async fn handshake(
         json_handshake_request, client_state,
     );
 
+    let cdm = &session.chain_data_config_manager;
+
+    let default_keyset = match get_default_keyset_id(cdm) {
+        Ok(keyset_id) => keyset_id,
+        Err(e) => {
+            warn!("Failed to get default keyset id: {:?}", e);
+            return handshake_bad_request_response_v0(&version.to_string());
+        }
+    };
+
     // Validate that the challenge exists in the request.
     let challenge = match &json_handshake_request.challenge {
         Some(challenge) => challenge,
-        None => {
-            return status::Custom(
-                Status::BadRequest,
-                json!(GenericResponse::err_and_data_json(
-                    "".to_string(),
-                    JsonSDKHandshakeResponse {
-                        server_public_key: "ERR".to_string(),
-                        subnet_public_key: "ERR".to_string(),
-                        network_public_key: "ERR".to_string(),
-                        network_public_key_set: "ERR".to_string(),
-                        client_sdk_version: version.to_string(),
-                        hd_root_pubkeys: vec![],
-                        attestation: None,
-                        latest_blockhash: "".to_string(),
-                        node_version: crate::version::get_version().to_string(),
-                        node_identity_key: "".to_string(),
-                        epoch: 0,
-                        git_commit_hash: crate::git_info::GIT_COMMIT_HASH.to_string(),
-                    }
-                )),
-            );
-        }
+        None => return handshake_bad_request_response_v0(&version.to_string()),
     };
 
     let cfg = cfg.load_full();
 
     let before = std::time::Instant::now();
-    let ecdsa_root_keys = match session.get_dkg_state(CurveType::K256) {
-        Ok(dkg_state) => dkg_state.root_keys().await,
-        Err(_) => {
-            debug!("Failed to acquire lock on hd_root_keys for ECDSA.");
-            vec![]
-        }
-    };
+    let curve_state = CurveState::new(session.peer_state.clone(), CurveType::K256, &default_keyset);
+    let ecdsa_root_keys = curve_state.root_keys().unwrap_or_else(|_| {
+        warn!("Failed to get root keys");
+        vec![]
+    });
     timing.insert("get ecdsa root keys".to_string(), before.elapsed());
 
     let before = std::time::Instant::now();
-    let bls_root_keys = match session.get_dkg_state(CurveType::BLS) {
-        Ok(dkg_state) => dkg_state.root_keys().await,
-        Err(_) => {
-            debug!("Failed to acquire lock on hd_root_keys for BLS.");
-            vec![]
-        }
-    };
-    timing.insert("get bls root keys".to_string(), before.elapsed());
+    let curve_state = CurveState::new(session.peer_state.clone(), CurveType::BLS, &default_keyset);
+    let bls_root_key = get_default_bls_root_pubkey(session).unwrap_or_else(|_| {
+        warn!("Failed to get root keys");
+        String::new()
+    });
+    timing.insert("get bls root key".to_string(), before.elapsed());
 
     let before = std::time::Instant::now();
     // run the attestation
@@ -434,7 +566,7 @@ pub async fn handshake(
                 Status::BadRequest,
                 json!(GenericResponse::err_and_data_json(
                     "".to_string(),
-                    JsonSDKHandshakeResponse {
+                    SDKHandshakeResponseV0 {
                         server_public_key: "ERR".to_string(),
                         subnet_public_key: "ERR".to_string(),
                         network_public_key: "ERR".to_string(),
@@ -464,19 +596,17 @@ pub async fn handshake(
     trace!("POST /web/handshake timing: {:?}", timing);
 
     // the public key set is currently the bls root key... of which there is only one.
-    if !bls_root_keys.is_empty() {
-        let network_public_key = &bls_root_keys[0];
-
+    if !bls_root_key.is_empty() {
         let realm_id = session.peer_state.realm_id();
         let epoch = session.peer_state.epoch();
 
         return status::Custom(
             Status::Ok,
-            json!(GenericResponse::ok(JsonSDKHandshakeResponse {
-                server_public_key: "".to_string(),
-                subnet_public_key: network_public_key.clone(),
-                network_public_key: network_public_key.clone(),
-                network_public_key_set: network_public_key.clone(),
+            json!(GenericResponse::ok(SDKHandshakeResponseV0 {
+                server_public_key: bls_root_key.to_string(),
+                subnet_public_key: bls_root_key.clone(),
+                network_public_key: bls_root_key.clone(),
+                network_public_key_set: bls_root_key.clone(),
                 client_sdk_version: version.to_string(),
                 hd_root_pubkeys: ecdsa_root_keys,
                 attestation,
@@ -493,7 +623,7 @@ pub async fn handshake(
         Status::Ok,
         json!(GenericResponse::err_and_data_json(
             "".to_string(),
-            JsonSDKHandshakeResponse {
+            SDKHandshakeResponseV0 {
                 server_public_key: "ERR".to_string(),
                 subnet_public_key: "ERR".to_string(),
                 network_public_key: "ERR".to_string(),
@@ -521,7 +651,7 @@ pub(crate) async fn get_job_status(
     cfg: &State<ReloadableLitConfig>,
     client_state: &Arc<ClientState>,
 ) -> status::Custom<Value> {
-    let bls_root_pubkey = match get_bls_root_pubkey(tss_state).await {
+    let bls_root_pubkey = match get_default_bls_root_pubkey(tss_state) {
         Ok(key) => key,
         Err(e) => {
             return client_session
@@ -711,7 +841,7 @@ pub(crate) async fn execute_function(
 
     let before = std::time::Instant::now();
     // Validate auth sig item
-    let bls_root_pubkey = match get_bls_root_pubkey(tss_state).await {
+    let bls_root_pubkey = match get_default_bls_root_pubkey(tss_state) {
         Ok(bls_root_pubkey) => bls_root_pubkey,
         Err(e) => {
             return client_session.json_encrypt_err_custom_response("no bls root key", e.handle());
@@ -768,7 +898,7 @@ pub(crate) async fn execute_function(
     let before = std::time::Instant::now();
     // check if the IPFS id is in the allowlist
     if matches!(cfg.enable_actions_allowlist(), Ok(true)) {
-        let allowlist_entry_id = keccak256(format!("LIT_ACTION_{}", derived_ipfs_id).as_bytes());
+        let allowlist_entry_id = keccak256(format!("LIT_ACTION_{derived_ipfs_id}").as_bytes());
         let action_is_allowed =
             match check_allowlist(allowlist_cache, &allowlist_entry_id, &cfg).await {
                 Ok(action_is_allowed) => action_is_allowed,
@@ -939,6 +1069,7 @@ pub(crate) async fn execute_function(
         .node_set(json_execution_request.node_set.clone())
         .dynamic_payment(dynamic_payment)
         .client_grpc_channels((*grpc_client_pool).clone())
+        .key_set_id(json_execution_request.key_set_id.clone())
         .build()
         .map_err(|e| {
             unexpected_err_code(
@@ -1197,8 +1328,7 @@ async fn get_price_multiplier(
         None => {
             return Err(unexpected_err_code(
                 format!(
-                    "Endpoint type {} not found in call to base_network_prices (len={})",
-                    endpoint_type, base_network_prices_len
+                    "Endpoint type {endpoint_type} not found in call to base_network_prices (len={base_network_prices_len})"
                 ),
                 EC::NodeJsExecutionError,
                 Some("Invalid endpoint type when calculating price_multiplier".into()),
@@ -1295,42 +1425,40 @@ pub(crate) async fn sign_session_key(
     };
     timing.insert("parsed siwe message".to_string(), before.elapsed());
 
-    if let Some(statement) = &parsed_siwe.statement {
-        if statement.contains(LIT_RESOURCE_PREFIX_RAC) {
-            return client_session.json_encrypt_err_custom_response(
-                "missing resource prefix",
-                validation_err_code(
-                    "Can't define Auth Context resources in capability",
-                    EC::NodeInvalidAuthContextResource,
-                    None,
-                )
-                .add_msg_to_details()
-                .handle(),
-            );
-        }
+    if let Some(statement) = &parsed_siwe.statement
+        && statement.contains(LIT_RESOURCE_PREFIX_RAC)
+    {
+        return client_session.json_encrypt_err_custom_response(
+            "missing resource prefix",
+            validation_err_code(
+                "Can't define Auth Context resources in capability",
+                EC::NodeInvalidAuthContextResource,
+                None,
+            )
+            .add_msg_to_details()
+            .handle(),
+        );
     }
 
-    let origin_domain = match get_domain_from_request_origin(
+    let origin_domain = get_domain_from_request_origin(
         request_headers
             .headers
             .get_one("Origin")
             .unwrap_or("http://localhost"),
-    ) {
-        Ok(origin_domain) => origin_domain,
-        Err(e) => {
-            error!(
-                "Error getting origin domain - swallowing and using default of localhost: {:?}",
-                e
-            );
-            "http://localhost".into()
-        }
-    };
-    trace!("Origin: {:?}", origin_domain);
+    )
+    .unwrap_or_else(|e| {
+        error!(
+            "Error getting origin domain - swallowing and using default of localhost: {:?}",
+            e
+        );
+        "http://localhost".into()
+    });
+    debug!("Origin: {:?}", origin_domain);
 
     let before = std::time::Instant::now();
     // convert the auth methods into an auth context by resolving the oauth ids
     // from the oauth endpoints
-    let bls_root_pubkey = match get_bls_root_pubkey(tss_state).await {
+    let bls_root_pubkey = match get_default_bls_root_pubkey(tss_state) {
         Ok(bls_root_pubkey) => bls_root_pubkey,
         Err(e) => {
             return client_session.json_encrypt_err_custom_response("no bls root key", e.handle());
@@ -1890,7 +2018,7 @@ pub(crate) async fn sign_session_key(
     );
     let mut capabilities = Capability::<Value>::default();
     let resource = "Auth/Auth".to_string();
-    let resource_prefix = format!("{}://*", LIT_RESOURCE_PREFIX_RAC); // TODO: Scope with uri
+    let resource_prefix = format!("{LIT_RESOURCE_PREFIX_RAC}://*"); // TODO: Scope with uri
     let capabilities = match capabilities
         .with_actions_convert(resource_prefix, [(resource, [notabene])])
         .map_err(|e| {
@@ -2005,11 +2133,13 @@ pub(crate) async fn sign_session_key(
     );
 
     let before = std::time::Instant::now();
-    let bls_root_pubkey = match get_bls_root_pubkey(tss_state).await {
+    let bls_root_pubkey = match get_default_bls_root_pubkey(tss_state) {
         Ok(bls_root_pubkey) => bls_root_pubkey,
         Err(e) => {
-            return client_session
-                .json_encrypt_err_custom_response("No bls root key exists", e.handle());
+            return client_session.json_encrypt_err_custom_response(
+                "No default bls root key exists to sign the session key.",
+                e.handle(),
+            );
         }
     };
     timing.insert("get bls root pubkey".to_string(), before.elapsed());
@@ -2024,6 +2154,10 @@ pub(crate) async fn sign_session_key(
         &cfg,
         &[2],
         &bls_root_pubkey,
+        &json_sign_session_key_request
+            .pkp_key_set_id
+            .unwrap_or_default(),
+        tss_state,
     )
     .await
     {
@@ -2038,10 +2172,7 @@ pub(crate) async fn sign_session_key(
         return client_session.json_encrypt_err_custom_response(
             "pkp is not authorized to sign",
             validation_err_code(
-                format!(
-                    "You are not authorized to sign using this PKP: {}",
-                    hex_pubkey
-                ),
+                format!("You are not authorized to sign using this PKP: {hex_pubkey}"),
                 EC::NodePKPNotAuthorized,
                 None,
             )
@@ -2067,15 +2198,26 @@ pub(crate) async fn sign_session_key(
         bls_root_pubkey, to_sign
     );
     let before = std::time::Instant::now();
-    let (signature_share, share_peer_id) = match cipher_state.sign(&to_sign, epoch).await {
-        Ok(signature_share) => signature_share,
+    let cdm = &tss_state.chain_data_config_manager;
+
+    let keyset_id = match get_default_keyset_id(cdm) {
+        Ok(keyset) => keyset,
         Err(e) => {
-            return client_session.json_encrypt_err_custom_response(
-                "unable to create signature share",
-                e.add_detail("Error signing with BLS key").handle(),
-            );
+            warn!("Failed to get keyset id: {:?}", e);
+            return client_session
+                .json_encrypt_err_custom_response("no keyset id found", e.handle());
         }
     };
+    let (signature_share, share_peer_id) =
+        match cipher_state.sign(&to_sign, &keyset_id, epoch).await {
+            Ok(signature_share) => signature_share,
+            Err(e) => {
+                return client_session.json_encrypt_err_custom_response(
+                    "unable to create signature share",
+                    e.add_detail("Error signing with BLS key").handle(),
+                );
+            }
+        };
     timing.insert("signing".to_string(), before.elapsed());
     timing.insert("total".to_string(), request_start.elapsed());
     debug!("POST /web/sign_session_key timing: {:?}", timing);
@@ -2095,12 +2237,11 @@ pub(crate) async fn sign_session_key(
 // see https://github.com/rust-lang/rust/issues/92554
 #[allow(dead_code)]
 fn get_domain_from_request_origin(origin: &str) -> error::Result<String> {
-    let origin = Url::parse(origin).map_err(|e| {
-        conversion_err(e, Some(format!("Unable to parse origin URL of {}", origin)))
-    })?;
+    let origin = Url::parse(origin)
+        .map_err(|e| conversion_err(e, Some(format!("Unable to parse origin URL of {origin}"))))?;
     let domain = origin.domain().ok_or_else(|| {
         conversion_err(
-            format!("Unable to parse domain from origin URL {}", origin),
+            format!("Unable to parse domain from origin URL {origin}"),
             None,
         )
     })?;

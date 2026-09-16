@@ -7,10 +7,10 @@ use lit_frost::{
 };
 use lit_node::peers::peer_state::models::SimplePeer;
 use lit_node::tss::common::key_share::KeyShare;
-use lit_node::tss::common::signing_scheme::signing_scheme_to_frost_scheme;
 use lit_node::tss::frost::FrostState;
 use lit_node_core::PeerId;
 use lit_node_core::SigningScheme;
+use lit_sdk::signature::signing_scheme_to_frost_scheme;
 use test_case::test_case;
 use tokio::task::JoinHandle;
 use tracing::info;
@@ -52,7 +52,7 @@ async fn sign_lower_threshold(signing_scheme: SigningScheme) {
         let frost_state = FrostState::new(node.tss_state.clone(), signing_scheme);
 
         let (_, secret_share, vk, _) =
-            load_frost_key_share(&signing_node, &pubkey, epoch, signing_scheme).await;
+            load_frost_key_share(signing_node, &pubkey, epoch, signing_scheme).await;
         if verifying_key.is_none() {
             verifying_key = Some(vk.clone());
         }
@@ -155,7 +155,7 @@ async fn sign_with_pubkey(signing_scheme: SigningScheme) {
         let frost_state = FrostState::new(node.tss_state.clone(), signing_scheme);
 
         let (_, secret_share, vk, _) =
-            load_frost_key_share(&signing_node, &pubkey, epoch, signing_scheme).await;
+            load_frost_key_share(signing_node, &pubkey, epoch, signing_scheme).await;
         if verifying_key.is_none() {
             verifying_key = Some(vk.clone());
         }

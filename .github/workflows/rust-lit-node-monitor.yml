@@ -27,7 +27,7 @@ jobs:
           rm -rf ../../lit-assets
           mkdir -p ${{ github.workspace }}
       - name: Checkout lit-assets
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Install deps
         working-directory: ${{ github.workspace }}
         run: sudo apt-get update && sudo apt-get install -y libudev-dev libsqlite3-dev cmake protobuf-compiler

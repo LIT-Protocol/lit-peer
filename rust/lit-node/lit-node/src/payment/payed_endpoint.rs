@@ -22,7 +22,7 @@ impl FromStr for PayedEndpoint {
             _ => Err(parser_err_code(
                 "",
                 EC::NodeSerializationError,
-                Some(format!("`{}` is not a valid PayedEndpoint", s)),
+                Some(format!("`{s}` is not a valid PayedEndpoint")),
             )),
         }
     }

@@ -29,7 +29,7 @@ pub async fn create_attestation(
     let noonce = <[u8; 32]>::from_hex(noonce).map_err(|e| {
         unexpected_err(
             e,
-            Some(format!("cannot parse noonce as 32-byte hex: {}", noonce)),
+            Some(format!("cannot parse noonce as 32-byte hex: {noonce}")),
         )
     })?;
     let mut data = BTreeMap::new();

@@ -1086,17 +1086,6 @@ contract StakingValidatorFacet {
     event StakingTokenSet(address newStakingTokenAddress);
     event KickPenaltyPercentSet(uint256 reason, uint256 newKickPenaltyPercent);
     event ResolverContractAddressSet(address newResolverContractAddress);
-    event ConfigSet(
-        uint256 newTokenRewardPerTokenPerEpoch,
-        uint256[] newKeyTypes,
-        uint256 newMinimumValidatorCount,
-        uint256 newMaxConcurrentRequests,
-        uint256 newMaxPresignCount,
-        uint256 newMinPresignCount,
-        uint256 newPeerCheckingIntervalSecs,
-        uint256 newMaxPresignConcurrency,
-        bool newRpcHealthcheckEnabled
-    );
     event ComplaintConfigSet(
         uint256 reason,
         LibStakingStorage.ComplaintConfig config

@@ -30,7 +30,7 @@ pub async fn get_discord_auth_from_access_token(
     let mut headers = reqwest::header::HeaderMap::new();
     headers.insert(
         "Authorization",
-        format!("Bearer {}", discord_access_token)
+        format!("Bearer {discord_access_token}")
             .parse()
             .map_err(|e| {
                 parser_err(

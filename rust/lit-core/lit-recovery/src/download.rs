@@ -1,13 +1,13 @@
-use bulletproofs::k256::{
-    ecdsa::SigningKey,
+use ethers::middleware::SignerMiddleware;
+use ethers::providers::{Http, Provider};
+use ethers::signers::Wallet;
+use lit_rust_crypto::{
     elliptic_curve::{
         Field, PrimeField, consts::U32, generic_array::GenericArray, group::GroupEncoding,
         ops::Reduce, point::AffineCoordinates, sec1::ToEncodedPoint,
     },
+    k256::ecdsa::SigningKey,
 };
-use ethers::middleware::SignerMiddleware;
-use ethers::providers::{Http, Provider};
-use ethers::signers::Wallet;
 use sha2::Digest;
 use std::io::Write;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -118,7 +118,7 @@ struct ContractProofK256 {
 impl ContractProofK256 {
     #[allow(dead_code)]
     pub fn generate(share: &[u8], participant_id: u8) -> RecoveryResult<Self> {
-        use bulletproofs::k256::*;
+        use lit_rust_crypto::k256::*;
 
         let mut repr = FieldBytes::default();
         repr.copy_from_slice(share);
@@ -200,7 +200,7 @@ struct ContractProofBls12381G1 {
 impl ContractProofBls12381G1 {
     #[allow(dead_code)]
     pub fn generate(share: &[u8], participant_id: u8) -> RecoveryResult<Self> {
-        use bulletproofs::blstrs_plus::*;
+        use lit_rust_crypto::blstrs_plus::*;
 
         let share_bytes = <[u8; 32]>::try_from(share).unwrap();
         let share = Option::<Scalar>::from(Scalar::from_be_bytes(&share_bytes))
@@ -646,7 +646,7 @@ mod tests {
     #[ignore]
     #[test]
     fn test_contract_proof_k256() {
-        use bulletproofs::k256::*;
+        use lit_rust_crypto::k256::*;
 
         let share = Scalar::random(rand::rngs::OsRng);
         let res = ContractProofK256::generate(&share.to_bytes(), 1);
@@ -666,7 +666,7 @@ mod tests {
     #[ignore]
     #[test]
     fn test_contract_proof_bls() {
-        use bulletproofs::blstrs_plus::*;
+        use lit_rust_crypto::blstrs_plus::*;
 
         let share = Scalar::random(rand::rngs::OsRng);
         let res = ContractProofBls12381G1::generate(&share.to_be_bytes(), 1);

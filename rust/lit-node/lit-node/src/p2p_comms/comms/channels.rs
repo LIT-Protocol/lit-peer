@@ -13,7 +13,7 @@ pub async fn register_comms_channel(
     let (tx, rx) = flume::unbounded();
     let channels = RoundCommsChannel { tx, rx };
 
-    let channel_id = format!("{}-{}", txn_prefix, round);
+    let channel_id = format!("{txn_prefix}-{round}");
     let channels = channels.clone();
 
     let round_registration = RoundRegistration {
@@ -43,7 +43,7 @@ pub async fn deregister_comms_channel(
     txn_prefix: &String,
     round: &str,
 ) {
-    let channel_id = format!("{}-{}", txn_prefix, round);
+    let channel_id = format!("{txn_prefix}-{round}");
     let round_registration = RoundRegistration {
         id: channel_id,
         channels: None,

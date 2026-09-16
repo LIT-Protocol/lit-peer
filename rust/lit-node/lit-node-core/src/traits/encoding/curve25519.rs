@@ -1,6 +1,8 @@
 use super::{BeBytes, CompressedBytes, LeBytes};
-use blsful::inner_types::GroupEncoding;
-use vsss_rs::{curve25519, curve25519_dalek};
+use lit_rust_crypto::{
+    group::GroupEncoding,
+    vsss_rs::{curve25519, curve25519_dalek},
+};
 
 // NOTE: There is no difference between compressed and uncompressed points for
 // this curve

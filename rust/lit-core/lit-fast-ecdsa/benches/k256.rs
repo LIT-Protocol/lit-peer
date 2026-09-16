@@ -9,6 +9,7 @@ use lit_fast_ecdsa::{
     SignatureShare,
 };
 use lit_poly::DensePrimeField;
+use lit_rust_crypto::k256;
 use rand::SeedableRng;
 use rand::seq::SliceRandom;
 use std::collections::BTreeSet;

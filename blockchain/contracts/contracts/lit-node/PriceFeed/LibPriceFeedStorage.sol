@@ -71,7 +71,8 @@ library LibPriceFeedStorage {
         mapping(uint256 => uint256) baseNetworkPrices;
         mapping(uint256 => uint256) maxNetworkPrices;
         mapping(LitActionPriceComponent => LitActionPriceConfig) litActionPriceConfigs;
-        NodeCapacityConfig nodeCapacityConfig;
+        // Use nodeCapacityConfigs[0] for now.
+        mapping(uint256 => NodeCapacityConfig) nodeCapacityConfigs;
     }
 
     // Return ERC721 storage struct for reading and writing

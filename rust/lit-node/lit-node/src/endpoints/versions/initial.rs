@@ -14,7 +14,7 @@ use lit_api_core::error::ApiError;
 use lit_core::config::ReloadableLitConfig;
 use lit_node_common::client_state::ClientState;
 use lit_node_core::{
-    request::{self, EncryptionSignRequest, JsonPKPClaimKeyRequest, JsonSDKHandshakeRequest},
+    request::{self, EncryptionSignRequest, JsonPKPClaimKeyRequest, SDKHandshakeRequest},
     response::GenericResponse,
 };
 use lit_sdk::EncryptedPayload;
@@ -95,12 +95,14 @@ pub async fn admin_get_key_backup(
 )]
 pub async fn admin_set_key_backup(
     cfg: &State<ReloadableLitConfig>,
+    tss_state: &State<Arc<TssState>>,
     restore_state: &State<Arc<RestoreState>>,
     admin_auth_sig: JsonAuthSigExtended,
     data: Data<'_>,
 ) -> status::Custom<Value> {
     with_timeout(&cfg.load_full(), None, None, async move {
-        admin::endpoints::admin_set_key_backup(cfg, restore_state, admin_auth_sig, data).await
+        admin::endpoints::admin_set_key_backup(cfg, tss_state, restore_state, admin_auth_sig, data)
+            .await
     })
     .await
 }
@@ -247,7 +249,7 @@ curl --header "Content-Type: application/json" \
 pub async fn handshake(
     session: &State<Arc<TssState>>,
     remote_addr: SocketAddr,
-    json_handshake_request: Json<JsonSDKHandshakeRequest>,
+    json_handshake_request: Json<SDKHandshakeRequest>,
     tracing_required: TracingRequired,
     version: SdkVersion,
     cfg: &State<ReloadableLitConfig>,
@@ -255,7 +257,7 @@ pub async fn handshake(
     client_state: &State<Arc<ClientState>>,
 ) -> status::Custom<Value> {
     with_timeout(&cfg.load_full(), None, None, async move {
-        web_client::handshake(
+        web_client::handshake_v0(
             session,
             remote_addr,
             json_handshake_request,

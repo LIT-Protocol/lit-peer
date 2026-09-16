@@ -20,6 +20,7 @@ flume = { workspace = true }
 indoc = { workspace = true }
 lit-actions-ext = { workspace = true }
 lit-actions-grpc = { workspace = true }
+lit-api-core = { workspace = true }
 lit-observability = { workspace = true, features = ["channels"] }
 serde_json = { workspace = true }
 sys_traits = { workspace = true }

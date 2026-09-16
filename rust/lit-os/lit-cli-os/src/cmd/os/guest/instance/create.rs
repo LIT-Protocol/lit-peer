@@ -287,6 +287,7 @@ pub(crate) async fn handle_cmd_os_guest_instance_create(
 }
 
 #[allow(clippy::too_many_arguments)]
+#[allow(clippy::collapsible_if)]
 pub(crate) async fn do_os_guest_instance_create(
     cfg: &LitConfig, opts: &CliGlobalOpts, instance_type: GuestType,
     common_args: GuestInstanceCreateArgsCommon, prov_args: Option<GuestInstanceCreateArgsProv>,

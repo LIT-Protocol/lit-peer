@@ -27,7 +27,6 @@ export interface DeployNodeConfig extends DeployBaseConfig {
   copyNodeConfigsToRustProject: boolean;
   ipAddresses?: string[];
   existingContracts?: Partial<ParsedNodeContracts>;
-  keyTypes: number[];
   nodePrivateKeys?: string[];
   chainPollingInterval?: string;
   customNodeRuntimeConfigPath?: string;
