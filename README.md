@@ -1,3 +1,5 @@
+### *** THE DATIL & NAGA NETWORKS HAVE BEEN SUNSETTED. THIS REPO REMAINS ONLINE FOR EDUCATIONAL PURPOSES ONLY ***
+
 <div align="center">
 <h1>Lit Protocol Node and Contracts</h1>
 <img src="https://i.ibb.co/p2xfzK1/Screenshot-2022-11-15-at-09-56-57.png">
