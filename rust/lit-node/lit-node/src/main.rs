@@ -52,6 +52,7 @@ use std::sync::Arc;
 use tokio::sync::broadcast;
 use tokio::sync::{RwLock, mpsc::channel};
 use tracing::error;
+use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
 use crate::peers::grpc_client_pool::GrpcClientPool;
@@ -406,6 +407,7 @@ pub fn main() {
                     })
                 }))
                 .attach(metrics_fairings)
+                .attach(crate::utils::rocket::privacy_mode::privacy_mode_fairing())
                 .manage(cfg.clone())
                 .manage(resolver)
                 .manage(tss_state.peer_state.clone())
@@ -487,6 +489,10 @@ async fn init_observability(
         )
         .await
         .map_err(|e| unexpected_err(e, Some("failed to create OTEL providers: {:?}".into())))?;
+
+    // Add privacy mode layer to disable tracing when privacy_mode is enabled
+    // The privacy mode layer checks thread-local state set by the fairing
+    let subscriber = subscriber.with(crate::utils::rocket::privacy_mode::PrivacyModeLayer);
 
     // Set globals
     global::set_text_map_propagator(TraceContextPropagator::new());
